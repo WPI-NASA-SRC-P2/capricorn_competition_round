@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Space Robotics Challenge (2)
+    NASA-JSC
+    Copyright (c) 2019, 2020, 2021
+    All Rights Reserved
+    Unauthorized distribution strictly prohibited
+
+    Final Round: QA testing for the spoil generation and garbage collection
+-->
+<sdf version='1.6'>
+    <world name='vol_spawn_qa_world'>
+
+        <!-- lunar environment defaults -->
+        <gravity>0 0 -1.62</gravity>
+        <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+        <atmosphere type='adiabatic'/>
+
+        <physics name='default' default='1' type='ode'>
+            <max_step_size>0.01</max_step_size>
+            <real_time_factor>1</real_time_factor>
+            <real_time_update_rate>100</real_time_update_rate>
+            <max_contacts>50</max_contacts>
+            <ode>
+                <solver>
+                    <type>quick</type>
+                    <iters>200</iters>
+                </solver>
+            </ode>
+        </physics>
+
+        <scene>
+            <ambient>1 1 1 1.0</ambient>
+            <background>0.5 0.5 0.5 1</background>
+            <origin_visual>0</origin_visual>
+            <grid>false</grid>
+            <shadows>true</shadows>
+        </scene>
+
+        <!-- create a toy heightmap to statisfy underground requirements -->
+        <model name="heightmap">
+            <static>true</static>
+            <link name="link">
+                <pose>0 0 10 0 0 0</pose>
+
+                <collision name="collision">
+                    <geometry>
+                        <heightmap>
+                            <uri>file://terrains/lunar_heightmap/heightmaps/lunar_heightmap.png</uri>
+                            <size>150 150 10</size>
+                            <pos>0 0 0</pos>
+                        </heightmap>
+                    </geometry>
+                </collision>
+
+                <visual name="visual_heightmap">
+                    <material>
+                        <lighting>true</lighting>
+                        <script>
+                            <uri>model://lunar_heightmap/scripts</uri>
+                            <name>lunar_texture</name>
+                        </script>
+                    </material>
+
+                    <geometry>
+                        <heightmap>
+                            <use_terrain_paging>false</use_terrain_paging>
+                            <uri>file://terrains/lunar_heightmap/heightmaps/lunar_heightmap.png</uri>
+                            <size>150 150 10</size>
+                            <pos>0 0 0</pos>
+                        </heightmap>
+                    </geometry>
+                </visual>
+            </link>
+        </model>
+
+        <!-- Include the volatile spawner -->
+        <plugin name="volatile_spawner_plugin" filename="libVolatileSpawner.so">
+            <total_volatile_count>104</total_volatile_count> <!-- must be a multiple of type-count -->
+            <volatile_radius>1.0</volatile_radius>
+            <max_spawn_radius>60</max_spawn_radius> <!-- maximum spawning radius in meters -->
+            <min_spawn_radius>10</min_spawn_radius> <!-- minimum spawning radius in meters -->
+            <spawn_depth>-10.0</spawn_depth>
+        </plugin>
+
+    </world>
+</sdf>

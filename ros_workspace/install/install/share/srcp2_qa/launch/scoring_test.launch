@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Space Robotics Challenge (2)
+	NASA-JSC
+	Copyright (c) 2019, All Rights Reserved
+	Unauthorized distribution strictly prohibited
+
+  Launch QA Test world
+-->
+<launch>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name"   value="$(find srcp2_qa)/worlds/scoring_qa.world"/>
+    <arg name="paused"       value="false"/>
+    <arg name="gui"          value="true"/>
+    <arg name="verbose"      value="true"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="recording"    value="false"/>
+  </include>
+
+</launch>

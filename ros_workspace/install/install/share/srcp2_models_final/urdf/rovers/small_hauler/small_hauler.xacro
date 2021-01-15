@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!--
+	Space Robotics Challenge Phase 2
+	NASA-JSC
+	Copyright (c) 2020, All Rights Reserved
+	Unauthorized distribution strictly prohibited
+-->
+
+<!--
+    @brief small hauler for srcp2 final rounds
+-->
+<robot name="small_hauler" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:arg name="rover_name" default="small_hauler" />
+    
+    <!-- includes -->
+    <xacro:include filename="../common/inertia_macros.xacro"/>
+    <xacro:include filename="../small_basic/small_rover_chassis.xacro"/>
+    <xacro:include filename="../small_basic/small_rover_drive.xacro"/>
+    <xacro:include filename="../small_basic/small_rover_power.xacro"/>
+    <xacro:include filename="bin.xacro"/>
+
+    <!-- hauler hardware -->
+    <xacro:small_rover_chassis rover_name="$(arg rover_name)"/>
+    <xacro:small_hauler_bin    rover_name="$(arg rover_name)" parent="$(arg rover_name)_small_chassis"/>
+    <xacro:small_rover_drive rover_name="$(arg rover_name)"/>
+    <!-- <xacro:small_rover_power rover_name="$(arg rover_name)" rover_type="small_hauler"/> -->
+
+    <!-- includes: sensors electronics -->
+    <xacro:include filename="../small_basic/small_rover_sensors.xacro"/> 
+    <xacro:small_rover_camera_sensor rover_name="$(arg rover_name)"/>
+    <xacro:small_rover_imu_sensor rover_name="$(arg rover_name)"/>
+    <xacro:small_rover_lidar_sensor rover_name="$(arg rover_name)"/>
+
+    <xacro:include filename="../small_basic/small_rover_sensors.gazebo"/>  
+
+    <!-- includes: motors (drive, sensor and bin) -->
+    <xacro:include filename="./motors.gazebo"/>
+
+    <gazebo>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so"/>
+    </gazebo>
+
+</robot>
+
+      

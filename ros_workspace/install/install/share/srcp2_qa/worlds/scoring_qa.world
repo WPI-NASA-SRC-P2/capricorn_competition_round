@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Space Robotics Challenge (2)
+    NASA-JSC
+    Copyright (c) 2019, 2020, 20201
+    All Rights Reserved
+    Unauthorized distribution strictly prohibited
+
+    Final Round: QA testing for scoring
+
+    This leverages the spoil fountain world, with modifications to check the
+    scoring output on the ROS side. 
+-->
+<sdf version='1.6'>
+    <world name='final_world'>
+
+        <!-- lunar environment defaults -->
+        <gravity>0 0 -1.62</gravity>
+        <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+        <atmosphere type='adiabatic'/>
+
+        <physics name='default' default='1' type='ode'>
+            <max_step_size>0.01</max_step_size>
+            <real_time_factor>1</real_time_factor>
+            <real_time_update_rate>100</real_time_update_rate>
+            <max_contacts>50</max_contacts>
+            <ode>
+                <solver>
+                <type>quick</type>
+                <iters>500</iters>
+                </solver>
+            </ode>
+        </physics>
+
+        <scene>
+            <ambient>0.5 0.5 0.5 1.0</ambient>
+            <background>0.05 0.05 0.05 1</background>
+            <origin_visual>0</origin_visual>
+            <grid>false</grid>
+            <shadows>true</shadows>
+        </scene>
+
+        <gui fullscreen='0'>
+            <camera name='user_camera'>
+            <pose frame=''>10 0 9 0 0.6 3.0</pose>
+            <view_controller>orbit</view_controller>
+            <projection_type>perspective</projection_type>
+            </camera>
+        </gui>
+
+        <!-- 
+            ====================================================================
+            Models
+        -->
+
+        <!-- create a toy heightmap to statisfy SpoilSpawner -->
+        <model name="heightmap">
+            <static>true</static>
+            <link name="link">
+                <pose>0 0 0 0 0 0</pose>
+
+                <collision name="collision_heightmap">
+                <geometry>
+                    <plane>
+                        <normal>0 0 1</normal>
+                        <size>10 10</size>
+                    </plane>
+                </geometry>
+
+                <max_contacts>100</max_contacts>
+                <surface>
+                    <contact>
+                        <collide_bitmask>0x02</collide_bitmask>
+                    </contact>
+                </surface>
+                </collision>
+
+                <visual name="visual_heightmap">
+                    <geometry>
+                        <plane>
+                            <normal>0 0 1</normal>
+                            <size>10 10</size>
+                        </plane>
+                    </geometry>
+                </visual>
+            </link>
+        </model>
+
+
+        <!-- Scoop -->
+        <!-- <include>
+            <pose>0 0 2 0 0 0</pose>
+            <uri>model://qa_scoop</uri>
+        </include> -->
+
+        <model name="clod_fountain">
+            <static>true</static>
+
+            <link name="tap_inner">
+                <pose>0 0 3 0 0 0</pose>
+                <collision name="tap_col">
+                    <geometry>
+                        <cylinder>
+                            <radius>0.1</radius>
+                            <length>0.50</length>
+                        </cylinder>
+                    </geometry>
+                    <surface>
+                        <contact>
+                            <collide_bitmask>0x02</collide_bitmask>
+                        </contact>
+                    </surface>
+                </collision>
+            </link>
+
+            <link name="tap">
+                <pose>0 0 3 0 0 0</pose>
+
+                <collision name="tap_col">
+                    <geometry>
+                        <cylinder>
+                            <radius>0.2</radius>
+                            <length>0.55</length>
+                        </cylinder>
+                    </geometry>
+                    <surface>
+                        <contact>
+                            <collide_bitmask>0x02</collide_bitmask>
+                        </contact>
+                    </surface>
+                </collision>
+
+                <visual name="tap_vis">
+                    <geometry>
+                        <cylinder>
+                            <radius>0.2</radius>
+                            <length>0.55</length>
+                        </cylinder>
+                    </geometry>
+                    <material>Gazebo/Blue</material>
+                </visual>
+            </link>
+
+            <joint name="spawning_zone_joint" type="fixed">
+                <parent>tap</parent>
+                <child>tap_inner</child>
+                <axis>0 0 1</axis>
+            </joint>
+
+            <plugin name="spoil_spawner" filename="libSpoilSpawner.so">
+                <ignore_ground>true</ignore_ground>
+                <scoop_link_name>tap</scoop_link_name>
+                <spawn_zone_link_name>tap_inner</spawn_zone_link_name>
+                <heightmap_name>heightmap</heightmap_name>
+                <heightmap_collision_name>collision_heightmap</heightmap_collision_name>
+                <clod_radius>0.05</clod_radius>
+                <max_capacity>5</max_capacity>
+                <max_volatile_radius>0.5</max_volatile_radius>
+            </plugin>
+        </model>
+
+        <!-- "Processing Plant" -->
+        <model name="processing_plant">
+    		<static>true</static>
+
+            <link name="processing_plant_hopper">
+
+                <visual name="processing_plant_hopper_vis">
+                    <pose>0 1.4 0 0 0 0</pose>
+
+                    <geometry>
+                        <mesh>
+                            <uri>model://meshes/landers/processing/ProcessingPlant2.dae</uri>
+						<scale>0.5 0.5 0.5</scale>
+					</mesh>
+                    </geometry>
+                </visual>
+
+                <collision name="processing_plant_hopper_col">
+                    <pose>0 0 0.5 0 0 0</pose>
+                    <geometry>
+                        <box><size>1 1 1</size></box>
+                    </geometry>
+                    <surface>
+                        <contact>
+                            <collide_bitmask>0x02</collide_bitmask>
+                        </contact>
+                    </surface>
+                </collision>
+            </link>
+        </model>
+
+        <!-- "Volatile" -->
+        <model name="volatile-ethane-1234-1456-1299">
+            <static>true</static>
+            <link name="volatile">
+                <pose>0 0 -5 0 0 0</pose>
+                <gravity>false</gravity>
+                <collision name="volatile_col">
+                    <geometry>
+                        <cylinder>
+                            <radius>0.5</radius>
+                            <length>0.1</length>
+                        </cylinder>
+                    </geometry>
+                </collision>
+            </link>
+        </model>
+
+        <light name='sun_directional' type='directional'>
+            <cast_shadows>true</cast_shadows>
+            <pose>20 0 10 0 0 0</pose>
+            <diffuse>0.7 0.7 0.7 1</diffuse>
+            <specular>0.001 0.001 0.001 1</specular>
+            <direction>-1 -0.1 -0.15</direction>
+            <attenuation>
+                <range>1000</range>
+                <constant>1</constant>
+                <linear>0</linear>
+            </attenuation>
+        </light>
+
+
+        <!-- Score the volatiles -->
+        <plugin name="volatile_scoring" filename="libVolatileScoring.so">
+            <score_ros_topic>/srcp2/score</score_ros_topic>
+            <scoring_period>0.25</scoring_period>
+            <loading_timeout>1.0</loading_timeout>
+
+            <processor_name>processing_plant</processor_name>
+            <processor_hopper_name>processing_plant_hopper</processor_hopper_name>
+            <hauler_basename>hauler</hauler_basename>
+            <hauler_bin_name>bin</hauler_bin_name>
+        </plugin>
+
+        <!-- Garbage collect the falling clods of excavated spoil -->
+        <plugin name="spoil_collector" filename="libSpoilCollector.so">
+            <spoil_base_name>spoil</spoil_base_name>
+            <garbage_collection_altitude>-1.0</garbage_collection_altitude>
+        </plugin>
+
+    </world>
+</sdf>

@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!--
+	Space Robotics Challenge (2)
+	NASA-JSC
+	Copyright (c) 2019, All Rights Reserved
+	Unauthorized distribution strictly prohibited
+
+    This XACRO file defines the EXCAVATORS's motors, initial PIDs and publication ros_topics
+    Joint effort maximums, friction, damping etc should be set in that joint's
+    xacro file
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:include filename="../small_basic/small_rover_drive_motors.xacro"/>
+    <xacro:include filename="../small_basic/small_rover_sensor_motors.xacro"/>
+    
+    <!-- ARM: Shoulder Yaw PID -->
+    <xacro:property name="shoulder_yaw_kp"    value="40.0"/>
+    <xacro:property name="shoulder_yaw_ki"    value="05.0"/>
+    <xacro:property name="shoulder_yaw_kd"    value="05.0"/>
+    <xacro:property name="shoulder_yaw_start" value="${-3*pi/8}"/>
+ 
+    <!-- ARM: Shoulder Pitch PID -->
+    <xacro:property name="shoulder_pitch_kp"    value="100.0"/>
+    <xacro:property name="shoulder_pitch_ki"    value="02.0"/>
+    <xacro:property name="shoulder_pitch_kd"    value="15.0"/>
+    <xacro:property name="shoulder_pitch_start" value="${-5*pi/8}"/>
+
+    <!-- ARM: Elbow Pitch PID -->
+    <xacro:property name="elbow_pitch_kp"    value="50.0"/>
+    <xacro:property name="elbow_pitch_ki"    value="05.0"/>
+    <xacro:property name="elbow_pitch_kd"    value="03.0"/>
+    <xacro:property name="elbow_pitch_start" value="${3*pi/2}"/>
+
+    <!-- ARM: Wrist Pitch PID -->
+    <xacro:property name="wrist_pitch_kp"    value="50.0"/>
+    <xacro:property name="wrist_pitch_ki"    value="05.0"/>
+    <xacro:property name="wrist_pitch_kd"    value="03.0"/>
+    <xacro:property name="wrist_pitch_start" value="${-pi/4}"/>
+
+    <gazebo>
+        <plugin name="rover_motors" filename="libRoverMotorsPlugin.so">
+
+            <update_rate>30.0</update_rate>
+            <all_motors>
+
+                <!-- import the standard drive motors -->
+                <xacro:drive_and_steer_motors/>
+
+                <!-- import the standard sensor motors -->
+                <xacro:sensor_motors/>
+
+                <!-- Shoulder Yaw Motor -->
+                <motor>
+                    <model_joint_name>shoulder_yaw_joint</model_joint_name>
+                    <controller_type>position</controller_type>
+                    <ros_topic>arm/shoulder_yaw/command/position</ros_topic>
+                    <start>${shoulder_yaw_start}</start>
+                    <kp>${shoulder_yaw_kp}</kp>
+                    <ki>${shoulder_yaw_ki}</ki>
+                    <kd>${shoulder_yaw_kd}</kd>
+                </motor>
+
+                <!-- Shoulder Pitch Motor -->
+                <motor>
+                    <model_joint_name>shoulder_pitch_joint</model_joint_name>
+                    <controller_type>position</controller_type>
+                    <ros_topic>arm/shoulder_pitch/command/position</ros_topic>
+                    <start>${shoulder_pitch_start}</start>
+                    <kp>${shoulder_pitch_kp}</kp>
+                    <ki>${shoulder_pitch_ki}</ki>
+                    <kd>${shoulder_pitch_kd}</kd>
+                </motor>
+
+                <!-- Elbow Pitch Motor -->
+                <motor>
+                    <model_joint_name>elbow_pitch_joint</model_joint_name>
+                    <controller_type>position</controller_type>
+                    <ros_topic>arm/elbow_pitch/command/position</ros_topic>
+                    <start>${elbow_pitch_start}</start>
+                    <kp>${elbow_pitch_kp}</kp>
+                    <ki>${elbow_pitch_ki}</ki>
+                    <kd>${elbow_pitch_kd}</kd>
+                </motor>
+
+               <!-- Wrist Pitch Motor -->
+                <motor>
+                    <model_joint_name>wrist_pitch_joint</model_joint_name>
+                    <controller_type>position</controller_type>
+                    <ros_topic>arm/wrist_pitch/command/position</ros_topic>
+                    <start>${wrist_pitch_start}</start>
+                    <kp>${wrist_pitch_kp}</kp>
+                    <ki>${wrist_pitch_ki}</ki>
+                    <kd>${wrist_pitch_kd}</kd>
+                </motor>
+
+            </all_motors>
+        </plugin>
+
+    </gazebo>
+</robot>
