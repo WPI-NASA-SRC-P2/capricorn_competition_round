@@ -429,6 +429,14 @@
             </plugin>
         </gazebo>
 
+        <!-- This is the plugin used for the excavator scoop topic -->
+        <gazebo>
+            <plugin name="excavator_scoop" filename="libExcavatorScoop.so">
+                <scoop_link_name>${rover_name}_scoop</scoop_link_name>
+                <scoop_topic_name>scoop_info</scoop_topic_name>
+                <scoop_topic_publish_rate>0.5</scoop_topic_publish_rate>
+            </plugin>
+        </gazebo>
 
     </xacro:macro>
 </robot>

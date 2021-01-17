@@ -13,7 +13,7 @@
 
     <xacro:include filename="../small_basic/small_rover_drive_motors.xacro"/>
     <xacro:include filename="../small_basic/small_rover_sensor_motors.xacro"/>
- 
+    
     <gazebo>
         <plugin name="rover_motors" filename="libRoverMotorsPlugin.so">
 
@@ -21,7 +21,7 @@
             <all_motors>
 
                 <!-- import the standard drive motors -->
-                <xacro:drive_and_steer_motors/>
+                <xacro:drive_and_steer_motors rover_type = "small_scout"/>
 
                 <!-- import the standard sensor motors -->
                 <xacro:sensor_motors/>

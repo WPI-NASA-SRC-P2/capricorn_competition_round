@@ -42,6 +42,9 @@ mem="4g"
 xsock="/tmp/.X11-unix"
 xauth="/tmp/.docker.xauth"
 
+# Main SIM Ros Master Network Name
+simalias_name="simmaster"
+srcp2net_name="srcp2net"
 
 function help(){
     echo -e "${B}Summary:${rs}
@@ -254,16 +257,27 @@ fi
 
 # mount src ros-workspace? (dev only)
 src_volumes=""
+cmp_volumes=""
+
 base_model_path="/home/srcp2/ros_workspace/install/share/srcp2_models_final/" # this is the path for competitors (default)
 #
 if [[ "$image_tag" == *"_dev"* ]]; then
 
     src_host_path=$(cd ../../ros_workspace && pwd)
+    cmp_host_path=$(cd ../../cmp_workspace && pwd)
+    
     if [[ ! -d $src_host_path ]]; then
-        echo -e "$echo_error This machine does not have access to source code. ${r}Cannot run as developer!${rs} Nice try"
+        echo -e "$echo_error This machine does not have access to sim source code. ${r}Cannot run as developer!${rs} Nice try"
         exit 1
     fi
+
+    if [[ ! -d $cmp_host_path ]]; then
+        echo -e "$echo_error This machine does not have access to cmp source code. ${r}Cannot run as developer!${rs} Nice try"
+        exit 1
+    fi
+
     src_volumes="--volume=${src_host_path}:/home/srcp2/ros_workspace:rw"
+    cmp_volumes="--volume=${cmp_host_path}:/home/srcp2/cmp_workspace:rw"
     base_model_path="/home/srcp2/ros_workspace/src/srcp2_models_final/"
 fi
 
@@ -284,6 +298,18 @@ else
     echo
     echo -e "$echo_info Running in interactive mode. Starting a BASH shell..."
 fi
+
+echo
+echo -e "$echo_info Confirming Network Setup: ${b} Network Setup${rs}..."
+if ! docker network ls | grep -q "$srcp2net_name"; then
+    echo -e "$echo_info Setting up as ${b} Bridge $srcp2net_name${rs}"
+    docker network create --driver=bridge $srcp2net_name
+    echo 
+else
+    echo -e "$echo_info Existing network found: ${b}$srcp2net_name${rs}"
+fi
+echo -e "$echo_info Network Setup is now ${b} ready as $srcp2net_name${rs}..."
+echo
 
 echo -e "${B}________________________________________________________________________________________________________________________${rs}"
 echo -e "${B}From Container:${rs}"
@@ -310,14 +336,17 @@ docker run --rm $interactive \
     --device=/dev/dri:/dev/dri \
     \
     --privileged \
-    --network host \
+    --network $srcp2net_name \
+    --network-alias $simalias_name \
     \
+    --env=ROS_MASTER_URI="http://${simalias_name}:11311" \
     --env=SRCP2_RUN_PACKAGE="srcp2_launch" \
     --env=SRCP2_LAUNCH_FILE="final.launch" \
     $config_volume \
     $config_env \
     \
     $src_volumes \
+    $cmp_volumes \
     --env SRCP2_DEV_OPTIONS=$dev_command \
     \
     --volume $host_ros_path:"/home/srcp2/.ros":rw \

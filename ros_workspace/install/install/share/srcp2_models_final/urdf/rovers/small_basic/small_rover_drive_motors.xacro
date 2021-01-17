@@ -16,7 +16,7 @@
     <xacro:property name="wheel_kp"  value="100"/>
     <xacro:property name="wheel_ki"  value="0.0"/>
     <xacro:property name="wheel_kd"  value="0.0"/>
-    <xacro:property name="max_wheel_command_speed" value="${pi}"/>
+    <!-- <xacro:property name="max_wheel_command_speed" value="${pi}"/> -->
 
     <!-- steering motor PID and other constants -->
     <xacro:property name="steer_kp"  value="10"/>
@@ -24,7 +24,21 @@
     <xacro:property name="steer_kd"  value="0.5"/>
 
     
-    <xacro:macro name="drive_and_steer_motors">
+    <xacro:macro name="drive_and_steer_motors" params="rover_type">
+
+        <xacro:if value="${rover_type=='small_scout'}">
+            <xacro:property name="max_wheel_command_speed" value="${2*pi}"/>
+        </xacro:if>
+
+        <xacro:if value="${rover_type=='small_hauler'}">
+            <xacro:property name="max_wheel_command_speed" value="${1.5*pi}"/>
+        </xacro:if>
+
+        <xacro:if value="${rover_type=='small_excavator'}">
+            <xacro:property name="max_wheel_command_speed" value="${pi}"/>
+        </xacro:if>
+
+
         <!-- DRIVE/WHEEL MOTORS -->
         <motor>
             <model_joint_name>fl_wheel_joint</model_joint_name>

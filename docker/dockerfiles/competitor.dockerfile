@@ -9,6 +9,20 @@ ARG base_image="gazebo-ros"
 FROM ${base_image}
 ARG enduser_name="srcp2"
 
+USER root
+RUN apt-get update && apt-get install -y \
+    vim \
+    nano \
+    tree  \
+    iputils-ping \
+    net-tools \
+    python3-rosinstall \
+    build-essential \
+    liburdfdom-tools \
+    python3-catkin-tools && \
+    \
+    pip3 install osrf-pycommon
+
 # make sure that we are _not_ root at this time!
 USER ${enduser_name}
 
@@ -20,6 +34,7 @@ RUN chmod +x ${HOME}/ros_workspace/install/share/srcp2_launch/scripts/team_spawn
 # make sure entrypoint exists
 COPY docker/scripts/container/competitor-entrypoint.bash ${HOME}/scripts
 
+VOLUME "${HOME}/cmp_workspace"
 # starting conditions (note: CMD not ENTRYPOINT for --interactive override)
 ENV COMPETITOR_ENTRYPOINT="${HOME}/scripts/competitor-entrypoint.bash"
 CMD ${COMPETITOR_ENTRYPOINT}

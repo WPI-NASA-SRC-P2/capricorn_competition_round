@@ -72,6 +72,9 @@ RUN apt-get update && apt-get install -y \
     ros-noetic-joint-state-controller \
     ros-noetic-compressed-image-transport \
     ros-noetic-rviz \
+    ros-noetic-rqt \ 
+    #ros-noetic-rqt-common-plugins \ # This creats an anoying bug where it asks for your keyboard type but doesn't seem to accept input from user
+    ros-noetic-stereo-image-proc \
     ros-noetic-xacro \
     imagemagick \
     python3-pip \ 

@@ -25,7 +25,7 @@
             <all_motors>
 
                 <!-- import the standard drive motors -->
-                <xacro:drive_and_steer_motors/>
+                <xacro:drive_and_steer_motors rover_type = "small_hauler"/>
 
                 <!-- import the standard sensor motors -->
                 <xacro:sensor_motors/>

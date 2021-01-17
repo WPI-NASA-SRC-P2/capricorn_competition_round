@@ -23,7 +23,7 @@
       <ode>
         <solver>
           <type>quick</type>
-          <iters>500</iters>
+          <iters>223</iters>
         </solver>
       </ode>
     </physics>

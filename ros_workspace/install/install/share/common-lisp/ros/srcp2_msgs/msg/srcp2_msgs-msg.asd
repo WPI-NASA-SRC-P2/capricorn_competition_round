@@ -7,6 +7,8 @@
   :components ((:file "_package")
     (:file "BatteryStateMsg" :depends-on ("_package_BatteryStateMsg"))
     (:file "_package_BatteryStateMsg" :depends-on ("_package"))
+    (:file "ExcavatorScoopMsg" :depends-on ("_package_ExcavatorScoopMsg"))
+    (:file "_package_ExcavatorScoopMsg" :depends-on ("_package"))
     (:file "ScoreMsg" :depends-on ("_package_ScoreMsg"))
     (:file "_package_ScoreMsg" :depends-on ("_package"))
     (:file "VolSensorMsg" :depends-on ("_package_VolSensorMsg"))

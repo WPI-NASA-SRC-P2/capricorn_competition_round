@@ -28,7 +28,7 @@
     <sensor name="head_hokuyo_sensor" type="ray">
       <pose>0 0 0.0 0 0 ${pi/2}</pose>
       <visualize>false</visualize>
-      <update_rate>5</update_rate>
+      <update_rate>10</update_rate>
       <ray>
         <scan>
           <horizontal>
@@ -64,7 +64,7 @@
     <sensor type="camera" name="stereo_camera_left">
       <update_rate>10.0</update_rate>
       <camera name="camera/left">
-        <pose>0 0 0 0 0 0</pose>
+        <pose>0 0 0 1.57 -1.57 0</pose>
         <horizontal_fov>1.3962634</horizontal_fov> 
         <image>
           <width>640</width>
@@ -98,7 +98,7 @@
     <sensor type="camera" name="stereo_camera_right">
       <update_rate>10.0</update_rate>
       <camera name="camera/right">
-        <pose>0 0 0 0 0 0</pose>
+        <pose>0 0 0 1.57 -1.57 0</pose>
         <horizontal_fov>1.3962634</horizontal_fov>
         <image>
           <width>640</width>
@@ -116,7 +116,7 @@
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <frameName>/$(arg rover_name)_right_camera_optical</frameName>
-        <hackBaseline>0.4124528</hackBaseline>
+        <hackBaseline>0.21</hackBaseline>
         <distortionK1>0.0</distortionK1>
         <distortionK2>0.0</distortionK2>
         <distortionK3>0.0</distortionK3>
