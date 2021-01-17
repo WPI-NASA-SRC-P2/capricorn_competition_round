@@ -25,10 +25,13 @@ This repository contains code for competitors to launch and develop the SRCP2 Fi
 
 Have you read [The Wiki](https://gitlab.com/scheducation/srcp2-final-public/-/wikis/home)? (please, do read the wiki!)
 
+- __root_folder__
+    - shell script to perform tasks such as run/build/submit solution etc.
+    - helper shell scripts for installation guidance etc.
 - __.gitlab__ 
     - repo meta
 - __docker__
-    - dockerized luanch scripts. Start the simulation with `./docker/scripts/launch/run_srcp2_final --help`
+    - dockerized building scripts as reference information for competitors.
 - __ros_workspace__
     - the SRCP2 ROS workspace, containing release versions of the simulations custom ROS messages
     - to use these for ROS command line tools (such as `rostopic`), run `source ros_workspace/install/setup.bash`
