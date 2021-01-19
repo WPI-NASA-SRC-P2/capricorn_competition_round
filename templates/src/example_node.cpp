@@ -39,8 +39,10 @@ int main(int argc, char *argv[])
     //http://wiki.ros.org/Remapping%20Arguments for more details.
     ros::init(argc, argv, "example_node");
 
-    //Create a node handle. This is what allows us to create publishers and subscribers.
-    ros::NodeHandle nh;
+    //Create a node handle. This is what allows us to create publishers and subscribers. Note the `~` passed in. This creates a private node handle, instead
+    //of a public one. I don't know all of the implications of this, but it means we can access parameters that are defined within the scope of the node (see
+    //the example_nodes.launch file for clarification). If you need a public node handle, you can create one here as well by simply omitting the argument to NodeHandle.
+    ros::NodeHandle nh("~");
 
     //Create a ROS rate. We use this later to keep a constant update rate for the main loop.
     ros::Rate update_rate(UPDATE_HZ);
@@ -69,6 +71,27 @@ int main(int argc, char *argv[])
 
 
 
+    //Example parameter. We first initialize a variable that we will store the parameter's value in named wheel_effort
+    float wheel_effort;
+
+    //We will check to see if the parameter is set. Note that there is no preceding `/` on the parameter name. This means the parameter namespace
+    //is the node, so we are looking for a parameter set for this node specifically. If there is a preceding `/`, then it is doing a parameter lookup
+    //in the global namespace instead.
+    //getParam will store the resulting value inside of wheel_effort, if the parameter exists. Otherwise, it will return false.
+    if(nh.getParam("~wheel_effort", wheel_effort))
+    {
+        //Assert that we did get the wheel_effort parameter properly
+        std::cout << "Set up wheel_effort param for " + robot_name + "." << std::endl;
+    }
+    else
+    {
+        //If the parameter was not set, then we need to set our variable to a default variable so that we can still use it later
+        std::cout << "No wheel_effort param set for " + robot_name + ", defaulting to 20.0." << std::endl;
+        wheel_effort = 20.0;
+    }
+
+
+
     //ros::ok() will return false once either ROS has been shut down or the node has been shut down. This allows the node to exit without hanging.
     while(ros::ok())
     {
@@ -81,7 +104,7 @@ int main(int argc, char *argv[])
         //with std::msgs::Float64, so we need to create one to pass to publish.
 
         std_msgs::Float64 speed;
-        speed.data = 20.0;
+        speed.data = wheel_effort;
 
         fl_speed.publish(speed);
         fr_speed.publish(speed);
