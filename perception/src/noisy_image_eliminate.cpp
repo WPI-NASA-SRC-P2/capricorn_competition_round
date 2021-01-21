@@ -13,11 +13,11 @@
 std::string robot_name;
 
 // Initializing noisy image check parameters
-int right_last_sum = 0;
-int left_last_sum = 0 ;
-int right_actual_sum = 0; 
-int left_actual_sum = 0;
-int threshold = 4000;
+float right_last_sum = 0;
+float left_last_sum = 0 ;
+float right_actual_sum = 0; 
+float left_actual_sum = 0;
+float threshold = 4000;
 float upper_threshold = 1.3;
 float lower_threshold = 0.7;
 
@@ -46,6 +46,7 @@ bool check_image(const sensor_msgs::ImageConstPtr& img, bool left) {
         if(s >= left_actual_sum * lower_threshold && s <= left_actual_sum * upper_threshold) {
             left_last_sum = s;
         }
+        
         left_actual_sum = s;
         
         if(diff < threshold) {
@@ -60,8 +61,9 @@ bool check_image(const sensor_msgs::ImageConstPtr& img, bool left) {
     else {
         int diff = s - right_last_sum; 
         if(s >= right_actual_sum * lower_threshold && s <= right_actual_sum * upper_threshold) {
-            right_actual_sum = s;
+            right_last_sum = s;
         }
+
         right_actual_sum = s;
 
         if(diff < threshold) {
@@ -114,6 +116,6 @@ int main(int argc, char *argv[]) {
     left_image_pub = nh.advertise<sensor_msgs::Image>("/capricorn/" + robot_name + "/camera/left/image_raw", 10);
     right_info_pub = nh.advertise<sensor_msgs::CameraInfo>("/capricorn/" + robot_name + "/camera/right/camera_info", 10);
     left_info_pub = nh.advertise<sensor_msgs::CameraInfo>("/capricorn/" + robot_name + "/camera/left/camera_info", 10);
-   
+    
     ros::spin();
 }
