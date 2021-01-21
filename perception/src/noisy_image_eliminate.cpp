@@ -32,7 +32,8 @@ ros::Publisher right_image_pub, left_image_pub, right_info_pub, left_info_pub;
  * @return true if image does not have noise
  * @return false if image has noise
  */
-bool check_image(const sensor_msgs::ImageConstPtr& img, bool left) {
+bool check_image(const sensor_msgs::ImageConstPtr& img, bool left) 
+{
     
     cv_bridge::CvImagePtr cv_ptr;
     cv_ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::BGR8);
@@ -41,36 +42,44 @@ bool check_image(const sensor_msgs::ImageConstPtr& img, bool left) {
     
     int s = cv::sum(edge)[0];
 
-    if(left) {
+    if(left) 
+    {
         int diff = s - left_last_sum;
-        if(s >= left_actual_sum * lower_threshold && s <= left_actual_sum * upper_threshold) {
+        if(s >= left_actual_sum * lower_threshold && s <= left_actual_sum * upper_threshold) 
+        {
             left_last_sum = s;
         }
         
         left_actual_sum = s;
         
-        if(diff < threshold) {
+        if(diff < threshold) 
+        {
             left_last_sum = s;
             return true;
         }
-        else {
+        else 
+        {
             return false;
         }
     }
 
-    else {
+    else 
+    {
         int diff = s - right_last_sum; 
-        if(s >= right_actual_sum * lower_threshold && s <= right_actual_sum * upper_threshold) {
+        if(s >= right_actual_sum * lower_threshold && s <= right_actual_sum * upper_threshold) 
+        {
             right_last_sum = s;
         }
 
         right_actual_sum = s;
 
-        if(diff < threshold) {
+        if(diff < threshold) 
+        {
             right_last_sum = s;
             return true;
         }
-        else {
+        else 
+        {
             return false;
         }
     }
@@ -85,19 +94,23 @@ bool check_image(const sensor_msgs::ImageConstPtr& img, bool left) {
  * @param right_info : Right Camera Info (ROS CameraInfo msg)
  * @param left_info  : Left Camera Info (ROS CameraInfo msg)
  */
-void img_callback(const sensor_msgs::ImageConstPtr& right, const sensor_msgs::ImageConstPtr& left, const sensor_msgs::CameraInfoConstPtr& right_info, const sensor_msgs::CameraInfoConstPtr& left_info) {
-    if(check_image(right, false)) {
+void img_callback(const sensor_msgs::ImageConstPtr& right, const sensor_msgs::ImageConstPtr& left, const sensor_msgs::CameraInfoConstPtr& right_info, const sensor_msgs::CameraInfoConstPtr& left_info) 
+{
+    if(check_image(right, false)) 
+    {
         right_image_pub.publish(right);
         right_info_pub.publish(right_info);
     }
     
-    if(check_image(left, true)) {
+    if(check_image(left, true)) 
+    {
         left_image_pub.publish(left);
         left_info_pub.publish(left_info);
     }
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) 
+{
     std::string name(argv[1]);
     robot_name = name;
 
