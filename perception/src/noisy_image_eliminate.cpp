@@ -32,7 +32,7 @@ ros::Publisher right_image_pub, left_image_pub, right_info_pub, left_info_pub;
  * @return true if image does not have noise
  * @return false if image has noise
  */
-bool check_image(const sensor_msgs::ImageConstPtr& img, bool left) 
+bool check_image(const sensor_msgs::ImageConstPtr& img, float& actual_sum, float& last_sum) 
 {
     
     cv_bridge::CvImagePtr cv_ptr;
@@ -42,46 +42,22 @@ bool check_image(const sensor_msgs::ImageConstPtr& img, bool left)
     
     int s = cv::sum(edge)[0];
 
-    if(left) 
+    int diff = s - last_sum; 
+    if(s >= actual_sum * lower_threshold && s <= actual_sum * upper_threshold) 
     {
-        int diff = s - left_last_sum;
-        if(s >= left_actual_sum * lower_threshold && s <= left_actual_sum * upper_threshold) 
-        {
-            left_last_sum = s;
-        }
-        
-        left_actual_sum = s;
-        
-        if(diff < threshold) 
-        {
-            left_last_sum = s;
-            return true;
-        }
-        else 
-        {
-            return false;
-        }
+        last_sum = s;
     }
 
+    actual_sum = s;
+
+    if(diff < threshold) 
+    {
+        last_sum = s;
+        return true;
+    }
     else 
     {
-        int diff = s - right_last_sum; 
-        if(s >= right_actual_sum * lower_threshold && s <= right_actual_sum * upper_threshold) 
-        {
-            right_last_sum = s;
-        }
-
-        right_actual_sum = s;
-
-        if(diff < threshold) 
-        {
-            right_last_sum = s;
-            return true;
-        }
-        else 
-        {
-            return false;
-        }
+        return false;
     }
 }
 
@@ -96,13 +72,13 @@ bool check_image(const sensor_msgs::ImageConstPtr& img, bool left)
  */
 void img_callback(const sensor_msgs::ImageConstPtr& right, const sensor_msgs::ImageConstPtr& left, const sensor_msgs::CameraInfoConstPtr& right_info, const sensor_msgs::CameraInfoConstPtr& left_info) 
 {
-    if(check_image(right, false)) 
+    if(check_image(right, right_actual_sum, right_last_sum)) 
     {
         right_image_pub.publish(right);
         right_info_pub.publish(right_info);
     }
     
-    if(check_image(left, true)) 
+    if(check_image(left, left_actual_sum, left_last_sum)) 
     {
         left_image_pub.publish(left);
         left_info_pub.publish(left_info);
