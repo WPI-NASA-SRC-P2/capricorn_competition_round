@@ -152,13 +152,6 @@ include_directories(
 
 #######################################################################################################
 
-# Drives both robots forwards in task 2. Example node
-add_executable(example_node src/example_node.cpp)
-add_dependencies(example_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(example_node
-  ${catkin_LIBRARIES}
-)
-
 # Same as above, but is the template version instead of having lots of documentation.
 add_executable(template_node src/template_node.cpp)
 add_dependencies(template_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
