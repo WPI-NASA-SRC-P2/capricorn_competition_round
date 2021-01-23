@@ -10,7 +10,10 @@ project(perception)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  cv_bridge
+  sensor_msgs
   std_msgs
+  message_filters
 )
 
 ## System dependencies are found with CMake's conventions
@@ -104,8 +107,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES perception
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+ LIBRARIES perception
+ CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -149,6 +152,14 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+# Same as above, but is the template version instead of having lots of documentation.
+add_executable(noisy_image_eliminate src/noisy_image_eliminate.cpp)
+add_dependencies(noisy_image_eliminate ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(noisy_image_eliminate
+  ${catkin_LIBRARIES}
+)
+
 
 #############
 ## Install ##
