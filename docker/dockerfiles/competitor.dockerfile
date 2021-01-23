@@ -32,6 +32,7 @@ COPY --chown=srcp2:srcp2 ros_workspace/install ${HOME}/ros_workspace/install/
 RUN chmod +x ${HOME}/ros_workspace/install/share/srcp2_launch/scripts/team_spawner.bash
 
 # make sure entrypoint exists
+COPY docker/scripts/container/common-entrypoint.bash ${HOME}/scripts
 COPY docker/scripts/container/competitor-entrypoint.bash ${HOME}/scripts
 
 VOLUME "${HOME}/cmp_workspace"

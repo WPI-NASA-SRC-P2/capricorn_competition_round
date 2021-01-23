@@ -46,22 +46,4 @@
       output  = "screen"
       respawn = "false" />
 
-    <!-- <node
-      name    = "small_excavator_spawning_node"
-      pkg     = "srcp2_launch"
-      type    = "team_spawner.bash"
-      args    = "small_excavator 0 4 0 1.5"
-      output  = "screen"
-      respawn = "false" /> -->
-
-    <!-- <node
-      name    = "small_hauler_spawning_node"
-      pkg     = "srcp2_launch"
-      type    = "team_spawner.bash"
-      args    = "small_hauler 0 8 0 1.5"
-      output  = "screen"
-      respawn = "false" /> -->
-
-
-
 </launch>

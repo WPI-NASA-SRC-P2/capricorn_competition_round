@@ -47,7 +47,11 @@
     <include>
       <uri>model://lunar_heightmap</uri>
     </include>
-    
+
+    <include>
+      <uri>model://digging_heightmap</uri>
+    </include>
+
     <light name='sun_directional' type='directional'>
     <cast_shadows>true</cast_shadows>
       <pose>200 0 10 0 0 0</pose>
@@ -86,20 +90,24 @@
         <max_spawn_radius>100</max_spawn_radius> <!-- maximum spawning radius in meters -->
         <min_spawn_radius>20</min_spawn_radius> <!-- minimum spawning radius in meters -->
         <!-- This should be a large negative value, but this visualization is for testing purposes -->
-        <spawn_depth>-2.0</spawn_depth>
+        <spawn_depth>-5.0</spawn_depth>
     </plugin>
 
     <!-- Score the volatiles -->
     <plugin name="volatile_scoring" filename="libVolatileScoring.so">
         <score_ros_topic>/srcp2/score</score_ros_topic>
         <scoring_period>0.25</scoring_period>
-        <loading_timeout>1.0</loading_timeout>
+        <loading_timeout>30.0</loading_timeout>
         <processor_name>processing_plant</processor_name>
         <processor_hopper_name>processing_plant_hopper_zone_link</processor_hopper_name>
         <hauler_basename>hauler</hauler_basename>
         <hauler_bin_name>bin</hauler_bin_name>
     </plugin>       
     
+    <plugin name="start_stop_sim" filename="libStartStopSimPlugin.so">
+        <run_endless>false</run_endless>
+    </plugin>
+
   </world>
   
 </sdf>

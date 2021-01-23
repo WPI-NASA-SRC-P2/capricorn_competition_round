@@ -17,9 +17,9 @@
     :initarg :score
     :type cl:float
     :initform 0.0)
-   (hauler_score
-    :reader hauler_score
-    :initarg :hauler_score
+   (hauler_volatile_mass
+    :reader hauler_volatile_mass
+    :initarg :hauler_volatile_mass
     :type cl:float
     :initform 0.0)
    (functioning_robot_score
@@ -57,10 +57,10 @@
   (roslisp-msg-protocol:msg-deprecation-warning "Using old-style slot reader srcp2_msgs-msg:score-val is deprecated.  Use srcp2_msgs-msg:score instead.")
   (score m))
 
-(cl:ensure-generic-function 'hauler_score-val :lambda-list '(m))
-(cl:defmethod hauler_score-val ((m <ScoreMsg>))
-  (roslisp-msg-protocol:msg-deprecation-warning "Using old-style slot reader srcp2_msgs-msg:hauler_score-val is deprecated.  Use srcp2_msgs-msg:hauler_score instead.")
-  (hauler_score m))
+(cl:ensure-generic-function 'hauler_volatile_mass-val :lambda-list '(m))
+(cl:defmethod hauler_volatile_mass-val ((m <ScoreMsg>))
+  (roslisp-msg-protocol:msg-deprecation-warning "Using old-style slot reader srcp2_msgs-msg:hauler_volatile_mass-val is deprecated.  Use srcp2_msgs-msg:hauler_volatile_mass instead.")
+  (hauler_volatile_mass m))
 
 (cl:ensure-generic-function 'functioning_robot_score-val :lambda-list '(m))
 (cl:defmethod functioning_robot_score-val ((m <ScoreMsg>))
@@ -88,7 +88,7 @@
     (cl:write-byte (cl:ldb (cl:byte 8 40) bits) ostream)
     (cl:write-byte (cl:ldb (cl:byte 8 48) bits) ostream)
     (cl:write-byte (cl:ldb (cl:byte 8 56) bits) ostream))
-  (cl:let ((bits (roslisp-utils:encode-double-float-bits (cl:slot-value msg 'hauler_score))))
+  (cl:let ((bits (roslisp-utils:encode-double-float-bits (cl:slot-value msg 'hauler_volatile_mass))))
     (cl:write-byte (cl:ldb (cl:byte 8 0) bits) ostream)
     (cl:write-byte (cl:ldb (cl:byte 8 8) bits) ostream)
     (cl:write-byte (cl:ldb (cl:byte 8 16) bits) ostream)
@@ -156,7 +156,7 @@
       (cl:setf (cl:ldb (cl:byte 8 40) bits) (cl:read-byte istream))
       (cl:setf (cl:ldb (cl:byte 8 48) bits) (cl:read-byte istream))
       (cl:setf (cl:ldb (cl:byte 8 56) bits) (cl:read-byte istream))
-    (cl:setf (cl:slot-value msg 'hauler_score) (roslisp-utils:decode-double-float-bits bits)))
+    (cl:setf (cl:slot-value msg 'hauler_volatile_mass) (roslisp-utils:decode-double-float-bits bits)))
     (cl:let ((bits 0))
       (cl:setf (cl:ldb (cl:byte 8 0) bits) (cl:read-byte istream))
       (cl:setf (cl:ldb (cl:byte 8 8) bits) (cl:read-byte istream))
@@ -211,16 +211,16 @@
   "srcp2_msgs/ScoreMsg")
 (cl:defmethod roslisp-msg-protocol:md5sum ((type (cl:eql '<ScoreMsg>)))
   "Returns md5sum for a message object of type '<ScoreMsg>"
-  "9894d24e6634996e33b61cbf5abe7cb8")
+  "4b8e4cd8ac6939c1c9c24cf2755e6b99")
 (cl:defmethod roslisp-msg-protocol:md5sum ((type (cl:eql 'ScoreMsg)))
   "Returns md5sum for a message object of type 'ScoreMsg"
-  "9894d24e6634996e33b61cbf5abe7cb8")
+  "4b8e4cd8ac6939c1c9c24cf2755e6b99")
 (cl:defmethod roslisp-msg-protocol:message-definition ((type (cl:eql '<ScoreMsg>)))
   "Returns full string definition for message of type '<ScoreMsg>"
-  (cl:format cl:nil "#~%# Space Robotics Simulation, Phase 2~%# Copyright (c) 2021, NASA-JSC. All Rights Reserved~%# Unauthorized copying or distribution of this code is strictly prohibited~%#~%# ~%# This message publishes the current score, and volatile collection state~%# for this simulation~%#~%Header header~%~%# scoring data~%float64 score # the current total score for this sim~%float64 hauler_score # the points value of all the volatiles currently held in hauler bins (tie-breaker #1)~%float64 functioning_robot_score # \"Number of original robotic team members still performing their intended function(s) at...\" this time (tie-breaker #3)~%~%# collection data (indexes align) -- this is for competitor information and used in tie-breaking~%string[] types_collected      # which types have been collected to date?~%float64[] masses_collected_kg # how much each type?~%================================================================================~%MSG: std_msgs/Header~%# Standard metadata for higher-level stamped data types.~%# This is generally used to communicate timestamped data ~%# in a particular coordinate frame.~%# ~%# sequence ID: consecutively increasing ID ~%uint32 seq~%#Two-integer timestamp that is expressed as:~%# * stamp.sec: seconds (stamp_secs) since epoch (in Python the variable is called 'secs')~%# * stamp.nsec: nanoseconds since stamp_secs (in Python the variable is called 'nsecs')~%# time-handling sugar is provided by the client library~%time stamp~%#Frame this data is associated with~%string frame_id~%~%~%"))
+  (cl:format cl:nil "#~%# Space Robotics Simulation, Phase 2~%# Copyright (c) 2021, NASA-JSC. All Rights Reserved~%# Unauthorized copying or distribution of this code is strictly prohibited~%#~%# ~%# This message publishes the current score, and volatile collection state~%# for this simulation~%#~%Header header~%~%# scoring data~%float64 score # the current total score for this sim~%float64 hauler_volatile_mass # the kgs of all the volatiles currently held in hauler bins (tie-breaker #1)~%float64 functioning_robot_score # \"Number of original robotic team members still performing their intended function(s) at...\" this time (tie-breaker #3)~%~%# collection data (indexes align) -- this is for competitor information and used in tie-breaking~%string[] types_collected      # which types have been collected to date?~%float64[] masses_collected_kg # how much each type?~%================================================================================~%MSG: std_msgs/Header~%# Standard metadata for higher-level stamped data types.~%# This is generally used to communicate timestamped data ~%# in a particular coordinate frame.~%# ~%# sequence ID: consecutively increasing ID ~%uint32 seq~%#Two-integer timestamp that is expressed as:~%# * stamp.sec: seconds (stamp_secs) since epoch (in Python the variable is called 'secs')~%# * stamp.nsec: nanoseconds since stamp_secs (in Python the variable is called 'nsecs')~%# time-handling sugar is provided by the client library~%time stamp~%#Frame this data is associated with~%string frame_id~%~%~%"))
 (cl:defmethod roslisp-msg-protocol:message-definition ((type (cl:eql 'ScoreMsg)))
   "Returns full string definition for message of type 'ScoreMsg"
-  (cl:format cl:nil "#~%# Space Robotics Simulation, Phase 2~%# Copyright (c) 2021, NASA-JSC. All Rights Reserved~%# Unauthorized copying or distribution of this code is strictly prohibited~%#~%# ~%# This message publishes the current score, and volatile collection state~%# for this simulation~%#~%Header header~%~%# scoring data~%float64 score # the current total score for this sim~%float64 hauler_score # the points value of all the volatiles currently held in hauler bins (tie-breaker #1)~%float64 functioning_robot_score # \"Number of original robotic team members still performing their intended function(s) at...\" this time (tie-breaker #3)~%~%# collection data (indexes align) -- this is for competitor information and used in tie-breaking~%string[] types_collected      # which types have been collected to date?~%float64[] masses_collected_kg # how much each type?~%================================================================================~%MSG: std_msgs/Header~%# Standard metadata for higher-level stamped data types.~%# This is generally used to communicate timestamped data ~%# in a particular coordinate frame.~%# ~%# sequence ID: consecutively increasing ID ~%uint32 seq~%#Two-integer timestamp that is expressed as:~%# * stamp.sec: seconds (stamp_secs) since epoch (in Python the variable is called 'secs')~%# * stamp.nsec: nanoseconds since stamp_secs (in Python the variable is called 'nsecs')~%# time-handling sugar is provided by the client library~%time stamp~%#Frame this data is associated with~%string frame_id~%~%~%"))
+  (cl:format cl:nil "#~%# Space Robotics Simulation, Phase 2~%# Copyright (c) 2021, NASA-JSC. All Rights Reserved~%# Unauthorized copying or distribution of this code is strictly prohibited~%#~%# ~%# This message publishes the current score, and volatile collection state~%# for this simulation~%#~%Header header~%~%# scoring data~%float64 score # the current total score for this sim~%float64 hauler_volatile_mass # the kgs of all the volatiles currently held in hauler bins (tie-breaker #1)~%float64 functioning_robot_score # \"Number of original robotic team members still performing their intended function(s) at...\" this time (tie-breaker #3)~%~%# collection data (indexes align) -- this is for competitor information and used in tie-breaking~%string[] types_collected      # which types have been collected to date?~%float64[] masses_collected_kg # how much each type?~%================================================================================~%MSG: std_msgs/Header~%# Standard metadata for higher-level stamped data types.~%# This is generally used to communicate timestamped data ~%# in a particular coordinate frame.~%# ~%# sequence ID: consecutively increasing ID ~%uint32 seq~%#Two-integer timestamp that is expressed as:~%# * stamp.sec: seconds (stamp_secs) since epoch (in Python the variable is called 'secs')~%# * stamp.nsec: nanoseconds since stamp_secs (in Python the variable is called 'nsecs')~%# time-handling sugar is provided by the client library~%time stamp~%#Frame this data is associated with~%string frame_id~%~%~%"))
 (cl:defmethod roslisp-msg-protocol:serialization-length ((msg <ScoreMsg>))
   (cl:+ 0
      (roslisp-msg-protocol:serialization-length (cl:slot-value msg 'header))
@@ -235,7 +235,7 @@
   (cl:list 'ScoreMsg
     (cl:cons ':header (header msg))
     (cl:cons ':score (score msg))
-    (cl:cons ':hauler_score (hauler_score msg))
+    (cl:cons ':hauler_volatile_mass (hauler_volatile_mass msg))
     (cl:cons ':functioning_robot_score (functioning_robot_score msg))
     (cl:cons ':types_collected (types_collected msg))
     (cl:cons ':masses_collected_kg (masses_collected_kg msg))

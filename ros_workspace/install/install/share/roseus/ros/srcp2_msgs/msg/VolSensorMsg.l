@@ -88,8 +88,8 @@
 # Volatile Sensor query message.
 #
 Header      header
-string      vol_type    # the type name string
-float32     distance_to # absolute distance from sensor to volatile (meters)
+string      vol_type         # the type name string
+float32     distance_to      # absolute distance from sensor to volatile (meters)
 ================================================================================
 MSG: std_msgs/Header
 # Standard metadata for higher-level stamped data types.

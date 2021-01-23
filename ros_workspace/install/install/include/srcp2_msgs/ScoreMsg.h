@@ -27,7 +27,7 @@ struct ScoreMsg_
   ScoreMsg_()
     : header()
     , score(0.0)
-    , hauler_score(0.0)
+    , hauler_volatile_mass(0.0)
     , functioning_robot_score(0.0)
     , types_collected()
     , masses_collected_kg()  {
@@ -35,7 +35,7 @@ struct ScoreMsg_
   ScoreMsg_(const ContainerAllocator& _alloc)
     : header(_alloc)
     , score(0.0)
-    , hauler_score(0.0)
+    , hauler_volatile_mass(0.0)
     , functioning_robot_score(0.0)
     , types_collected(_alloc)
     , masses_collected_kg(_alloc)  {
@@ -50,8 +50,8 @@ struct ScoreMsg_
    typedef double _score_type;
   _score_type score;
 
-   typedef double _hauler_score_type;
-  _hauler_score_type hauler_score;
+   typedef double _hauler_volatile_mass_type;
+  _hauler_volatile_mass_type hauler_volatile_mass;
 
    typedef double _functioning_robot_score_type;
   _functioning_robot_score_type functioning_robot_score;
@@ -93,7 +93,7 @@ bool operator==(const ::srcp2_msgs::ScoreMsg_<ContainerAllocator1> & lhs, const 
 {
   return lhs.header == rhs.header &&
     lhs.score == rhs.score &&
-    lhs.hauler_score == rhs.hauler_score &&
+    lhs.hauler_volatile_mass == rhs.hauler_volatile_mass &&
     lhs.functioning_robot_score == rhs.functioning_robot_score &&
     lhs.types_collected == rhs.types_collected &&
     lhs.masses_collected_kg == rhs.masses_collected_kg;
@@ -153,12 +153,12 @@ struct MD5Sum< ::srcp2_msgs::ScoreMsg_<ContainerAllocator> >
 {
   static const char* value()
   {
-    return "9894d24e6634996e33b61cbf5abe7cb8";
+    return "4b8e4cd8ac6939c1c9c24cf2755e6b99";
   }
 
   static const char* value(const ::srcp2_msgs::ScoreMsg_<ContainerAllocator>&) { return value(); }
-  static const uint64_t static_value1 = 0x9894d24e6634996eULL;
-  static const uint64_t static_value2 = 0x33b61cbf5abe7cb8ULL;
+  static const uint64_t static_value1 = 0x4b8e4cd8ac6939c1ULL;
+  static const uint64_t static_value2 = 0xc9c24cf2755e6b99ULL;
 };
 
 template<class ContainerAllocator>
@@ -190,7 +190,7 @@ struct Definition< ::srcp2_msgs::ScoreMsg_<ContainerAllocator> >
 "\n"
 "# scoring data\n"
 "float64 score # the current total score for this sim\n"
-"float64 hauler_score # the points value of all the volatiles currently held in hauler bins (tie-breaker #1)\n"
+"float64 hauler_volatile_mass # the kgs of all the volatiles currently held in hauler bins (tie-breaker #1)\n"
 "float64 functioning_robot_score # \"Number of original robotic team members still performing their intended function(s) at...\" this time (tie-breaker #3)\n"
 "\n"
 "# collection data (indexes align) -- this is for competitor information and used in tie-breaking\n"
@@ -231,7 +231,7 @@ namespace serialization
     {
       stream.next(m.header);
       stream.next(m.score);
-      stream.next(m.hauler_score);
+      stream.next(m.hauler_volatile_mass);
       stream.next(m.functioning_robot_score);
       stream.next(m.types_collected);
       stream.next(m.masses_collected_kg);
@@ -258,8 +258,8 @@ struct Printer< ::srcp2_msgs::ScoreMsg_<ContainerAllocator> >
     Printer< ::std_msgs::Header_<ContainerAllocator> >::stream(s, indent + "  ", v.header);
     s << indent << "score: ";
     Printer<double>::stream(s, indent + "  ", v.score);
-    s << indent << "hauler_score: ";
-    Printer<double>::stream(s, indent + "  ", v.hauler_score);
+    s << indent << "hauler_volatile_mass: ";
+    Printer<double>::stream(s, indent + "  ", v.hauler_volatile_mass);
     s << indent << "functioning_robot_score: ";
     Printer<double>::stream(s, indent + "  ", v.functioning_robot_score);
     s << indent << "types_collected[]" << std::endl;

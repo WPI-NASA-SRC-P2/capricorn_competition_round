@@ -1,15 +1,15 @@
 <?xml version="1.0" ?>
 <sdf version="1.7">
-    <model name="heightmap">
+    <model name="digging_heightmap">
       <static>true</static>
       <link name="link">
 
-        <collision name="collision_heightmap">
+        <collision name="collision_digging_heightmap">
           <geometry>
             <heightmap>
               <uri>file://runtime_heightmap.png</uri>
               <size>200 200 3</size>
-              <pos>0 0 0</pos>
+              <pos>0 0 -0.95</pos>
             </heightmap>
           </geometry>
 
@@ -27,7 +27,7 @@
           </surface>
         </collision>
 
-        <visual name="visual_heightmap">
+        <visual name="visual_digging_heightmap">
           <cast_shadows>true</cast_shadows>
           <geometry>
             <heightmap>
@@ -39,7 +39,7 @@
               </texture>
               <uri>file://runtime_heightmap.png</uri>
               <size>200 200 3</size>
-              <pos>0 0 0</pos>
+              <pos>0 0 -0.95</pos>
             </heightmap>
           </geometry>
         </visual>
