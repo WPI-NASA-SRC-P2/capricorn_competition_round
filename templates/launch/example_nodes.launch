@@ -3,7 +3,7 @@
         We create one instance of the node for each robot. We pass in the robot name and number as arguments (note the space between and no `_`),
         so that they will publish to the correct wheel topics.
     -->
-    <node pkg="templates" type="template_node.py" name="hauler_example"    ns="/capricorn/hauler_1"    args="hauler_1"    output="screen">
+    <node pkg="templates" type="template_node" name="hauler_example"    ns="/capricorn/hauler_1"    args="hauler_1"    output="screen">
         <!-- 
             This parameter is defined within the scope of the node tag, making it a private parameter. Node handles must be passed a "~" argument if
             they want to access this value. If this was defined outside of the scope of the node, it would have a different scope (see `rosparam list` from
@@ -12,7 +12,7 @@
         <param name="wheel_effort" value="25.0" />
     </node>
 
-    <node pkg="templates" type="template_node.py" name="excavator_example" ns="/capricorn/excavator_1" args="excavator_1" output="screen">
+    <node pkg="templates" type="template_node" name="excavator_example" ns="/capricorn/excavator_1" args="excavator_1" output="screen">
         <param name="wheel_effort" value="15.0" />
     </node>
 </launch>

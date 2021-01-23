@@ -19,6 +19,20 @@ void imu_callback(const sensor_msgs::Imu::ConstPtr &imu_msg)
 
 int main(int argc, char *argv[])
 {
+  // Check if the node is being run through roslauch, and have one parameter of RobotName_Number
+  if (argc != 4)
+  {
+      // Getting the script name
+      std::string filename = std::string(argv[0]);
+      int index = filename.find_last_of('/');
+      std::string input_trace_filename = filename.substr(index + 1);
+
+      // Displaying an error message for correct usage of the script, and returning error.
+      ROS_ERROR_STREAM("This Node must be launched via 'roslaunch' and needs an argument as <RobotName_Number>";);
+      return -1;
+  }
+  else
+  {
     //Get robot name from parameters, and store it globally.
     std::string name(argv[1]);
     robot_name = name;
@@ -68,4 +82,5 @@ int main(int argc, char *argv[])
         //Rate limit the loop to UPDATE_HZ.
         update_rate.sleep();
     }
+  }
 }
