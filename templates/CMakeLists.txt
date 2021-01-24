@@ -104,7 +104,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- # INCLUDE_DIRS include
+ INCLUDE_DIRS include
  LIBRARIES templates
  CATKIN_DEPENDS roscpp rospy sensor_msgs
  # DEPENDS system_lib
@@ -117,7 +117,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 ## Declare a C++ library
@@ -152,11 +152,18 @@ include_directories(
 
 #######################################################################################################
 
-# Same as above, but is the template version instead of having lots of documentation.
+# Drives both robots forwards in task 2. Example node
 add_executable(template_node src/template_node.cpp)
 add_dependencies(template_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(template_node
   ${catkin_LIBRARIES}
+)
+
+# example class and its node to test the class functions
+add_executable(template_class src/template_class.cpp)
+add_dependencies(template_class ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(template_class
+  ${catkin_LIBRARIES} 
 )
 
 #############
@@ -174,7 +181,7 @@ install(PROGRAMS
 )
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS template_node
+install(TARGETS template_node template_class
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
