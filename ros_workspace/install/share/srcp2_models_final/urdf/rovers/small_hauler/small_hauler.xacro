@@ -38,7 +38,28 @@
     <xacro:include filename="./motors.gazebo"/>
 
     <gazebo>
-        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so"/>
+        <plugin name="joint_state_publisher" filename="libJointStatePublisher.so">
+            <robotNamespace>$(arg rover_name)</robotNamespace>
+            <jointName>
+                    bl_wheel_joint,
+                    br_wheel_joint,
+                    fl_wheel_joint,
+                    fr_wheel_joint,
+                    bl_steering_arm_tibia_joint,
+                    br_steering_arm_tibia_joint,
+                    fl_steering_arm_tibia_joint,
+                    fr_steering_arm_tibia_joint,
+                    bl_steering_arm_shoulder_joint,
+                    br_steering_arm_shoulder_joint,
+                    fl_steering_arm_shoulder_joint,
+                    fr_steering_arm_shoulder_joint,
+                    sensor_bar_pitch_joint,
+                    sensor_bar_yaw_joint,
+                    bin_joint
+            </jointName>
+            <updateRate>15</updateRate>
+            <alwaysOn>true</alwaysOn>
+        </plugin>
     </gazebo>
 
 </robot>
