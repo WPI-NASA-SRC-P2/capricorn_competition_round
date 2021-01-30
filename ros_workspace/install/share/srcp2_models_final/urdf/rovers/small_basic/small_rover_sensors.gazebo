@@ -77,8 +77,7 @@
         </clip>
       </camera>
 
-      <!-- <plugin name="left_camera_controller" filename="libSpaceCamera.so"> -->
-      <plugin name="left_camera_controller" filename="libgazebo_ros_camera.so">
+      <plugin name="left_camera_controller" filename="libSpaceCamera.so">
         <cameraName>camera/left</cameraName>
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
@@ -111,7 +110,7 @@
         </clip>
       </camera>
 
-      <plugin name="right_camera_controller" filename="libgazebo_ros_camera.so">
+      <plugin name="right_camera_controller" filename="libSpaceCamera.so">
         <cameraName>camera/right</cameraName>
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>

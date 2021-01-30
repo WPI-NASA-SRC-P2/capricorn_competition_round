@@ -211,5 +211,12 @@
             <plugin name="rover_brake" filename="libRoverBrakePlugin.so"/>
         </gazebo>
 
+        <!-- _______________________________________________________________________________________________________________
+            Localization
+        -->
+        <gazebo>
+            <plugin name="rover_localization" filename="libRoverLocalization.so"/>
+        </gazebo>
+
     </xacro:macro>
 </robot>
