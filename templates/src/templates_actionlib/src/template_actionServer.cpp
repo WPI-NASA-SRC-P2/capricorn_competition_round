@@ -37,14 +37,24 @@ class actionToBePerformed
     {
         ROS_INFO("Subscribers Initialized");
     }
-
+ 
     //Initialize Publishers here
     void initializePublishers(void)
     {
         ROS_INFO("Publishers Initialized");
     }
 
-    // below this line create callback functions for initialized subsribers
+    //create callback functions for initialized subsribers
+    void actionCallback(const template_actionServer::template_actionServerMsgPointer &goal)
+    {
+         
+         do
+         {
+             /* 
+             this is where all the cool robotics stuff happens
+            */
+         } while ({/* condition */});
+        
 }
 
 
