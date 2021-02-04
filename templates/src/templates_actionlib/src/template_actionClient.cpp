@@ -9,6 +9,6 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "template_actionClient");
 
     //Create the Action Client
-    actionlib::SimpleActionClient<templates_actionServer::templateAction> action_client_("fibonacci", true);
+    actionlib::SimpleActionClient<templates_actionlib::templateAction> action_client_("template_actionClient", true);
 
 }
