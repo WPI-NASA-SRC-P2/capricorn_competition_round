@@ -18,6 +18,8 @@ mandatory_env_vars=(
     SRCP2_SCOUTS
     SRCP2_EXCAVATORS
     SRCP2_HAULERS
+    SRCP2_SEED
+
 )
 for name in ${mandatory_env_vars[@]}; do
     if [ -z ${!name} ]; then
@@ -36,6 +38,12 @@ function spawn(){
 
     robot_class=$1
     count=$2
+    
+    SRCP2_SEED_Q=$(echo "var=$SRCP2_SEED;var%=8;var" | bc)
+    SRCP2_SEED_FACTOR=$(echo "var=$SRCP2_SEED_Q;var*=4095;var" | bc)
+
+    echo -e "$echo_info Simulation Team Spawn      Q [$SRCP2_SEED_Q]"
+    echo -e "$echo_info Simulation Team Spawn Factor [$SRCP2_SEED_FACTOR]"
 
     origin_y=$SRCP2_SPAWN_CENTER_Y # adjusted left and right for each model
     origin_z=$uniform_drop_height
@@ -61,7 +69,7 @@ function spawn(){
         echo -e "$echo_info spawning \"$gazebo_model_name\" into sim"
 
         y=$(echo "$origin_y + $i*-$uniform_model_clearance" | bc)
-        origin_yaw=$(echo "scale=3;3.14*$RANDOM / 32767" | bc)    
+        origin_yaw=$(echo "scale=3;3.14*$SRCP2_SEED_FACTOR / 32767" | bc)    
         pose="-x $origin_x -y $y -z $origin_z -R 0 -P 0 -Y $origin_yaw"
 
         if ! roslaunch \
@@ -93,11 +101,11 @@ origin_x=$SRCP2_SPAWN_CENTER_Y
 # ****************************************************************
 # Repair Station Spawn
 # Just make the Repair far enough from the last bots
-k_x_rand=$(echo "scale=3;-0.5+($RANDOM / 32767)" | bc)
-k_y_rand=$(echo "scale=3;-0.5+($RANDOM / 32767)" | bc)
+k_x_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
+k_y_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
 x_rs=$(echo "$origin_x + (1.5+$k_x_rand)*$uniform_model_clearance" | bc)
 y_rs=$(echo "$origin_y + (1.5+$k_y_rand)*$uniform_model_clearance" | bc)
-yaw_rs=$(echo "scale=3;3.14*$RANDOM / 32767" | bc)
+yaw_rs=$(echo "scale=3;3.14*$SRCP2_SEED_FACTOR / 32767" | bc)
 
 pose_rs="-x $x_rs -y $y_rs -z 0.65 -R 0 -P 0 -Y $yaw_rs"
 if ! roslaunch  srcp2_launch repair_station.launch init_pose:="$pose_rs"; then
@@ -108,11 +116,11 @@ fi
 # ****************************************************************
 #  Processing Plant Spawn Spawn
 # Just make the Processing plant far enough from the last repair station
-k_x_rand=$(echo "scale=3;-0.5+($RANDOM / 32767)" | bc)
-k_y_rand=$(echo "scale=3;-0.5+($RANDOM / 32767)" | bc)
+k_x_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
+k_y_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
 x_pp=$(echo "$origin_x + (1.5+$k_x_rand)*$uniform_model_clearance"    | bc)
 y_pp=$(echo "$origin_y + (1.5+$k_y_rand)*$uniform_model_clearance*-1" | bc)
-yaw_pp=$(echo "scale=3;3.14*$RANDOM / 32767" | bc)
+yaw_pp=$(echo "scale=3; 1.57+0.125*3.14*$SRCP2_SEED_FACTOR / 32767" | bc)
 
 pose_pp="-x $x_pp -y $y_pp -z 0.45 -R 0 -P 0 -Y $yaw_pp"
 if ! roslaunch  srcp2_launch processing_plant.launch init_pose:="$pose_pp"; then

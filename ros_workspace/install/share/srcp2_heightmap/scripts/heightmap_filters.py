@@ -93,7 +93,7 @@ class HeightmapFilters:
         """
         for _ in range(0, heightmap_blur_number):
             self._heightmap = self._heightmap.filter(
-                ImageFilter.GaussianBlur(radius=3.5))
+                ImageFilter.GaussianBlur(radius=4))
 
     def generate_rocks(self, rock_properties):
         """

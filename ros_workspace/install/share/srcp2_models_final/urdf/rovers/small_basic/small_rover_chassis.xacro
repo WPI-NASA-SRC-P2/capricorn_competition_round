@@ -13,7 +13,7 @@
     <xacro:macro name="small_rover_chassis" params="rover_name">
         <xacro:include filename="../common/universal_chassis.xacro"/>
         
-        <xacro:property name="chassis_collision_x" value="0.7"/>
+        <xacro:property name="chassis_collision_x" value="1.2"/>
         <xacro:property name="chassis_collision_y" value="0.8"/>
         <xacro:property name="chassis_collision_z" value="0.2"/>
 

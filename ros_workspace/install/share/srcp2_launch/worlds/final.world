@@ -87,8 +87,8 @@
     <plugin name="volatile_spawner_plugin" filename="libVolatileSpawner.so">
         <total_volatile_count>72</total_volatile_count> <!-- must be a multiple of type-count -->
         <volatile_radius>1.0</volatile_radius>
-        <max_spawn_radius>100</max_spawn_radius> <!-- maximum spawning radius in meters -->
-        <min_spawn_radius>20</min_spawn_radius> <!-- minimum spawning radius in meters -->
+        <max_spawn_radius>93</max_spawn_radius> <!-- maximum spawning radius in meters -->
+        <min_spawn_radius>28</min_spawn_radius> <!-- minimum spawning radius in meters -->
         <!-- This should be a large negative value, but this visualization is for testing purposes -->
         <spawn_depth>-5.0</spawn_depth>
     </plugin>
