@@ -1,5 +1,5 @@
 <launch>
-    <arg name="robot_name" default="small_scout_1" />
+    <arg name="robot_name" />
 
     <!-- Run the ROS package stereo_image_proc -->
     <group ns="/$(arg robot_name)/camera">

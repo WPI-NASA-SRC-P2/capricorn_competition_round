@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
     std::string name(argv[1]);
     robot_name = name;
 
-    ros::init(argc, argv, "noisy_image_eliminate_"+robot_name);  std::cout<<"9 7  \n";
+    ros::init(argc, argv, "noisy_image_eliminate_"+robot_name); 
     ros::NodeHandle nh("");
 
     message_filters::Subscriber<sensor_msgs::Image> img_sub_r(nh, '/'+robot_name+"/camera/right/image_raw", 1);
