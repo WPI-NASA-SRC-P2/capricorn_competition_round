@@ -3,6 +3,7 @@
 #include <ros/ros.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <cv_bridge/cv_bridge.h>
@@ -90,21 +91,22 @@ int main(int argc, char *argv[])
     std::string name(argv[1]);
     robot_name = name;
 
-    ros::init(argc, argv, "noisy_image_eliminate");
-    ros::NodeHandle nh("~");
-    
+    ros::init(argc, argv, "noisy_image_eliminate_"+robot_name);  std::cout<<"9 7  \n";
+    ros::NodeHandle nh("");
+
     message_filters::Subscriber<sensor_msgs::Image> img_sub_r(nh, '/'+robot_name+"/camera/right/image_raw", 1);
     message_filters::Subscriber<sensor_msgs::Image> img_sub_l(nh, '/'+robot_name+"/camera/left/image_raw", 1);
     message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub_r(nh, '/'+robot_name+"/camera/right/camera_info", 1);
     message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub_l(nh, '/'+robot_name+"/camera/left/camera_info", 1);
     
-    message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::CameraInfo> sync(img_sub_r, img_sub_l, info_sub_r, info_sub_l, 10);
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::CameraInfo> syncPolicy;
+    message_filters::Synchronizer<syncPolicy> sync(syncPolicy(10), img_sub_r, img_sub_l, info_sub_r, info_sub_l);
     sync.registerCallback(boost::bind(&img_callback, _1, _2, _3, _4));
     
     right_image_pub = nh.advertise<sensor_msgs::Image>("/capricorn/" + robot_name + "/camera/right/image_raw", 10);
     left_image_pub = nh.advertise<sensor_msgs::Image>("/capricorn/" + robot_name + "/camera/left/image_raw", 10);
     right_info_pub = nh.advertise<sensor_msgs::CameraInfo>("/capricorn/" + robot_name + "/camera/right/camera_info", 10);
     left_info_pub = nh.advertise<sensor_msgs::CameraInfo>("/capricorn/" + robot_name + "/camera/left/camera_info", 10);
-    
+
     ros::spin();
 }
