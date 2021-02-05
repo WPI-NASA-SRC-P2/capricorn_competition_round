@@ -5,6 +5,8 @@ Clone the repository if you haven't done it already. _(Enter your GitHub credent
 ```bash
 cd && https://github.com/WPI-NASA-SRC-P2/srcp2-final-public.git
 ```
+Please read [the wiki](https://github.com/WPI-NASA-SRC-P2/srcp2-final-public/wiki/2.-Requirements,-Install-and-Updates)  to install the sim.
+
 
 #### Setting the aliases for easing the usage:
 Add the sourcing line to the `bashrc` by executing this command:
