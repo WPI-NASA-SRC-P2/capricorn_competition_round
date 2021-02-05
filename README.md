@@ -3,7 +3,7 @@
 #### Downloading the simulation:
 Clone the repository if you haven't done it already. _(Enter your GitHub credentials when prompted)_
 ```bash
-cd && https://github.com/WPI-NASA-SRC-P2/srcp2-final-public.git
+cd && git clone https://github.com/WPI-NASA-SRC-P2/srcp2-final-public.git
 ```
 Please read [the wiki](https://github.com/WPI-NASA-SRC-P2/srcp2-final-public/wiki/2.-Requirements,-Install-and-Updates)  to install the sim.
 
