@@ -1,0 +1,8 @@
+# Define the goal
+float32 velocity  
+---
+# Define the result
+uint32 result
+---
+# Define a feedback message
+float32 percent_complete
