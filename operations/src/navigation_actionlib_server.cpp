@@ -14,9 +14,6 @@
 typedef actionlib::SimpleActionServer<operations::NavigationAction> Server;
 using namespace COMMON_NAMES;
 
-ros::NodeHandle nh_;
-std::string robot_name_;
-
 ros::Publisher front_left_vel_pub_, front_right_vel_pub_, back_left_vel_pub_, back_right_vel_pub_;
 ros::Publisher front_left_steer_pub_, front_right_steer_pub_, back_left_steer_pub_, back_right_steer_pub_;
 
@@ -28,34 +25,34 @@ ros::Publisher front_left_steer_pub_, front_right_steer_pub_, back_left_steer_pu
  * @brief Initialise the publishers for wheel velocities
  * 
  */
-void initVelocityPublisher()
+void initVelocityPublisher(ros::NodeHandle &nh, const std::string &robot_name)
 {
-  front_left_vel_pub_ = nh_.advertise<std_msgs::Float64>(robot_name_ + FRONT_LEFT_WHEEL + VELOCITY_TOPIC, 1000);  
-  front_right_vel_pub_ = nh_.advertise<std_msgs::Float64>(robot_name_ + FRONT_RIGHT_WHEEL + VELOCITY_TOPIC, 1000);  
-  back_left_vel_pub_ = nh_.advertise<std_msgs::Float64>(robot_name_ + BACK_RIGHT_WHEEL + VELOCITY_TOPIC, 1000);  
-  back_right_vel_pub_ = nh_.advertise<std_msgs::Float64>(robot_name_ + BACK_LEFT_WHEEL + VELOCITY_TOPIC, 1000);
+  front_left_vel_pub_ = nh.advertise<std_msgs::Float64>(robot_name + FRONT_LEFT_WHEEL + VELOCITY_TOPIC, 1000);  
+  front_right_vel_pub_ = nh.advertise<std_msgs::Float64>(robot_name + FRONT_RIGHT_WHEEL + VELOCITY_TOPIC, 1000);  
+  back_left_vel_pub_ = nh.advertise<std_msgs::Float64>(robot_name + BACK_LEFT_WHEEL + VELOCITY_TOPIC, 1000);  
+  back_right_vel_pub_ = nh.advertise<std_msgs::Float64>(robot_name + BACK_RIGHT_WHEEL + VELOCITY_TOPIC, 1000);
 }
 
 /**
  * @brief Initialise the publishers for wheel steering angles
  * 
  */
-void initSteerPublisher()
+void initSteerPublisher(ros::NodeHandle &nh, const std::string &robot_name)
 {
-  front_left_steer_pub_ = nh_.advertise<std_msgs::Float64>(robot_name_ + FRONT_LEFT_WHEEL + STEERING_TOPIC, 1000);
-  front_right_steer_pub_ = nh_.advertise<std_msgs::Float64>(robot_name_ + FRONT_RIGHT_WHEEL + STEERING_TOPIC, 1000);
-  back_left_steer_pub_ = nh_.advertise<std_msgs::Float64>(robot_name_ + BACK_RIGHT_WHEEL + STEERING_TOPIC, 1000);
-  back_right_steer_pub_ = nh_.advertise<std_msgs::Float64>(robot_name_ + BACK_LEFT_WHEEL + STEERING_TOPIC, 1000);
+  front_left_steer_pub_ = nh.advertise<std_msgs::Float64>(robot_name + FRONT_LEFT_WHEEL + STEERING_TOPIC, 1000);
+  front_right_steer_pub_ = nh.advertise<std_msgs::Float64>(robot_name + FRONT_RIGHT_WHEEL + STEERING_TOPIC, 1000);
+  back_left_steer_pub_ = nh.advertise<std_msgs::Float64>(robot_name + BACK_LEFT_WHEEL + STEERING_TOPIC, 1000);
+  back_right_steer_pub_ = nh.advertise<std_msgs::Float64>(robot_name + BACK_RIGHT_WHEEL + STEERING_TOPIC, 1000);
 }
 
 /**
  * @brief Call Publisher initializers
  * 
  */
-void initPublishers()
+void initPublishers(ros::NodeHandle &nh, const std::string &robot_name)
 {
-  initVelocityPublisher();
-  initSteerPublisher();
+  initVelocityPublisher(nh, robot_name);
+  initSteerPublisher(nh, robot_name);
 }
 
 
@@ -70,7 +67,7 @@ void initPublishers()
  * @param publisher   publisher over which message will be published
  * @param data        data that will be published over the publisher
  */
-void publishMessage(ros::Publisher &publisher, double data)
+void publishMessage(ros::Publisher &publisher, float data)
 {
   std_msgs::Float64 pub_data;
   pub_data.data = data;
@@ -164,7 +161,7 @@ void moveRobotWheels(const float velocity)
 void execute(const operations::NavigationGoalConstPtr& goal, Server* action_server)  
 {
   // Velocities 
-  float forward_velocity, sideways_velocity, velocity;
+  float forward_velocity, sideways_velocity;
   forward_velocity = goal->forward_velocity;
   sideways_velocity = goal->sideways_velocity;
 
@@ -191,8 +188,11 @@ void execute(const operations::NavigationGoalConstPtr& goal, Server* action_serv
     }
 
     // This will give us the steering angles and the velocities needed for taking the radial turn
-    std::vector<float> steering_angles = NavigationAlgo::getSteeringAnglesRadialTurn(radius);
-    std::vector<float> velocities = NavigationAlgo::getDrivingVelocitiessRadialTurn(radius, velocity);
+    std::vector<float> steering_angles;
+    std::vector<float> velocities;
+    NavigationAlgo navigation_algo;
+    steering_angles = navigation_algo.getSteeringAnglesRadialTurn(radius);
+    velocities = NavigationAlgo::getDrivingVelocitiessRadialTurn(radius, velocity);
 
     // Steer and move the robot.
     steerRobot(steering_angles);
@@ -225,17 +225,17 @@ int main(int argc, char** argv)
   // }
   // else
   // {
-    robot_name_ = (std::string)argv[1];
-    std::string node_name = robot_name_ + "_navigation_action_server";
+    std::string robot_name = (std::string)argv[1];
+    std::string node_name = robot_name + "_navigation_action_server";
 
     ros::init(argc, argv, node_name);
-    nh_ = ros::NodeHandle();
+    ros::NodeHandle nh;
 
     // Initialise the publishers for steering and wheel velocites
-    initPublishers();
+    initPublishers(nh, robot_name);
     
     // Action server 
-    Server server(nh_, NAVIGATION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
+    Server server(nh, NAVIGATION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.start();
     ros::spin();
 

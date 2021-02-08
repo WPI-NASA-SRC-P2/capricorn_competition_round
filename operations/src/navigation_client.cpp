@@ -17,7 +17,7 @@ int main(int argc, char** argv)
   // else
   // {
     std::string robot_name(argv[1]);
-    std::string node_name = robot_name + "_navigation_action_server";
+    std::string node_name = robot_name + "_navigation_action_client";
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
 
