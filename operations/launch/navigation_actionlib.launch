@@ -1,0 +1,9 @@
+<launch>
+
+  <!-- Initialising parameters -->
+  <arg name="robot_name" default="small_scout_1" />
+
+  <!-- Running Teleop -->
+  <node name="navigation_actionlib_server" pkg="navigation_actionlib_server" type="navigation_actionlib_server"  args="small_scout_1" output="screen"/>
+
+</launch>
