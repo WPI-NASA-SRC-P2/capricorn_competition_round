@@ -169,13 +169,13 @@ void execute(const operations::NavigationGoalConstPtr& goal, Server* action_serv
   // If the goal has sideways velocity, then the robots should take radial turn
   if (std::abs(sideways_velocity) > 0)
   {
-    float radius = 5, velocity;
+    float radius = 2.5, velocity;
     
     // If the forward velocity is 0, then the robot will rotate about its center,
     // Hence the radius of rotation will be 0 and rotational velocity is
     if(forward_velocity==0)
     {
-      velocity = sideways_velocity;
+      velocity = -sideways_velocity;
       radius = 0;
     } 
 
@@ -216,15 +216,15 @@ void execute(const operations::NavigationGoalConstPtr& goal, Server* action_serv
 
 int main(int argc, char** argv)
 {
-  // // Check if the node is being run through roslauch, and have one parameter of RobotName_Number
-  // if (argc != 4)
-  // {
-  //     // Displaying an error message for correct usage of the script, and returning error.
-  //     ROS_ERROR_STREAM("This Node must be launched via 'roslaunch' and needs an argument as <RobotName_Number>";);
-  //     return -1;
-  // }
-  // else
-  // {
+  // Check if the node is being run through roslauch, and have one parameter of RobotName_Number
+  if (argc != 4)
+  {
+      // Displaying an error message for correct usage of the script, and returning error.
+      ROS_ERROR_STREAM("This Node must be launched via 'roslaunch' and needs an argument as <RobotName_Number>";);
+      return -1;
+  }
+  else
+  {
     std::string robot_name = (std::string)argv[1];
     std::string node_name = robot_name + "_navigation_action_server";
 
@@ -240,5 +240,5 @@ int main(int argc, char** argv)
     ros::spin();
 
     return 0;
-  // }
+  }
 }
