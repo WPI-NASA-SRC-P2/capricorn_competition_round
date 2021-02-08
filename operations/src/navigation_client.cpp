@@ -3,19 +3,30 @@
 #include <utils/common_names.h>
 #include <geometry_msgs/Twist.h>
 
+// typedef for the Action Server
 typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
 Client* client;
 
 using namespace COMMON_NAMES;
 
+/**
+ * @brief Callback for the twist message of teleop message twist
+ * 
+ * @param twist twist message from teleop
+ */
 void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
 {
+    // Action message goal
     operations::NavigationGoal goal;
-    goal.forward_velocity = twist->linear.x * 50;
+    
+    // Diverting values from twist to navigation
+    goal.forward_velocity = twist->linear.x * 5;
     goal.sideways_velocity = twist->angular.z;
     
     client->sendGoal(goal);
     
+    // Not really needed here. 
+    // This can be better used as an actual feedback.
     client->waitForResult(ros::Duration(5.0));
     if (client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
       printf("Yay! Robot should be moving\n");
@@ -34,13 +45,16 @@ int main(int argc, char** argv)
   }
   else
   {
+    // Robot Name from argument
     std::string robot_name(argv[1]);
     std::string node_name = robot_name + "_navigation_action_client";
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
 
+    // Subscribing to teleop topic
     ros::Subscriber sub = nh.subscribe("/cmd_vel", 1000, chatterCallback);
 
+    // initialize client
     client = new Client(NAVIGATION_ACTIONLIB, true);
     client->waitForServer();
 
