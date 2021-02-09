@@ -110,7 +110,7 @@ catkin_package(
 #  INCLUDE_DIRS include
  LIBRARIES perception
  CATKIN_DEPENDS roscpp rospy std_msgs utils
- DEPENDS system_lib
+#  DEPENDS system_lib
 )
 
 ###########
@@ -120,7 +120,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-include
+# include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -160,13 +160,6 @@ add_dependencies(noisy_image_eliminate ${${PROJECT_NAME}_EXPORTED_TARGETS} ${cat
 target_link_libraries(noisy_image_eliminate
   ${catkin_LIBRARIES}
 )
-
-add_executable(horizon_tracking src/horizon_tracking.cpp)
-add_dependencies(horizon_tracking ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(horizon_tracking
-  ${catkin_LIBRARIES}
-)
-
 
 #############
 ## Install ##

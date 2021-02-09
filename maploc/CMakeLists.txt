@@ -110,8 +110,8 @@ catkin_package(
 #  INCLUDE_DIRS include
  LIBRARIES maploc
  CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf utils std_msgs message_runtime
- DEPENDS system_lib
-)
+#  DEPENDS system_lib
+) 
 
 ###########
 ## Build ##
