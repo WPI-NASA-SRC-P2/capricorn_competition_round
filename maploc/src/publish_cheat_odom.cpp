@@ -12,7 +12,8 @@
  * It takes the ground truth pose from gazebo for a particular model and publishes it on a topic "/capricorn/model_name/cheat_odom", 
  * message type is nav_msgs/Odometry. The messages are published at 10 Hz frequency.
  * 
- * All the positions are relative to the "heightmap" entity in the simulation which is assumed to be the origin (also appears to be the origin as well)
+ * All the positions are relative to the "heightmap" entity in the simulation which is assumed to be the origin (also appears to be the origin as well).
+ * Changes the reference frame id to "odom"
  *  
  * @param argc 
  * @param argv : Model name (Required, eg. small_scout_1, small_excavator_2 etc.)
@@ -56,6 +57,7 @@ int main(int argc, char **argv)
         odom_msg.pose.pose = req.response.pose;
         odom_msg.twist.twist = req.response.twist;
         odom_msg.header = req.response.header;
+        odom_msg.header.frame_id = "odom";
         odom_pub.publish(odom_msg);
       }
       else

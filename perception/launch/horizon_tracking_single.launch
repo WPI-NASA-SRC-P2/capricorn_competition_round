@@ -1,0 +1,9 @@
+<launch>
+    <arg name="robot_name" />
+
+    <group ns="/$(arg robot_name)/">
+        <node name="noisy_image_eliminate" pkg="perception" type="noisy_image_eliminate" respawn="true" output="screen" args="$(arg robot_name)" />
+        <node name="horizon_tracking" pkg="perception" type="horizon_tracking" respawn="true" output="screen" args="$(arg robot_name)" />
+
+    </group>
+</launch>

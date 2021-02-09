@@ -1,0 +1,14 @@
+<launch>
+
+    <arg name="robot_name" default="small_scout_1" />
+
+    <include file="$(find maploc)/launch/rtabmap.launch" >
+      <arg name="robot_name" value="$(arg robot_name)"/>
+    </include>
+
+
+    <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" output="screen" args="$(arg robot_name)" />
+    <node name="odom_error" pkg="maploc" type="odom_error" output="screen" args="$(arg robot_name)  /$(arg robot_name)/camera/odom" />
+    <node name="initialize_rtabmap" pkg="maploc" type="initialize_rtabmap" output="screen" args="$(arg robot_name)" />
+
+</launch>

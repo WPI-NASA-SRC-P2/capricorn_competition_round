@@ -1,5 +1,5 @@
 <launch>
-    <arg name="robot_name" />
+    <arg name="robot_name" default="small_scout_1" />
 
     <!-- Run the ROS package stereo_image_proc -->
     <group ns="/$(arg robot_name)/camera">
@@ -8,7 +8,7 @@
 
         <!-- Odometry -->
         <node pkg="rtabmap_ros" type="stereo_odometry" name="stereo_odometry">
-            <param name="frame_id" type="string" value="$(arg robot_name)_sensor_bar"/>
+            <param name="frame_id" type="string" value="$(arg robot_name)_base_footprint"/>
             <param name="approx_sync" type="bool" value="true"/>
             <param name="queue_size" type="int" value="5"/>
 	    	<param name="odom_frame_id" type="string" value="odom"/>
