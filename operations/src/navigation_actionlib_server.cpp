@@ -167,7 +167,7 @@ void execute(const operations::NavigationGoalConstPtr& goal, Server* action_serv
 
 
   // If the goal has sideways velocity, then the robots should take radial turn
-  if (std::abs(angular_velocity) > 0)
+  if (angular_velocity != 0)
   {
     float radius = 2.5, velocity;
     
