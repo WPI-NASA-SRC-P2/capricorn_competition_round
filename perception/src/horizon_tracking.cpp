@@ -1,3 +1,11 @@
+/*
+Author: Mahimana Bhatt
+Email: mbhatt@wpi.edu
+
+TEAM CAPRICORN
+NASA SPACE ROBOTICS CHALLENGE
+*/
+
 #include<iostream>
 
 #include <opencv2/core/types.hpp>
@@ -9,6 +17,8 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
+
+#include <utils/common_names.h>
 
 std::string robot_name;
 std_msgs::Float64 pitch;
@@ -109,13 +119,13 @@ int main(int argc, char *argv[])
     std::string name(argv[1]);
     robot_name = name;
 
-    ros::init(argc, argv, "horzion_tracking_"+robot_name);
+    ros::init(argc, argv, robot_name + COMMON_NAMES::HORIZON_TRACKING_NODE_NAME);
     ros::NodeHandle nh("~");
     
-    ros::Subscriber img_sub_l = nh.subscribe("/capricorn/"+robot_name+"/camera/left/image_raw", 1, &img_callback);
+    ros::Subscriber img_sub_l = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::LEFT_IMAGE_RAW_TOPIC, 1, &img_callback);
     
-    test_image_pub = nh.advertise<sensor_msgs::Image>("/capricorn/" + robot_name + "/horizon_test_image", 10);
-    pitch_camera_pub = nh.advertise<std_msgs::Float64>("/" + robot_name + "/sensor/pitch/command/position", 10);
+    test_image_pub = nh.advertise<sensor_msgs::Image>(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/horizon_test_image", 10);
+    pitch_camera_pub = nh.advertise<std_msgs::Float64>("/" + robot_name + COMMON_NAMES::SET_SENSOR_PITCH_TOPIC, 10);
     pitch.data = 0;
     pitch_camera_pub.publish(pitch);
     

@@ -1,5 +1,12 @@
+<!--
+  Author: Mahimana Bhatt
+  Email: mbhatt@wpi.edu
+
+  Team Capricorn
+  NASA SPACE ROBOTICS CHALLENGE -->
+
 <launch>
-    <arg name="robot_name" />
+    <arg name="robot_name" default="small_scout_1" />
 
     <group ns="/$(arg robot_name)/">
         <node name="noisy_image_eliminate" pkg="perception" type="noisy_image_eliminate" respawn="true" output="screen" args="$(arg robot_name)" />

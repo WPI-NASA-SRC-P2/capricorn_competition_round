@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   gazebo_msgs
   tf
+  utils
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
  LIBRARIES maploc
- CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf  std_msgs message_runtime
+ CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf utils std_msgs message_runtime
  DEPENDS system_lib
 )
 

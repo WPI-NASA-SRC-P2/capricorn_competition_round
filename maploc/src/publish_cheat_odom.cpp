@@ -1,7 +1,17 @@
+/*
+Copied and modified from qualification phase: https://github.com/WPI-NASA-SRC-P2/TeamCapricorn/blob/master/capricorn_examples/src/publish_cheat_odom.cpp
+MODIFIED BY: Mahimana Bhatt
+Email: mbhatt@wpi.edu
+
+TEAM CAPRICORN
+NASA SPACE ROBOTICS CHALLENGE
+*/
+
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
 #include <gazebo_msgs/GetModelState.h>
 #include <tf/transform_broadcaster.h>
+#include <utils/common_names.h>
 
 #define UPDATE_HZ 10
 
@@ -21,17 +31,15 @@
  */
 int main(int argc, char **argv)
 {
-    std::string node_name = std::string(argv[1]) + "_cheat_odom_publisher";
-    ros::init(argc, argv, node_name);
+    std::string model_name = std::string(argv[1]);
+    ros::init(argc, argv, model_name + COMMON_NAMES::CHEAT_ODOM_PUB_NODE_NAME);
     ros::NodeHandle nh;
     ros::AsyncSpinner spin(1);
 
-    std::string model_name = std::string(argv[1]);
-    std::string topic_name = "/capricorn/" + model_name + "/cheat_odom";
-    // std::string topic_name = "/" + model_name + "_loc/filtered_odometry";
-    std::string robot_frame_name = model_name + "_base_footprint";
+    std::string topic_name = COMMON_NAMES::CAPRICORN_TOPIC + model_name + COMMON_NAMES::CHEAT_ODOM_TOPIC;
+    std::string robot_frame_name = model_name + COMMON_NAMES::ROBOT_BASE;
 
-    ros::ServiceClient client = nh.serviceClient<gazebo_msgs::GetModelState>("/gazebo/get_model_state");
+    ros::ServiceClient client = nh.serviceClient<gazebo_msgs::GetModelState>(COMMON_NAMES::MODEL_STATE_QUERY);
     ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>(topic_name, 1, true);
 
     static tf::TransformBroadcaster br;
@@ -39,10 +47,12 @@ int main(int argc, char **argv)
 
     gazebo_msgs::GetModelState req;
     req.request.model_name = model_name;
-    req.request.relative_entity_name = "heightmap";
+
+    // HEIGHTMAP is considered as origin of the simulation (as per the observation it is)
+    req.request.relative_entity_name = COMMON_NAMES::HEIGHTMAP;
     nav_msgs::Odometry odom_msg;
     tf::Quaternion quat;
-    odom_msg.header.frame_id = "odom";
+    odom_msg.header.frame_id = COMMON_NAMES::ODOM;
     odom_msg.child_frame_id = robot_frame_name;
 
     ros::Rate update_rate(UPDATE_HZ);
@@ -57,15 +67,12 @@ int main(int argc, char **argv)
         odom_msg.pose.pose = req.response.pose;
         odom_msg.twist.twist = req.response.twist;
         odom_msg.header = req.response.header;
-        odom_msg.header.frame_id = "odom";
+        odom_msg.header.frame_id = COMMON_NAMES::ODOM;
         odom_pub.publish(odom_msg);
       }
       else
       {
-        std::string filename = std::string(argv[0]);
-        int index = filename.find_last_of('/');
-        std::string input_trace_filename = filename.substr(index + 1);
-        ROS_ERROR("Something went wrong in file %s getting odom from gazebo.", input_trace_filename);
+        ROS_ERROR("Something went wrong in getting odom from gazebo.");
       }
       update_rate.sleep();
     }

@@ -1,3 +1,11 @@
+/*
+Author: Mahimana Bhatt
+Email: mbhatt@wpi.edu
+
+TEAM CAPRICORN
+NASA SPACE ROBOTICS CHALLENGE
+*/
+
 #include<iostream>
 
 #include <ros/ros.h>
@@ -10,6 +18,8 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
+
+#include <utils/common_names.h>
 
 std::string robot_name;
 
@@ -34,8 +44,7 @@ ros::Publisher right_image_pub, left_image_pub, right_info_pub, left_info_pub;
  * @return false if image has noise
  */
 bool check_image(const sensor_msgs::ImageConstPtr& img, float& actual_sum, float& last_sum) 
-{
-    
+{    
     cv_bridge::CvImagePtr cv_ptr;
     cv_ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::BGR8);
     cv::Mat edge;
@@ -91,22 +100,22 @@ int main(int argc, char *argv[])
     std::string name(argv[1]);
     robot_name = name;
 
-    ros::init(argc, argv, "noisy_image_eliminate_"+robot_name); 
+    ros::init(argc, argv, robot_name + COMMON_NAMES::NOISY_IMAGE_NODE_NAME); 
     ros::NodeHandle nh("");
 
-    message_filters::Subscriber<sensor_msgs::Image> img_sub_r(nh, '/'+robot_name+"/camera/right/image_raw", 1);
-    message_filters::Subscriber<sensor_msgs::Image> img_sub_l(nh, '/'+robot_name+"/camera/left/image_raw", 1);
-    message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub_r(nh, '/'+robot_name+"/camera/right/camera_info", 1);
-    message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub_l(nh, '/'+robot_name+"/camera/left/camera_info", 1);
+    message_filters::Subscriber<sensor_msgs::Image> img_sub_r(nh, '/' + robot_name + COMMON_NAMES::RIGHT_IMAGE_RAW_TOPIC, 1);
+    message_filters::Subscriber<sensor_msgs::Image> img_sub_l(nh, '/' + robot_name + COMMON_NAMES::LEFT_IMAGE_RAW_TOPIC, 1);
+    message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub_r(nh, '/' + robot_name + COMMON_NAMES::RIGHT_CAMERAINFO_TOPIC, 1);
+    message_filters::Subscriber<sensor_msgs::CameraInfo> info_sub_l(nh, '/' + robot_name + COMMON_NAMES::LEFT_CAMERAINFO_TOPIC, 1);
     
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo, sensor_msgs::CameraInfo> syncPolicy;
     message_filters::Synchronizer<syncPolicy> sync(syncPolicy(10), img_sub_r, img_sub_l, info_sub_r, info_sub_l);
     sync.registerCallback(boost::bind(&img_callback, _1, _2, _3, _4));
     
-    right_image_pub = nh.advertise<sensor_msgs::Image>("/capricorn/" + robot_name + "/camera/right/image_raw", 10);
-    left_image_pub = nh.advertise<sensor_msgs::Image>("/capricorn/" + robot_name + "/camera/left/image_raw", 10);
-    right_info_pub = nh.advertise<sensor_msgs::CameraInfo>("/capricorn/" + robot_name + "/camera/right/camera_info", 10);
-    left_info_pub = nh.advertise<sensor_msgs::CameraInfo>("/capricorn/" + robot_name + "/camera/left/camera_info", 10);
+    right_image_pub = nh.advertise<sensor_msgs::Image>(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::RIGHT_IMAGE_RAW_TOPIC, 10);
+    left_image_pub = nh.advertise<sensor_msgs::Image>(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::LEFT_IMAGE_RAW_TOPIC, 10);
+    right_info_pub = nh.advertise<sensor_msgs::CameraInfo>(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::RIGHT_CAMERAINFO_TOPIC, 10);
+    left_info_pub = nh.advertise<sensor_msgs::CameraInfo>(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::LEFT_CAMERAINFO_TOPIC, 10);
 
     ros::spin();
 }
