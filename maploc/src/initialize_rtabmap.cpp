@@ -1,28 +1,23 @@
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
-#include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
-
-//TODO: Remove
 #include <gazebo_msgs/GetModelState.h>
+
 #include <rtabmap_ros/ResetPose.h>
 
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
+#include <utils/common_names.h>
 
-#include <tf2_ros/transform_listener.h>
-
-#include <rosgraph_msgs/Clock.h>
-
-bool simulation_paused = true;
-
+/**
+ * @brief 
+ * 
+ * @param argc 
+ * @param argv 
+ * @return int 
+ */
 int main(int argc, char *argv[])
 {
     //Setup robot_name from passed in arguments
-    std::string name(argv[1]);
-    std::string robot_name = name;
+    std::string robot_name(argv[1]);
 
     //Startup ROS
     ros::init(argc, argv, "odom_initialize_"+robot_name);
@@ -64,30 +59,6 @@ int main(int argc, char *argv[])
     geometry_msgs::PoseStamped stampedPose;
     stampedPose.pose = true_pose.pose.pose;
     stampedPose.header = true_pose.header;
-
-    // bool transformed = false;
-
-    // while(!transformed)
-    // {
-    //     try
-    //     {
-    //         transformStamped = tfBuffer.lookupTransform(robot_name + "_sensor_bar", robot_name + "_base_footprint",
-    //                                 ros::Time(), ros::Duration(2.0));
-    //         transformed = true;
-    //     }
-    //     catch (tf2::TransformException &ex) {
-    //         std::cout << "Camera to footprint transform doesn't yet exist, trying again..." << std::endl;
-    //         ROS_WARN("%s",ex.what());
-    //         ros::Duration(2.0).sleep();
-    //         // return 0;
-    //     }
-    // }
-
-    // std::cout << "Transform found." << std::endl;
-
-    // geometry_msgs::PoseStamped transformedPose;
-
-    // tf2::doTransform(stampedPose, transformedPose, transformStamped);
 
     tf2::Quaternion q(stampedPose.pose.orientation.x,
                         stampedPose.pose.orientation.y,
