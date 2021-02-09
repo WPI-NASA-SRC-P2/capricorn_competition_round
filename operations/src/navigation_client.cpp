@@ -21,7 +21,7 @@ void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
     
     // Diverting values from twist to navigation
     goal.forward_velocity = twist->linear.x * 5;
-    goal.sideways_velocity = twist->angular.z;
+    goal.angular_velocity = twist->angular.z;
     
     client->sendGoal(goal);
     
