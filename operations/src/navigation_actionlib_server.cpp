@@ -190,8 +190,7 @@ void execute(const operations::NavigationGoalConstPtr& goal, Server* action_serv
     // This will give us the steering angles and the velocities needed for taking the radial turn
     std::vector<float> steering_angles;
     std::vector<float> velocities;
-    NavigationAlgo navigation_algo;
-    steering_angles = navigation_algo.getSteeringAnglesRadialTurn(radius);
+    steering_angles = NavigationAlgo::getSteeringAnglesRadialTurn(radius);
     velocities = NavigationAlgo::getDrivingVelocitiessRadialTurn(radius, velocity);
 
     // Steer and move the robot.
