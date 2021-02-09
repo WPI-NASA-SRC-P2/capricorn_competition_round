@@ -25,12 +25,12 @@ void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
     
     client->sendGoal(goal);
     
-    // Not really needed here. 
-    // This can be better used as an actual feedback.
-    client->waitForResult(ros::Duration(5.0));
-    if (client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-      printf("Yay! Robot should be moving\n");
-    printf("Robot navigation state: %s\n", client->getState().toString().c_str());
+    // // Not really needed here. 
+    // // This can be better used as an actual feedback.
+    // client->waitForResult(ros::Duration(5.0));
+    // if (client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    //   printf("Yay! Robot should be moving\n");
+    // printf("Robot navigation state: %s\n", client->getState().toString().c_str());
 
 }
 
