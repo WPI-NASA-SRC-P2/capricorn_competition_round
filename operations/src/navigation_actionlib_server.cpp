@@ -161,13 +161,13 @@ void moveRobotWheels(const float velocity)
 void execute(const operations::NavigationGoalConstPtr& goal, Server* action_server)  
 {
   // Velocities 
-  float forward_velocity, sideways_velocity;
+  float forward_velocity, angular_velocity;
   forward_velocity = goal->forward_velocity;
-  sideways_velocity = goal->sideways_velocity;
+  angular_velocity = goal->angular_velocity;
 
 
   // If the goal has sideways velocity, then the robots should take radial turn
-  if (std::abs(sideways_velocity) > 0)
+  if (angular_velocity != 0)
   {
     float radius = 2.5, velocity;
     
@@ -175,7 +175,7 @@ void execute(const operations::NavigationGoalConstPtr& goal, Server* action_serv
     // Hence the radius of rotation will be 0 and rotational velocity is
     if(forward_velocity==0)
     {
-      velocity = -sideways_velocity;
+      velocity = -angular_velocity;
       radius = 0;
     } 
 
@@ -184,14 +184,13 @@ void execute(const operations::NavigationGoalConstPtr& goal, Server* action_serv
     else
     {
       velocity = forward_velocity;
-      radius = std::copysign(radius, sideways_velocity);
+      radius = std::copysign(radius, angular_velocity);
     }
 
     // This will give us the steering angles and the velocities needed for taking the radial turn
     std::vector<float> steering_angles;
     std::vector<float> velocities;
-    NavigationAlgo navigation_algo;
-    steering_angles = navigation_algo.getSteeringAnglesRadialTurn(radius);
+    steering_angles = NavigationAlgo::getSteeringAnglesRadialTurn(radius);
     velocities = NavigationAlgo::getDrivingVelocitiessRadialTurn(radius, velocity);
 
     // Steer and move the robot.

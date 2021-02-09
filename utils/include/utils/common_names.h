@@ -1,22 +1,5 @@
 #include <string.h>
 
-enum RobotWheel
-{
-  FRONT_LEFT = 0,
-  FRONT_RIGHT,
-  BACK_LEFT,
-  BACK_RIGHT
-};
-
-enum RobotDriveMode
-{
-  DRIVE = 0,
-  ROTATE,
-  CIRCULAR_TURN,
-  GOAL_POINT,
-  GOAL_POSE  
-};
-
 namespace COMMON_NAMES
 {
   /****** ROBOTS ******/
@@ -43,7 +26,7 @@ namespace COMMON_NAMES
   const std::string VELOCITY_TOPIC = "/drive/command/velocity";
   const std::string STEERING_TOPIC = "/steer/command/position";
 
-  /****** VELOCITY ******/
+  /****** ACTIONLIBS ******/
   const std::string NAVIGATION_ACTIONLIB = "navigation";
 
 } // namespace CAPRICORN_COMMON_NAMES

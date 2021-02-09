@@ -21,16 +21,16 @@ void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
     
     // Diverting values from twist to navigation
     goal.forward_velocity = twist->linear.x * 5;
-    goal.sideways_velocity = twist->angular.z;
+    goal.angular_velocity = twist->angular.z;
     
     client->sendGoal(goal);
     
-    // Not really needed here. 
-    // This can be better used as an actual feedback.
-    client->waitForResult(ros::Duration(5.0));
-    if (client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-      printf("Yay! Robot should be moving\n");
-    printf("Robot navigation state: %s\n", client->getState().toString().c_str());
+    // // Not really needed here. 
+    // // This can be better used as an actual feedback.
+    // client->waitForResult(ros::Duration(5.0));
+    // if (client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    //   printf("Yay! Robot should be moving\n");
+    // printf("Robot navigation state: %s\n", client->getState().toString().c_str());
 
 }
 
