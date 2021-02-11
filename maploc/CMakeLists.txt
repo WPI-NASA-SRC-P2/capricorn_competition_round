@@ -11,6 +11,11 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  geometry_msgs
+  nav_msgs
+  gazebo_msgs
+  tf
+  utils
 )
 
 ## System dependencies are found with CMake's conventions
@@ -47,11 +52,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+   FILES
+   OdomError.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -68,10 +72,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   std_msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -104,10 +108,10 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES maploc
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+ LIBRARIES maploc
+ CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf utils std_msgs message_runtime
 #  DEPENDS system_lib
-)
+) 
 
 ###########
 ## Build ##
@@ -149,6 +153,26 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+
+# Make differential turn for 3 seconds
+add_executable(publish_cheat_odom src/publish_cheat_odom.cpp)
+add_dependencies(publish_cheat_odom ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(publish_cheat_odom
+  ${catkin_LIBRARIES}
+)
+
+add_executable(initialize_rtabmap src/initialize_rtabmap.cpp)
+add_dependencies(initialize_rtabmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(initialize_rtabmap
+  ${catkin_LIBRARIES}
+)
+
+add_executable(odom_error src/odom_error.cpp)
+add_dependencies(odom_error ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(odom_error
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##

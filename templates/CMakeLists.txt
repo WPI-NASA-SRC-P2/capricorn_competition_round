@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(templates)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   sensor_msgs
+  rostest
 )
 
 
@@ -125,6 +126,7 @@ include_directories(
 #   src/${PROJECT_NAME}/capricorn_examples.cpp
 # )
 
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -222,3 +224,6 @@ install(TARGETS template_node template_class
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+catkin_add_gtest(${PROJECT_NAME}-test test/test_example.cpp)
+target_link_libraries(${PROJECT_NAME}-test ${catkin_LIBRARIES})
