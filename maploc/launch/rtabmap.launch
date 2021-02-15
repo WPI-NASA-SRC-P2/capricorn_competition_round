@@ -7,8 +7,8 @@
 
 <launch>
     <arg name="robot_name" default="small_scout_1" />
-    <arg name="use_rtabmap" default="false" />
-    <arg name="rtabmapviz" default="false" />    
+    <arg name="use_rtabmap" default="true" />
+    <arg name="rtabmapviz" default="true" />    
     <arg name="rviz" default="true" />
     <arg name="use_noisy_image" default="false" />
     <param name="use_sim_time" type="bool" value="True"/>
