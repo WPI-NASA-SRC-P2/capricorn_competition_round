@@ -104,7 +104,7 @@ catkin_package(
  INCLUDE_DIRS include
  LIBRARIES utils
  CATKIN_DEPENDS std_msgs
- DEPENDS system_lib
+#  DEPENDS system_lib
 )
 
 ###########
