@@ -27,14 +27,9 @@ std::string robot_name;
 
 //initializing variables
 int num_img = 15000;
-
-
-
-
-
+int cv_image[512][512][3];
 
 void callback() {
-
 }
 
 int main(int argc, char *argv[]) {
@@ -47,5 +42,9 @@ int main(int argc, char *argv[]) {
 
     message_filters::Subscriber<sensor_msgs::Image> img_sub(nhm, '/' + robot_name + COMMON_NAMES::LEFT_IMAGE_RAW_TOPIC, 1);
     
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image> syncPolicy;
+    message_filters::Synchronizer<syncPolicy> sync(syncPolicy(10), img_sub);
+    sync.registerCallback(boost::bind(&callback,_1));
+
     ros::spin();
 }
