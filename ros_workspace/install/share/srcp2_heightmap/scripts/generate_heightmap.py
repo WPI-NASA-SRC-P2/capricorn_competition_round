@@ -198,9 +198,9 @@ def main():
 
     # Sets starting zone x pixel, y pixel location
     starting_zone_properties['x_pixel'] = resolution//2 + \
-        (arenaPixelBufferSize//2 * resolution//1025)
+        (resolution//1025)
     starting_zone_properties['y_pixel'] = resolution//2 + \
-        (arenaPixelBufferSize//2 * resolution//1025)
+        (resolution//1025)
 
     meters_per_pixel_xy = totalMetersOfHeightmapRadius/resolution
     meters_per_grayscale_z = totalMetersOfHeightmapHeight/maxGrayscaleNumber

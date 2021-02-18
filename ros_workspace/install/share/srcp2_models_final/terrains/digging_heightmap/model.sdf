@@ -9,7 +9,7 @@
             <heightmap>
               <uri>file://runtime_heightmap.png</uri>
               <size>200 200 3</size>
-              <pos>0 0 -0.95</pos>
+              <pos>0 0 -0.9999</pos>
             </heightmap>
           </geometry>
 
@@ -39,7 +39,7 @@
               </texture>
               <uri>file://runtime_heightmap.png</uri>
               <size>200 200 3</size>
-              <pos>0 0 -0.95</pos>
+              <pos>0 0 -0.9999</pos>
             </heightmap>
           </geometry>
         </visual>

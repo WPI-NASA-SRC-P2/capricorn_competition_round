@@ -425,7 +425,7 @@
                 <digging_heightmap_collision_name>collision_digging_heightmap</digging_heightmap_collision_name>
                 <clod_radius>0.05</clod_radius>
                 <max_capacity>5</max_capacity>
-                <max_volatile_radius>4.0</max_volatile_radius>
+                <max_volatile_radius>2.0</max_volatile_radius>
                 <min_volatile_depth>5.0</min_volatile_depth>
                 <max_volatile_depth>20.0</max_volatile_depth>
             </plugin>
