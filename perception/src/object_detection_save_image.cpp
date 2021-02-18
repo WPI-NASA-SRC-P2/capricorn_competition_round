@@ -27,9 +27,14 @@ std::string robot_name;
 
 //initializing variables
 int num_img = 15000;
-int cv_image[512][512][3];
+cv::Mat cv_image; 
 
-void callback() {
+void callback(const sensor_msgs::ImageConstPtr& img) {
+    cv_bridge::CvImagePtr cv_ptr;
+    cv_ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::BGR8);
+    cv_image = cv_ptr->image;
+    cv::imshow("Image Window", cv_image);
+    cv::waitKey(1);
 }
 
 int main(int argc, char *argv[]) {
@@ -40,11 +45,10 @@ int main(int argc, char *argv[]) {
     ros::init(argc, argv, robot_name + COMMON_NAMES::NOISY_IMAGE_NODE_NAME); 
     ros::NodeHandle nh("");
 
-    message_filters::Subscriber<sensor_msgs::Image> img_sub(nhm, '/' + robot_name + COMMON_NAMES::LEFT_IMAGE_RAW_TOPIC, 1);
     
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image> syncPolicy;
-    message_filters::Synchronizer<syncPolicy> sync(syncPolicy(10), img_sub);
-    sync.registerCallback(boost::bind(&callback,_1));
+    ros::Subscriber img_sub = nh.subscribe('/' + robot_name + COMMON_NAMES::LEFT_IMAGE_RAW_TOPIC, 1, callback); 
+    
+    
 
     ros::spin();
 }

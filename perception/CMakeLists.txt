@@ -161,6 +161,12 @@ target_link_libraries(noisy_image_eliminate
   ${catkin_LIBRARIES}
 )
 
+
+add_executable(object_detection_save_image src/object_detection_save_image.cpp)
+add_dependencies(object_detection_save_image ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(object_detection_save_image
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
