@@ -32,7 +32,6 @@ Create a workspace and clone the repository
 ```bash
 mkdir -p ~/catkin_ws/src 
 cd catkin_ws/src/ && git clone https://github.com/WPI-NASA-SRC-P2/capricorn_competition_round.git
-cd ~/catkin_ws/ && catkin_make
 ```
 
 #### Setup Visual Studio Code
