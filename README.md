@@ -57,6 +57,3 @@ Click on Docker extension, right click on the running container from previous st
 >For executing any command within the development container, use the VScode terminal. This terminal will be running within the development container. You can open this terminal by pressing: `ctrl +`\` (ctrl + tilde key)
 
 For getting the command line access to the docker, execute `src_comp_terminal`
-
-
-Example change
