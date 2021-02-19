@@ -7,6 +7,8 @@ NASA SPACE ROBOTICS CHALLENGE
 */
 
 #include<iostream>
+#include <limits>
+#include <string>
 
 #include <ros/ros.h>
 #include <message_filters/subscriber.h>
@@ -21,15 +23,15 @@ NASA SPACE ROBOTICS CHALLENGE
 
 #include <utils/common_names.h>
 
-
-
 std::string robot_name;
 
 //initializing variables
-int num_img = 15000;
+int num_img = 0;
+std::string dataset_path = "~/catkin_ws/dataset/images/";
 cv::Mat cv_image; 
 
-void callback(const sensor_msgs::ImageConstPtr& img) {
+void img_callback(const sensor_msgs::ImageConstPtr& img) 
+{
     cv_bridge::CvImagePtr cv_ptr;
     cv_ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::BGR8);
     cv_image = cv_ptr->image;
@@ -37,7 +39,8 @@ void callback(const sensor_msgs::ImageConstPtr& img) {
     cv::waitKey(1);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) 
+{
 
     std::string name(argv[1]);
     robot_name = name;
@@ -46,9 +49,17 @@ int main(int argc, char *argv[]) {
     ros::NodeHandle nh("");
 
     
-    ros::Subscriber img_sub = nh.subscribe('/' + robot_name + COMMON_NAMES::LEFT_IMAGE_RAW_TOPIC, 1, callback); 
+    ros::Subscriber img_sub = nh.subscribe('/' + robot_name + COMMON_NAMES::LEFT_IMAGE_RAW_TOPIC, 1, img_callback); 
     
-    
+    // while(ros::ok()) 
+    // {
+    //     ros::spinOnce();
+    //     // std::cout << "Press ENTER to continue...";
+    //     // std::cin.ignore( std::numeric_limits <std::streamsize> ::max(), '\n' );
+
+    //     // cv::imwrite(dataset_path + std::to_string(num_img), cv_image);
+    //     // num_img += 1;
+    // }
 
     ros::spin();
 }
