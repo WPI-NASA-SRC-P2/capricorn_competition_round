@@ -48,10 +48,10 @@ int main(int argc, char *argv[])
     ros::Subscriber imu_sub = nh.subscribe("/" + robot_name + "/imu", 10, imu_callback);
 
     //Initialize publishers. This example create publishers to command each wheel on this robot.
-    ros::Publisher fl_speed = nh.advertise<std_msgs::Float64>("/" + robot_name + "/fl_wheel_controller/command", 10);
-    ros::Publisher fr_speed = nh.advertise<std_msgs::Float64>("/" + robot_name + "/fr_wheel_controller/command", 10);
-    ros::Publisher bl_speed = nh.advertise<std_msgs::Float64>("/" + robot_name + "/bl_wheel_controller/command", 10);
-    ros::Publisher br_speed = nh.advertise<std_msgs::Float64>("/" + robot_name + "/br_wheel_controller/command", 10);
+    ros::Publisher fl_speed = nh.advertise<std_msgs::Float64>("/" + robot_name + "/front_left_wheel/drive/command/velocity", 10);
+    ros::Publisher fr_speed = nh.advertise<std_msgs::Float64>("/" + robot_name + "/front_right_wheel/command/velocity", 10);
+    ros::Publisher bl_speed = nh.advertise<std_msgs::Float64>("/" + robot_name + "/back_left_wheel/command/velocity", 10);
+    ros::Publisher br_speed = nh.advertise<std_msgs::Float64>("/" + robot_name + "/back_right_wheel/command/velocity", 10);
 
     float wheel_effort;
 
