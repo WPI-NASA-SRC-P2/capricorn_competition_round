@@ -25,19 +25,19 @@ def template():
 
     #Initialize publishers. This example create publishers to command each wheel on this robot.
     fl_speed = rospy.Publisher('/' + robot_name + '/front_left_wheel/drive/command/velocity', Float64, queue_size=10)
-    fr_speed = rospy.Publisher('/' + robot_name + '/front_right_wheel/command/velocity', Float64, queue_size=10)
-    bl_speed = rospy.Publisher('/' + robot_name + '/back_left_wheel/command/velocity', Float64, queue_size=10)
-    br_speed = rospy.Publisher('/' + robot_name + '/back_right_wheel/command/velocity', Float64, queue_size=10)
+    fr_speed = rospy.Publisher('/' + robot_name + '/front_right_wheel/drive/command/velocity', Float64, queue_size=10)
+    bl_speed = rospy.Publisher('/' + robot_name + '/back_left_wheel/drive/command/velocity', Float64, queue_size=10)
+    br_speed = rospy.Publisher('/' + robot_name + '/back_right_wheel/drive/command/velocity', Float64, queue_size=10)
     
     #Initialize outside of try/except
-    wheel_effort = 0
+    wheel_effort = 20.0
 
     try:
         wheel_effort = rospy.get_param('~wheel_effort')
         print("Wheel effort set to " + str(wheel_effort) + " by parameter for " + robot_name)
     except KeyError:
         print("No wheel_effort param set for " + robot_name + ", defaulting to 20.0.")
-        wheel_effort = 20.0
+        wheel_effort = 0.0
         
     while not rospy.is_shutdown():
         
