@@ -10,7 +10,7 @@ prefix = "mb_"
 num_img = 000
 
 cv_image = np.zeros(shape=[512, 512, 3], dtype=np.uint8)
-dataset_path = "./"
+dataset_path = "/home/srcp2/cmp_workspace/dataset/images/"
 bridge = CvBridge()
 
 def img_callback(image):
