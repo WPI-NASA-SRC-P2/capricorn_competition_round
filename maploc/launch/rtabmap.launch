@@ -10,15 +10,9 @@
     <arg name="use_rtabmap" default="true" />
     <arg name="rtabmapviz" default="true" />    
     <arg name="rviz" default="true" />
-    <arg name="use_noisy_image" default="false" />
-    <param name="use_sim_time" type="bool" value="True"/>
+    <param name="use_sim_time" type="bool" value="true"/>
 
-    <arg name="namespace" value="/$(arg robot_name)/camera" unless="$(arg use_noisy_image)" />
-    <arg name="namespace" value="/capricorn/$(arg robot_name)/camera" if="$(arg use_noisy_image)"/>
-
-    <group if="$(arg use_noisy_image)">
-        <node name="noisy_image_eliminate" pkg="perception" type="noisy_image_eliminate" respawn="true" output="screen" args="$(arg robot_name)" />
-    </group>
+    <arg name="namespace" value="/$(arg robot_name)/camera" />
 
     <!-- Run the ROS package stereo_image_proc -->
     <group ns="$(arg namespace)">
@@ -39,7 +33,7 @@
 			<param name="Stereo/MaxDisparity" value="256.0"/>
 			<param name="Odom/ResetCountdown" value="1"/>
 	
-			<remap from="/odom" to="capricorn/$(arg robot_name)/odom/stereo_odom"/>
+			<!-- <remap from="/odom" to="capricorn/$(arg robot_name)/odom/stereo_odom"/> -->
    	<!--    <remap from="odom" to="/$(arg robot_name)/stereo_odom" /> -->
         </node>     
 
@@ -58,6 +52,8 @@
             <param name="Kp/RoiRatios" type="string" value="0.03 0.03 0.04 0.04"/>
             <param name="Kp/DetectorStrategy" type="string" value="0"/>   <!-- use SURF -->
             <param name="Kp/NNStrategy" type="string" value="1"/>         <!-- kdTree -->
+
+            <param name="Vis/FeatureType" value="2"/>
 
             <param name="SURF/HessianThreshold" type="string" value="1000"/>
         </node>
