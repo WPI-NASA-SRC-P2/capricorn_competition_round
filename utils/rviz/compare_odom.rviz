@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1/Frames1
         - /Odometry1/Shape1
         - /Odometry2/Shape1
       Splitter Ratio: 0.5
@@ -62,7 +63,7 @@ Visualization Manager:
         map:
           Value: true
         odom:
-          Value: false
+          Value: true
         small_scout_1_base_footprint:
           Value: true
         small_scout_1_bl_steering_arm_shoulder:
@@ -395,7 +396,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rtabmap_ros/OrbitOriented
-      Distance: 77.02667999267578
+      Distance: 35.67473602294922
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -403,17 +404,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 2.5527238845825195
-        Y: 1.585190773010254
-        Z: -23.691524505615234
+        X: 9.452388763427734
+        Y: 8.591553688049316
+        Z: -23.18760108947754
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3047953844070435
+      Pitch: 1.4297964572906494
       Target Frame: base_footprint
-      Yaw: 2.9404139518737793
+      Yaw: 4.7904229164123535
     Saved: ~
 Window Geometry:
   Displays:

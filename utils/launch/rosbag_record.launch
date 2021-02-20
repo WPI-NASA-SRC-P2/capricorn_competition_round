@@ -1,0 +1,14 @@
+<!--
+    Records rosbag 
+  -->
+
+<launch>
+    <arg name="robot_name" default="small_scout_1" />
+    <arg name="record_rtabmap" default="false" />
+    <arg name="file_name" default="capricorn" />
+
+    <node pkg="rosbag" type="record" name="rosbag_record_rtabmap"
+        args="record -o $(find utils)/bags/$(arg file_name)  /clock /tf /$(arg robot_name)/camera/left/image_raw /$(arg robot_name)/camera/left/camera_info /$(arg robot_name)/camera/right/image_raw /$(arg robot_name)/camera/right/camera_info /tf_static"
+        if="$(arg record_rtabmap)" />
+
+</launch>
