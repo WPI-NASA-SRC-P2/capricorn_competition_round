@@ -56,3 +56,6 @@ filename: output_file_name, eg: "test_run_1"
 ```
 roslaunch utils rosbag_record.launch robot_name:=small_scout_1 record_rtabmap:=true file_name:=test_run_1
 ```
+
+
+[Tutorial for recording Rosbag | Teleop](https://youtu.be/uRyz2Q1Ur-Q)
