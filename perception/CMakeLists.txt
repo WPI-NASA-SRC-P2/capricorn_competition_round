@@ -109,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
  LIBRARIES perception
- CATKIN_DEPENDS roscpp rospy std_msgs utils
+ CATKIN_DEPENDS roscpp rospy std_msgs utils sensor_msgs message_filters
 #  DEPENDS system_lib
 )
 
@@ -162,11 +162,6 @@ target_link_libraries(noisy_image_eliminate
 )
 
 
-add_executable(object_detection_save_image src/object_detection_save_image.cpp)
-add_dependencies(object_detection_save_image ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(object_detection_save_image
-  ${catkin_LIBRARIES}
-)
 #############
 ## Install ##
 #############
@@ -180,11 +175,6 @@ target_link_libraries(object_detection_save_image
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
-
-install(PROGRAMS
-  src/object_detection_save_image_python.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
