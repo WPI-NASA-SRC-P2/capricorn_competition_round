@@ -3,10 +3,10 @@
 
     <arg name="robot_name" default="small_scout_1" />
     <arg name="dataset_path" default="$(find utils)/dataset/" />
-    <arg name="prefix" default="mb_" />
+    <arg name="prefix" default="cp_" />
 
     <!-- Running Teleop -->
-    <node name="teleop_twist_keyboard" pkg="utils" type="od_save_image.py" args="$(arg robot_name) $(arg dataset_path) $(arg prefix)" output="screen"/>
+    <node name="teleop_twist_keyboard" pkg="utils" type="object_detection_save_image.py" args="$(arg robot_name) $(arg dataset_path) $(arg prefix)" output="screen"/>
     
     <!-- Actionlib Server -->
     <node name="navigation_actionlib_server" pkg="operations" type="navigation_actionlib_server"  args="$(arg robot_name)" output="screen"/>
