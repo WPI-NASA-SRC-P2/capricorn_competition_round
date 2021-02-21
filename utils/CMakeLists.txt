@@ -8,7 +8,12 @@ project(utils)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+roscpp
   std_msgs
+  rospy
+  cv_bridge
+  sensor_msgs
+  message_filters
 )
 
 ## System dependencies are found with CMake's conventions
@@ -103,7 +108,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES utils
- CATKIN_DEPENDS std_msgs
+ CATKIN_DEPENDS std_msgs roscpp rospy message_filters sensor_msgs
 #  DEPENDS system_lib
 )
 
@@ -148,6 +153,13 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
+
+add_executable(object_detection_save_image src/object_detection_save_image.cpp)
+add_dependencies(object_detection_save_image ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(object_detection_save_image
+  ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
@@ -161,6 +173,11 @@ include_directories(
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
+
+install(PROGRAMS
+src/object_detection_save_image_python.py
+DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
