@@ -2,7 +2,7 @@
 <launch>
 
     <arg name="robot_name" default="small_scout_1" />
-    <arg name="dataset_path" default="$(find utils)/dataset/" />
+    <arg name="dataset_path" default="$(find utils)/dataset/images/" />
     <arg name="prefix" default="cp_" />
 
     <!-- Running Teleop -->

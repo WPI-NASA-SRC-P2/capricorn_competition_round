@@ -14,13 +14,15 @@ prefix: initial letters of output file name to identify the user, for example *m
 Normal teleop operation keys
 For saving images, please press **SPACE** in the terminal
 
-All the images captured are stored in "utils/dataset/". The folder is included in .gitignore, so no rosbag will be pushed to git repository.
+All the images captured are stored in "utils/dataset/images/". The folder is included in .gitignore, so no rosbag will be pushed to git repository.
 
 Example:
 
 ```
 roslaunch utils make_dataset_object_detection.launch robot_name:=small_scout_1 prefix:=mb1_
 ```
+
+[Tutorial for making dataset](https://youtu.be/5SokPAdBn2c)
 
 ### teleop.launch
 
@@ -43,7 +45,7 @@ roslaunch utils teleop.launch
 
 ### rosbag_record.launch
 
-This file records rosbags containing topics needed for specific purpose such as rtabmap. The output file will be stored in "utils/dataset/" and the folder is included in .gitignore, so no rosbag will be pushed to git repository
+This file records rosbags containing topics needed for specific purpose such as rtabmap. The output file will be stored in "utils/bags/" and the folder is included in .gitignore, so no rosbag will be pushed to git repository
 
 Arguments:
 

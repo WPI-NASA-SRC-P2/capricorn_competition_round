@@ -1,3 +1,4 @@
 .vscode/
 utils/bags/*.bag
-utils/dataset/*.jpg
+utils/dataset/images/*.jpg
+utils/dataset/annotate/*.xml
