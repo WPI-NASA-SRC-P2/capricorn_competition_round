@@ -1,0 +1,2 @@
+float32 dist_error
+float32 theta_error
