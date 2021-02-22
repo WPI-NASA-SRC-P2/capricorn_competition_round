@@ -21,12 +21,12 @@ class actionToBePerformed
 
     //constructor with initialization list
     actionToBePerformed(std::string name) :
-        action_server_(nh, name, boost::bind(&actionToBePerformed) )
-        action_name(name)
+        action_server_(nh, name, boost::bind(&actionToBePerformed::actionCallback, this, _1), false)
+        action_name_(name)
     {
         initializeSubsribers();
         initializePublishers();
-        acion_server_.start();
+        action_server_.start();
     }
 
 
@@ -45,17 +45,28 @@ class actionToBePerformed
     }
 
     //create callback functions for initialized subsribers
+    // &goal -> pointer to goal message
     void actionCallback(const template_actionServer::template_actionServerMsgPointer &goal)
     {
-         
+        
          do
          {
              /* 
              this is where all the cool robotics stuff happens
             */
          } while ({/* condition */});
-        
+    }
+
+
+    /*
+
+    Callback Functions for initialized subscribers
+
+    */
+
 }
+        
+
 
 
 int main(int argc, char** argv)
@@ -64,9 +75,9 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "template_actionServer");
 
     //Creating an instance of the Action Class
-    actionToBePerformed action_1 
+    actionToBePerformed action_1(action_name);
 
-    //Setting the rate
+    //Setting the rate - Once every two seconds
     ros::Rate rate(0.5)
 
     int n = 0;
