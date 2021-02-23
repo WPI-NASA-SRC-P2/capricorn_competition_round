@@ -170,7 +170,7 @@ if __name__=="__main__":
     global robot_name
     global dataset_path
 
-    dataset_path = "/home/srcp2/cmp_workspace/dataset/images/"
+    dataset_path = "/home/srcp2/catkin_ws/src/capricorn_competition_round/utils/dataset/images"
     robot_name = sys.argv[1]
     dataset_path = sys.argv[2]
     prefix = sys.argv[3]
