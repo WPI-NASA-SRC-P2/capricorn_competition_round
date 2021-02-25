@@ -21,7 +21,7 @@ class ScoreMsg {
       // initObj === null is a special case for deserialization where we don't initialize fields
       this.header = null;
       this.score = null;
-      this.hauler_volatile_mass = null;
+      this.hauler_volatile_score = null;
       this.functioning_robot_score = null;
       this.types_collected = null;
       this.masses_collected_kg = null;
@@ -39,11 +39,11 @@ class ScoreMsg {
       else {
         this.score = 0.0;
       }
-      if (initObj.hasOwnProperty('hauler_volatile_mass')) {
-        this.hauler_volatile_mass = initObj.hauler_volatile_mass
+      if (initObj.hasOwnProperty('hauler_volatile_score')) {
+        this.hauler_volatile_score = initObj.hauler_volatile_score
       }
       else {
-        this.hauler_volatile_mass = 0.0;
+        this.hauler_volatile_score = 0.0;
       }
       if (initObj.hasOwnProperty('functioning_robot_score')) {
         this.functioning_robot_score = initObj.functioning_robot_score
@@ -72,8 +72,8 @@ class ScoreMsg {
     bufferOffset = std_msgs.msg.Header.serialize(obj.header, buffer, bufferOffset);
     // Serialize message field [score]
     bufferOffset = _serializer.float64(obj.score, buffer, bufferOffset);
-    // Serialize message field [hauler_volatile_mass]
-    bufferOffset = _serializer.float64(obj.hauler_volatile_mass, buffer, bufferOffset);
+    // Serialize message field [hauler_volatile_score]
+    bufferOffset = _serializer.float64(obj.hauler_volatile_score, buffer, bufferOffset);
     // Serialize message field [functioning_robot_score]
     bufferOffset = _serializer.float64(obj.functioning_robot_score, buffer, bufferOffset);
     // Serialize message field [types_collected]
@@ -91,8 +91,8 @@ class ScoreMsg {
     data.header = std_msgs.msg.Header.deserialize(buffer, bufferOffset);
     // Deserialize message field [score]
     data.score = _deserializer.float64(buffer, bufferOffset);
-    // Deserialize message field [hauler_volatile_mass]
-    data.hauler_volatile_mass = _deserializer.float64(buffer, bufferOffset);
+    // Deserialize message field [hauler_volatile_score]
+    data.hauler_volatile_score = _deserializer.float64(buffer, bufferOffset);
     // Deserialize message field [functioning_robot_score]
     data.functioning_robot_score = _deserializer.float64(buffer, bufferOffset);
     // Deserialize message field [types_collected]
@@ -119,7 +119,7 @@ class ScoreMsg {
 
   static md5sum() {
     //Returns md5sum for a message object
-    return '4b8e4cd8ac6939c1c9c24cf2755e6b99';
+    return 'ef847ed6ab4527fd804b255b1fadb1da';
   }
 
   static messageDefinition() {
@@ -138,7 +138,7 @@ class ScoreMsg {
     
     # scoring data
     float64 score # the current total score for this sim
-    float64 hauler_volatile_mass # the kgs of all the volatiles currently held in hauler bins (tie-breaker #1)
+    float64 hauler_volatile_score # the score of all the volatiles currently held in hauler bins (tie-breaker #1)
     float64 functioning_robot_score # "Number of original robotic team members still performing their intended function(s) at..." this time (tie-breaker #3)
     
     # collection data (indexes align) -- this is for competitor information and used in tie-breaking
@@ -183,11 +183,11 @@ class ScoreMsg {
       resolved.score = 0.0
     }
 
-    if (msg.hauler_volatile_mass !== undefined) {
-      resolved.hauler_volatile_mass = msg.hauler_volatile_mass;
+    if (msg.hauler_volatile_score !== undefined) {
+      resolved.hauler_volatile_score = msg.hauler_volatile_score;
     }
     else {
-      resolved.hauler_volatile_mass = 0.0
+      resolved.hauler_volatile_score = 0.0
     }
 
     if (msg.functioning_robot_score !== undefined) {

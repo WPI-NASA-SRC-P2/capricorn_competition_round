@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     vim \
     nano \
     tree  \
+    x11-apps \
     iputils-ping \
     net-tools \
     python3-rosinstall \

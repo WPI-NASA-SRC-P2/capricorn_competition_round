@@ -16,14 +16,14 @@
 
 (defclass srcp2_msgs::ScoreMsg
   :super ros::object
-  :slots (_header _score _hauler_volatile_mass _functioning_robot_score _types_collected _masses_collected_kg ))
+  :slots (_header _score _hauler_volatile_score _functioning_robot_score _types_collected _masses_collected_kg ))
 
 (defmethod srcp2_msgs::ScoreMsg
   (:init
    (&key
     ((:header __header) (instance std_msgs::Header :init))
     ((:score __score) 0.0)
-    ((:hauler_volatile_mass __hauler_volatile_mass) 0.0)
+    ((:hauler_volatile_score __hauler_volatile_score) 0.0)
     ((:functioning_robot_score __functioning_robot_score) 0.0)
     ((:types_collected __types_collected) (let (r) (dotimes (i 0) (push "" r)) r))
     ((:masses_collected_kg __masses_collected_kg) (make-array 0 :initial-element 0.0 :element-type :float))
@@ -31,7 +31,7 @@
    (send-super :init)
    (setq _header __header)
    (setq _score (float __score))
-   (setq _hauler_volatile_mass (float __hauler_volatile_mass))
+   (setq _hauler_volatile_score (float __hauler_volatile_score))
    (setq _functioning_robot_score (float __functioning_robot_score))
    (setq _types_collected __types_collected)
    (setq _masses_collected_kg __masses_collected_kg)
@@ -46,9 +46,9 @@
   (:score
    (&optional __score)
    (if __score (setq _score __score)) _score)
-  (:hauler_volatile_mass
-   (&optional __hauler_volatile_mass)
-   (if __hauler_volatile_mass (setq _hauler_volatile_mass __hauler_volatile_mass)) _hauler_volatile_mass)
+  (:hauler_volatile_score
+   (&optional __hauler_volatile_score)
+   (if __hauler_volatile_score (setq _hauler_volatile_score __hauler_volatile_score)) _hauler_volatile_score)
   (:functioning_robot_score
    (&optional __functioning_robot_score)
    (if __functioning_robot_score (setq _functioning_robot_score __functioning_robot_score)) _functioning_robot_score)
@@ -65,7 +65,7 @@
     (send _header :serialization-length)
     ;; float64 _score
     8
-    ;; float64 _hauler_volatile_mass
+    ;; float64 _hauler_volatile_score
     8
     ;; float64 _functioning_robot_score
     8
@@ -82,8 +82,8 @@
        (send _header :serialize s)
      ;; float64 _score
        (sys::poke _score (send s :buffer) (send s :count) :double) (incf (stream-count s) 8)
-     ;; float64 _hauler_volatile_mass
-       (sys::poke _hauler_volatile_mass (send s :buffer) (send s :count) :double) (incf (stream-count s) 8)
+     ;; float64 _hauler_volatile_score
+       (sys::poke _hauler_volatile_score (send s :buffer) (send s :count) :double) (incf (stream-count s) 8)
      ;; float64 _functioning_robot_score
        (sys::poke _functioning_robot_score (send s :buffer) (send s :count) :double) (incf (stream-count s) 8)
      ;; string[] _types_collected
@@ -104,8 +104,8 @@
      (send _header :deserialize buf ptr-) (incf ptr- (send _header :serialization-length))
    ;; float64 _score
      (setq _score (sys::peek buf ptr- :double)) (incf ptr- 8)
-   ;; float64 _hauler_volatile_mass
-     (setq _hauler_volatile_mass (sys::peek buf ptr- :double)) (incf ptr- 8)
+   ;; float64 _hauler_volatile_score
+     (setq _hauler_volatile_score (sys::peek buf ptr- :double)) (incf ptr- 8)
    ;; float64 _functioning_robot_score
      (setq _functioning_robot_score (sys::peek buf ptr- :double)) (incf ptr- 8)
    ;; string[] _types_collected
@@ -126,7 +126,7 @@
    self)
   )
 
-(setf (get srcp2_msgs::ScoreMsg :md5sum-) "4b8e4cd8ac6939c1c9c24cf2755e6b99")
+(setf (get srcp2_msgs::ScoreMsg :md5sum-) "ef847ed6ab4527fd804b255b1fadb1da")
 (setf (get srcp2_msgs::ScoreMsg :datatype-) "srcp2_msgs/ScoreMsg")
 (setf (get srcp2_msgs::ScoreMsg :definition-)
       "#
@@ -142,7 +142,7 @@ Header header
 
 # scoring data
 float64 score # the current total score for this sim
-float64 hauler_volatile_mass # the kgs of all the volatiles currently held in hauler bins (tie-breaker #1)
+float64 hauler_volatile_score # the score of all the volatiles currently held in hauler bins (tie-breaker #1)
 float64 functioning_robot_score # \"Number of original robotic team members still performing their intended function(s) at...\" this time (tie-breaker #3)
 
 # collection data (indexes align) -- this is for competitor information and used in tie-breaking
@@ -168,6 +168,6 @@ string frame_id
 
 
 
-(provide :srcp2_msgs/ScoreMsg "4b8e4cd8ac6939c1c9c24cf2755e6b99")
+(provide :srcp2_msgs/ScoreMsg "ef847ed6ab4527fd804b255b1fadb1da")
 
 

@@ -23,7 +23,8 @@
       <ode>
         <solver>
           <type>quick</type>
-          <iters>223</iters>
+          <iters>75</iters>
+          <sor>1.15</sor>
         </solver>
       </ode>
     </physics>
@@ -86,7 +87,7 @@
     <!-- Include the volatile spawner -->
     <plugin name="volatile_spawner_plugin" filename="libVolatileSpawner.so">
         <total_volatile_count>72</total_volatile_count> <!-- must be a multiple of type-count -->
-        <volatile_radius>1.0</volatile_radius>
+        <volatile_radius>2.0</volatile_radius>
         <max_spawn_radius>93</max_spawn_radius> <!-- maximum spawning radius in meters -->
         <min_spawn_radius>28</min_spawn_radius> <!-- minimum spawning radius in meters -->
         <!-- This should be a large negative value, but this visualization is for testing purposes -->

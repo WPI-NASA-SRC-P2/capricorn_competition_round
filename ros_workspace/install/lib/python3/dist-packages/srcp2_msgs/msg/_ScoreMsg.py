@@ -9,7 +9,7 @@ import struct
 import std_msgs.msg
 
 class ScoreMsg(genpy.Message):
-  _md5sum = "4b8e4cd8ac6939c1c9c24cf2755e6b99"
+  _md5sum = "ef847ed6ab4527fd804b255b1fadb1da"
   _type = "srcp2_msgs/ScoreMsg"
   _has_header = True  # flag to mark the presence of a Header object
   _full_text = """#
@@ -25,7 +25,7 @@ Header header
 
 # scoring data
 float64 score # the current total score for this sim
-float64 hauler_volatile_mass # the kgs of all the volatiles currently held in hauler bins (tie-breaker #1)
+float64 hauler_volatile_score # the score of all the volatiles currently held in hauler bins (tie-breaker #1)
 float64 functioning_robot_score # "Number of original robotic team members still performing their intended function(s) at..." this time (tie-breaker #3)
 
 # collection data (indexes align) -- this is for competitor information and used in tie-breaking
@@ -47,7 +47,7 @@ time stamp
 #Frame this data is associated with
 string frame_id
 """
-  __slots__ = ['header','score','hauler_volatile_mass','functioning_robot_score','types_collected','masses_collected_kg']
+  __slots__ = ['header','score','hauler_volatile_score','functioning_robot_score','types_collected','masses_collected_kg']
   _slot_types = ['std_msgs/Header','float64','float64','float64','string[]','float64[]']
 
   def __init__(self, *args, **kwds):
@@ -58,7 +58,7 @@ string frame_id
     changes.  You cannot mix in-order arguments and keyword arguments.
 
     The available fields are:
-       header,score,hauler_volatile_mass,functioning_robot_score,types_collected,masses_collected_kg
+       header,score,hauler_volatile_score,functioning_robot_score,types_collected,masses_collected_kg
 
     :param args: complete set of field values, in .msg order
     :param kwds: use keyword arguments corresponding to message field names
@@ -71,8 +71,8 @@ string frame_id
         self.header = std_msgs.msg.Header()
       if self.score is None:
         self.score = 0.
-      if self.hauler_volatile_mass is None:
-        self.hauler_volatile_mass = 0.
+      if self.hauler_volatile_score is None:
+        self.hauler_volatile_score = 0.
       if self.functioning_robot_score is None:
         self.functioning_robot_score = 0.
       if self.types_collected is None:
@@ -82,7 +82,7 @@ string frame_id
     else:
       self.header = std_msgs.msg.Header()
       self.score = 0.
-      self.hauler_volatile_mass = 0.
+      self.hauler_volatile_score = 0.
       self.functioning_robot_score = 0.
       self.types_collected = []
       self.masses_collected_kg = []
@@ -108,7 +108,7 @@ string frame_id
         length = len(_x)
       buff.write(struct.Struct('<I%ss'%length).pack(length, _x))
       _x = self
-      buff.write(_get_struct_3d().pack(_x.score, _x.hauler_volatile_mass, _x.functioning_robot_score))
+      buff.write(_get_struct_3d().pack(_x.score, _x.hauler_volatile_score, _x.functioning_robot_score))
       length = len(self.types_collected)
       buff.write(_struct_I.pack(length))
       for val1 in self.types_collected:
@@ -150,7 +150,7 @@ string frame_id
       _x = self
       start = end
       end += 24
-      (_x.score, _x.hauler_volatile_mass, _x.functioning_robot_score,) = _get_struct_3d().unpack(str[start:end])
+      (_x.score, _x.hauler_volatile_score, _x.functioning_robot_score,) = _get_struct_3d().unpack(str[start:end])
       start = end
       end += 4
       (length,) = _struct_I.unpack(str[start:end])
@@ -195,7 +195,7 @@ string frame_id
         length = len(_x)
       buff.write(struct.Struct('<I%ss'%length).pack(length, _x))
       _x = self
-      buff.write(_get_struct_3d().pack(_x.score, _x.hauler_volatile_mass, _x.functioning_robot_score))
+      buff.write(_get_struct_3d().pack(_x.score, _x.hauler_volatile_score, _x.functioning_robot_score))
       length = len(self.types_collected)
       buff.write(_struct_I.pack(length))
       for val1 in self.types_collected:
@@ -238,7 +238,7 @@ string frame_id
       _x = self
       start = end
       end += 24
-      (_x.score, _x.hauler_volatile_mass, _x.functioning_robot_score,) = _get_struct_3d().unpack(str[start:end])
+      (_x.score, _x.hauler_volatile_score, _x.functioning_robot_score,) = _get_struct_3d().unpack(str[start:end])
       start = end
       end += 4
       (length,) = _struct_I.unpack(str[start:end])

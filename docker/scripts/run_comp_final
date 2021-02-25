@@ -12,6 +12,7 @@ cd $_this_dir
 
 # Source helper scripts
 source "srcp2_setup.bash"
+source "gpu_and_x.bash"
 
 image_tag="scheducation/srcp2_comp:final_competitor"
 
@@ -27,6 +28,7 @@ cmp_volumes=""
 
 # Main SIM Ros Master Network Name
 simalias_name="simmaster"
+cmpalias_name="cmpsolution"
 srcp2net_name="srcp2net"
 
 function help(){
@@ -181,15 +183,34 @@ echo -e "${B}From Container:${rs}"
 echo
 
 
-#    $cmp_volumes \
+# X Server / Display 
+if ! x_host_setup; then
+    echo -e "$echo_error Host X-Server setup failed"
+    exit 1
+fi
+# XServer
+xsock="/tmp/.X11-unix"
+xauth="/tmp/.docker.xauth"
+echo -e "$echo_info X Display ${b}Setup Done${rs}"
+
+
 
 
 docker run --rm  \
     --name $cmp_container_name\
     --user 1001:1001 \
     $interactive \
+    --env="DISPLAY"=$DISPLAY \
+    --volume="/etc/group:/etc/group:ro"   \
+    --volume="/etc/passwd:/etc/passwd:ro" \
+    --volume="/etc/shadow:/etc/shadow:ro" \
+    --env=XAUTHORITY=$xauth \
+    --volume=$xsock:$xsock:rw \
+    --volume=$xauth:$xauth:rw \
+    --volume=/dev/log:/dev/log:rw \
+    --device=/dev/dri:/dev/dri \
     --network $srcp2net_name \
-    --network-alias $simalias_name \
+    --network-alias $cmpalias_name \
     --env=ROS_MASTER_URI="http://${simalias_name}:11311" \
     --cpus=$cpus \
     --memory=$mem \

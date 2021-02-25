@@ -50,13 +50,13 @@ function spawn(){
 
     case $robot_class in
         "small_scout")
-            origin_x=$SRCP2_SPAWN_CENTER_X
+            origin_x=$(echo $SRCP2_SPAWN_CENTER_X + 10.0| bc)
             ;;
         "small_excavator")
-            origin_x=$(echo $SRCP2_SPAWN_CENTER_X - $uniform_model_clearance | bc)
+            origin_x=$(echo $SRCP2_SPAWN_CENTER_X - $uniform_model_clearance  + 10.0| bc)
             ;;
         "small_hauler")
-            origin_x=$(echo $SRCP2_SPAWN_CENTER_X - 2.0*$uniform_model_clearance | bc)
+            origin_x=$(echo $SRCP2_SPAWN_CENTER_X - 2.0*$uniform_model_clearance  + 10.0| bc)
             ;;
         *)
             echo -e "$echo_error robot class \"$robot_class\" unknown"
@@ -68,7 +68,7 @@ function spawn(){
         gazebo_model_name="${robot_class}_${i}"
         echo -e "$echo_info spawning \"$gazebo_model_name\" into sim"
 
-        y=$(echo "$origin_y + $i*-$uniform_model_clearance" | bc)
+        y=$(echo "$origin_y - $i*-$uniform_model_clearance" | bc)
         origin_yaw=$(echo "scale=3;3.14*$SRCP2_SEED_FACTOR / 32767" | bc)    
         pose="-x $origin_x -y $y -z $origin_z -R 0 -P 0 -Y $origin_yaw"
 
@@ -103,8 +103,8 @@ origin_x=$SRCP2_SPAWN_CENTER_Y
 # Just make the Repair far enough from the last bots
 k_x_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
 k_y_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
-x_rs=$(echo "$origin_x + (1.5+$k_x_rand)*$uniform_model_clearance" | bc)
-y_rs=$(echo "$origin_y + (1.5+$k_y_rand)*$uniform_model_clearance" | bc)
+x_rs=$(echo "$origin_x - (1.5+$k_x_rand)*$uniform_model_clearance" | bc)
+y_rs=$(echo "$origin_y - (1.5+$k_y_rand)*$uniform_model_clearance" | bc)
 yaw_rs=$(echo "scale=3;3.14*$SRCP2_SEED_FACTOR / 32767" | bc)
 
 pose_rs="-x $x_rs -y $y_rs -z 0.65 -R 0 -P 0 -Y $yaw_rs"
@@ -118,8 +118,8 @@ fi
 # Just make the Processing plant far enough from the last repair station
 k_x_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
 k_y_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
-x_pp=$(echo "$origin_x + (1.5+$k_x_rand)*$uniform_model_clearance"    | bc)
-y_pp=$(echo "$origin_y + (1.5+$k_y_rand)*$uniform_model_clearance*-1" | bc)
+x_pp=$(echo "$origin_x - (1.5+$k_x_rand)*$uniform_model_clearance"    | bc)
+y_pp=$(echo "$origin_y - (1.5+$k_y_rand)*$uniform_model_clearance*-1" | bc)
 yaw_pp=$(echo "scale=3; 1.57+0.125*3.14*$SRCP2_SEED_FACTOR / 32767" | bc)
 
 pose_pp="-x $x_pp -y $y_pp -z 0.45 -R 0 -P 0 -Y $yaw_pp"

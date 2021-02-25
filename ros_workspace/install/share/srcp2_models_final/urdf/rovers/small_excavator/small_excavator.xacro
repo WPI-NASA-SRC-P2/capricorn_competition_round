@@ -61,7 +61,7 @@
                     wrist_pitch_joint,
                     spawning_zone_joint
             </jointName>
-            <updateRate>15</updateRate>
+            <updateRate>100</updateRate>
             <alwaysOn>true</alwaysOn>
         </plugin>
     </gazebo>

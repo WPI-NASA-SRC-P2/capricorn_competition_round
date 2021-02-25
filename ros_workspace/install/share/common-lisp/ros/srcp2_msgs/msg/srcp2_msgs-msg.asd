@@ -11,6 +11,8 @@
     (:file "_package_ExcavatorScoopMsg" :depends-on ("_package"))
     (:file "ScoreMsg" :depends-on ("_package_ScoreMsg"))
     (:file "_package_ScoreMsg" :depends-on ("_package"))
+    (:file "SystemMonitorMsg" :depends-on ("_package_SystemMonitorMsg"))
+    (:file "_package_SystemMonitorMsg" :depends-on ("_package"))
     (:file "VolSensorMsg" :depends-on ("_package_VolSensorMsg"))
     (:file "_package_VolSensorMsg" :depends-on ("_package"))
   ))
