@@ -1,12 +1,13 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
+#include <actionlib_tutorials/FibonacciAction.h>
 
+//Class Name - Action to be performed
 //Class containing  Action Server methods
-class actionToBePerformed
+class FibonacciAction
 {
     protected:
-
-    //create a nodehandle to create subscribers and publishers
+    //create a nodehandle to be able create subscribers and publishers
     ros::NodeHandle nh;
 
     //declare a simple action server type object
@@ -18,9 +19,8 @@ class actionToBePerformed
 
 
     public:
-
     //constructor with initialization list
-    actionToBePerformed(std::string name) :
+    FibonacciAction(std::string name) :
         action_server_(nh, name, boost::bind(&actionToBePerformed::actionCallback, this, _1), false)
         action_name_(name)
     {
