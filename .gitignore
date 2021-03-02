@@ -2,3 +2,4 @@
 utils/bags/*.bag
 utils/dataset/images/*.jpg
 utils/dataset/annotate/*.xml
+perception/src/__pycache__/

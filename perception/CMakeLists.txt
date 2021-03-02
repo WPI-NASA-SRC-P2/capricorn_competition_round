@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   cv_bridge
+  message_generation
   sensor_msgs
   std_msgs
   message_filters
@@ -77,6 +78,13 @@ find_package(catkin REQUIRED COMPONENTS
 #   std_msgs
 # )
 
+## Generate messages in the 'msg' folder
+add_message_files(
+  FILES
+  Object.msg
+  Objects.msg
+)
+
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
@@ -96,6 +104,13 @@ find_package(catkin REQUIRED COMPONENTS
 #   cfg/DynReconf1.cfg
 #   cfg/DynReconf2.cfg
 # )
+
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -175,6 +190,12 @@ target_link_libraries(noisy_image_eliminate
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
+
+
+install(PROGRAMS
+src/object_detection.py
+DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
