@@ -6,25 +6,12 @@
   NASA SPACE ROBOTICS CHALLENGE -->
 
 <launch>
-
     <arg name="robot_name" default="small_scout_1" />
-    <arg name="node_start_delay" default="5.0" /> 
     <arg name="path_to_model" default='$(find perception)/model' /> 
     <arg name="path_to_labelmap" default='$(find perception)/model/saved_model.pbtxt' /> 
 
     <arg name="namespace" value="/$(arg robot_name)/camera" />
-    <!-- <include file="$(find maploc)/launch/rtabmap.launch" >
-        <arg name="robot_name" value="$(arg robot_name)"/>
-        <arg name="use_rtabmap" value="false"/>
-        <arg name="rtabmapviz" default="false" />    
-        <arg name="rviz" default="false" />
-    </include> -->
-    
-    <group ns="$(arg namespace)">
-        <!-- To get camera info, the stereo_image_proc node must run within the /robot/camera namespace, or there needs to be a LOT of remapping. -->
-        <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" />	
-    </group>
-    
-    <node name="object_detection" pkg="perception" type="object_detection_cap.py" output="screen" args="$(arg robot_name) $(arg path_to_model) $(arg path_to_labelmap)" />
 
+    <node pkg="stereo_image_proc" ns="$(arg namespace)" type="stereo_image_proc" name="stereo_image_proc" />	
+    <node name="object_detection" pkg="perception" type="object_detection_cap.py" output="screen" args="$(arg robot_name) $(arg path_to_model) $(arg path_to_labelmap)" />
 </launch>

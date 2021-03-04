@@ -3,7 +3,6 @@ import rospy
 import sys
 import message_filters
 import math
-import time
 
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, CameraInfo
@@ -11,6 +10,8 @@ from stereo_msgs.msg import DisparityImage
 from perception.msg import Object
 from perception.msg import Objects
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 import tensorflow as tf
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import label_map_util
@@ -29,9 +30,21 @@ cy = K[5]
 height = 480
 width = 640
 
-def detection_callback(image, disparity):
-    image_np = bridge.imgmsg_to_cv2(image,  "bgr8")
-    disp_img = bridge.imgmsg_to_cv2(disparity.image,  "32FC1")    
+processing_lock = False
+global_image = None
+global_disparity = None
+
+UPDATE_HZ = 20.0
+
+def detection_algorithm():
+    rospy.loginfo_once("Object Detection Algorithm Working")
+
+    image = global_image
+    disparity = global_disparity
+
+    processing_lock = True
+    image_np = bridge.imgmsg_to_cv2(image, "bgr8")
+    disp_img = bridge.imgmsg_to_cv2(disparity.image, "32FC1")    
 
     input_tensor = tf.convert_to_tensor(image_np)
     input_tensor = input_tensor[tf.newaxis,...]
@@ -83,8 +96,6 @@ def detection_callback(image, disparity):
             centerX = int(box[i,1] + (box[i,3] - box[i,1])/2)
             centerY = int(box[i,0] + (box[i,2] - box[i,0])/2)
 
-            # print("Center Coordinates: ({}, {})".format(centerX, centerY))
-            
             low_x = int(box[i,1])
             high_x = int(box[i,3])
             min_disp = disp_img[centerY, centerX]
@@ -156,34 +167,51 @@ def detection_callback(image, disparity):
     msg = bridge.cv2_to_imgmsg(image_np)
     img_pub.publish(msg)
     objects_pub.publish(objects_msg)
+    processing_lock = False
+
+def detection_callback(image, disparity):    
+    rospy.loginfo_once("Callback Working")
+
+    global global_image
+    global global_disparity
+    global_image = image
+    global_disparity = disparity
 
 def init_object_detection(path_to_model, path_to_label_map):
+    update_rate = rospy.Rate(UPDATE_HZ)
+
+    image_sub_left = message_filters.Subscriber('/' + robot_name + '/camera/left/image_raw', Image)
+    disp_sub = message_filters.Subscriber('/' + robot_name + '/camera/disparity', DisparityImage)
+    ts = message_filters.ApproximateTimeSynchronizer([image_sub_left, disp_sub], 1, 1, allow_headerless=True) 
+
+    ts.registerCallback(detection_callback)
+
+    global img_pub
+    global objects_pub
+
+    img_pub = rospy.Publisher('/capricorn/'+robot_name+'/object_detection/image', Image, queue_size=10)
+    objects_pub = rospy.Publisher('/capricorn/'+robot_name+'/object_detection/objects', Objects, queue_size=10)
+
     global model_fn
     tf.keras.backend.clear_session()
     model = tf.saved_model.load(str.format(path_to_model))
     model_fn = model.signatures['serving_default']
 
-    image_sub_left = message_filters.Subscriber('/' + robot_name + '/camera/left/image_raw', Image)
-    disp_sub = message_filters.Subscriber('/' + robot_name + '/camera/disparity', DisparityImage)
-    ts = message_filters.ApproximateTimeSynchronizer([image_sub_left, disp_sub], 1, 0.1, allow_headerless=True)
-
-    global img_pub
-    global objects_pub
-    img_pub = rospy.Publisher('/capricorn/'+robot_name+'/object_detection/image', Image, queue_size=10)
-    objects_pub = rospy.Publisher('/capricorn/'+robot_name+'/object_detection/objects', Objects, queue_size=10)
-
     global category_index
     category_index = label_map_util.create_category_index_from_labelmap(str.format(path_to_label_map), use_display_name=True)
-    print("Registering loop callback for {}".format(robot_name))        
-    ts.registerCallback(detection_callback)
-    rospy.spin()
+    rospy.loginfo("Registering loop callback for {}".format(robot_name))       
 
-if __name__ == "__main__":    
-    time.sleep(2)
+    while not rospy.is_shutdown():
+        if(not processing_lock and global_disparity is not None and global_image is not None):
+            detection_algorithm()
+        update_rate.sleep()
+
+if __name__ == "__main__":   
     global robot_name
     robot_name = sys.argv[1]
     path_to_model = sys.argv[2]
     path_to_label_map = sys.argv[3]
 
-    rospy.init_node(robot_name + '_object_detection')
+    rospy.init_node(robot_name + '_object_detection', anonymous = True)
+    
     init_object_detection(path_to_model, path_to_label_map)
