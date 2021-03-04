@@ -54,11 +54,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  TrajectoryWithVelocities.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -81,11 +80,6 @@ generate_messages(
   geometry_msgs
 )
 
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -180,6 +174,12 @@ target_link_libraries(navigation_client
   ${catkin_LIBRARIES}
 )
 
+add_executable(trajectory_processor src/trajectory_processor.cpp)
+add_dependencies(trajectory_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(trajectory_processor
+  ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
@@ -191,7 +191,7 @@ target_link_libraries(navigation_client
 ## in contrast to setup.py, you can choose the destination
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS navigation_actionlib_server navigation_client
+install(TARGETS navigation_actionlib_server navigation_client trajectory_processor
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
