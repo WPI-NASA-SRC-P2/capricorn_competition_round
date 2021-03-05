@@ -13,7 +13,8 @@
     <xacro:arg name="name" 		default="processing_plant"/>
     <xacro:arg name="len" 		default="5.40"/>
     <xacro:arg name="rad" 		default="1.801"/>
-    <xacro:arg name="zoffset"	default="0.50"/> 
+    <xacro:arg name="zoffset"	default="0.60"/>
+    <xacro:arg name="zoffset_collision"	default="1.60"/>  
  
     <!-- Main Link  -->
     <link name="$(arg name)_link">
@@ -31,19 +32,18 @@
         </inertial>
 
         <collision>
-            <origin xyz="0 0 1.60" 
-                    rpy="0 0 0"/>
+            <origin xyz="0 0 $(arg zoffset_collision)" 
+                    rpy="0 0 -${pi/2}"/>
             <geometry>
                 <cylinder 
                     length="$(arg len)"
                     radius="$(arg rad)"/>
-  
             </geometry>
         </collision>
 
         <visual>
             <origin xyz="0 0 $(arg zoffset)" 
-                    rpy="0 0 0"/>
+                    rpy="0 0 -${pi/2}"/>
             <geometry>
                 <mesh
                     filename = "package://srcp2_models_final/meshes/landers/processing/ProcessingPlant3.dae"

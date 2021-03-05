@@ -33,9 +33,9 @@
             <heightmap>
               <use_terrain_paging>false</use_terrain_paging>
               <texture>
-                <diffuse>file://lunar_gravel.png</diffuse>
-                <normal> file://lunar_gravel_normal.png</normal>
-                <size>5</size>
+                <diffuse>file://Lunarsurface1000x1000.png</diffuse>
+                <normal> file://Lunarsurface1000x1000NormalMap.png</normal>
+                <size>20</size>
               </texture>
               <uri>file://runtime_heightmap.png</uri>
               <size>200 200 3</size>

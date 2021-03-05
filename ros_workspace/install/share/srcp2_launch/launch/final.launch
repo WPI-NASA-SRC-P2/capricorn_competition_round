@@ -16,6 +16,9 @@
   <arg name="timeout" default="$(env SRCP2_DURATION)"/>
   <arg name="seed"    default="$(env SRCP2_SEED)"/>
   <arg name="world"   default="$(find srcp2_launch)/worlds/final.world"/>
+  
+  <arg name="run_endless"    default="$(env SRCP2_RUN_ENDLESS)"/>
+  <arg name="system_monitor_enabled"    default="$(env SRCP2_SYSTEM_MONITOR_ENABLED)"/>
 
   <!-- hard-coded default args -->
   <arg name="spawning_delay" default="10.0"/>
@@ -23,6 +26,9 @@
   <!-- global ROS parameters -->
   <param name="spawning_delay" value="$(arg spawning_delay)" />
   <param name="timeout"        value="$(arg timeout)" />
+
+  <param name="run_endless"        value="$(arg run_endless)" />
+  <param name="system_monitor_enabled"        value="$(arg system_monitor_enabled)" />
 
   <!-- start simulation world, pass GUI, physics and GZserver options -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">

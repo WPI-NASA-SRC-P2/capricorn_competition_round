@@ -13,7 +13,8 @@
     <xacro:arg name="name" 		default="repair_station"/>
     <xacro:arg name="len" 		default="4.30"/>
     <xacro:arg name="rad" 		default="3.194"/>
-    <xacro:arg name="zoffset"	default="2.68"/> <!-- Close to Half Len-->
+    <xacro:arg name="zoffset"	default="3.10"/> 
+    <xacro:arg name="zoffset_collision"	default="2.05"/> 
 
     <!-- Main Link  -->
     <link name="$(arg name)_link">
@@ -31,7 +32,7 @@
         </inertial>
 
         <collision>
-            <origin xyz="0 0 1.6" 
+            <origin xyz="0 0 $(arg zoffset_collision)" 
                     rpy="0 0 0"/>
             <geometry>
                 <cylinder 
@@ -45,7 +46,7 @@
                     rpy="0 0 0"/>
             <geometry>
                 <mesh
-                    filename = "package://srcp2_models_final/meshes/landers/repair/RepairAndRecharge.dae"
+                    filename = "package://srcp2_models_final/meshes/landers/repair/repair-and-recharge3.dae"
                     scale    = "1 1 1"/>
             </geometry>
         </visual>
