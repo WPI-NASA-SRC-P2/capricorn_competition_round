@@ -11,57 +11,46 @@
 class pathPlanner
 {
 
-/**
- * @brief  Declare the private variables, functions and methods here.
- *         Variables, functions and methods here cannot be accessed from outside the class
- * 
- */
+    /**
+    * @brief  Declare the private variables, functions and methods here.
+    *         Variables, functions and methods here cannot be accessed from outside the class
+    * 
+    */
 private:
+    // Private variable
+    // Variable names must be
+    std::string team_name;
 
-  // Private variable
-  // Variable names must be 
-  std::string team_name;
-
-
-/**
- * @brief Declare the public variables, functions and methods here.
- *        Things here can be accessed from outside the class.
- * 
- */
+    /**
+    * @brief Declare the public variables, functions and methods here.
+    *        Things here can be accessed from outside the class.
+    * 
+    */
 public:
-  /**
-   * @brief Construct a new Template Class object
+    /**
+   * @brief Constructor
    * 
    */
-  pathPlanner();
+    pathPlanner();
 
-  /**
-   * @brief Destroy the Template Class object
-   *        Pointers, threads etc used in the class must be delted in the destructor
-   * 
-   */
-  ~pathPlanner();
-  
+    /**
+    * @brief Destroy the Template Class object
+    *        Pointers, threads etc used in the class must be delted in the destructor
+    * 
+    */
+    ~pathPlanner();
 
-  // Functions and Methods should be camelCased with first letter lower-cased 
-  // Getters and Setters for interacting with the private variables/attributes
-  // https://www.w3schools.com/cpp/cpp_encapsulation.asp
-  
-  /**
-   * @brief Get the Team Name from the class object
-   * 
-   * @return std::string returns the team name
-   */
-  std::string cspace();
+    // Functions and Methods should be camelCased with first letter lower-cased
+    // Getters and Setters for interacting with the private variables/attributes
+    // https://www.w3schools.com/cpp/cpp_encapsulation.asp
 
-  /**
-   * @brief Set the team name
+    /**
+   * @brief Calculate the c-space from the occupancy grid
    * 
-   * @param string Input which will set the Team Name
-   *               Notice that the variable is passed by reference and is const.
-   *               https://www.learncpp.com/cpp-tutorial/passing-arguments-by-reference/
+   * @return void  - publishes the updated occupancy grid to a "cspace" topic
    */
-  void setTeamName(const std::string& input_string);
+    void cSpace();
+
 };
 
 #endif // TEMPLATE_CLASS_H
