@@ -56,9 +56,13 @@ int main(int argc, char** argv)
     // Subscribing to teleop topic
     ros::Subscriber sub = nh.subscribe("/cmd_vel", 1000, chatterCallback);
 
+    std::cout << "Nav client: Instantiating client instance" << std::endl;
+
     // initialize client
     client = new Client(NAVIGATION_ACTIONLIB, true);
+    std::cout << "Waiting for server..." << std::endl;
     client->waitForServer();
+    std::cout << "Done waiting. Spinning" << std::endl;
 
     ros::spin();
     return 0;

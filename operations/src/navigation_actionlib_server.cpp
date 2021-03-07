@@ -1,6 +1,6 @@
-#include "ros/ros.h"
+#include <ros/ros.h>
 
-#include "std_msgs/String.h"
+#include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
 #include <string.h>
 #include <sensor_msgs/Imu.h>
@@ -12,6 +12,8 @@
 #include <operations/navigation_algorithm.h>
 #include <operations/NavigationAction.h>  // Note: "Action" is appended
 
+#include <gazebo_msgs/ModelStates.h>
+
 
 typedef actionlib::SimpleActionServer<operations::NavigationAction> Server;
 using namespace COMMON_NAMES;
@@ -19,8 +21,13 @@ using namespace COMMON_NAMES;
 ros::Publisher front_left_vel_pub_, front_right_vel_pub_, back_left_vel_pub_, back_right_vel_pub_;
 ros::Publisher front_left_steer_pub_, front_right_steer_pub_, back_left_steer_pub_, back_right_steer_pub_;
 
+ros::Subscriber update_current_robot_pose;
+
 // Declared globally so that execute() can access. TODO: probably temporary
 std::string robot_name;
+
+// Declare robot pose to be used globally 
+geometry_msgs::PoseStamped robot_pose;
 
 /*******************************************************************************/
 /****************** I N I T I A L I Z E   P U B L I S H E R S ******************/
@@ -59,6 +66,33 @@ void initPublishers(ros::NodeHandle &nh, const std::string &robot_name)
 	initSteerPublisher(nh, robot_name);
 }
 
+void updateRobotPose(const gazebo_msgs::ModelStates::ConstPtr &msg)
+{
+	for (int i = 0; i < msg->name.size(); i++)
+	{
+		if (strcmp(msg->name[i].c_str(), robot_name.c_str()) == 0)
+		{
+			std_msgs::Header* robot_header = new std_msgs::Header();
+			robot_header->frame_id = robot_name + "_small_chassis";
+			
+			robot_pose.header = *robot_header;
+			robot_pose.pose = msg->pose[i];
+		}
+	}
+}
+
+/**
+ * @brief Initialize the subscriber for robot position
+ * 
+ */
+void initSubscribers(ros::NodeHandle &nh, std::string &robot_name)
+{
+	/*
+	 * WARNING WARNING WARNING
+	 * If we use this in submission-ready code, we will get disqualified
+	 */
+	update_current_robot_pose = nh.subscribe("/gazebo/model_states", 1000, updateRobotPose);
+}
 
 
 /*********************************************************************/
@@ -145,109 +179,134 @@ void moveRobotWheels(const float velocity)
 	publishMessage(back_right_vel_pub_, velocity);
 }
 
-void followTrajectory(operations::TrajectoryWithVelocities* traj)
-{
-	std::cout << "Following custom trajectory message" << std::endl;
-
-	std::cout << "First x coordinate: " << traj->waypoints[0].pose.position.x << std::endl;
-  std::cout << "Frame of reference: " << traj->waypoints[0].header.frame_id << std::endl;
-}
-
-void followManually(float forward_velocity, float angular_velocity)
-{
-	float radius = 2.5, velocity;
-	
-	// If the forward velocity is 0, then the robot will rotate about its center,
-	// Hence the radius of rotation will be 0 and rotational velocity is
-	if(forward_velocity==0)
-	{
-		velocity = -angular_velocity;
-		radius = 0;
-	} 
-
-	// If the goal has forward velocity, then the robot should take radial turn
-	// Velocity will be the same as forward_velocity
-	else
-	{
-		velocity = forward_velocity;
-		radius = std::copysign(radius, angular_velocity);
-	}
-
-	// This will give us the steering angles and the velocities needed for taking the radial turn
-	std::vector<float> steering_angles;
-	std::vector<float> velocities;
-	steering_angles = NavigationAlgo::getSteeringAnglesRadialTurn(radius);
-	velocities = NavigationAlgo::getDrivingVelocitiessRadialTurn(radius, velocity);
-
-	// Steer and move the robot.
-	steerRobot(steering_angles);
-	moveRobotWheels(velocities);
-}
-
 /*******************************************************************/
 /****************** P U B L I S H E R   L O G I C ******************/
 /*******************************************************************/
 
-/**
- * @brief executes the actionlib goal request
- * 
- * @param goal Goal requestedfor the action:
- *             Goal components:
- *                float32 forward_velocity  
- *                float32 sideways_velocity  
- *                geometry_msgs/Point point
- *                geometry_msgs/Pose pose
- * @param action_server Action Server object 
- */
-void execute(const operations::NavigationGoalConstPtr& goal, Server* action_server)  
+operations::TrajectoryWithVelocities* sendGoalToPlanner(const operations::NavigationGoalConstPtr& goal)
 {
-	// Velocities 
-	float forward_velocity, angular_velocity;
-	forward_velocity = goal->forward_velocity;
-	angular_velocity = goal->angular_velocity;
+	operations::TrajectoryWithVelocities* traj = new operations::TrajectoryWithVelocities();
+	return traj;
+}
 
-	std::cout << "Execute called" << std::endl;
+geometry_msgs::PoseStamped* getRobotPose()
+{
+ 	return &robot_pose;
+}
 
+float changeInHeading(geometry_msgs::PoseStamped* current_robot_pose, geometry_msgs::PoseStamped* current_waypoint)
+{
+	/*take the current robot's pose and the current waypoint we want to get to
+	convert from quaternion to euler and create an array of them
+	calculate the difference in angle between the two for the yaw
+	return that value */
+	
+	// std::vector<double> current_robot_pose_angles = calculation_function(current_robot_pose);
+	// std::vector<double> current_waypoint_angles = calculation_function(current_waypoint);
+	// double change_in_yaw = current_robot_pose_angles[0] - current_waypoint_angles[0];
+	// return change_in_yaw;
+}
 
-	// If the goal has sideways velocity, then the robots should take radial turn
-	if (angular_velocity != 0)
+bool rotateRobot(double delta_heading)
+{
+	/*
+	use the current delta_heading as an input 
+	if there is a need to rotate the robot then return true 
+	else return false
+	*/
+	return true;
+}
+
+float changeInPosition(geometry_msgs::PoseStamped* current_robot_pose, geometry_msgs::PoseStamped* target_robot_pose)
+{
+	/*
+	Take the current and target pose, return the euclidean distance between them.
+	*/
+	float delta_x = current_robot_pose->pose.position.x-target_robot_pose->pose.position.x;
+	float delta_y = current_robot_pose->pose.position.y-target_robot_pose->pose.position.y;
+	return pow(pow(delta_x, 2) + pow(delta_y, 2), 0.5);
+}
+
+bool driveToGoal(double delta_distance)
+{
+	/*
+	
+	*/
+	return true;
+}
+
+void execute(const operations::NavigationGoalConstPtr& goal, Server* action_server)
+{
+	//Forward goal to local planner
+	//Read trajectory list
+	operations::TrajectoryWithVelocities* trajectory = sendGoalToPlanner(goal);
+
+	//Loop over trajectories
+	for(int i = 0; i < trajectory->waypoints.size(); i++)
 	{
-		followManually(forward_velocity, angular_velocity);
+		//Current waypoint comprehension
+		geometry_msgs::PoseStamped* current_waypoint = &trajectory->waypoints[i];
+		float current_velocity = trajectory->velocities[i].data;
+
+		//Get current pose + position from odometry
+		geometry_msgs::PoseStamped* current_robot_pose = getRobotPose();
+
+		//Calculate delta heading
+		float delta_heading = changeInHeading(current_robot_pose, current_waypoint);
+
+		//Turn to heading
+		bool turned_successfully = rotateRobot(delta_heading);
+
+		if(!turned_successfully)
+		{
+			//AAAH ERROR
+			std::cout << "Turn to waypoint " << i << " did not succeed." << std::endl;
+
+			//TODO: We may need to add more logic here
+			return;
+		}
+
+		//Get current pose + position from odometry
+		current_robot_pose = getRobotPose();
+
+		//Calculate delta distance
+		float delta_distance = changeInPosition(current_robot_pose, current_waypoint);
+
+		//Drive to goal
+		bool drove_successfully = driveToGoal(delta_distance);
+
+		if(!drove_successfully)
+		{
+			//AAAH ERROR
+			std::cout << "Drive to waypoint " << i << " did not succeed." << std::endl;
+
+			//TODO: We may need to add more logic here
+			return;
+		}
 	}
-	else
+
+	if(false/* goal came with orientation information */)
 	{
-		// Make service call to planner to get the trajectory
-		// TODO: Replace this temp code with real code
-		operations::TrajectoryWithVelocities* traj = new operations::TrajectoryWithVelocities();
+		//Get current pose + position from odometry
+		geometry_msgs::PoseStamped* current_robot_pose = getRobotPose();
 
-		geometry_msgs::PoseStamped* pose1 = new geometry_msgs::PoseStamped();
+		//Calculate delta heading
+		geometry_msgs::PoseStamped final_pose = goal->pose;
+		float delta_heading = changeInHeading(current_robot_pose, &final_pose);
 
-		std_msgs::Header chassis;
-		chassis.frame_id = robot_name + "_small_chassis";
+		//Turn to heading
+		bool turned_successfully = rotateRobot(delta_heading);
 
-    pose1->header = chassis;
-		pose1->pose.position.x = 2;
+		if(!turned_successfully){
+			//AAAH ERROR
+			std::cout << "Turn to goal did not succeed." << std::endl;
 
-		geometry_msgs::PoseStamped* pose2 = pose1;
-		pose2->pose.position.x = 4;
-
-		traj->waypoints.push_back(*pose1);
-		traj->waypoints.push_back(*pose2);
-
-		std_msgs::Float64 speed1;
-		std_msgs::Float64 speed2;
-
-		speed1.data = 0.5;
-		speed2.data = 0.7;
-
-		traj->velocities.push_back(speed1);
-		traj->velocities.push_back(speed2);
-
-		// Follow the trajectory generated by the local planner
-		followTrajectory(traj);
+			//TODO: We may need to add more logic here
+			return;
+		}
 	}
 
-	action_server->setSucceeded();
+	//Message the Robot State Machine with success on goal follow
 }
 
 /*********************************************/
@@ -258,11 +317,11 @@ int main(int argc, char** argv)
 {
 	// Check if the node is being run through roslauch, and have one parameter of RobotName_Number
 	if (argc != 2)
-  {
-      // Displaying an error message for correct usage of the script, and returning error.
-      ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
-      return -1;
-  }
+	{
+		// Displaying an error message for correct usage of the script, and returning error.
+		ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
+		return -1;
+	}
 	else
 	{
 		robot_name = (std::string) argv[1];
@@ -273,6 +332,7 @@ int main(int argc, char** argv)
 
 		// Initialise the publishers for steering and wheel velocites
 		initPublishers(nh, robot_name);
+		initSubscribers(nh, robot_name);
 		
 		// Action server 
 		Server server(nh, NAVIGATION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
