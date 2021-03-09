@@ -64,6 +64,64 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
+        small_excavator_1_arm_mount:
+          Value: true
+        small_excavator_1_base_footprint:
+          Value: true
+        small_excavator_1_imu_link:
+          Value: true
+        small_excavator_1_left_camera_optical:
+          Value: true
+        small_excavator_1_lidar_link:
+          Value: true
+        small_excavator_1_right_camera_optical:
+          Value: true
+        small_excavator_1_sensor_bar:
+          Value: true
+        small_excavator_1_small_chassis:
+          Value: true
+        small_hauler_1_base_footprint:
+          Value: true
+        small_hauler_1_bin:
+          Value: true
+        small_hauler_1_bl_steering_arm_shoulder:
+          Value: true
+        small_hauler_1_bl_steering_arm_tibia:
+          Value: true
+        small_hauler_1_bl_wheel:
+          Value: true
+        small_hauler_1_br_steering_arm_shoulder:
+          Value: true
+        small_hauler_1_br_steering_arm_tibia:
+          Value: true
+        small_hauler_1_br_wheel:
+          Value: true
+        small_hauler_1_fl_steering_arm_shoulder:
+          Value: true
+        small_hauler_1_fl_steering_arm_tibia:
+          Value: true
+        small_hauler_1_fl_wheel:
+          Value: true
+        small_hauler_1_fr_steering_arm_shoulder:
+          Value: true
+        small_hauler_1_fr_steering_arm_tibia:
+          Value: true
+        small_hauler_1_fr_wheel:
+          Value: true
+        small_hauler_1_imu_link:
+          Value: true
+        small_hauler_1_left_camera_optical:
+          Value: true
+        small_hauler_1_lidar_link:
+          Value: true
+        small_hauler_1_right_camera_optical:
+          Value: true
+        small_hauler_1_sensor_bar:
+          Value: true
+        small_hauler_1_sensor_bar_yaw_motor:
+          Value: true
+        small_hauler_1_small_chassis:
+          Value: true
         small_scout_1_base_footprint:
           Value: true
         small_scout_1_bl_steering_arm_shoulder:
@@ -396,7 +454,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rtabmap_ros/OrbitOriented
-      Distance: 35.67473602294922
+      Distance: 55.98303985595703
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -404,17 +462,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 9.452388763427734
-        Y: 8.591553688049316
-        Z: -23.18760108947754
+        X: 2.3872458934783936
+        Y: 0.4317511320114136
+        Z: -21.63965606689453
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4297964572906494
+      Pitch: 1.5697963237762451
       Target Frame: base_footprint
-      Yaw: 4.7904229164123535
+      Yaw: 1.570414423942566
     Saved: ~
 Window Geometry:
   Displays:

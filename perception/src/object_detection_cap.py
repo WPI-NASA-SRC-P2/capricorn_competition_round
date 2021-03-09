@@ -7,11 +7,13 @@ import math
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, CameraInfo
 from stereo_msgs.msg import DisparityImage
+
 from perception.msg import Object
-from perception.msg import Objects
+from perception.msg import ObjectArray
 
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+
 import tensorflow as tf
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import label_map_util
@@ -19,6 +21,9 @@ from object_detection.utils import visualization_utils as vis_util
 
 import cv2
 import numpy as np
+
+physical_devices = tf.config.list_physical_devices('GPU') 
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 bridge = CvBridge()
 K = [381.36246688113556, 0.0, 320.5, 0.0, 381.36246688113556, 240.5, 0.0, 0.0, 1.0]
@@ -39,10 +44,13 @@ UPDATE_HZ = 20.0
 def detection_algorithm():
     rospy.loginfo_once("Object Detection Algorithm Working")
 
+    global processing_lock
+    processing_lock = True
+
+    global global_image
     image = global_image
     disparity = global_disparity
 
-    processing_lock = True
     image_np = bridge.imgmsg_to_cv2(image, "bgr8")
     disp_img = bridge.imgmsg_to_cv2(disparity.image, "32FC1")    
 
@@ -56,14 +64,6 @@ def detection_algorithm():
     output_dict['num_detections'] = num_detections
 
     output_dict['detection_classes'] = output_dict['detection_classes'].astype(np.int64)
-    
-    if 'detection_masks' in output_dict:
-        detection_masks_reframed = utils_ops.reframe_box_masks_to_image_masks(
-                output_dict['detection_masks'], output_dict['detection_boxes'],
-                image.shape[0], image.shape[1])      
-        detection_masks_reframed = tf.cast(detection_masks_reframed > 0.5,
-                                        tf.uint8)
-        output_dict['detection_masks_reframed'] = detection_masks_reframed.numpy()
 
     vis_util.visualize_boxes_and_labels_on_image_array(
       image_np,
@@ -71,7 +71,6 @@ def detection_algorithm():
       output_dict['detection_classes'],
       output_dict['detection_scores'],
       category_index,
-      instance_masks=output_dict.get('detection_masks_reframed', None),
       use_normalized_coordinates=True,
       line_thickness=8)      
 
@@ -81,7 +80,7 @@ def detection_algorithm():
     num_detections = output_dict['num_detections']
     box = boxes.copy()
 
-    objects_msg = Objects()
+    objects_msg = ObjectArray()
 
     objects_msg.header.seq = image.header.seq
     objects_msg.header.stamp = image.header.stamp
@@ -162,11 +161,18 @@ def detection_algorithm():
                 object_msg.label = "excavator"
             elif (classes[i] == 7):
                 object_msg.label = "hauler"
-            objects_msg.obj.append(object_msg)                
+
+            object_msg.center.x = centerX
+            object_msg.center.y = centerY
+            object_msg.size_x = (box[i,3] - box[i,1])
+            object_msg.size_y = (box[i,2] - box[i,0])
+
+            objects_msg.obj.append(object_msg)                        
         
     msg = bridge.cv2_to_imgmsg(image_np)
     img_pub.publish(msg)
     objects_pub.publish(objects_msg)
+    
     processing_lock = False
 
 def detection_callback(image, disparity):    
@@ -190,7 +196,7 @@ def init_object_detection(path_to_model, path_to_label_map):
     global objects_pub
 
     img_pub = rospy.Publisher('/capricorn/'+robot_name+'/object_detection/image', Image, queue_size=10)
-    objects_pub = rospy.Publisher('/capricorn/'+robot_name+'/object_detection/objects', Objects, queue_size=10)
+    objects_pub = rospy.Publisher('/capricorn/'+robot_name+'/object_detection/objects', ObjectArray, queue_size=10)
 
     global model_fn
     tf.keras.backend.clear_session()

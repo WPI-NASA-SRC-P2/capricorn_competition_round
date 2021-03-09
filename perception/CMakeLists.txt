@@ -82,7 +82,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   Object.msg
-  Objects.msg
+  ObjectArray.msg
 )
 
 ################################################
