@@ -46,7 +46,7 @@
                     rpy="0 0 -${pi/2}"/>
             <geometry>
                 <mesh
-                    filename = "package://srcp2_models_final/meshes/landers/processing/ProcessingPlant3.dae"
+                    filename = "package://srcp2_models_final/meshes/landers/processing/ProcessingPlant.dae"
                     scale    = "1 1 1"/>
             </geometry>
         </visual>

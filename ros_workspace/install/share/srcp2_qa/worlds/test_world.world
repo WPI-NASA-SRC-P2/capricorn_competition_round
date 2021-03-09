@@ -132,7 +132,7 @@
           <pose frame=''>0 0 0 0 0 -1.5707963267948966</pose>
           <geometry>
             <mesh>
-              <uri>model://meshes/landers/processing/ProcessingPlant2.dae</uri>
+              <uri>model://meshes/landers/processing/ProcessingPlant.dae</uri>
             </mesh>
           </geometry>
         </visual>
