@@ -23,11 +23,10 @@ With the aliases set above, simulation should start with a command `src_start_si
 
 _(For the first time, you might have to execute `source ~/.bashrc` or use a new terminal)_
 
-### rviz
-To start the rviz, execute `src_sim_rviz`
-
 ### Terminal
-To attach a terminal to the docker, execute `src_sim_terminal`
+To attach a terminal to the simulation docker, execute `src_sim_terminal`
+
+_(You won't usually need this access, but the alias has been set nonetheless)_
 
 
 # Developing and Testing
@@ -35,7 +34,7 @@ To attach a terminal to the docker, execute `src_sim_terminal`
 Create a workspace and clone the repository
 ```bash
 mkdir -p ~/catkin_ws/src 
-cd catkin_ws/src/ && git clone https://github.com/WPI-NASA-SRC-P2/capricorn_competition_round.git
+cd ~/catkin_ws/src/ && git clone https://github.com/WPI-NASA-SRC-P2/capricorn_competition_round.git
 ```
 
 #### Setup Visual Studio Code
