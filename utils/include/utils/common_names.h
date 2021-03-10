@@ -45,6 +45,7 @@ namespace COMMON_NAMES
   const std::string ODOM_ERROR_NODE_NAME = "_odom_errorr";
   const std::string NOISY_IMAGE_NODE_NAME = "_noisy_image_eliminate";
   const std::string HORIZON_TRACKING_NODE_NAME = "_horzion_tracking";
+  const std::string FIND_PP_RS_NODE_NAME = "_find_pp_rs";
 
   /****** TOPIC NAMES ******/
   const std::string CAPRICORN_TOPIC = "/capricorn/";
@@ -55,5 +56,7 @@ namespace COMMON_NAMES
   const std::string RIGHT_CAMERAINFO_TOPIC = "/camera/right/camera_info";
   const std::string LEFT_CAMERAINFO_TOPIC = "/camera/left/camera_info";
   const std::string SET_SENSOR_PITCH_TOPIC = "/sensor/pitch/command/position";
+  const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";
+  const std::string OBJECT_DETECTION_OBJECTS_TOPIC = "/object_detection/objects";
   
 } // namespace CAPRICORN_COMMON_NAMES

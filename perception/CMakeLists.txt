@@ -176,6 +176,11 @@ target_link_libraries(noisy_image_eliminate
   ${catkin_LIBRARIES}
 )
 
+add_executable(find_pp_rs src/find_pp_rs.cpp)
+add_dependencies(find_pp_rs ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(find_pp_rs
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##

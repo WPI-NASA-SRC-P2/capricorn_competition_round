@@ -168,7 +168,9 @@ def detection_algorithm():
             object_msg.size_x = (box[i,3] - box[i,1])
             object_msg.size_y = (box[i,2] - box[i,0])
 
-            objects_msg.obj.append(object_msg)                        
+            objects_msg.obj.append(object_msg)
+
+    objects_msg.number_of_objects = len(objects_msg.obj)                        
         
     msg = bridge.cv2_to_imgmsg(image_np)
     img_pub.publish(msg)
@@ -213,7 +215,7 @@ def init_object_detection(path_to_model, path_to_label_map):
             detection_algorithm()
         update_rate.sleep()
 
-if __name__ == "__main__":   
+if __name__ == '__main__':   
     global robot_name
     robot_name = sys.argv[1]
     path_to_model = sys.argv[2]
