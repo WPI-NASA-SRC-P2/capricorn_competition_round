@@ -34,6 +34,8 @@ Example:
 
 The script will move the rover's camera 360 degrees in order to find the PP and RS, once anyone of them are find, it will orient the camera of the rover such that PP and RS are exactly at the center of the image, in condition when only once is available from PP and RS, it will orient the camera using that object as center. The script will exit after orienting the camera.
 
+[Isage Video](https://youtu.be/7D91GapPlfg)
+
 ### Object Detection (object_detection_cap):
 
 Example:
@@ -41,3 +43,4 @@ Example:
 `rosrun perception object_detection_cap small_scout_1 model_path labelmap_path`
 
 Uses the model from path specified to detect objects in the images received from image topics of the rover specified.
+
