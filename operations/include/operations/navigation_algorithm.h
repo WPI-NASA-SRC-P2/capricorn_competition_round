@@ -90,5 +90,10 @@ public:
     return 0.5 * (robot_mass) * (std::pow(vel, 2));
   }
 
+  inline static float getFive()
+  {
+    return 5;
+  }
+
 };
 #endif
