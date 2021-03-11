@@ -20,8 +20,8 @@ void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
     operations::NavigationGoal goal;
     
     // Diverting values from twist to navigation
-    goal.forward_velocity = twist->linear.x * 5;
-    goal.angular_velocity = twist->angular.z;
+    goal.forward_velocity = 0;
+    goal.angular_velocity = 0;
     
     client->sendGoal(goal);
     
@@ -36,11 +36,13 @@ void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
 
 int main(int argc, char** argv)
 {
-  // Check if the node is being run through roslauch, and have one parameter of RobotName_Number
-  if (argc != 4)
+
+  std::cout << argc << std::endl;
+  // Ensure the robot name is passed in
+  if (argc != 2)
   {
       // Displaying an error message for correct usage of the script, and returning error.
-      ROS_ERROR_STREAM("This Node must be launched via 'roslaunch' and needs an argument as <RobotName_Number>";);
+      ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
       return -1;
   }
   else
@@ -54,9 +56,13 @@ int main(int argc, char** argv)
     // Subscribing to teleop topic
     ros::Subscriber sub = nh.subscribe("/cmd_vel", 1000, chatterCallback);
 
+    std::cout << "Nav client: Instantiating client instance" << std::endl;
+
     // initialize client
     client = new Client(NAVIGATION_ACTIONLIB, true);
+    std::cout << "Waiting for server..." << std::endl;
     client->waitForServer();
+    std::cout << "Done waiting. Spinning" << std::endl;
 
     ros::spin();
     return 0;

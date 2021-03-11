@@ -1,8 +1,10 @@
 # Define the goal
 float32 forward_velocity  # For manual driving
 float32 angular_velocity  # For manual driving
-geometry_msgs/Point point # Will not contain orientation information
-geometry_msgs/Pose pose   # Will contain orientation information
+
+geometry_msgs/PointStamped point # Will not contain orientation information
+
+geometry_msgs/PoseStamped pose   # Will contain orientation information
 ---
 # Define the result
 uint32 result

@@ -1,3 +1,7 @@
+# [Important Links Sheet](https://docs.google.com/spreadsheets/d/1_u9gZq9JMEhlwfY9OdAV7LRMA7wjt9MWbYRa9ZyF7W4/edit?usp=sharing)
+Google sheet link for all the links to important stuff. Feel free to add new links if you find any.
+
+
 # Working with the simulation
 ## Setup Simulation
 #### Downloading the simulation:
