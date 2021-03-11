@@ -3,6 +3,7 @@
 #include <ros/ros.h>
 #include <operations/navigation_algorithm.h>
 
+
 // Declare a test
 TEST(DumbTests, simpleAddition)
 {
@@ -19,6 +20,20 @@ TEST(DumbTests, pythagTheorem)
 TEST(DumbTests, otherPackageCall)
 {
   ASSERT_EQ(5, NavigationAlgo::getFive());
+}
+
+
+TEST(DumbTests, SampleHeading)
+{
+  geometry_msgs::PoseStamped p = new geometry_msgs::PoseStamped();
+  p.pose.orientation.x = -0.369;
+  p.pose.orientation.y = 0.003;
+  p.pose.orientation.z = 0.882;
+  p.pose.orientation.w = -0.294;
+  //genPose(&p, -0.369, 0.003, 0.882, -0.294);
+  ASSERT_EQ(p.pose.orientation.x, -0.369);
+  // 163.026
+  //ASSERT_EQ(NavigationAlgo::headingFromPose(p), 163.026);
 }
 
 // Run all the tests that were declared with TEST()

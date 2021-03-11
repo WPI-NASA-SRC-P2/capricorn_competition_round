@@ -45,8 +45,8 @@ float NavigationAlgo::getRadiusInArchimedeanSpiral(const float t)
   return radius;
 }
 
-double NavigationAlgo::headingFromPose(geometry_msgs::PoseStamped* pose){
-  geometry_msgs::Quaternion q = pose->pose.orientation;
+double NavigationAlgo::headingFromPose(geometry_msgs::PoseStamped &pose){
+  geometry_msgs::Quaternion q = pose.pose.orientation;
 
   // yaw (z-axis rotation)
   double siny_cosp = 2 * (q.w * q.z + q.x * q.y);

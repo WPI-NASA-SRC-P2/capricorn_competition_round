@@ -78,7 +78,7 @@ public:
    * 
    * @return float   outputs the robot's yaw
    */
-  static double headingFromPose(geometry_msgs::PoseStamped* pose);
+  static double headingFromPose(geometry_msgs::PoseStamped &pose);
 
   /**
    * @brief Retruns the N points lying in spiral path
