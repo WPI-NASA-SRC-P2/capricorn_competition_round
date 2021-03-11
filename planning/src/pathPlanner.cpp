@@ -1,16 +1,19 @@
 
 #include <ros/ros.h>
 #include <templates/template_class.h>
+#include <nav_msgs/OccupancyGrid.h>
 
 int grid_width = 10;
 int grid_height = 10;
 
 PathPlanner::PathPlanner())
 {
+
 }
 
 PathPlanner::~PathPlanner()
 {
+
 }
 
 std::string PathPlanner::getTeamName()
@@ -30,18 +33,20 @@ void PathPlanner::setTeamName(const std::string& input_string)
  * @brief converts index of a grid into x and y coordinates
  * 
  */
-void PathPlanner::indexToGrid(int index)
+void PathPlanner::indexToGrid(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 {
-    int index_x = index % grid_width + 1;
-    int index_y = index / grid_width;
-    
+    int index_x = msg.info.width % grid_width + 1;
+    int index_y = msg.info.height / grid_width;
+
+    ROS_INFO("X: [%s], Y: [%s]", index_x, index_y);
+
 }
 
 /**
  * @brief converts x and y coordinates of a grid cell to its index
  * 
  */
-void PathPlanner::gricToIndex(nav_msg msg)
+void PathPlanner::gridToIndex(nav_msg msg)
 {
     
     
@@ -99,15 +104,10 @@ int main(int argc, char *argv[])
     // Creted an object of the class
     PathPlanner planner;
 
-    // Setting the team name
-    std::string temp_string = "Team Capricorn";
-    template_class.setTeamName(temp_string);
-    
-    // Getting the team name
-    std::string team_name = template_class.getTeamName();
-    
-    // Printing the team name
-    ROS_INFO_STREAM("Team name from class object is: "<<team_name);
+    //Subscribe to the node publishing map values 
+    ros::Subscriber indexValue = nh.subscribe("/small_scout1/camera/grid_map", 1000, indexToGrid;
+
+    ros::spin();
 
     return 0;
 }
