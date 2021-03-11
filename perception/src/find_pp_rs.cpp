@@ -60,8 +60,6 @@ void objects_callback(const perception::ObjectArray& objects)
         error = ((width / 2) - c);
     }
 
-    std::cout<<error<<"\n";
-
     if(error < 5 && error > -5) 
     {
         times++;
