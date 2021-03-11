@@ -1,3 +1,7 @@
+# [Important Links Sheet](https://docs.google.com/spreadsheets/d/1_u9gZq9JMEhlwfY9OdAV7LRMA7wjt9MWbYRa9ZyF7W4/edit?usp=sharing)
+Google sheet link for all the links to important stuff. Feel free to add new links if you find any.
+
+
 # Working with the simulation
 ## Setup Simulation
 #### Downloading the simulation:
@@ -32,7 +36,6 @@ Create a workspace and clone the repository
 ```bash
 mkdir -p ~/catkin_ws/src 
 cd catkin_ws/src/ && git clone https://github.com/WPI-NASA-SRC-P2/capricorn_competition_round.git
-cd ~/catkin_ws/ && catkin_make
 ```
 
 #### Setup Visual Studio Code
@@ -54,6 +57,3 @@ Click on Docker extension, right click on the running container from previous st
 >For executing any command within the development container, use the VScode terminal. This terminal will be running within the development container. You can open this terminal by pressing: `ctrl +`\` (ctrl + tilde key)
 
 For getting the command line access to the docker, execute `src_comp_terminal`
-
-
-Example change
