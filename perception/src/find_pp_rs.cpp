@@ -60,7 +60,7 @@ void objects_callback(const perception::ObjectArray& objects)
         error = ((width / 2) - c);
     }
 
-    if(error < 5 && error > -5) 
+    if(error < 7 && error > -7) 
     {
         times++;
 
