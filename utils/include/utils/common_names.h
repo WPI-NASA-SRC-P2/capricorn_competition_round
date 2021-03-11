@@ -1,6 +1,7 @@
 namespace COMMON_NAMES
 {
-
+  const float PI = 3.14;
+  const float NEGATIVE_PI = -3.14;
   /****** ROBOTS ******/
   const std::string SCOUT_1 = "small_scout_1";
   const std::string SCOUT_2 = "small_scout_2";

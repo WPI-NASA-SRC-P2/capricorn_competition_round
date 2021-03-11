@@ -22,6 +22,7 @@ float width = 640;
 #define UPDATE_HZ 20
 std_msgs::Float64 yaw_msg;
 bool pp_rs_detected = false;
+int times = 0;
 
 void objects_callback(const perception::ObjectArray& objects) 
 {   
@@ -39,23 +40,45 @@ void objects_callback(const perception::ObjectArray& objects)
     }
     
     int proportional = 15;
+    float error;
 
     if(center_rs == -1 && center_pp == -1)
     {
         pp_rs_detected = false;
         ROS_INFO("No Processing Plant or Repair Station in image");
+        return;
     }
     else if(center_rs > -1 && center_pp > -1) 
     {
         pp_rs_detected = true;
-        yaw_msg.data = yaw_msg.data + ((width / 2) -(center_rs + (center_pp - center_rs) / 2)) / width * 3.14 / proportional;
+        error = ((width / 2) -(center_rs + (center_pp - center_rs) / 2));
     }
     else 
     {
         pp_rs_detected = true;
         int c = (center_pp > -1) ? center_pp : center_rs;
-        yaw_msg.data = yaw_msg.data + ((width / 2) - c) / width * 3.14 / proportional;
+        error = ((width / 2) - c);
     }
+
+    std::cout<<error<<"\n";
+
+    if(error < 5 && error > -5) 
+    {
+        times++;
+
+        if(times > 10)
+        {
+            ROS_INFO("Found them");
+            ros::shutdown();
+        }
+    }
+    else
+    {
+        times = 0;
+    }
+
+    yaw_msg.data = yaw_msg.data +  error / width * 3.14 / proportional;
+    
 
     if(yaw_msg.data > 3.14) 
     {
@@ -92,20 +115,21 @@ int main(int argc, char *argv[])
         ros::spinOnce();       
         if(!pp_rs_detected) 
         {
-            yaw_msg.data = yaw_msg.data + multi * 0.03;
+            yaw_msg.data = yaw_msg.data + multi * 0.04;
             yaw_sensor_pub.publish(yaw_msg);
 
-            if(yaw_msg.data < -3.14) 
+            if(yaw_msg.data < -4) 
             {
                 break;
             }
 
-            else if(yaw_msg.data > 3.14) 
+            else if(yaw_msg.data > 4) 
             {
                 multi = -1;
+                ros::Duration(1).sleep();
             }
         }     
         update_rate.sleep();   
     }
-    
+    ROS_INFO("No processing plant or repair station found");
 }
