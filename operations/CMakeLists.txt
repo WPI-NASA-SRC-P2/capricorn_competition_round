@@ -3,7 +3,6 @@ project(operations)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
-find_package(OpenCV REQUIRED)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -19,8 +18,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   utils
   geometry_msgs
-  cv_bridge
-  image_transport
 )
 
 ## System dependencies are found with CMake's conventions
@@ -181,12 +178,6 @@ add_executable(navigation_client src/navigation_client.cpp)
 add_dependencies(navigation_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_client
   ${catkin_LIBRARIES}
-)
-
-add_executable(img_converter src/image_converter.cpp)
-add_dependencies(img_converter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(img_converter
-  ${catkin_LIBRARIES} ${OpenCV_LIBRARIES}
 )
 
 #############

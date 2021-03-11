@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import subprocess, os
 
 def runTestsInPackage(pkg):
