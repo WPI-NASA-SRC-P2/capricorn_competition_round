@@ -169,6 +169,11 @@ target_link_libraries(template_class
   ${catkin_LIBRARIES} 
 )
 
+add_executable(challenge src/challenge.cpp)
+add_dependencies(challenge ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(challenge
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
@@ -184,7 +189,7 @@ install(PROGRAMS
 )
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS template_node template_class
+install(TARGETS template_node template_class challenge
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

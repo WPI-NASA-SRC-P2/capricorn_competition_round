@@ -4,6 +4,9 @@
 #include <vector>
 #include <math.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/PoseStamped.h>
+//#include <geometry_msgs/Pose.h>
+//#include <geometry_msgs/Quaternion.h>
 // #include <capricorn_common/robot_description.h>
 
 class NavigationAlgo
@@ -67,6 +70,15 @@ public:
    * @return float   outputs the radius at Arcimedean Spiral
    */
   static float getRadiusInArchimedeanSpiral(const float time);
+
+  /**
+   * @brief Get the current yaw of the robot in euler angles
+   * 
+   * @param pose      Current robot pose from odometry
+   * 
+   * @return float   outputs the robot's yaw
+   */
+  static double headingFromPose(geometry_msgs::PoseStamped* pose);
 
   /**
    * @brief Retruns the N points lying in spiral path

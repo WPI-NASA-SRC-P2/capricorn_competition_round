@@ -194,25 +194,24 @@ geometry_msgs::PoseStamped* getRobotPose()
  	return &robot_pose;
 }
 
-float changeInHeading(geometry_msgs::PoseStamped* current_robot_pose, geometry_msgs::PoseStamped* current_waypoint)
+double changeInHeading(geometry_msgs::PoseStamped* current_robot_pose, geometry_msgs::PoseStamped* current_waypoint)
 {
 	/*take the current robot's pose and the current waypoint we want to get to
 	convert from quaternion to euler and create an array of them
 	calculate the difference in angle between the two for the yaw
 	return that value */
 	
-	// std::vector<double> current_robot_pose_angles = calculation_function(current_robot_pose);
-	// std::vector<double> current_waypoint_angles = calculation_function(current_waypoint);
-	// double change_in_yaw = current_robot_pose_angles[0] - current_waypoint_angles[0];
-	// return change_in_yaw;
+	double current_robot_pose_angles = NavigationAlgo::headingFromPose(current_robot_pose);
+	double current_waypoint_angles = NavigationAlgo::headingFromPose(current_waypoint);
+	double change_in_yaw = current_robot_pose_angles - current_waypoint_angles;
+	return change_in_yaw;
 }
 
 bool rotateRobot(double delta_heading)
 {
 	/*
 	use the current delta_heading as an input 
-	if there is a need to rotate the robot then return true 
-	else return false
+	return true on completing a successful move, false otherwise
 	*/
 	return true;
 }
