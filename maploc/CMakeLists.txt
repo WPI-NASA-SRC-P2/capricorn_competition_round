@@ -56,6 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    OdomError.msg
+   PosePR.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -172,6 +173,12 @@ target_link_libraries(initialize_rtabmap
 add_executable(odom_error src/odom_error.cpp)
 add_dependencies(odom_error ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(odom_error
+  ${catkin_LIBRARIES}
+)
+
+add_executable(ground_truth_pr src/ground_truth_pr.cpp)
+add_dependencies(ground_truth_pr ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(ground_truth_pr
   ${catkin_LIBRARIES}
 )
 

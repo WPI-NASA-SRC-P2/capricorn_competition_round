@@ -35,12 +35,16 @@ namespace COMMON_NAMES
 
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";
+  const std::string PROCESSING_PLANT_GAZEBO = "processing_plant";
+  const std::string REPAIR_STATION_GAZEBO = "repair_station";
   const std::string MODEL_STATE_QUERY = "/gazebo/get_model_state";
 
   /****** RTABMAP ******/
   const std::string RESET_POSE_CLIENT = "/camera/reset_odom_to_pose";
 
   /****** ROS NODE NAMES ******/
+  const std::string GROUND_TRUTH_PR_NODE_NAME = "_ground_truth_pr";
+  const std::string PR_LOCALIZATION_NODE_NAME = "_pr_localization";
   const std::string INITALIZE_ODOM_NODE_NAME = "_odom_initialize";
   const std::string CHEAT_ODOM_PUB_NODE_NAME = "_cheat_odom_publisher";
   const std::string ODOM_ERROR_NODE_NAME = "_odom_errorr";
@@ -51,6 +55,8 @@ namespace COMMON_NAMES
   /****** TOPIC NAMES ******/
   const std::string CAPRICORN_TOPIC = "/capricorn/";
   const std::string POSE_ERROR_TOPIC = "/pose_error";
+  const std::string GROUND_TRUTH_TOPIC = "/ground_truth";
+  const std::string PR_GROUND_TRUTH_TOPIC = "/pr_ground_truth";
   const std::string CHEAT_ODOM_TOPIC = "/cheat_odom";
   const std::string RIGHT_IMAGE_RAW_TOPIC = "/camera/right/image_raw";
   const std::string LEFT_IMAGE_RAW_TOPIC = "/camera/left/image_raw";
