@@ -182,11 +182,11 @@ target_link_libraries(find_pp_rs
   ${catkin_LIBRARIES}
 )
 
-add_executable(pr_localization src/pr_localization.cpp)
-add_dependencies(pr_localization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pr_localization
-  ${catkin_LIBRARIES}
-)
+# add_executable(pr_localization src/pr_localization.cpp)
+# add_dependencies(pr_localization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(pr_localization
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
