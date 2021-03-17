@@ -421,13 +421,11 @@
                 <spawn_zone_link_name>${rover_name}_scoop_spawn_zone</spawn_zone_link_name>
                 <heightmap_name>heightmap</heightmap_name>
                 <heightmap_collision_name>collision_heightmap</heightmap_collision_name>
-                <digging_heightmap_name>digging_heightmap</digging_heightmap_name>
-                <digging_heightmap_collision_name>collision_digging_heightmap</digging_heightmap_collision_name>
                 <clod_radius>0.05</clod_radius>
                 <max_capacity>5</max_capacity>
                 <max_volatile_radius>2.0</max_volatile_radius>
-                <min_volatile_depth>5.0</min_volatile_depth>
-                <max_volatile_depth>20.0</max_volatile_depth>
+                <initial_volatile_depth>5.0</initial_volatile_depth>
+                <depleted_volatile_depth>25.0</depleted_volatile_depth>
             </plugin>
         </gazebo>
 

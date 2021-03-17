@@ -22,7 +22,6 @@ class ScoreMsg {
       this.header = null;
       this.score = null;
       this.hauler_volatile_score = null;
-      this.functioning_robot_score = null;
       this.types_collected = null;
       this.masses_collected_kg = null;
     }
@@ -44,12 +43,6 @@ class ScoreMsg {
       }
       else {
         this.hauler_volatile_score = 0.0;
-      }
-      if (initObj.hasOwnProperty('functioning_robot_score')) {
-        this.functioning_robot_score = initObj.functioning_robot_score
-      }
-      else {
-        this.functioning_robot_score = 0.0;
       }
       if (initObj.hasOwnProperty('types_collected')) {
         this.types_collected = initObj.types_collected
@@ -74,8 +67,6 @@ class ScoreMsg {
     bufferOffset = _serializer.float64(obj.score, buffer, bufferOffset);
     // Serialize message field [hauler_volatile_score]
     bufferOffset = _serializer.float64(obj.hauler_volatile_score, buffer, bufferOffset);
-    // Serialize message field [functioning_robot_score]
-    bufferOffset = _serializer.float64(obj.functioning_robot_score, buffer, bufferOffset);
     // Serialize message field [types_collected]
     bufferOffset = _arraySerializer.string(obj.types_collected, buffer, bufferOffset, null);
     // Serialize message field [masses_collected_kg]
@@ -93,8 +84,6 @@ class ScoreMsg {
     data.score = _deserializer.float64(buffer, bufferOffset);
     // Deserialize message field [hauler_volatile_score]
     data.hauler_volatile_score = _deserializer.float64(buffer, bufferOffset);
-    // Deserialize message field [functioning_robot_score]
-    data.functioning_robot_score = _deserializer.float64(buffer, bufferOffset);
     // Deserialize message field [types_collected]
     data.types_collected = _arrayDeserializer.string(buffer, bufferOffset, null)
     // Deserialize message field [masses_collected_kg]
@@ -109,7 +98,7 @@ class ScoreMsg {
       length += 4 + _getByteLength(val);
     });
     length += 8 * object.masses_collected_kg.length;
-    return length + 32;
+    return length + 24;
   }
 
   static datatype() {
@@ -119,7 +108,7 @@ class ScoreMsg {
 
   static md5sum() {
     //Returns md5sum for a message object
-    return 'ef847ed6ab4527fd804b255b1fadb1da';
+    return 'd717730154f875f7091c54cda3c9ac8e';
   }
 
   static messageDefinition() {
@@ -139,7 +128,6 @@ class ScoreMsg {
     # scoring data
     float64 score # the current total score for this sim
     float64 hauler_volatile_score # the score of all the volatiles currently held in hauler bins (tie-breaker #1)
-    float64 functioning_robot_score # "Number of original robotic team members still performing their intended function(s) at..." this time (tie-breaker #3)
     
     # collection data (indexes align) -- this is for competitor information and used in tie-breaking
     string[] types_collected      # which types have been collected to date?
@@ -188,13 +176,6 @@ class ScoreMsg {
     }
     else {
       resolved.hauler_volatile_score = 0.0
-    }
-
-    if (msg.functioning_robot_score !== undefined) {
-      resolved.functioning_robot_score = msg.functioning_robot_score;
-    }
-    else {
-      resolved.functioning_robot_score = 0.0
     }
 
     if (msg.types_collected !== undefined) {

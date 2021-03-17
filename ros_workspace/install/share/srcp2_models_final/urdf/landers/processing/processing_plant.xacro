@@ -74,7 +74,7 @@
     <!-- Score Hopper Zone  -->
     <link name="$(arg name)_hopper_zone_link">
         <collision>
-            <origin xyz="0.0 -2.9 0.75" rpy="0.475 0 0"/>
+            <origin xyz="0.0 -2.9 1.25" rpy="0.475 0 0"/>
             <geometry>
                 <box size="2.8 2.0 0.6"/>
             </geometry>
@@ -92,7 +92,7 @@
     <joint name="$(arg name)_hopper_zone_joint" type="fixed">
         <parent  link="$(arg name)_link"/>
         <child link="$(arg name)_hopper_zone_link"/>
-        <origin xyz="0 0 $(arg zoffset)" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <axis   xyz="0 0 1"/>
     </joint>
 

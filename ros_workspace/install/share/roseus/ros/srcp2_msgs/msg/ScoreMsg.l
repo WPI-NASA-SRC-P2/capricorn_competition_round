@@ -16,7 +16,7 @@
 
 (defclass srcp2_msgs::ScoreMsg
   :super ros::object
-  :slots (_header _score _hauler_volatile_score _functioning_robot_score _types_collected _masses_collected_kg ))
+  :slots (_header _score _hauler_volatile_score _types_collected _masses_collected_kg ))
 
 (defmethod srcp2_msgs::ScoreMsg
   (:init
@@ -24,7 +24,6 @@
     ((:header __header) (instance std_msgs::Header :init))
     ((:score __score) 0.0)
     ((:hauler_volatile_score __hauler_volatile_score) 0.0)
-    ((:functioning_robot_score __functioning_robot_score) 0.0)
     ((:types_collected __types_collected) (let (r) (dotimes (i 0) (push "" r)) r))
     ((:masses_collected_kg __masses_collected_kg) (make-array 0 :initial-element 0.0 :element-type :float))
     )
@@ -32,7 +31,6 @@
    (setq _header __header)
    (setq _score (float __score))
    (setq _hauler_volatile_score (float __hauler_volatile_score))
-   (setq _functioning_robot_score (float __functioning_robot_score))
    (setq _types_collected __types_collected)
    (setq _masses_collected_kg __masses_collected_kg)
    self)
@@ -49,9 +47,6 @@
   (:hauler_volatile_score
    (&optional __hauler_volatile_score)
    (if __hauler_volatile_score (setq _hauler_volatile_score __hauler_volatile_score)) _hauler_volatile_score)
-  (:functioning_robot_score
-   (&optional __functioning_robot_score)
-   (if __functioning_robot_score (setq _functioning_robot_score __functioning_robot_score)) _functioning_robot_score)
   (:types_collected
    (&optional __types_collected)
    (if __types_collected (setq _types_collected __types_collected)) _types_collected)
@@ -66,8 +61,6 @@
     ;; float64 _score
     8
     ;; float64 _hauler_volatile_score
-    8
-    ;; float64 _functioning_robot_score
     8
     ;; string[] _types_collected
     (apply #'+ (mapcar #'(lambda (x) (+ 4 (length x))) _types_collected)) 4
@@ -84,8 +77,6 @@
        (sys::poke _score (send s :buffer) (send s :count) :double) (incf (stream-count s) 8)
      ;; float64 _hauler_volatile_score
        (sys::poke _hauler_volatile_score (send s :buffer) (send s :count) :double) (incf (stream-count s) 8)
-     ;; float64 _functioning_robot_score
-       (sys::poke _functioning_robot_score (send s :buffer) (send s :count) :double) (incf (stream-count s) 8)
      ;; string[] _types_collected
      (write-long (length _types_collected) s)
      (dolist (elem _types_collected)
@@ -106,8 +97,6 @@
      (setq _score (sys::peek buf ptr- :double)) (incf ptr- 8)
    ;; float64 _hauler_volatile_score
      (setq _hauler_volatile_score (sys::peek buf ptr- :double)) (incf ptr- 8)
-   ;; float64 _functioning_robot_score
-     (setq _functioning_robot_score (sys::peek buf ptr- :double)) (incf ptr- 8)
    ;; string[] _types_collected
    (let (n)
      (setq n (sys::peek buf ptr- :integer)) (incf ptr- 4)
@@ -126,7 +115,7 @@
    self)
   )
 
-(setf (get srcp2_msgs::ScoreMsg :md5sum-) "ef847ed6ab4527fd804b255b1fadb1da")
+(setf (get srcp2_msgs::ScoreMsg :md5sum-) "d717730154f875f7091c54cda3c9ac8e")
 (setf (get srcp2_msgs::ScoreMsg :datatype-) "srcp2_msgs/ScoreMsg")
 (setf (get srcp2_msgs::ScoreMsg :definition-)
       "#
@@ -143,7 +132,6 @@ Header header
 # scoring data
 float64 score # the current total score for this sim
 float64 hauler_volatile_score # the score of all the volatiles currently held in hauler bins (tie-breaker #1)
-float64 functioning_robot_score # \"Number of original robotic team members still performing their intended function(s) at...\" this time (tie-breaker #3)
 
 # collection data (indexes align) -- this is for competitor information and used in tie-breaking
 string[] types_collected      # which types have been collected to date?
@@ -168,6 +156,6 @@ string frame_id
 
 
 
-(provide :srcp2_msgs/ScoreMsg "ef847ed6ab4527fd804b255b1fadb1da")
+(provide :srcp2_msgs/ScoreMsg "d717730154f875f7091c54cda3c9ac8e")
 
 

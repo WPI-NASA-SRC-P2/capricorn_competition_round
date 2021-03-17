@@ -151,8 +151,8 @@
                 <publish_inrange_only>false</publish_inrange_only>
                 <sensor_topic>volatile_sensor</sensor_topic>
                 <sensing_range>2.0</sensing_range>
-                <min_volatile_depth>5.0</min_volatile_depth>
-                <max_volatile_depth>20.0</max_volatile_depth>
+                <initial_volatile_depth>5.0</initial_volatile_depth>
+                <depleted_volatile_depth>25.0</depleted_volatile_depth>
                 <sensor_link>$(arg rover_name)_volatile_sensor</sensor_link>
             </plugin>
         </gazebo>

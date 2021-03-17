@@ -11,11 +11,13 @@
 
   <!-- We do not control the lidar plugin directly, so must choose whether to use noise or not here -->
   <!-- <xacro:if value="${(arg use_noise) == 'false'}"/>
-    <xacro:property name="lidar_noise_sigma" value="0.0" /> 
+    <xacro:property name="lidar_noise_sigma" value="0.0" />
+    <xacro:property name="imu_noise_sigma" value="0.0" /> 
   </xacro:if> -->
 
   <xacro:arg name="use_noise" default="true" />
-  <xacro:property name="lidar_noise_sigma" value="0.0" /> 
+
+  <xacro:property name="lidar_noise_sigma" value="0.0" />
   <xacro:property name="imu_noise_sigma" value="0.0" /> 
 
   <xacro:if value="$(arg use_noise)">
@@ -147,6 +149,72 @@
       <pose>0 0 0 0 0 0</pose>
     </sensor>
   </gazebo>
+
+
+    <gazebo>
+      <model name='light_model'>
+        <link name='$(arg rover_name)_light_link'>
+          <pose frame="$(arg rover_name)::light_model">0.425 0.470 0.512 -1.570769 0 0</pose>
+          <collision name='collision'>
+            <geometry>
+              <sphere>
+                <radius>0.025</radius>
+              </sphere>
+            </geometry>
+          </collision>
+          <visual name='visual'>
+            <geometry>
+              <sphere>
+                <radius>0.025</radius>
+              </sphere>
+            </geometry>
+            <transparency>0.4</transparency>
+            <material>
+              <ambient>0.5 1 1 1</ambient>
+              <diffuse>1 1 1 1</diffuse>
+              <specular>1 1 1 1</specular>
+              <emissive>1 1 1 1</emissive>
+            </material>
+          </visual>
+          <light name='spotlight' type='spot'>
+            <pose>0 0 0.0 0 -1.570769 0</pose>
+            <attenuation>
+              <range>30</range>
+              <linear>0.05</linear>
+            </attenuation>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <spot>
+              <inner_angle>0.3</inner_angle>
+              <outer_angle>2.00</outer_angle>
+              <falloff>1</falloff>
+            </spot>
+            <direction>0 0 -1</direction>
+          </light>
+        </link>
+        <joint name='light_joint' type='fixed'>
+          <parent>$(arg rover_name)_sensor_bar</parent>
+          <child>$(arg rover_name)_light_link</child>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+        </joint>
+        <plugin name='light_control' filename='libFlashLightPlugin.so'>
+          <enable>true</enable>
+          <light>
+            <id>$(arg rover_name)_light_link/spotlight</id>
+            <duration>1.0</duration>
+            <interval>0.0</interval>
+            <color>1 0 0</color>
+          </light>
+        </plugin>
+      </model>
+    </gazebo>
+
+
+
+
+    <gazebo>
+      <plugin name='spotlight' filename='libSpotLightPlugin.so'/>
+    </gazebo>
 
 
 

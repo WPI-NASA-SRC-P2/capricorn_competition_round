@@ -17,8 +17,10 @@
   <arg name="seed"    default="$(env SRCP2_SEED)"/>
   <arg name="world"   default="$(find srcp2_launch)/worlds/final.world"/>
   
-  <arg name="run_endless"    default="$(env SRCP2_RUN_ENDLESS)"/>
+  <arg name="run_endless"               default="$(env SRCP2_RUN_ENDLESS)"/>
   <arg name="system_monitor_enabled"    default="$(env SRCP2_SYSTEM_MONITOR_ENABLED)"/>
+  <arg name="use_noise"                 default="$(env SRCP2_USE_NOISE)"/>
+  <arg name="start_power_percentage"    default="$(env SRCP2_START_POWER_PERCENTAGE)"/>
 
   <!-- hard-coded default args -->
   <arg name="spawning_delay" default="10.0"/>
@@ -27,8 +29,10 @@
   <param name="spawning_delay" value="$(arg spawning_delay)" />
   <param name="timeout"        value="$(arg timeout)" />
 
-  <param name="run_endless"        value="$(arg run_endless)" />
-  <param name="system_monitor_enabled"        value="$(arg system_monitor_enabled)" />
+  <param name="run_endless"            value="$(arg run_endless)" />
+  <param name="system_monitor_enabled" value="$(arg system_monitor_enabled)" />
+  <param name="use_noise"              value="$(arg use_noise)" />
+  <param name="start_power_percentage" value="$(arg start_power_percentage)" />
 
   <!-- start simulation world, pass GUI, physics and GZserver options -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -48,7 +52,7 @@
       name    = "small_scout_spawning_node"
       pkg     = "srcp2_launch"
       type    = "team_spawner.bash"
-      args    = "small_scout 1 0 0 1.5"
+      args    = ""
       output  = "screen"
       respawn = "false" />
 
