@@ -10,24 +10,24 @@ NASA SPACE ROBOTICS CHALLENGE
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <gazebo_msgs/GetModelState.h>
+#include <gazebo_msgs/GetLinkState.h>
 #include <maploc/PosePR.h>
 #include <utils/common_names.h>
 #include <math.h>
 
-#define UPDATE_HZ 10
+#define UPDATE_HZ 5
 
 ros::ServiceClient client;
-gazebo_msgs::GetModelState req;
+gazebo_msgs::GetLinkState req;
 std::string model_name;
 ros::Publisher pr_pub;
 
 geometry_msgs::Pose ground_truth_3d() {
-    req.request.model_name = model_name;
-    req.request.relative_entity_name = COMMON_NAMES::PROCESSING_PLANT_GAZEBO;
+    req.request.link_name = model_name + "_sensor_bar";
+    req.request.reference_frame = COMMON_NAMES::PROCESSING_PLANT_LINK_GAZEBO;
     if (client.call(req))
     {
-        return req.response.pose;
+        return req.response.link_state.pose;
     }
     else
     {
@@ -36,11 +36,11 @@ geometry_msgs::Pose ground_truth_3d() {
 }
 
 void ground_truth_2d() {
-    req.request.model_name = COMMON_NAMES::REPAIR_STATION_GAZEBO;
-    req.request.relative_entity_name = COMMON_NAMES::PROCESSING_PLANT_GAZEBO;
+    req.request.link_name = COMMON_NAMES::REPAIR_STATION_LINK_GAZEBO;
+    req.request.reference_frame = COMMON_NAMES::PROCESSING_PLANT_LINK_GAZEBO;
     if (client.call(req))
     {
-        geometry_msgs::Pose pose_rs = req.response.pose, pose_robot = ground_truth_3d();
+        geometry_msgs::Pose pose_rs = req.response.link_state.pose, pose_robot = ground_truth_3d();
 
         float radius = sqrt(pow(pose_robot.position.x, 2) +  pow(pose_robot.position.y, 2) * 1.0);
 
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     ros::AsyncSpinner spin(1);
 
-    client = nh.serviceClient<gazebo_msgs::GetModelState>(COMMON_NAMES::MODEL_STATE_QUERY);
+    client = nh.serviceClient<gazebo_msgs::GetLinkState>(COMMON_NAMES::LINK_STATE_QUERY);
 
     std::string gt_topic_name = COMMON_NAMES::CAPRICORN_TOPIC + model_name + COMMON_NAMES::GROUND_TRUTH_TOPIC;
     std::string pr_topic_name = COMMON_NAMES::CAPRICORN_TOPIC + model_name + COMMON_NAMES::PR_GROUND_TRUTH_TOPIC;

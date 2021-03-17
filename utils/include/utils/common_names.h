@@ -37,7 +37,10 @@ namespace COMMON_NAMES
   const std::string HEIGHTMAP = "heightmap";
   const std::string PROCESSING_PLANT_GAZEBO = "processing_plant";
   const std::string REPAIR_STATION_GAZEBO = "repair_station";
+  const std::string PROCESSING_PLANT_LINK_GAZEBO = "processing_plant_link";
+  const std::string REPAIR_STATION_LINK_GAZEBO = "repair_station_link";
   const std::string MODEL_STATE_QUERY = "/gazebo/get_model_state";
+  const std::string LINK_STATE_QUERY = "/gazebo/get_link_state";
 
   /****** RTABMAP ******/
   const std::string RESET_POSE_CLIENT = "/camera/reset_odom_to_pose";
