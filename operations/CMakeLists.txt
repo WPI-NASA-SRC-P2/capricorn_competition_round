@@ -72,6 +72,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 add_action_files(DIRECTORY action
   FILES
   Navigation.action
+  Hauler.action
 )
 
 generate_messages(
@@ -168,11 +169,20 @@ add_library(${PROJECT_NAME}
 
 # Drives both robots forwards in task 2. Example node
 add_executable(navigation_actionlib_server src/navigation_actionlib_server.cpp)
+add_executable(hauler_actionlib_server src/HaulerServerNew.cpp)
+add_executable(hauler_actionlib_client src/HaulerClient.cpp)
 add_dependencies(navigation_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_actionlib_server ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
-
+add_dependencies(hauler_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(hauler_actionlib_server ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+add_dependencies(hauler_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(hauler_actionlib_client ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
 # Drives both robots forwards in task 2. Example node
 add_executable(navigation_client src/navigation_client.cpp)
 add_dependencies(navigation_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

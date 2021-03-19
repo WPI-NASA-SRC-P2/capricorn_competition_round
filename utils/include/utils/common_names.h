@@ -55,5 +55,8 @@ namespace COMMON_NAMES
   const std::string RIGHT_CAMERAINFO_TOPIC = "/camera/right/camera_info";
   const std::string LEFT_CAMERAINFO_TOPIC = "/camera/left/camera_info";
   const std::string SET_SENSOR_PITCH_TOPIC = "/sensor/pitch/command/position";
+
+  /****** HAULER NAMES ******/
+  const std::string SET_BIN_POSITION = "/bin/command/position";
   
 } // namespace CAPRICORN_COMMON_NAMES
