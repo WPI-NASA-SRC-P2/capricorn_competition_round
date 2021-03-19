@@ -130,10 +130,15 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+# add_library(${PROJECT_NAME}
+#   src/navigation_algorithm.cpp
+# )
+
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
 )
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -238,3 +243,6 @@ install(TARGETS navigation_actionlib_server navigation_client trajectory_process
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+catkin_add_gtest(${PROJECT_NAME}-test test/algorithm_tests.cpp)
+target_link_libraries(${PROJECT_NAME}-test ${catkin_LIBRARIES} ${PROJECT_NAME})

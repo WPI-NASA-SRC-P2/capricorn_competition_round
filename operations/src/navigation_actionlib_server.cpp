@@ -127,7 +127,7 @@ void publishMessage(ros::Publisher &publisher, float data)
 	 *          element 2: Back Right Wheel
 	 *          element 3: Back Left Wheel
  */
-void steerRobot(const std::vector<float> &angles)
+void steerRobot(const std::vector<double> &angles)
 {
 	publishMessage(front_left_steer_pub_, angles.at(0));
 	publishMessage(front_right_steer_pub_, angles.at(1));
@@ -140,7 +140,7 @@ void steerRobot(const std::vector<float> &angles)
  * 
  * @param angle Angles at which the robot wheels will be steeered
  */
-void steerRobot(const float angle)
+void steerRobot(const double angle)
 {
 	publishMessage(front_left_steer_pub_, angle);
 	publishMessage(front_right_steer_pub_, angle);
@@ -160,7 +160,7 @@ void steerRobot(const float angle)
 	 *          element 2: Back Right Wheel
 	 *          element 3: Back Left Wheel
  */
-void moveRobotWheels(const std::vector<float> velocity)
+void moveRobotWheels(const std::vector<double> velocity)
 {
 	publishMessage(front_left_vel_pub_, velocity.at(0));
 	publishMessage(front_right_vel_pub_, velocity.at(1));
@@ -173,7 +173,7 @@ void moveRobotWheels(const std::vector<float> velocity)
  * 
  * @param velocity velocity for the wheels
  */
-void moveRobotWheels(const float velocity)
+void moveRobotWheels(const double velocity)
 {
 	publishMessage(front_left_vel_pub_, velocity);
 	publishMessage(front_right_vel_pub_, velocity);
@@ -191,7 +191,7 @@ operations::TrajectoryWithVelocities *sendGoalToPlanner(const operations::Naviga
 
 	// Temporary, replace with service call once the planner is complete
 	// TODO: Stop assuming we'll always get a PoseStamped. Adapt this to allow for PointStamped as well
-	geometry_msgs::PoseStampted goal_pose = goal->
+	//geometry_msgs::PoseStamped goal_pose = goal->
 
 	return traj;
 }
@@ -201,9 +201,9 @@ geometry_msgs::PoseStamped *getRobotPose()
 	return &robot_pose;
 }
 
-std::vector<double> quaternionToEulerAngles(geometry_msgs::PoseStamped *pose)
+double quaternionToEulerAngles(geometry_msgs::PoseStamped *pose)
 {
-	geometry_msgs::Quaternion q = pose.pose.orientation;
+	geometry_msgs::Quaternion q = pose->pose.orientation;
 
 	// yaw (z-axis rotation)
 	double siny_cosp = 2 * (q.w * q.z + q.x * q.y);
@@ -212,17 +212,17 @@ std::vector<double> quaternionToEulerAngles(geometry_msgs::PoseStamped *pose)
 	return std::atan2(siny_cosp, cosy_cosp);
 }
 
-float changeInHeading(geometry_msgs::PoseStamped *current_robot_pose, geometry_msgs::PoseStamped *current_waypoint)
+double changeInHeading(geometry_msgs::PoseStamped* current_robot_pose, geometry_msgs::PoseStamped* current_waypoint)
 {
 	/*take the current robot's pose and the current waypoint we want to get to
 	convert from quaternion to euler and create an array of them
 	calculate the difference in angle between the two for the yaw
 	return that value */
 
-	std::vector<double> current_robot_pose_angles = quaternionToEulerAngles(current_robot_pose);
-	std::vector<double> current_waypoint_angles = quaternionToEulerAngles(current_waypoint);
+	double current_robot_yaw = quaternionToEulerAngles(current_robot_pose);
+	double current_waypoint_yaw = quaternionToEulerAngles(current_waypoint);
 	
-	double change_in_yaw = current_robot_pose_angles[0] - current_waypoint_angles[0];
+	double change_in_yaw = current_robot_yaw - current_waypoint_yaw;
 	
 	// we want the robot to turn in the direction of the smallest angle change
 	if(change_in_yaw >= M_PI/2)
@@ -242,8 +242,7 @@ bool rotateRobot(double delta_heading)
 {
 	/*
 	use the current delta_heading as an input 
-	if there is a need to rotate the robot then return true 
-	else return false
+	return true on completing a successful move, false otherwise
 	*/
 
 	// Speed at which the robot should be driving
@@ -252,10 +251,11 @@ bool rotateRobot(double delta_heading)
 	// Delta position that we allow. With better nav methods, we can decrease this value
 	const float EPSILON = 0.05;
 
-	std::vector<int> wheel_angles = {M_PI/4, -M_PI/4, -M_PI/4, M_PI/4};
-	std::vector<int> wheel_speeds = {BASE_SPEED, -BASE_SPEED, -BASE_SPEED, BASE_SPEED};
+	std::vector<double> wheel_angles = {M_PI/4, -M_PI/4, -M_PI/4, M_PI/4};
+	std::vector<double> wheel_speeds_right = {BASE_SPEED, -BASE_SPEED, -BASE_SPEED, BASE_SPEED};
+	std::vector<double> wheel_speeds_left = {-BASE_SPEED, BASE_SPEED, BASE_SPEED, -BASE_SPEED};
 
-	transform(wheel_speeds.begin(), wheel_speeds.end(), wheel_speeds.begin(), _1 * 3);
+	//transform(wheel_speeds.begin(), wheel_speeds.end(), wheel_speeds.begin(), _1 * 3);
 
 	// Save starting robot pose to track the change in heading
 	geometry_msgs::PoseStamped starting_pose = robot_pose;
@@ -267,19 +267,19 @@ bool rotateRobot(double delta_heading)
 	}
 
 	// While we have not turned the desired amount
-	while (abs(changeInHeading(starting_pose, robot_pose) - delta_heading) > EPSILON)
+	while (abs(changeInHeading(&starting_pose, &robot_pose) - delta_heading) > EPSILON)
 	{
 		steerRobot(wheel_angles);
 
 		if (delta_heading < 0)
 		{
 			// Turn clockwise	
-			moveRobotWheels(wheel_speeds);
+			moveRobotWheels(wheel_speeds_right);
 		}
 		else if (delta_heading > 0)
 		{
 			// Turn counter-clockwise
-			moveRobotWheels(-wheel_speeds);
+			moveRobotWheels(wheel_speeds_left);
 		}
 
 		// Allow ROS to catch up and update our subscribers
@@ -320,7 +320,7 @@ bool driveToGoal(double delta_distance)
 	geometry_msgs::PoseStamped starting_pose = robot_pose;
 
 	// While we have not traveled the
-	while (abs(changeInPosition(starting_pose, robot_pose) - delta_distance) > EPSILON)
+	while (abs(changeInPosition(&starting_pose, &robot_pose) - delta_distance) > EPSILON)
 	{
 		// Move the wheels forward at a constant speed
 		moveRobotWheels(BASE_SPEED);

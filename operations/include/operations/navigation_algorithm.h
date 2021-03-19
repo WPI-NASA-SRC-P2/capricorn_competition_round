@@ -3,7 +3,11 @@
 
 #include <vector>
 #include <math.h>
+#include <tf/transform_datatypes.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/PoseStamped.h>
+//#include <geometry_msgs/Pose.h>
+//#include <geometry_msgs/Quaternion.h>
 // #include <capricorn_common/robot_description.h>
 
 class NavigationAlgo
@@ -69,6 +73,15 @@ public:
   static float getRadiusInArchimedeanSpiral(const float time);
 
   /**
+   * @brief Get the current yaw of the robot in euler angles
+   * 
+   * @param pose      Current robot pose from odometry
+   * 
+   * @return float   outputs the robot's yaw
+   */
+  static double headingFromPose(geometry_msgs::PoseStamped* pose);
+
+  /**
    * @brief Retruns the N points lying in spiral path
    * 
    * @param init_location   Initial location of the robot in an environment
@@ -90,10 +103,16 @@ public:
     return 0.5 * (robot_mass) * (std::pow(vel, 2));
   }
 
-  inline static float getFive()
-  {
-    return 5;
-  }
+  static float getFive();
+
+    /**
+   * @brief Returns a set of Euler angles
+   * 
+   * @param pose            Current robot pose
+   * @return std::vector<double> 
+   */
+   static std::vector<double> fromQuatToEuler(geometry_msgs::PoseStamped* pose);
 
 };
+
 #endif

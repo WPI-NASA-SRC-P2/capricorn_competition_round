@@ -45,6 +45,15 @@ float NavigationAlgo::getRadiusInArchimedeanSpiral(const float t)
   return radius;
 }
 
+double NavigationAlgo::headingFromPose(geometry_msgs::PoseStamped* pose){
+  geometry_msgs::Quaternion q = pose->pose.orientation;
+
+  // yaw (z-axis rotation)
+  double siny_cosp = 2 * (q.w * q.z + q.x * q.y);
+  double cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+  return std::atan2(siny_cosp, cosy_cosp);
+}
+
 /**
  * @brief 
  * 
@@ -67,6 +76,28 @@ std::vector<geometry_msgs::Point> NavigationAlgo::getNArchimedeasSpiralPoints(co
     points.at(i-init_theta).y = pre * sin(th) + init_location.y;
   }
   return points;
+}
+
+float NavigationAlgo::getFive()
+{
+  return 5;
+}
+
+std::vector<double> NavigationAlgo::fromQuatToEuler(geometry_msgs::PoseStamped* pose)
+{
+  geometry_msgs::Quaternion q = pose->pose.orientation;
+
+  tf::Quaternion quat(q.x, q.y, q.z, q.w);
+
+  tf::Matrix3x3 m(quat);
+
+  double roll, pitch, yaw;
+
+  m.getRPY(roll, pitch, yaw);
+
+  std::vector<double> euler_angles = {roll, pitch, yaw};
+  
+  return euler_angles;
 }
 
 // float NavigationAlgo::getBrakingForce(const float ang_vel, const float pitch, const RobotModel robot_model)
