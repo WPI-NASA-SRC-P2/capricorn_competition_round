@@ -1,0 +1,24 @@
+<launch>
+    <arg name="robot_name" default="scout" />
+    <arg name="robot_number" default="1" />
+
+    <include file="$(find operations)/launch/wheel_pid.launch">
+        <arg name="robot_name" value="$(arg robot_name)" />
+        <arg name="wheel" value="front_right" />
+    </include>
+
+    <include file="$(find operations)/launch/wheel_pid.launch">
+        <arg name="robot_name" value="$(arg robot_name)" />
+        <arg name="wheel" value="front_left" />
+    </include>
+
+    <include file="$(find operations)/launch/wheel_pid.launch">
+        <arg name="robot_name" value="$(arg robot_name)" />
+        <arg name="wheel" value="back_right" />
+    </include>
+
+    <include file="$(find operations)/launch/wheel_pid.launch">
+        <arg name="robot_name" value="$(arg robot_name)" />
+        <arg name="wheel" value="back_left" />
+    </include>
+</launch>
