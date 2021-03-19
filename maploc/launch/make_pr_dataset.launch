@@ -5,7 +5,6 @@
   Team Capricorn
   NASA SPACE ROBOTICS CHALLENGE -->
 
- <!-- This launch file is used to launch the rtabmap, nodes publish cheat odom, odom error to publish error and reset the rtabmap pose from the ground truth to gazebo-->
 <launch>
 
     <arg name="robot_name" default="small_scout_1" />

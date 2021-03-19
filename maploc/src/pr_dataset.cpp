@@ -6,7 +6,7 @@ NASA SPACE ROBOTICS CHALLENGE
 */
 
 #include <maploc/ground_truth_pr.h>
-#include <perception/Find_PP_RSAction.h> // Note: "Action" is appended
+#include <perception/Find_PP_RSAction.h>
 #include <actionlib/client/simple_action_client.h>
 #include <perception/ObjectArray.h>
 #include <perception/Object.h>
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
     }
     else if(action_client.getState() == actionlib::SimpleClientGoalState::ABORTED || action_client.getState() == actionlib::SimpleClientGoalState::ACTIVE)
     {
-        std::cout<<"Cannot find the Processing Plant or Station\n";
+        ROS_INFO("Cannot find the Processing Plant or Station");
     } 
     
     return 0;
