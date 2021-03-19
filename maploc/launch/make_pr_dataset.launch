@@ -1,0 +1,18 @@
+<!--
+  Author: Mahimana Bhatt
+  Email: mbhatt@wpi.edu
+
+  Team Capricorn
+  NASA SPACE ROBOTICS CHALLENGE -->
+
+ <!-- This launch file is used to launch the rtabmap, nodes publish cheat odom, odom error to publish error and reset the rtabmap pose from the ground truth to gazebo-->
+<launch>
+
+    <arg name="robot_name" default="small_scout_1" />
+
+    <include file="$(find perception)/launch/object_detection.launch" >
+      <arg name="robot_name" value="$(arg robot_name)"/>
+    </include>
+    
+    <node name="find_pp_rs_server" pkg="perception" type="find_pp_rs_server" output="screen" args="$(arg robot_name)" />
+</launch>

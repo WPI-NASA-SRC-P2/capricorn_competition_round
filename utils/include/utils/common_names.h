@@ -45,7 +45,11 @@ namespace COMMON_NAMES
   /****** RTABMAP ******/
   const std::string RESET_POSE_CLIENT = "/camera/reset_odom_to_pose";
 
+  /****** ACTIONLIB NAMES ******/
+  const std::string FIND_PP_RS_ACTIONLIB_NAME = "_find_pp_rs";
+
   /****** ROS NODE NAMES ******/
+  const std::string PR_DATASET_NODE_NAME = "_pr_dataset";
   const std::string GROUND_TRUTH_PR_NODE_NAME = "_ground_truth_pr";
   const std::string PR_LOCALIZATION_NODE_NAME = "_pr_localization";
   const std::string INITALIZE_ODOM_NODE_NAME = "_odom_initialize";
@@ -53,7 +57,7 @@ namespace COMMON_NAMES
   const std::string ODOM_ERROR_NODE_NAME = "_odom_errorr";
   const std::string NOISY_IMAGE_NODE_NAME = "_noisy_image_eliminate";
   const std::string HORIZON_TRACKING_NODE_NAME = "_horzion_tracking";
-  const std::string FIND_PP_RS_NODE_NAME = "_find_pp_rs";
+  const std::string FIND_PP_RS_SERVER_NODE_NAME = "_find_pp_rs_server";
 
   /****** TOPIC NAMES ******/
   const std::string CAPRICORN_TOPIC = "/capricorn/";
