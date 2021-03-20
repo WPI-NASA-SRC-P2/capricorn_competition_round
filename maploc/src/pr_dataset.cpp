@@ -23,22 +23,22 @@ void bb_and_objects_callback(const perception::ObjectArray& objects)
 
     for(int i = 0; i < objects.number_of_objects; i++) 
     {   
-        if(objects.obj[i].label == "processingPlant")
+        if(objects.obj[i].label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
         {
             size_x_pp = objects.obj[i].size_x;
             size_y_pp = objects.obj[i].size_y;
             area_pp = size_x_pp * size_y_pp;
         }
-        else if(objects.obj[i].label == "repairStation") {
+        else if(objects.obj[i].label == COMMON_NAMES::OBJECT_DETECTION_REPAIR_STATION_CLASS) {
             size_x_rs = objects.obj[i].size_x;
             size_y_rs = objects.obj[i].size_y;
             area_rs = size_x_rs * size_y_rs;
         }
     }
 
-    std::cout<<"Radius: "<<pr_msg.radius<<", Angle: "<<pr_msg.angle<<"\n";
-    std::cout<<"Dimensions of RS X: "<<size_x_rs<<", Y: "<<size_y_rs<<"\n";
-    std::cout<<"Dimensions of PP X: "<<size_x_pp<<", Y: "<<size_y_pp<<"\n";
+    ROS_INFO_STREAM("Radius: "<<pr_msg.radius<<", Angle: "<<pr_msg.angle);
+    ROS_INFO_STREAM("Dimensions of RS X: "<<size_x_rs<<", Y: "<<size_y_rs);
+    ROS_INFO_STREAM("Dimensions of PP X: "<<size_x_pp<<", Y: "<<size_y_pp);
 
     ros::shutdown();
 }
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
         ROS_INFO("Succeeded to find processing plant and repair station");
         ros::spin();
     }
-    else if(action_client.getState() == actionlib::SimpleClientGoalState::ABORTED || action_client.getState() == actionlib::SimpleClientGoalState::ACTIVE)
+    else
     {
         ROS_INFO("Cannot find the Processing Plant or Station");
     } 

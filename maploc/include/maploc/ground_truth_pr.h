@@ -22,7 +22,7 @@ gazebo_msgs::GetLinkState req;
 std::string robot_name;
 
 geometry_msgs::Pose ground_truth_3d(std::string model_name) {
-    req.request.link_name = model_name + "_sensor_bar";
+    req.request.link_name = model_name + COMMON_NAMES::SENSOR_BAR_GAZEBO;
     req.request.reference_frame = COMMON_NAMES::PROCESSING_PLANT_LINK_GAZEBO;
     if (client.call(req))
     {
@@ -48,7 +48,7 @@ maploc::PosePR ground_truth_2d(std::string model_name, geometry_msgs::Pose pose_
         float angle = atan2(det, dot);
 
         if(angle < 0) {
-            angle = 2 * 3.1459 + angle;
+            angle = 2 * M_PI + angle;
         }
         
         maploc::PosePR pr_msg;

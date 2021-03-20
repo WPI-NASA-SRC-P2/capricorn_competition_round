@@ -1,7 +1,5 @@
 namespace COMMON_NAMES
 {
-  const float PI = 3.14;
-  const float NEGATIVE_PI = -3.14;
   /****** ROBOTS ******/
   const std::string SCOUT_1 = "small_scout_1";
   const std::string SCOUT_2 = "small_scout_2";
@@ -41,6 +39,7 @@ namespace COMMON_NAMES
   const std::string REPAIR_STATION_LINK_GAZEBO = "repair_station_link";
   const std::string MODEL_STATE_QUERY = "/gazebo/get_model_state";
   const std::string LINK_STATE_QUERY = "/gazebo/get_link_state";
+  const std::string SENSOR_BAR_GAZEBO = "_sensor_bar";
 
   /****** RTABMAP ******/
   const std::string RESET_POSE_CLIENT = "/camera/reset_odom_to_pose";
@@ -72,5 +71,10 @@ namespace COMMON_NAMES
   const std::string SET_SENSOR_PITCH_TOPIC = "/sensor/pitch/command/position";
   const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";
   const std::string OBJECT_DETECTION_OBJECTS_TOPIC = "/object_detection/objects";
+
+  /****** OBJECT DETECTION CLASS NAMES ******/
+  const std::string OBJECT_DETECTION_PROCESSING_PLANT_CLASS = "processingPlant";
+  const std::string OBJECT_DETECTION_REPAIR_STATION_CLASS = "repairStation";
+
   
 } // namespace CAPRICORN_COMMON_NAMES

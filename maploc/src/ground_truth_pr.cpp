@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     ros::Rate update_rate(UPDATE_HZ);
     geometry_msgs::PoseStamped gt_msg;
     maploc::PosePR pr_msg;
-    gt_msg.header.frame_id = "map";
+    gt_msg.header.frame_id = COMMON_NAMES::MAP;
 
     while (ros::ok())
     {
