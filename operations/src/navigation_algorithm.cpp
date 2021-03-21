@@ -23,15 +23,71 @@ std::vector<float> NavigationAlgo::getSteeringAnglesRadialTurn(const float radiu
 
 std::vector<float> NavigationAlgo::getDrivingVelocitiessRadialTurn(const float radius, const float effort)
 {
-  int radius_within_robot = copysign(1, (std::abs(radius) - wheel_sep_width_));
+  int radius_within_robot = copysign(1, (std::abs(radius) - wheel_sep_width_/2 ));
   std::vector<float> wheels_steer_angles;
   wheels_steer_angles.resize(4);
-  float hypoteneus_left = std::hypot(wheel_sep_length_ / 2, (radius - wheel_sep_width_));
-  float hypoteneus_right = std::hypot(wheel_sep_length_ / 2, (radius + wheel_sep_width_));
+  float hypoteneus_left = std::hypot(wheel_sep_length_ / 2, (radius - wheel_sep_width_/2));
+  float hypoteneus_right = std::hypot(wheel_sep_length_ / 2, (radius + wheel_sep_width_/2));
   wheels_steer_angles.at(0) = (hypoteneus_left / std::abs(radius)) * effort;
   wheels_steer_angles.at(1) = (hypoteneus_right / std::abs(radius)) * effort * radius_within_robot;
   wheels_steer_angles.at(2) = (hypoteneus_right / std::abs(radius)) * effort * radius_within_robot;
   wheels_steer_angles.at(3) = (hypoteneus_left / std::abs(radius)) * effort;
+
+  return wheels_steer_angles;
+}
+
+std::vector<float> NavigationAlgo::getSteeringAnglesRadialTurn(const geometry_msgs::Point center_of_rotation)
+{
+  std::vector<float> wheels_steer_angles;
+  
+  wheels_steer_angles.resize(4);
+
+  float front_left_x = center_of_rotation.x - wheel_sep_length_/2;
+  float front_left_y = center_of_rotation.y - wheel_sep_width_/2;
+  float front_right_x = center_of_rotation.x - wheel_sep_length_/2;
+  float front_right_y = center_of_rotation.y + wheel_sep_width_/2;
+  float back_right_x = center_of_rotation.x + wheel_sep_length_/2;
+  float back_right_y = center_of_rotation.y + wheel_sep_width_/2;
+  float back_left_x = center_of_rotation.x + wheel_sep_length_/2;
+  float back_left_y = center_of_rotation.y - wheel_sep_width_/2;
+
+  wheels_steer_angles.at(0) = -atan(front_left_x / front_left_y);
+  wheels_steer_angles.at(1) = -atan(front_right_x / front_right_y);
+  wheels_steer_angles.at(2) = -atan(back_right_x / back_right_y);
+  wheels_steer_angles.at(3) = -atan(back_left_x / back_left_y);
+
+  return wheels_steer_angles;
+}
+
+std::vector<float> NavigationAlgo::getDrivingVelocitiessRadialTurn(const geometry_msgs::Point center_of_rotation, const float velocity)
+{
+  float radius = std::hypot(center_of_rotation.x, center_of_rotation.y);
+  std::vector<float> wheels_steer_angles;
+  wheels_steer_angles.resize(4);
+
+  float front_left_x = center_of_rotation.x - wheel_sep_length_/2;
+  float front_left_y = center_of_rotation.y - wheel_sep_width_/2;
+  float front_right_x = center_of_rotation.x - wheel_sep_length_/2;
+  float front_right_y = center_of_rotation.y + wheel_sep_width_/2;
+  float back_right_x = center_of_rotation.x + wheel_sep_length_/2;
+  float back_right_y = center_of_rotation.y + wheel_sep_width_/2;
+  float back_left_x = center_of_rotation.x + wheel_sep_length_/2;
+  float back_left_y = center_of_rotation.y - wheel_sep_width_/2;
+
+  float hypoteneus_front_left = std::hypot(front_left_x, front_left_y);
+  float hypoteneus_front_right = std::hypot(front_right_x, front_right_y);
+  float hypoteneus_back_right = std::hypot(back_right_x, back_right_y);
+  float hypoteneus_back_left = std::hypot(back_left_x, back_left_y);
+
+  int invert_velocity_front_left = 1;//copysign(1, (std::abs(radius) - hypoteneus_front_left));
+  int invert_velocity_front_right = 1;//copysign(1, (std::abs(radius) - hypoteneus_front_right));
+  int invert_velocity_back_right = 1;//copysign(1, (std::abs(radius) - hypoteneus_back_right));
+  int invert_velocity_back_left = 1;//copysign(1, (std::abs(radius) - hypoteneus_back_left));
+
+  wheels_steer_angles.at(0) = (hypoteneus_front_left / std::abs(radius)) * velocity * invert_velocity_front_left;
+  wheels_steer_angles.at(1) = (hypoteneus_front_right / std::abs(radius)) * velocity * invert_velocity_front_right;
+  wheels_steer_angles.at(2) = (hypoteneus_back_right / std::abs(radius)) * velocity * invert_velocity_back_right;
+  wheels_steer_angles.at(3) = (hypoteneus_back_left / std::abs(radius)) * velocity * invert_velocity_back_left;
 
   return wheels_steer_angles;
 }
