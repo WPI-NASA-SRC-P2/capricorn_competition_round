@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   rostest
-  operations
+
 )
 
 
@@ -108,7 +108,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES templates
- CATKIN_DEPENDS roscpp rospy sensor_msgs operations
+ CATKIN_DEPENDS roscpp rospy sensor_msgs
  # DEPENDS system_lib
 )
 
@@ -166,13 +166,6 @@ target_link_libraries(template_node
 add_executable(template_class src/template_class.cpp)
 add_dependencies(template_class ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(template_class
-  ${catkin_LIBRARIES} 
-)
-
-# example class and its node to test the class functions
-add_executable(radial_turn_tester src/radial_turn_tester.cpp)
-add_dependencies(radial_turn_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(radial_turn_tester
   ${catkin_LIBRARIES} 
 )
 
