@@ -19,6 +19,8 @@ find_package(catkin REQUIRED COMPONENTS
   utils
   geometry_msgs
   gazebo_msgs
+  tf2
+  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -184,6 +186,12 @@ target_link_libraries(navigation_client
 add_executable(trajectory_processor src/trajectory_processor.cpp)
 add_dependencies(trajectory_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(trajectory_processor
+  ${catkin_LIBRARIES}
+)
+
+add_executable(wheel_speed_processing src/wheel_speed_processing.cpp)
+add_dependencies(wheel_speed_processing ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(wheel_speed_processing
   ${catkin_LIBRARIES}
 )
 

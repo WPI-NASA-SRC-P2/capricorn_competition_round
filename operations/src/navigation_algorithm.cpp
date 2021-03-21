@@ -45,15 +45,6 @@ float NavigationAlgo::getRadiusInArchimedeanSpiral(const float t)
   return radius;
 }
 
-double NavigationAlgo::headingFromPose(geometry_msgs::PoseStamped* pose){
-  geometry_msgs::Quaternion q = pose->pose.orientation;
-
-  // yaw (z-axis rotation)
-  double siny_cosp = 2 * (q.w * q.z + q.x * q.y);
-  double cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
-  return std::atan2(siny_cosp, cosy_cosp);
-}
-
 /**
  * @brief 
  * 
@@ -99,17 +90,3 @@ std::vector<double> NavigationAlgo::fromQuatToEuler(geometry_msgs::PoseStamped* 
   
   return euler_angles;
 }
-
-// float NavigationAlgo::getBrakingForce(const float ang_vel, const float pitch, const RobotModel robot_model)
-// {
-//   float mass = RobotDescription::robot_mass_map[robot_model];
-//   float gravity = RobotDescription::MOON_GRAVITY;
-
-//   //Calculates the maximum force that can be applied without skidding
-//   float braking_force = -mass * gravity * std::cos(std::abs(pitch));
-
-//   //Calculate torque, dividing by 4 to calculate per wheel value instead of the total value
-//   float braking_torque = braking_force * RobotDescription::WHEEL_RADIUS / 4;
-
-//   return braking_torque;
-// }

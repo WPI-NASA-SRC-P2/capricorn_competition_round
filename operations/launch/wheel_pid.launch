@@ -5,18 +5,18 @@
     <!-- front_right, front_left, back_right, back_left -->
     <arg name="wheel" />
 
-    <node pkg="pid" type="controller" name="$(arg wheel)_pid" ns="/capricorn/small_$(arg robot_name)_$(arg robot_number)/wheel_pid/">
-        <param name="Kp" value="10.0" />
-        <param name="Ki" value="0.0" />
-        <param name="Kd" value="0.0" />
-        <param name="upper_limit" value="50" />
-        <param name="lower_limit" value="-50" />
+    <node pkg="pid" type="controller" name="$(arg wheel)_pid" ns="/capricorn/$(arg robot_name)_$(arg robot_number)/wheel_pid/">
+        <param name="Kp" value="5" />
+        <param name="Ki" value="2" />
+        <param name="Kd" value="0" />
+        <param name="upper_limit" value="300" />
+        <param name="lower_limit" value="-300" />
         <param name="windup_limit" value="10" />
         <param name="max_loop_frequency" value="100.0" />
         <param name="min_loop_frequency" value="100.0" />
 
-        <param name="setpoint_topic" value="$(arg wheel)_omega" />
-        <param name="topic_from_plant" value="$(arg wheel)_speed" />
-        <param name="topic_from_controller" value="/small_$(arg robot_name)_$(arg robot_number)/$(arg wheel)_wheel/command/velocity" />
+        <param name="setpoint_topic" value="$(arg wheel)_wheel/desired_velocity" />
+        <param name="topic_from_plant" value="$(arg wheel)_wheel/current_speed" />
+        <param name="topic_from_controller" value="/$(arg robot_name)_$(arg robot_number)/$(arg wheel)_wheel/drive/command/velocity" />
     </node>
 </launch>

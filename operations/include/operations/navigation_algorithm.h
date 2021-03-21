@@ -73,15 +73,6 @@ public:
   static float getRadiusInArchimedeanSpiral(const float time);
 
   /**
-   * @brief Get the current yaw of the robot in euler angles
-   * 
-   * @param pose      Current robot pose from odometry
-   * 
-   * @return float   outputs the robot's yaw
-   */
-  static double headingFromPose(geometry_msgs::PoseStamped* pose);
-
-  /**
    * @brief Retruns the N points lying in spiral path
    * 
    * @param init_location   Initial location of the robot in an environment

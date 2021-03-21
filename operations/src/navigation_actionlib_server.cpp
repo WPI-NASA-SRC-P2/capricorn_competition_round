@@ -13,8 +13,14 @@
 #include <operations/NavigationAction.h> // Note: "Action" is appended
 #include <math.h>
 
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-#include <gazebo_msgs/ModelStates.h>
+#include <nav_msgs/Odometry.h>
+
+#define BASE_SPEED 0.25
+#define DIST_EPSILON 0.2
+#define ANGLE_EPSILON 0.1
 
 typedef actionlib::SimpleActionServer<operations::NavigationAction> Server;
 using namespace COMMON_NAMES;
@@ -30,6 +36,9 @@ std::string robot_name;
 // Declare robot pose to be used globally
 geometry_msgs::PoseStamped robot_pose;
 
+tf2_ros::Buffer buffer;
+tf2_ros::TransformListener* listener;
+
 /*******************************************************************************/
 /****************** I N I T I A L I Z E   P U B L I S H E R S ******************/
 /*******************************************************************************/
@@ -39,10 +48,10 @@ geometry_msgs::PoseStamped robot_pose;
  */
 void initVelocityPublisher(ros::NodeHandle &nh, const std::string &robot_name)
 {
-	front_left_vel_pub_ = nh.advertise<std_msgs::Float64>(robot_name + FRONT_LEFT_WHEEL + VELOCITY_TOPIC, 1000);
-	front_right_vel_pub_ = nh.advertise<std_msgs::Float64>(robot_name + FRONT_RIGHT_WHEEL + VELOCITY_TOPIC, 1000);
-	back_left_vel_pub_ = nh.advertise<std_msgs::Float64>(robot_name + BACK_LEFT_WHEEL + VELOCITY_TOPIC, 1000);
-	back_right_vel_pub_ = nh.advertise<std_msgs::Float64>(robot_name + BACK_RIGHT_WHEEL + VELOCITY_TOPIC, 1000);
+	front_left_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + FRONT_LEFT_WHEEL + "/desired_velocity", 1000);
+	front_right_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + FRONT_RIGHT_WHEEL + "/desired_velocity", 1000);
+	back_left_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + BACK_LEFT_WHEEL + "/desired_velocity", 1000);
+	back_right_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + BACK_RIGHT_WHEEL + "/desired_velocity", 1000);
 }
 
 /**
@@ -69,19 +78,12 @@ void initPublishers(ros::NodeHandle &nh, const std::string &robot_name)
 
 // TODO: Should be factored out, and subscribing to cheat odom/normal odom should be implemented instead
 // (see maploc/publish_cheat_odom)
-void updateRobotPose(const gazebo_msgs::ModelStates::ConstPtr &msg)
+// odom -> header, child_frame_id, pose -> (pose, covariance), twist
+// takes in an odometry message and updates the robot_pose variable (a pose stamped)
+void updateRobotPose(const nav_msgs::Odometry::ConstPtr &msg)
 {
-	for (int i = 0; i < msg->name.size(); i++)
-	{
-		if (strcmp(msg->name[i].c_str(), robot_name.c_str()) == 0)
-		{
-			std_msgs::Header *robot_header = new std_msgs::Header();
-			robot_header->frame_id = robot_name + "_small_chassis";
-
-			robot_pose.header = *robot_header;
-			robot_pose.pose = msg->pose[i];
-		}
-	}
+	robot_pose.header = msg->header;
+	robot_pose.pose = msg->pose.pose;
 }
 
 /**
@@ -94,7 +96,7 @@ void initSubscribers(ros::NodeHandle &nh, std::string &robot_name)
 	 * WARNING WARNING WARNING
 	 * If we use this in submission-ready code, we will get disqualified
 	 */
-	update_current_robot_pose = nh.subscribe("/gazebo/model_states", 1000, updateRobotPose);
+	update_current_robot_pose = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
 }
 
 /*********************************************************************/
@@ -191,7 +193,12 @@ operations::TrajectoryWithVelocities *sendGoalToPlanner(const operations::Naviga
 
 	// Temporary, replace with service call once the planner is complete
 	// TODO: Stop assuming we'll always get a PoseStamped. Adapt this to allow for PointStamped as well
-	//geometry_msgs::PoseStamped goal_pose = goal->
+	geometry_msgs::PoseStamped goal_pose = goal->pose;
+	std_msgs::Float64 speed;
+	speed.data = BASE_SPEED;
+
+	traj->waypoints.push_back(goal_pose);
+	traj->velocities.push_back(speed);
 
 	return traj;
 }
@@ -201,17 +208,6 @@ geometry_msgs::PoseStamped *getRobotPose()
 	return &robot_pose;
 }
 
-double quaternionToEulerAngles(geometry_msgs::PoseStamped *pose)
-{
-	geometry_msgs::Quaternion q = pose->pose.orientation;
-
-	// yaw (z-axis rotation)
-	double siny_cosp = 2 * (q.w * q.z + q.x * q.y);
-	double cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
-
-	return std::atan2(siny_cosp, cosy_cosp);
-}
-
 double changeInHeading(geometry_msgs::PoseStamped* current_robot_pose, geometry_msgs::PoseStamped* current_waypoint)
 {
 	/*take the current robot's pose and the current waypoint we want to get to
@@ -219,8 +215,8 @@ double changeInHeading(geometry_msgs::PoseStamped* current_robot_pose, geometry_
 	calculate the difference in angle between the two for the yaw
 	return that value */
 
-	double current_robot_yaw = quaternionToEulerAngles(current_robot_pose);
-	double current_waypoint_yaw = quaternionToEulerAngles(current_waypoint);
+	double current_robot_yaw = NavigationAlgo::fromQuatToEuler(current_robot_pose)[2];
+	double current_waypoint_yaw = NavigationAlgo::fromQuatToEuler(current_waypoint)[2];
 	
 	double change_in_yaw = current_robot_yaw - current_waypoint_yaw;
 	
@@ -240,17 +236,6 @@ double changeInHeading(geometry_msgs::PoseStamped* current_robot_pose, geometry_
 
 bool rotateRobot(double delta_heading)
 {
-	/*
-	use the current delta_heading as an input 
-	return true on completing a successful move, false otherwise
-	*/
-
-	// Speed at which the robot should be driving
-	const float BASE_SPEED = 0.25;
-
-	// Delta position that we allow. With better nav methods, we can decrease this value
-	const float EPSILON = 0.05;
-
 	std::vector<double> wheel_angles = {M_PI/4, -M_PI/4, -M_PI/4, M_PI/4};
 	std::vector<double> wheel_speeds_right = {BASE_SPEED, -BASE_SPEED, -BASE_SPEED, BASE_SPEED};
 	std::vector<double> wheel_speeds_left = {-BASE_SPEED, BASE_SPEED, BASE_SPEED, -BASE_SPEED};
@@ -267,7 +252,7 @@ bool rotateRobot(double delta_heading)
 	}
 
 	// While we have not turned the desired amount
-	while (abs(changeInHeading(&starting_pose, &robot_pose) - delta_heading) > EPSILON)
+	while (abs(changeInHeading(&starting_pose, &robot_pose) - delta_heading) > ANGLE_EPSILON)
 	{
 		steerRobot(wheel_angles);
 
@@ -307,9 +292,6 @@ float changeInPosition(geometry_msgs::PoseStamped *current_robot_pose, geometry_
 
 bool driveToGoal(double delta_distance)
 {
-	// Speed at which the robot should be driving
-	const float BASE_SPEED = 0.25;
-
 	// Delta position that we allow. With better nav methods, we can decrease this value
 	const float EPSILON = 0.2;
 
@@ -320,7 +302,7 @@ bool driveToGoal(double delta_distance)
 	geometry_msgs::PoseStamped starting_pose = robot_pose;
 
 	// While we have not traveled the
-	while (abs(changeInPosition(&starting_pose, &robot_pose) - delta_distance) > EPSILON)
+	while (abs(changeInPosition(&starting_pose, &robot_pose) - delta_distance) > DIST_EPSILON)
 	{
 		// Move the wheels forward at a constant speed
 		moveRobotWheels(BASE_SPEED);
@@ -347,6 +329,8 @@ void execute(const operations::NavigationGoalConstPtr &goal, Server *action_serv
 		//Current waypoint comprehension
 		geometry_msgs::PoseStamped *current_waypoint = &trajectory->waypoints[i];
 		float current_velocity = trajectory->velocities[i].data;
+
+		current_waypoint = buffer.transform(current_waypoint, COMMON_NAMES::MAP);
 
 		//Get current pose + position from odometry
 		geometry_msgs::PoseStamped *current_robot_pose = getRobotPose();
@@ -438,6 +422,9 @@ int main(int argc, char **argv)
 		// Action server
 		Server server(nh, NAVIGATION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
 		server.start();
+
+		listener = new tf2_ros::TransformListener(buffer);
+		
 		ros::spin();
 
 		return 0;
