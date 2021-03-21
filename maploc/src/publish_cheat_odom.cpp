@@ -67,7 +67,7 @@ int main(int argc, char **argv)
         odom_msg.pose.pose = req.response.pose;
         odom_msg.twist.twist = req.response.twist;
         odom_msg.header = req.response.header;
-        odom_msg.header.frame_id = COMMON_NAMES::ODOM;
+        odom_msg.header.frame_id = COMMON_NAMES::MAP;
         odom_pub.publish(odom_msg);
       }
       else
