@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   rtabmap_ros
   tf
   utils
+  perception
 )
 
 ## System dependencies are found with CMake's conventions
@@ -56,6 +57,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    OdomError.msg
+   PosePR.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -108,9 +110,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+ INCLUDE_DIRS include
  LIBRARIES maploc
- CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf utils std_msgs message_runtime rtabmap_ros
+ CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf utils std_msgs message_runtime rtabmap_ros perception
 #  DEPENDS system_lib
 ) 
 
@@ -121,7 +123,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+ include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -174,6 +176,24 @@ add_dependencies(odom_error ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTE
 target_link_libraries(odom_error
   ${catkin_LIBRARIES}
 )
+
+add_executable(ground_truth_pr src/ground_truth_pr.cpp)
+add_dependencies(ground_truth_pr ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(ground_truth_pr
+  ${catkin_LIBRARIES}
+)
+
+add_executable(pr_dataset src/pr_dataset.cpp)
+add_dependencies(pr_dataset ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(pr_dataset
+  ${catkin_LIBRARIES}
+)
+
+# add_executable(pr_localization src/pr_localization.cpp)
+# add_dependencies(pr_localization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(pr_localization
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
