@@ -22,7 +22,8 @@ public:
   static constexpr float wheel_sep_length_ = 1.076;
 
   /**
-   * @brief Get the Steering Angles for Making Radial Turn 
+   * @brief **DEPRICATED** Get the Steering Angles for Making Radial Turn 
+   *        Use override with geometry_msgs::Point instead
    * 
    * @param radius    Radius follows right hand rule from top
    *                  i.e. radius to the left is +ve
@@ -40,10 +41,11 @@ public:
   static std::vector<float> getSteeringAnglesRadialTurn(const float radius);
 
   /**
-   * @brief Get the Steering Angles for Making Radial Turn 
+   * @brief **DEPRICATED** Get the Steering Angles for Making Radial Turn 
+   *        Use override with geometry_msgs::Point instead
    * 
    * @param center_of_rotation    The center of rotation from the center of the robot.                                
-   *                              The Center of Radius follows right hand rule from top
+   *                              The Center of Rotation follows right hand rule from top
    *                              i.e. Positive X is to the front of the robot 
    *                                   Positive Y is to the left of the robot
    * 
@@ -62,20 +64,20 @@ public:
    * @brief Get the Driving Velocities for Making Radial Turn 
    * 
    * @param center_of_rotation    The center of rotation from the center of the robot.                                
-   *                              The Center of Radius follows right hand rule from top
+   *                              The Center of Rotation follows right hand rule from top
    *                              i.e. Positive X is to the front of the robot 
    *                                   Positive Y is to the left of the robot
    * 
-   * @param velocity    Velocity at the center of the robot
+   * @param velocity              Desired Velocity at the center of the robot
    * 
-   * @return std::vector<float>    output steering angles
-   *                  The vector will be in order:
-   *                  Clockwise from top, starting with FRONT_LEFT
+   * @return std::vector<float>   Output steering angles
+   *                              The vector will be in order:
+   *                              Clockwise from top, starting with FRONT_LEFT
    * 
-   *          element 0: Front Left Wheel
-   *          element 1: Front Right Wheel
-   *          element 2: Back Right Wheel
-   *          element 3: Back Left Wheel
+   *                      element 0: Front Left Wheel
+   *                      element 1: Front Right Wheel
+   *                      element 2: Back Right Wheel
+   *                      element 3: Back Left Wheel
    */
   static std::vector<float> getDrivingVelocitiessRadialTurn(const geometry_msgs::Point center_of_rotation, const float velocity);
 
