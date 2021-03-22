@@ -22,7 +22,8 @@ Example:
 roslaunch utils make_dataset_object_detection.launch robot_name:=small_scout_1 prefix:=mb1_
 ```
 
-[Tutorial for making dataset](https://youtu.be/5SokPAdBn2c)
+[Tutorial for Saving Images](https://youtu.be/5SokPAdBn2c)
+[Tutorial for Labelling Images](https://youtu.be/SUINv33R71s)
 
 ### teleop.launch
 

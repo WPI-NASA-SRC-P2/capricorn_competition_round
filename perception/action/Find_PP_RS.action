@@ -1,0 +1,8 @@
+# Define the goal
+string robot_name
+---
+# Define the result
+bool found
+---
+# Define a feedback message
+bool progress
