@@ -1,30 +1,30 @@
-// #include <ros/ros.h>
+#include <ros/ros.h>
 
-#include "planner.h"
+#include "../include/pathPlanner.h"
 
 
-Planner::Planner()
+pathPlanner::pathPlanner()
 {
 }
 
-Planner::~Planner()
+pathPlanner::~pathPlanner()
 {
 }
 
-std::string Planner::getTeamName()
+std::string pathPlanner::getTeamName()
 {
     // returns the private variable 
     return team_name;
 }
 
-void Planner::setTeamName(const std::string& input_string)
+void pathPlanner::setTeamName(const std::string& input_string)
 {
     // team_name is assigned the value of Input string
     // Doing this, you keep the private variable safe 
     team_name = input_string;
 }
 
-// int grid_to_index(std::vector <Planner::cord> gridArray, Planner::cord cordinate) {
+// int grid_to_index(std::vector <pathPlanner::cord> gridArray, pathPlanner::cord cordinate) {
 //     for (int i = 0; gridArray.size(); i++) {
 //         if (gridArray.at(i) == cordinate) {
 //             return i;
@@ -34,15 +34,15 @@ void Planner::setTeamName(const std::string& input_string)
 //     return -1;
 // }
 
-// Planner::cord index_to_grid(std::vector <Planner::cord> grid, int index){
+// pathPlanner::cord index_to_grid(std::vector <pathPlanner::cord> grid, int index){
 //     return grid.at(index);
 // }
 
 
 
-// std::vector <Planner::cord> eightNeighbors(std::vector <Planner::cord> grid, Planner::cord cord, int width){
+// std::vector <pathPlanner::cord> eightNeighbors(std::vector <pathPlanner::cord> grid, pathPlanner::cord cord, int width){
 //     int cordIndex = grid_to_index(grid, cord);
-//     std::vector <Planner::cord> neighbors;
+//     std::vector <pathPlanner::cord> neighbors;
 //     neighbors.push_back(index_to_grid(grid, cordIndex + 1));
 //     neighbors.push_back(index_to_grid(grid, cordIndex - 1));
 //     neighbors.push_back(index_to_grid(grid, cordIndex - width + 1));
@@ -54,7 +54,7 @@ void Planner::setTeamName(const std::string& input_string)
 //     return neighbors;
 // }
 
-std::vector <int> Planner::cSpace(std::vector <Planner::cord> grid, int width, std::vector <int> probibility, int threshold, int radius) 
+std::vector <int> pathPlanner::cSpace(std::vector <pathPlanner::cord> grid, int width, std::vector <int> probibility, int threshold, int radius) 
 {
     std::vector <int> newProbibility = probibility;
     
@@ -62,9 +62,9 @@ std::vector <int> Planner::cSpace(std::vector <Planner::cord> grid, int width, s
         
         if (probibility.at(i) > threshold) 
         {
-            std::vector <Planner::cord> origin;
+            std::vector <pathPlanner::cord> origin;
             origin.insert(origin.begin(), grid.at(i));
-            std::vector <Planner::cord> neighbors = findAllNeighbors(grid, width, origin, radius);
+            std::vector <pathPlanner::cord> neighbors = findAllNeighbors(grid, width, origin, radius);
             
             int index = 0;
             for(int j  = 0; j < neighbors.size(); j++) 
@@ -87,13 +87,13 @@ std::vector <int> Planner::cSpace(std::vector <Planner::cord> grid, int width, s
 
 }
 
-std::vector <Planner::cord> Planner::findAllNeighbors(std::vector <Planner::cord> grid, int width, std::vector <Planner::cord> toSearch, int r)
+std::vector <pathPlanner::cord> pathPlanner::findAllNeighbors(std::vector <pathPlanner::cord> grid, int width, std::vector <pathPlanner::cord> toSearch, int r)
 {
     
-    std::vector <Planner::cord> toAdd;
+    std::vector <pathPlanner::cord> toAdd;
     for(int i = 0; i < toSearch.size(); i++)
     {
-        std::vector <Planner::cord> neighbors;// =  eightNeighbors(grid, toSearch.at(i),width);
+        std::vector <pathPlanner::cord> neighbors;// =  eightNeighbors(grid, toSearch.at(i),width);
         
         // there was an eightNeighbors here
         int cordIndex  = 0;
@@ -132,7 +132,7 @@ std::vector <Planner::cord> Planner::findAllNeighbors(std::vector <Planner::cord
     if (r > 0) 
     {
         
-        std::vector <Planner::cord> recusiveAdd = findAllNeighbors(grid, width, toAdd, r);
+        std::vector <pathPlanner::cord> recusiveAdd = findAllNeighbors(grid, width, toAdd, r);
 
         toAdd.insert(toAdd.end(), recusiveAdd.begin(), recusiveAdd.end());
     }
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
     // ros::NodeHandle nh;
 
     // // Creted an object of the class
-    // Planner template_class;
+    // pathPlanner template_class;
 
     // // Setting the team name
     // std::string temp_string = "Team Capricorn";
@@ -169,13 +169,13 @@ int main(int argc, char *argv[])
         (3, 3) at 100
         run cspace(r = 1, width = 5, threashold = 20)
     */
-   std::vector <Planner::cord> grid;
+   std::vector <pathPlanner::cord> grid;
    std::vector <int> probibility;
    for (int i = 1; i <= 5; i++) 
    {
     for (int j = 1; j <= 5; j++) 
     {
-        Planner::cord currentCord;
+        pathPlanner::cord currentCord;
         currentCord.x = i;
         currentCord.y = j;
         grid.insert(grid.end(), currentCord);
@@ -209,9 +209,9 @@ int main(int argc, char *argv[])
         }
         printf("\n");
     }
-    Planner* testPlanner = new Planner();
+    pathPlanner* testpathPlanner = new pathPlanner();
     printf("\n");
-    std::vector<int> cSpaceOut = testPlanner->cSpace(grid, 5, probibility, 20, 1);
+    std::vector<int> cSpaceOut = testpathPlanner->cSpace(grid, 5, probibility, 20, 1);
 
     for(int i = 0; i < 5; i++)
     {
