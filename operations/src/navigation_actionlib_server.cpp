@@ -327,7 +327,7 @@ void execute(const operations::NavigationGoalConstPtr &goal, Server *action_serv
 	for (int i = 0; i < trajectory->waypoints.size(); i++)
 	{
 		//Current waypoint comprehension
-		geometry_msgs::PoseStamped *current_waypoint = &trajectory->waypoints[i];
+		geometry_msgs::PoseStamped current_waypoint = trajectory->waypoints[i];
 		float current_velocity = trajectory->velocities[i].data;
 
 		current_waypoint = buffer.transform(current_waypoint, COMMON_NAMES::MAP);
@@ -336,7 +336,7 @@ void execute(const operations::NavigationGoalConstPtr &goal, Server *action_serv
 		geometry_msgs::PoseStamped *current_robot_pose = getRobotPose();
 
 		//Calculate delta heading
-		float delta_heading = changeInHeading(current_robot_pose, current_waypoint);
+		float delta_heading = changeInHeading(current_robot_pose, &current_waypoint);
 
 		//Turn to heading
 		bool turned_successfully = rotateRobot(delta_heading);
@@ -354,7 +354,7 @@ void execute(const operations::NavigationGoalConstPtr &goal, Server *action_serv
 		current_robot_pose = getRobotPose();
 
 		//Calculate delta distance
-		float delta_distance = changeInPosition(current_robot_pose, current_waypoint);
+		float delta_distance = changeInPosition(current_robot_pose, &current_waypoint);
 
 		//Drive to goal
 		bool drove_successfully = driveToGoal(delta_distance);

@@ -81,7 +81,6 @@ generate_messages(
   actionlib_msgs
   std_msgs
   geometry_msgs
-  gazebo_msgs
 )
 
 
