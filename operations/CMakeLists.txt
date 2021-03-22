@@ -10,7 +10,7 @@ project(operations)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  # srcp2_msgs
+  srcp2_msgs
   actionlib_msgs
   genmsg
   message_generation
@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   utils
   geometry_msgs
   gazebo_msgs
+  srcp2_msgs
   tf2
   tf2_ros
 )
@@ -81,6 +82,7 @@ generate_messages(
   actionlib_msgs
   std_msgs
   geometry_msgs
+  srcp2_msgs
 )
 
 
@@ -116,7 +118,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs #srcp2_msgs
+ CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs
  #  DEPENDS system_lib
 )
 

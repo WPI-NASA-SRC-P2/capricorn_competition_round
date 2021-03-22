@@ -15,8 +15,8 @@ namespace COMMON_NAMES
   const std::string HAULER_3 = "small_hauler_3";
 
   /****** ROBOT FRAMES ******/
-  const std::string MAP = "map";  
-  const std::string ODOM = "odom";  
+  const std::string MAP = "map";
+  const std::string ODOM = "odom";
   const std::string ROBOT_BASE = "base_footprint";  
 
   /****** WHEELS ******/

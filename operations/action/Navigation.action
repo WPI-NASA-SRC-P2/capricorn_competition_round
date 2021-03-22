@@ -5,8 +5,13 @@ float32 angular_velocity  # For manual driving
 geometry_msgs/PointStamped point # Will not contain orientation information
 
 geometry_msgs/PoseStamped pose   # Will contain orientation information
+bool manual_driving
 ---
 # Define the result
+# TODO: Make an enum (in utils?) to properly define these
+# 0: Failed
+# 1: Succeeded
+# 2: Interrupted by a manual action
 uint32 result
 ---
 # Define a feedback message

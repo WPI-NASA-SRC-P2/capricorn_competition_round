@@ -1,13 +1,14 @@
 <launch>
     <arg name="robot_name" default="small_scout" />
     <arg name="robot_number" default="1" />
-    <arg name="speed" default="0.7" />
+    <!-- 
+    <arg name="speed" default="0.7" /> 
 
     <node pkg="rostopic" type="rostopic" name="rostopic_fr" args="pub /capricorn/$(arg robot_name)_$(arg robot_number)/wheel_pid/front_right_wheel/desired_velocity std_msgs/Float64 'data: $(arg speed)' -r 10"/>
     <node pkg="rostopic" type="rostopic" name="rostopic_fl" args="pub /capricorn/$(arg robot_name)_$(arg robot_number)/wheel_pid/front_left_wheel/desired_velocity std_msgs/Float64 'data: $(arg speed)' -r 10"/>
     <node pkg="rostopic" type="rostopic" name="rostopic_br" args="pub /capricorn/$(arg robot_name)_$(arg robot_number)/wheel_pid/back_right_wheel/desired_velocity std_msgs/Float64 'data: $(arg speed)' -r 10"/>
     <node pkg="rostopic" type="rostopic" name="rostopic_bl" args="pub /capricorn/$(arg robot_name)_$(arg robot_number)/wheel_pid/back_left_wheel/desired_velocity std_msgs/Float64 'data: $(arg speed)' -r 10"/>
-
+    -->
     <include file="$(find operations)/launch/wheel_pid.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
         <arg name="robot_number" value="$(arg robot_number)" />

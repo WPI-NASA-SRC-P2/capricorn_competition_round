@@ -13,7 +13,7 @@ NASA SPACE ROBOTICS CHALLENGE
 #include <tf/transform_broadcaster.h>
 #include <utils/common_names.h>
 
-#define UPDATE_HZ 10
+#define UPDATE_HZ 200
 
 /**
  * @brief This node is used to publish the ground truth position of the model given in the argument.
@@ -66,6 +66,7 @@ int main(int argc, char **argv)
         transform.setRotation(quat);
         transform.frame_id_ = COMMON_NAMES::MAP;
         transform.child_frame_id_ = model_name + "_" + COMMON_NAMES::ROBOT_BASE;
+        transform.stamp_ = req.response.header.stamp;
 
         br.sendTransform(transform);
 
