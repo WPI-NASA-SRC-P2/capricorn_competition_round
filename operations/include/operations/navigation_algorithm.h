@@ -41,7 +41,7 @@ public:
   static std::vector<float> getSteeringAnglesRadialTurn(const float radius);
 
   /**
-   * @brief **DEPRICATED** Get the Steering Angles for Making Radial Turn 
+   * @brief Get the Steering Angles for Making Radial Turn 
    *        Use override with geometry_msgs::Point instead
    * 
    * @param center_of_rotation    The center of rotation from the center of the robot.                                
@@ -82,7 +82,7 @@ public:
   static std::vector<float> getDrivingVelocitiessRadialTurn(const geometry_msgs::Point center_of_rotation, const float velocity);
 
   /**
-   * @brief Get the Driving Efforts for Making Radial Turn 
+   * @brief **DEPRICATED** Get the Driving Efforts for Making Radial Turn 
    * 
    * @param radius    Radius follows right hand rule from top
    *                  i.e. radius to the left is +ve
