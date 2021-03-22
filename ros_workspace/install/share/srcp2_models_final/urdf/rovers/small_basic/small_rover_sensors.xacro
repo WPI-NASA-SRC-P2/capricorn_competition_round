@@ -52,7 +52,7 @@
               upper    = "${pi}" 
               lower    = "-${pi}" 
               effort   = "10" 
-              velocity = "1.0"/>
+              velocity = "0.01"/>
       <!-- Some joint damping is necessary for this joint, as it's a powerful -->
       <!-- motor and a light link. Without this, the PID controller must be  -->
       <!-- perfectly tuned to prevent oscillations -->
@@ -82,6 +82,7 @@
       </visual>
 
       <inertial>
+        <origin xyz="0 0.07 0.05" rpy="0 0 0"/>
         <!-- <xacro:sensor_bar pitch_joint_origin/> -->
         <mass value="${camera_mass}"/>
         <xacro:box_inertia
@@ -101,13 +102,13 @@
               upper    = "${pi/3}" 
               lower    = "-${pi/3}" 
               effort   = "10" 
-              velocity = "1.0"/>
+              velocity = "0.01"/>
      <!-- Some joint damping is necessary for this joint, as it's a powerful -->
      <!-- motor and a light link. Without this, the PID controller must be  -->
      <!-- perfectly tuned to prevent oscillations -->
       <dynamics
-          damping  = "1"
-          friction = "0.5"/>
+          damping  = "10"
+          friction = "1"/>
     </joint>
 
     <!-- The Left Camera Optical Link -->

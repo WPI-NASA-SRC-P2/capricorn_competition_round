@@ -162,6 +162,17 @@
               </sphere>
             </geometry>
           </collision>
+          <inertial>
+              <inertia>
+                  <ixx>0.00000001</ixx>
+                  <ixy>0</ixy>
+                  <ixz>0</ixz>
+                  <iyy>0.00000001</iyy>
+                  <iyz>0</iyz>
+                  <izz>0.00000001</izz>
+              </inertia>
+              <mass>0.0001</mass>
+          </inertial>
           <visual name='visual'>
             <geometry>
               <sphere>
@@ -179,15 +190,16 @@
           <light name='spotlight' type='spot'>
             <pose>0 0 0.0 0 -1.570769 0</pose>
             <attenuation>
-              <range>30</range>
-              <linear>0.05</linear>
+              <range>20</range>
+              <linear>0.01</linear>
+              <constant>0.0</constant>
             </attenuation>
             <diffuse>1 1 1 1</diffuse>
             <specular>1 1 1 1</specular>
             <spot>
-              <inner_angle>0.3</inner_angle>
-              <outer_angle>2.00</outer_angle>
-              <falloff>1</falloff>
+              <inner_angle>0.0</inner_angle>
+              <outer_angle>0.0</outer_angle>
+              <falloff>1.2</falloff>
             </spot>
             <direction>0 0 -1</direction>
           </light>

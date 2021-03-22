@@ -13,14 +13,14 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
  
     <!-- YAW motor PID and other constants -->
-    <xacro:property name="sensor_pan_kp"  value="5.0"/>
-    <xacro:property name="sensor_pan_ki"  value="1.0"/>
-    <xacro:property name="sensor_pan_kd"  value="0.1"/>
+    <xacro:property name="sensor_pan_kp"  value="150.0"/>
+    <xacro:property name="sensor_pan_ki"  value="0.1"/>
+    <xacro:property name="sensor_pan_kd"  value="0.0"/>
 
     <!-- PITCH motor PID and other constants -->
-    <xacro:property name="sensor_tilt_kp"  value="5.0"/>
-    <xacro:property name="sensor_tilt_ki"  value="1.0"/>
-    <xacro:property name="sensor_tilt_kd"  value="0.1"/>
+    <xacro:property name="sensor_tilt_kp"  value="150.0"/>
+    <xacro:property name="sensor_tilt_ki"  value="0.1"/>
+    <xacro:property name="sensor_tilt_kd"  value="0.0"/>
 
     <xacro:macro name="sensor_motors">
 
@@ -30,9 +30,9 @@
             <controller_type>position</controller_type>
             <ros_topic>sensor/yaw/command/position</ros_topic>
             <start>0</start>
-            <kp>${wheel_kp}</kp>
-            <ki>${wheel_ki}</ki>
-            <kd>${wheel_kd}</kd>
+            <kp>${sensor_pan_kp}</kp>
+            <ki>${sensor_pan_ki}</ki>
+            <kd>${sensor_pan_kd}</kd>
         </motor>
 
         <!-- SENSOR PITCH MOTOR -->
@@ -41,9 +41,9 @@
             <controller_type>position</controller_type>
             <ros_topic>sensor/pitch/command/position</ros_topic>
             <start>0</start>
-            <kp>${wheel_kp}</kp>
-            <ki>${wheel_ki}</ki>
-            <kd>${wheel_kd}</kd>
+            <kp>${sensor_tilt_kp}</kp>
+            <ki>${sensor_tilt_ki}</ki>
+            <kd>${sensor_tilt_kd}</kd>
         </motor>
 
     </xacro:macro>
