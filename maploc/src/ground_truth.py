@@ -23,7 +23,6 @@ class Models_state:
         'small_hauler_1':Block('small_hauler_1', 'link'),
         'repair_station': Block('repair_station', 'link'),
         'processing_plant': Block('processing_plant', 'link')
-
     }
     
     def show_gazebo_models(self):
@@ -32,47 +31,11 @@ class Models_state:
             model_coordinates = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
             for block in self._blockListDict.values():
                 blockName = str(block._name)
-                resp_coordinates = model_coordinates(blockName, block._relative_entity_name)     
-                if (block._name == 'small_scout_1'):
-                    small_scout_1_pose_x = resp_coordinates.pose.position.x
-                    small_scout_1_pose_y = resp_coordinates.pose.position.y
-                    small_scout_1_pose_z = resp_coordinates.pose.position.z
-                    small_scout_1_coordinate = (small_scout_1_pose_x,small_scout_1_pose_y,small_scout_1_pose_z)
-                    #print("small_scout_1_coordinate :")
-                    #print(small_scout_1_coordinate)
-                    All_coordinate.append(small_scout_1_coordinate)
-                if (block._name == 'small_excavator_1'):
-                    small_excavator_1_pose_x = resp_coordinates.pose.position.x
-                    small_excavator_1_pose_y = resp_coordinates.pose.position.y
-                    small_excavator_1_pose_z = resp_coordinates.pose.position.z
-                    small_excavator_1_coordinate = (small_excavator_1_pose_x,small_excavator_1_pose_y,small_excavator_1_pose_z)
-                    #print("small_excavator_coordinate :")
-                    #print(small_excavator_coordinate)
-                    All_coordinate.append(small_excavator_1_coordinate)
-                if (block._name == 'small_hauler_1'):
-                    small_hauler_1_pose_x = resp_coordinates.pose.position.x
-                    small_hauler_1_pose_y = resp_coordinates.pose.position.y
-                    small_hauler_1_pose_z = resp_coordinates.pose.position.z
-                    small_hauler_1_coordinate = (small_hauler_1_pose_x,small_hauler_1_pose_y,small_hauler_1_pose_z)
-                    #print("small_hauler_1_coordinate :")
-                    #print(small_hauler_1_coordinate)
-                    All_coordinate.append(small_hauler_1_coordinate)
-                if (block._name == 'repair_station'):
-                    repair_station_pose_x = resp_coordinates.pose.position.x
-                    repair_station_pose_y = resp_coordinates.pose.position.y
-                    repair_station_pose_z = resp_coordinates.pose.position.z
-                    repair_station_coordinate = (repair_station_pose_x,repair_station_pose_y,repair_station_pose_z)
-                    #print("repair_station_coordinate :")
-                    #print(repair_station_coordinate)
-                    All_coordinate.append(repair_station_coordinate)
-                if (block._name == 'processing_plant'):
-                    processing_plant_pose_x = resp_coordinates.pose.position.x
-                    processing_plant_pose_y = resp_coordinates.pose.position.y
-                    processing_plant_pose_z = resp_coordinates.pose.position.z
-                    processing_plant_coordinate = (processing_plant_pose_x,processing_plant_pose_y,processing_plant_pose_z)
-                    #print("processing_plant_coordinate :")
-                    #print(processing_plant_coordinate)
-                    All_coordinate.append(processing_plant_coordinate)
+                resp_coordinates = model_coordinates(blockName, block._relative_entity_name)
+                x = resp_coordinates.pose.position.x
+                y = resp_coordinates.pose.position.y
+                z = resp_coordinates.pose.position.z
+                All_coordinate.append((x, y, z))
 
         except rospy.ServiceException as e:
             rospy.loginfo("Get Model State service call failed:  {0}".format(e))
@@ -104,88 +67,48 @@ metadata.origin.position.x, metadata.origin.position.y = pos[:2]
 occGrid = OccupancyGrid()
 occGrid.info = metadata
 
-#coordinates[0] = (x,y,z) of small_scout_1
-#coordinates[0][0] = x of small_scout_1
 #acquire coordinates of all of the POI
 coordinates = states.show_gazebo_models()
 #print(coordinates[0][1])
 occGrid.data = [0]*(width*height)
 
 # 100 = obstacle, -1 = unexplored, 0 = free
-def add_obstacle(obx, oby, radius):
-    # print(obx)
-    # print(oby)
-    # print(occGrid.info.width)
-    # print(len(occGrid.data))
-    obx = obx + 99
-    oby = oby + 99
-    #occGrid.data[int(oby*occGrid.info.width + obx)] = 100
+def add_obstacle(initial_origin_x, initial_origin_y, obx, oby, radius):
+    obx = obx + 99 - initial_origin_x
+    oby = oby + 99 - initial_origin_y
 
     for theta in range(0,360,5):
         theta = theta*pi/180
-        circX = int(obx + radius*np.cos(theta)) 
-        circY = int(oby + radius*np.sin(theta)) 
-        if(theta == 90*pi/180):
-            print(obx)
-            print(oby)
-            print(theta)
-            print(circX)
-            print(circY)
+        circX = int(obx + radius*np.cos(theta))   #int
+        circY = int(oby + radius*np.sin(theta))   #int
         occGrid.data[int(circY*occGrid.info.width + circX)] = 100
 
-    # for theta in range(0,90,5):
-    #     theta = theta*pi/180
-    #     circX = int(obx + radius*np.cos(theta))
-    #     circY = int(oby + radius*np.sin(theta))
-    #     occGrid.data[int(circY*occGrid.info.width + circX)] = 100
-
-    # for theta in range(90, 180,5):
-    #     theta = theta*pi/180
-    #     circX = int(obx - radius*np.cos(theta))
-    #     circY = int(oby + radius*np.sin(theta))
-    #     occGrid.data[int(circY*occGrid.info.width + circX)] = 100
-
-    # for theta in range(180, 270,45):
-    #     theta = theta*pi/180
-    #     circX = int(obx - radius*np.cos(theta))
-    #     circY = int(oby - radius*np.sin(theta))
-    #     occGrid.data[int(circY*occGrid.info.width + circX)] = 100
-
-    # for theta in range(270, 360,45):
-    #     theta = theta*pi/180
-    #     circX = int(obx + radius*np.cos(theta))
-    #     circY = int(oby - radius*np.sin(theta))
-    #     occGrid.data[int(circY*occGrid.info.width + circX)] = 100
-
-def add_initial_obstacles():
+def add_initial_obstacles(initial_origin_x, initial_origin_y):
     rover_radius = 1.5/2 #m
 
     #add small_scout_1
-    add_obstacle(coordinates[0][0], coordinates[0][1], rover_radius)
+    add_obstacle(initial_origin_x, initial_origin_y, coordinates[0][0], coordinates[0][1], rover_radius)
     
     #add small_excavator_1
-    add_obstacle(coordinates[1][0], coordinates[1][1], rover_radius)
+    add_obstacle(initial_origin_x, initial_origin_y, coordinates[1][0], coordinates[1][1], rover_radius)
 
     #add small_hauler_1
-    add_obstacle(coordinates[2][0], coordinates[2][1], rover_radius)
+    add_obstacle(initial_origin_x, initial_origin_y, coordinates[2][0], coordinates[2][1], rover_radius)
 
     #add repair_station
-    add_obstacle(coordinates[3][0], coordinates[3][1], 3.19)
+    add_obstacle(initial_origin_x, initial_origin_y, coordinates[3][0], coordinates[3][1], 3.19)
 
     #add processing_plant (UPDATE BASED ON HOPPER STUFF)
-    add_obstacle(coordinates[4][0], coordinates[4][1], 1.8)
+    add_obstacle(initial_origin_x, initial_origin_y, coordinates[4][0], coordinates[4][1], 1.8)
 
 rospy.init_node("Ground_Truth")
 
 while not rospy.is_shutdown():
     occGridPub = rospy.Publisher("Ground_Truth_Map", OccupancyGrid, queue_size=1)
-        
-    add_initial_obstacles()
-    #add_obstacle(100,100,0)
-    #add_obstacle(10, 4, 4)
-    #add_obstacle(12, 6, 0)
-    #add_obstacle(-5, -5, 0)
-    #add_obstacle(195, 195, 0)
+    
+    initial_origin_x = coordinates[4][0]
+    initial_origin_y = coordinates[4][1]
+    add_initial_obstacles(initial_origin_x, initial_origin_y)
     occGridPub.publish(occGrid)
 
 
