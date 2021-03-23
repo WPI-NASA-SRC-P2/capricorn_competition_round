@@ -225,14 +225,7 @@ operations::TrajectoryWithVelocities* sendGoalToPlanner(const operations::Naviga
 	std_msgs::Float64 speed;
 	speed.data = BASE_SPEED;
 
-	// TODO: Please remove me
-	geometry_msgs::PoseStamped next_pose = goal_pose;
-	next_pose.pose.position.x = 0;
-
 	traj->waypoints.push_back(goal_pose);
-	traj->velocities.push_back(speed);
-
-	traj->waypoints.push_back(next_pose);
 	traj->velocities.push_back(speed);
 
 	return traj;
