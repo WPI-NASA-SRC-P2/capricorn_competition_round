@@ -142,7 +142,7 @@ public:
    * @param pose            Current robot pose
    * @return std::vector<double> 
    */
-  static std::vector<double> fromQuatToEuler(geometry_msgs::PoseStamped* pose);
+  static std::vector<double> fromQuatToEuler(const geometry_msgs::PoseStamped& pose);
 
   /**
    * @brief Calculates the change in heading between two poses. The current pose will be treated as the origin, and the waypoint will be transformed
@@ -154,7 +154,7 @@ public:
    * 
    * @return double The angle between the robot and waypoint.
    */
-  static double changeInHeading(geometry_msgs::PoseStamped* current_robot_pose, geometry_msgs::PoseStamped* current_waypoint, std::string robot_name, tf2_ros::Buffer* tf_buffer);
+  static double changeInHeading(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& current_waypoint, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer);
   
   /**
    * @brief Calculates the distance between two poses in XY.
@@ -163,7 +163,7 @@ public:
    * @param target_robot_pose The next pose (map frame)
    * @return double Distance formula between the x and y components of each pose.
    */
-  static double changeInPosition(geometry_msgs::PoseStamped *current_robot_pose, geometry_msgs::PoseStamped *target_robot_pose);
+  static double changeInPosition(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& target_robot_pose);
 
 };
 

@@ -6,6 +6,8 @@
 //How fast the main loop of the node will run.
 #define UPDATE_HZ 1000
 
+using namespace COMMON_NAMES;
+
 std::string robot_name;
 
 std_msgs::Float64 bl_speed, br_speed, fl_speed, fr_speed;
@@ -61,10 +63,10 @@ int main(int argc, char *argv[])
     //Initialize subscribers for each wheel
     ros::Subscriber joint_state_sub = nh.subscribe("/" + robot_name + "/joint_states", 10, encoder_callback);
 
-    ros::Publisher bl_speed_pub = nh.advertise<std_msgs::Float64>(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::WHEEL_PID + "/back_left_wheel/current_speed", 1000);
-    ros::Publisher br_speed_pub = nh.advertise<std_msgs::Float64>(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::WHEEL_PID + "/back_right_wheel/current_speed", 1000);
-    ros::Publisher fl_speed_pub = nh.advertise<std_msgs::Float64>(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::WHEEL_PID + "/front_left_wheel/current_speed", 1000);
-    ros::Publisher fr_speed_pub = nh.advertise<std_msgs::Float64>(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::WHEEL_PID + "/front_right_wheel/current_speed", 1000);
+    ros::Publisher bl_speed_pub = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + BACK_LEFT_WHEEL + CURRENT_SPEED, 1000);
+    ros::Publisher br_speed_pub = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + BACK_RIGHT_WHEEL + CURRENT_SPEED, 1000);
+    ros::Publisher fl_speed_pub = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + FRONT_LEFT_WHEEL + CURRENT_SPEED, 1000);
+    ros::Publisher fr_speed_pub = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + FRONT_RIGHT_WHEEL + CURRENT_SPEED, 1000);
 
     while(ros::ok())
     {

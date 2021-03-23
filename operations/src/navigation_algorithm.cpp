@@ -155,9 +155,9 @@ std::vector<geometry_msgs::Point> NavigationAlgo::getNArchimedeasSpiralPoints(co
   return points;
 }
 
-std::vector<double> NavigationAlgo::fromQuatToEuler(geometry_msgs::PoseStamped* pose)
+std::vector<double> NavigationAlgo::fromQuatToEuler(const geometry_msgs::PoseStamped& pose)
 {
-  geometry_msgs::Quaternion q = pose->pose.orientation;
+  geometry_msgs::Quaternion q = pose.pose.orientation;
 
   tf::Quaternion quat(q.x, q.y, q.z, q.w);
 
@@ -172,22 +172,23 @@ std::vector<double> NavigationAlgo::fromQuatToEuler(geometry_msgs::PoseStamped* 
   return euler_angles;
 }
 
-double NavigationAlgo::changeInPosition(geometry_msgs::PoseStamped* current_robot_pose, geometry_msgs::PoseStamped* target_robot_pose)
+double NavigationAlgo::changeInPosition(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& target_robot_pose)
 {
   //Get the change in x and y between the two poses
-	double delta_x = current_robot_pose->pose.position.x - target_robot_pose->pose.position.x;
-	double delta_y = current_robot_pose->pose.position.y - target_robot_pose->pose.position.y;
+	double delta_x = current_robot_pose.pose.position.x - target_robot_pose.pose.position.x;
+	double delta_y = current_robot_pose.pose.position.y - target_robot_pose.pose.position.y;
 
   //Return the distance formula from these deltas
 	return pow(pow(delta_x, 2) + pow(delta_y, 2), 0.5);
 }
 
-double NavigationAlgo::changeInHeading(geometry_msgs::PoseStamped* current_robot_pose, geometry_msgs::PoseStamped* current_waypoint, std::string robot_name, tf2_ros::Buffer* tf_buffer)
+double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& current_waypoint, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer)
 {
 	// Get the next waypoint in the robot's frame
 	geometry_msgs::PoseStamped waypoint_relative_to_robot;
-	current_waypoint->header.stamp = ros::Time::now();
-	waypoint_relative_to_robot = tf_buffer->transform(*current_waypoint, robot_name + "_small_chassis", ros::Duration(0.1));
+
+  // Should probably wrap this in a try except for tf2::ExtrapolationException, we seem to extrapolate into the past sometimes
+	waypoint_relative_to_robot = tf_buffer.transform(current_waypoint, robot_name + "_small_chassis", ros::Duration(0.1));
 
   //Get the change in yaw between the two poses with atan2
 	double change_in_yaw = atan2(waypoint_relative_to_robot.pose.position.y, waypoint_relative_to_robot.pose.position.x);

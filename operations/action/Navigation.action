@@ -8,10 +8,7 @@ geometry_msgs/PoseStamped pose   # Will contain orientation information
 bool manual_driving              # Whether or not this is a manual drive
 ---
 # Define the result
-# TODO: Make an enum (in utils?) to properly define these
-# 0: Failed
-# 1: Succeeded
-# 2: Interrupted by a manual action
+# See COMMON_NAMES::NAV_RESULT for possible values
 uint32 result
 ---
 # Define a feedback message

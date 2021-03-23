@@ -27,6 +27,9 @@ namespace COMMON_NAMES
   /****** VELOCITY ******/
   const std::string VELOCITY_TOPIC = "/drive/command/velocity";
   const std::string STEERING_TOPIC = "/steer/command/position";
+  const std::string DESIRED_VELOCITY = "/desired_velocity";
+  const std::string CURRENT_SPEED = "/current_speed";
+  const std::string BRAKE_ROVER = "/brake_rover";
 
   /****** ACTIONLIBS ******/
   const std::string NAVIGATION_ACTIONLIB = "navigation";
@@ -76,6 +79,14 @@ namespace COMMON_NAMES
   /****** OBJECT DETECTION CLASS NAMES ******/
   const std::string OBJECT_DETECTION_PROCESSING_PLANT_CLASS = "processingPlant";
   const std::string OBJECT_DETECTION_REPAIR_STATION_CLASS = "repairStation";
+
+  /****** NAVIGATION ACTION RESULT ENUM ******/
+  enum NAV_RESULT
+  {
+    FAILED = 0,
+    SUCCESS = 1,
+    INTERRUPTED = 2
+  };
 
   
 } // namespace CAPRICORN_COMMON_NAMES
