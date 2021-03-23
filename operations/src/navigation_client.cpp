@@ -17,9 +17,6 @@ using namespace COMMON_NAMES;
 
 std::string robot_name;
 
-//tf2_ros::Buffer buffer;
-//tf2_ros::TransformListener* listener;
-
 /**
  * @brief Callback for the twist message of teleop message twist
  * 
@@ -30,11 +27,7 @@ void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
     // Action message goal
     operations::NavigationGoal goal;
     
-    // No manual driving
-    goal.forward_velocity = 0;
-    goal.angular_velocity = 0;
-    
-    // Simple waypoint 2 meters in front of the robot
+    //Simple waypoint 2 meters in front of the robot
     geometry_msgs::PoseStamped t1;
     t1.header.frame_id = robot_name + "_small_chassis";
     t1.pose.position.x = 2.0;
@@ -49,19 +42,32 @@ void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
     //geometry_msgs::PoseStamped map_frame_waypoint = buffer.transform(t1, MAP);
 
     goal.pose = t1;
+    goal.manual_driving = false;
 
-    printf("Sending goal to actionlib server");
+    printf("Sending auto goal to actionlib server\n");
+    client->sendGoal(goal);
+    ros::Duration(3).sleep();
+
+    // No manual driving
+    goal.manual_driving = true;
+    goal.forward_velocity = 0;
+    goal.angular_velocity = -1;
+    printf("Sending manual goal to actionlib server\n");
+    client->sendGoal(goal);
+    ros::Duration(3).sleep();
+
+    printf("Re-sending auto goal to actionlib server\n");
+    goal.manual_driving = false;
+    goal.forward_velocity = 0;
+    goal.angular_velocity = 0;
     client->sendGoal(goal);
 }
 
 int main(int argc, char** argv)
 {
-
-  std::cout << argc << std::endl;
   // Ensure the robot name is passed in
   if (argc != 2 && argc != 4)
   {
-      std::cout << argc << std::endl;
       // Displaying an error message for correct usage of the script, and returning error.
       ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
       return -1;
@@ -84,8 +90,6 @@ int main(int argc, char** argv)
     std::cout << "Waiting for server..." << std::endl;
     client->waitForServer();
     std::cout << "Done waiting. Spinning" << std::endl;
-
-    //listener = new tf2_ros::TransformListener(buffer);
 
     ros::spin();
     return 0;

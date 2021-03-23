@@ -5,7 +5,7 @@ float32 angular_velocity  # For manual driving
 geometry_msgs/PointStamped point # Will not contain orientation information
 
 geometry_msgs/PoseStamped pose   # Will contain orientation information
-bool manual_driving
+bool manual_driving              # Whether or not this is a manual drive
 ---
 # Define the result
 # TODO: Make an enum (in utils?) to properly define these

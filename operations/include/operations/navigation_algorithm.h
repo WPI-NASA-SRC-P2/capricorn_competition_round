@@ -6,9 +6,9 @@
 #include <tf/transform_datatypes.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
-//#include <geometry_msgs/Pose.h>
-//#include <geometry_msgs/Quaternion.h>
-// #include <capricorn_common/robot_description.h>
+
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 class NavigationAlgo
 {
@@ -94,15 +94,34 @@ public:
     return 0.5 * (robot_mass) * (std::pow(vel, 2));
   }
 
-  static float getFive();
-
-    /**
+  /**
    * @brief Returns a set of Euler angles
    * 
    * @param pose            Current robot pose
    * @return std::vector<double> 
    */
-   static std::vector<double> fromQuatToEuler(geometry_msgs::PoseStamped* pose);
+  static std::vector<double> fromQuatToEuler(geometry_msgs::PoseStamped* pose);
+
+  /**
+   * @brief Calculates the change in heading between two poses. The current pose will be treated as the origin, and the waypoint will be transformed
+   *        into the robot's frame. Delta heading is atan2 of the angle from the robot's x axis to the waypoint.
+   * @param current_robot_pose The current robot pose
+   * @param current_waypoint The waypoint to which the angle will be calculates
+   * @param robot_name The name of the robot, used for frame transforms
+   * @param tf_buffer The transform buffer, used to do frame transforms. Must be up to date.
+   * 
+   * @return double The angle between the robot and waypoint.
+   */
+  static double changeInHeading(geometry_msgs::PoseStamped* current_robot_pose, geometry_msgs::PoseStamped* current_waypoint, std::string robot_name, tf2_ros::Buffer* tf_buffer);
+  
+  /**
+   * @brief Calculates the distance between two poses in XY.
+   * 
+   * @param current_robot_pose The current robot pose (map frame)
+   * @param target_robot_pose The next pose (map frame)
+   * @return double Distance formula between the x and y components of each pose.
+   */
+  static double changeInPosition(geometry_msgs::PoseStamped *current_robot_pose, geometry_msgs::PoseStamped *target_robot_pose);
 
 };
 
