@@ -1,8 +1,8 @@
 # Define the goal
-float64 desired_pos
+float64 desired_angle # The angle to empty the bin
 ---
 # Define the result
-float64 final_pos
+float64 final_angle # 
 ---
 # Define a feedback message
-float64 current_pos
+float64 current_angle # Not using in current implementation due to lack of a feedback topic

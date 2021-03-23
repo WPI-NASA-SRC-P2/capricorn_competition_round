@@ -1,0 +1,14 @@
+# Define the goal
+float64 shoulder_yaw_angle # The angle to move the shoulder yaw joint
+float64 shoulder_pitch_angle # The angle to move the shoulder pitch joint
+float64 elbow_pitch_angle # The angle to move the elbow pitch joint
+float64 wrist_pitch_angle # The angle to move the wrist pitch joint
+
+---
+# Define the result
+bool result_mass # Unused
+
+---
+# Define a feedback message
+bool volatile_mass # Flag to check whether volatile present in scoop
+bool regolith_mass # Flag to check whether regolith present in scoop

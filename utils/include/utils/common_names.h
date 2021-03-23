@@ -31,6 +31,8 @@ namespace COMMON_NAMES
 
   /****** ACTIONLIBS ******/
   const std::string NAVIGATION_ACTIONLIB = "navigation";
+  const std::string HAULER_ACTIONLIB = "hauler_bin";
+  const std::string EXCAVATOR_ACTIONLIB = "excavator";
 
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";
@@ -58,5 +60,11 @@ namespace COMMON_NAMES
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
+
+  /****** HAULER NAMES ******/
+  const std::string SET_ELBOW_PITCH_POSITION = "/small_excavator_1/arm/elbow_pitch/command/position";
+  const std::string SET_SHOULDER_PITCH_POSITION = "/small_excavator_1/arm/shoulder_pitch/command/position";
+  const std::string SET_SHOULDER_YAW_POSITION = "/small_excavator_1/arm/shoulder_yaw/command/position";
+  const std::string SET_WRIST_PITCH_POSITION = "/small_excavator_1/arm/wrist_pitch/command/position";
   
 } // namespace CAPRICORN_COMMON_NAMES
