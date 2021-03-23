@@ -48,6 +48,7 @@ namespace COMMON_NAMES
   const std::string FIND_PP_RS_ACTIONLIB_NAME = "_find_pp_rs";
 
   /****** ROS NODE NAMES ******/
+  const std::string NAVIGATION_VISION_NODE_NAME = "_navigation_vision";
   const std::string PR_DATASET_NODE_NAME = "_pr_dataset";
   const std::string GROUND_TRUTH_PR_NODE_NAME = "_ground_truth_pr";
   const std::string PR_LOCALIZATION_NODE_NAME = "_pr_localization";

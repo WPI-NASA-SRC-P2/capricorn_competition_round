@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   utils
   geometry_msgs
+  perception
 )
 
 ## System dependencies are found with CMake's conventions
@@ -119,7 +120,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs #srcp2_msgs
+ CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs perception #srcp2_msgs
  #  DEPENDS system_lib
 )
 
@@ -177,6 +178,13 @@ target_link_libraries(navigation_actionlib_server ${PROJECT_NAME}
 add_executable(navigation_client src/navigation_client.cpp)
 add_dependencies(navigation_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_client
+  ${catkin_LIBRARIES}
+)
+
+# Drives robot using vision
+add_executable(navigation_vision src/navigation_vision.cpp)
+add_dependencies(navigation_vision ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(navigation_vision
   ${catkin_LIBRARIES}
 )
 
