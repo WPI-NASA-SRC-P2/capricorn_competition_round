@@ -12,6 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   rostest
+  actionlib
+  actionlib_msgs
+  message_generation
 )
 
 
@@ -63,17 +66,17 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
+ add_action_files(
+   FILES
+   template_actionMSG.action
 #   Action2.action
-# )
+ )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   actionlib_msgs std_msgs  # Or other packages containing msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -165,6 +168,13 @@ target_link_libraries(template_node
 add_executable(template_class src/template_class.cpp)
 add_dependencies(template_class ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(template_class
+  ${catkin_LIBRARIES} 
+)
+
+# template action server node
+add_executable(action_server src/templates_actionlib/template_actionServer.cpp)
+add_dependencies(action_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(action_server
   ${catkin_LIBRARIES} 
 )
 
