@@ -10,7 +10,7 @@ project(operations)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  # srcp2_msgs
+  srcp2_msgs
   actionlib_msgs
   genmsg
   message_generation
@@ -72,6 +72,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 add_action_files(DIRECTORY action
   FILES
   Navigation.action
+  ResourceLocaliser.action
 )
 
 generate_messages(
@@ -119,7 +120,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs #srcp2_msgs
+ CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs
  #  DEPENDS system_lib
 )
 
@@ -137,6 +138,7 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
+  src/scout_state_machine.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -177,6 +179,13 @@ target_link_libraries(navigation_actionlib_server ${PROJECT_NAME}
 add_executable(navigation_client src/navigation_client.cpp)
 add_dependencies(navigation_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_client
+  ${catkin_LIBRARIES}
+)
+
+# Drives both robots forwards in task 2. Example node
+add_executable(resource_localiser src/resource_localiser.cpp)
+add_dependencies(resource_localiser ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(resource_localiser
   ${catkin_LIBRARIES}
 )
 
