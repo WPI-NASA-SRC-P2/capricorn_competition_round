@@ -5,22 +5,42 @@
 
 using namespace COMMON_NAMES;
 
+float START_DIGGING = 1.0; // This starts the digging condition
+float START_UNLOADING = 2.0; // This starts the unloading condition
+float SLEEP_DURATION = 5.0; // The sleep duration
+
+
 typedef actionlib::SimpleActionClient<operations::ExcavatorAction> Client;
 
+/**
+ * @brief The main method for excavator client
+ * 
+ * @param argc The number of arguments passed
+ * @param argv The array of arguments passed
+ * @return int 
+ */
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "excavator_client");
   Client client(EXCAVATOR_ACTIONLIB, true);
   client.waitForServer();
   operations::ExcavatorGoal goal;
-  goal.wrist_pitch_angle = 1; // Start digging
+  goal.wrist_pitch_angle = START_DIGGING; // START_DIGGING = 1
   client.sendGoal(goal);
   std::string message1(client.getState().toString().c_str());
   ROS_INFO_STREAM("Current State: " + message1);
-  client.waitForResult(ros::Duration(5.0));
+  client.waitForResult(ros::Duration(SLEEP_DURATION));
   if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     ROS_INFO_STREAM("Yay! The scoop is now full");
+  ros::Duration(SLEEP_DURATION).sleep(); // Delay between digging and unloading tasks
+  goal.wrist_pitch_angle = START_UNLOADING; // START_UNLOADING = 2
+  client.sendGoal(goal);
   std::string message2(client.getState().toString().c_str());
   ROS_INFO_STREAM("Current State: " + message2);
+  client.waitForResult(ros::Duration(SLEEP_DURATION));
+  if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    ROS_INFO_STREAM("Yay! The scoop is now empty");
+  std::string message3(client.getState().toString().c_str());
+  ROS_INFO_STREAM("Current State: " + message3);
   return 0;
 }
