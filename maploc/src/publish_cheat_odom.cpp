@@ -13,7 +13,7 @@ NASA SPACE ROBOTICS CHALLENGE
 #include <tf/transform_broadcaster.h>
 #include <utils/common_names.h>
 
-#define UPDATE_HZ 10
+#define UPDATE_HZ 200
 
 /**
  * @brief This node is used to publish the ground truth position of the model given in the argument.
@@ -43,7 +43,7 @@ int main(int argc, char **argv)
     ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>(topic_name, 1, true);
 
     static tf::TransformBroadcaster br;
-    tf::Transform transform;
+    tf::StampedTransform transform;
 
     gazebo_msgs::GetModelState req;
     req.request.model_name = model_name;
@@ -64,6 +64,12 @@ int main(int argc, char **argv)
         transform.setOrigin(tf::Vector3(req.response.pose.position.x, req.response.pose.position.y, req.response.pose.position.z));
         tf::quaternionMsgToTF(req.response.pose.orientation, quat);
         transform.setRotation(quat);
+        transform.frame_id_ = COMMON_NAMES::MAP;
+        transform.child_frame_id_ = model_name + "_" + COMMON_NAMES::ROBOT_BASE;
+        transform.stamp_ = req.response.header.stamp;
+
+        br.sendTransform(transform);
+
         odom_msg.pose.pose = req.response.pose;
         odom_msg.twist.twist = req.response.twist;
         odom_msg.header = req.response.header;
