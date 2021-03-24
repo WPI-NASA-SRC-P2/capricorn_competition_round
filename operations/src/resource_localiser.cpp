@@ -36,7 +36,7 @@ void localiseResource(const operations::ResourceLocaliserGoalConstPtr& localiser
         ROS_INFO("");
     }
     
-    float volatile_approx_orient_ = robot_pose.pose.pose.orientation;
+    // float volatile_approx_orient_ = robot_pose.pose.pose.orientation;
     
 }
 
