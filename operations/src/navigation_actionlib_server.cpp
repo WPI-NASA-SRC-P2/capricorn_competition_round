@@ -242,7 +242,8 @@ operations::TrajectoryWithVelocities* sendGoalToPlanner(const operations::Naviga
 	return traj;
 }
 
-void brakeRobot(double brake_force){
+void brakeRobot(double brake_force)
+{
 	srcp2_msgs::BrakeRoverSrv srv;
 	srv.request.brake_force = brake_force;
 	brake_client_.call(srv);
