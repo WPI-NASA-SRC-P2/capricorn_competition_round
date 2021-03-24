@@ -22,7 +22,28 @@ std::string robot_name;
  * 
  * @param twist twist message from teleop
  */
-void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
+void teleopCB(const geometry_msgs::Twist::ConstPtr& twist)
+{
+  // Action message goal
+  operations::NavigationGoal goal;
+  
+  // Manual driving
+  goal.manual_driving = true;
+
+  // Diverting values from twist to navigation
+  goal.forward_velocity = twist->linear.x;
+  goal.angular_velocity = twist->angular.z;
+  
+  client->sendGoal(goal);
+  ros::Duration(0.1).sleep();
+}
+
+/**
+ * @brief Callback for the navigation testing topic
+ * 
+ * @param twist geometry_msgs::Point for the goal 
+ */
+void navigationCB(const geometry_msgs::Point::ConstPtr& goal_point)
 {
     // Action message goal
     operations::NavigationGoal goal;
@@ -30,8 +51,8 @@ void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
     //Simple waypoint 2 meters in front of the robot
     geometry_msgs::PoseStamped t1;
     t1.header.frame_id = robot_name + "_small_chassis";
-    t1.pose.position.x = 2.0;
-    t1.pose.position.y = 2.0;
+    t1.pose.position.x = goal_point->x;
+    t1.pose.position.y = goal_point->y;
     t1.pose.position.z = 0;
 
     t1.pose.orientation.w = 1;
@@ -39,28 +60,13 @@ void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
     t1.pose.orientation.y = 0;
     t1.pose.orientation.z = 0;
 
-    //geometry_msgs::PoseStamped map_frame_waypoint = buffer.transform(t1, MAP);
-
     goal.pose = t1;
     goal.manual_driving = false;
 
     printf("Sending auto goal to actionlib server\n");
     client->sendGoal(goal);
-    ros::Duration(3).sleep();
+    ros::Duration(0.1).sleep();
 
-    // No manual driving
-    goal.manual_driving = true;
-    goal.forward_velocity = 0;
-    goal.angular_velocity = -1;
-    printf("Sending manual goal to actionlib server\n");
-    client->sendGoal(goal);
-    ros::Duration(3).sleep();
-
-    printf("Re-sending auto goal to actionlib server\n");
-    goal.manual_driving = false;
-    goal.forward_velocity = 0;
-    goal.angular_velocity = 0;
-    client->sendGoal(goal);
 }
 
 int main(int argc, char** argv)
@@ -81,7 +87,8 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     // Subscribing to teleop topic
-    ros::Subscriber sub = nh.subscribe("/cmd_vel", 1000, chatterCallback);
+    ros::Subscriber navigation_sub = nh.subscribe( "/capricorn/" + robot_name + "/navigation_tester_topic", 1000, navigationCB);
+    ros::Subscriber teleop_sub = nh.subscribe( "/cmd_vel", 1000, teleopCB);
 
     printf("Nav client: Instantiating client instance\n");
 
