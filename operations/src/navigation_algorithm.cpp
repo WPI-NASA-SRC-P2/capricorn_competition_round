@@ -155,16 +155,54 @@ std::vector<geometry_msgs::Point> NavigationAlgo::getNArchimedeasSpiralPoints(co
   return points;
 }
 
-// float NavigationAlgo::getBrakingForce(const float ang_vel, const float pitch, const RobotModel robot_model)
-// {
-//   float mass = RobotDescription::robot_mass_map[robot_model];
-//   float gravity = RobotDescription::MOON_GRAVITY;
+std::vector<double> NavigationAlgo::fromQuatToEuler(const geometry_msgs::PoseStamped& pose)
+{
+  geometry_msgs::Quaternion q = pose.pose.orientation;
 
-//   //Calculates the maximum force that can be applied without skidding
-//   float braking_force = -mass * gravity * std::cos(std::abs(pitch));
+  tf::Quaternion quat(q.x, q.y, q.z, q.w);
 
-//   //Calculate torque, dividing by 4 to calculate per wheel value instead of the total value
-//   float braking_torque = braking_force * RobotDescription::WHEEL_RADIUS / 4;
+  tf::Matrix3x3 m(quat);
 
-//   return braking_torque;
-// }
+  double roll, pitch, yaw;
+
+  m.getRPY(roll, pitch, yaw);
+
+  std::vector<double> euler_angles = {roll, pitch, yaw};
+  
+  return euler_angles;
+}
+
+double NavigationAlgo::changeInPosition(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& target_robot_pose)
+{
+  //Get the change in x and y between the two poses
+	double delta_x = current_robot_pose.pose.position.x - target_robot_pose.pose.position.x;
+	double delta_y = current_robot_pose.pose.position.y - target_robot_pose.pose.position.y;
+
+  //Return the distance formula from these deltas
+	return pow(pow(delta_x, 2) + pow(delta_y, 2), 0.5);
+}
+
+double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& current_waypoint, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer)
+{
+	// Get the next waypoint in the robot's frame
+	geometry_msgs::PoseStamped waypoint_relative_to_robot;
+
+  // Should probably wrap this in a try except for tf2::ExtrapolationException, we seem to extrapolate into the past sometimes
+	waypoint_relative_to_robot = tf_buffer.transform(current_waypoint, robot_name + "_small_chassis", ros::Duration(0.1));
+
+  //Get the change in yaw between the two poses with atan2
+	double change_in_yaw = atan2(waypoint_relative_to_robot.pose.position.y, waypoint_relative_to_robot.pose.position.x);
+	
+	// We want the robot to turn in the direction of the smallest angle change, so if abs(change) > 180, flip its direction
+	if(change_in_yaw >= M_PI/2)
+	{
+		change_in_yaw -= 2*M_PI;
+	}
+	
+	if (change_in_yaw <= -M_PI/2) 
+	{
+		change_in_yaw += 2*M_PI;
+	}
+	
+	return change_in_yaw;
+}
