@@ -14,6 +14,8 @@ public:
   
   std::vector<geometry_msgs::Point> PathPlanner::indexToGrid(const int8[] data, uint32 width, uint32 height);
 
+void PathPlanner::PrintMessage(nav_msgs::OccupancyGrid OccGrid);
+
   /**
  * @brief converts grid cell into list of walkable neightbors (full adjacent neightbors only)
  * 
