@@ -50,7 +50,7 @@ inline double distance(Point gridpoint, Point tgt) {
     return(sqrt((gridpoint.x - tgt.x)*(gridpoint.x - tgt.x) + (gridpoint.y - tgt.y)*(gridpoint.y - tgt.y)));
 }
 
-bool is_frontier(std::vector<Point> &frontiers, Point point) {
+bool contains(std::vector<Point> &frontiers, Point point) {
     for(auto &pt : frontiers) {
         if(point == pt) {
             return true;
@@ -59,14 +59,7 @@ bool is_frontier(std::vector<Point> &frontiers, Point point) {
     return false;
 }
 
-bool is_obstacle(std::vector<Point> &obstacles, Point point) {
-    for(auto &pt : obstacles) {
-        if(point == pt) {
-            return true;
-        }
-    }
-    return false;
-}
+
 
 std::vector<Point> get_neighbors(Point pt) {
     std::vector<Point> neighbors;
@@ -149,7 +142,7 @@ std::vector<Point> AStar::FindPath(std::vector<Point> &frontiers, std::vector<Po
             return reconstruct_path(current, came_from);
         }
 
-        if(is_obstacle(obstacles, current)) continue;
+        if(contains(obstacles, current) || contains(frontiers, current)) continue;
 
         for(auto &neighbor : get_neighbors(current)) {
 
