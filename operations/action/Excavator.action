@@ -3,6 +3,7 @@ float64 shoulder_yaw_angle # The angle to move the shoulder yaw joint
 float64 shoulder_pitch_angle # The angle to move the shoulder pitch joint
 float64 elbow_pitch_angle # The angle to move the elbow pitch joint
 float64 wrist_pitch_angle # The angle to move the wrist pitch joint
+float64 task # The task variable to choose between digging or unloading
 
 ---
 # Define the result

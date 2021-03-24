@@ -61,7 +61,7 @@ namespace COMMON_NAMES
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
 
-  /****** HAULER NAMES ******/
+  /****** EXCAVATOR NAMES ******/
   const std::string SET_ELBOW_PITCH_POSITION = "/arm/elbow_pitch/command/position";
   const std::string SET_SHOULDER_PITCH_POSITION = "/arm/shoulder_pitch/command/position";
   const std::string SET_SHOULDER_YAW_POSITION = "/arm/shoulder_yaw/command/position";

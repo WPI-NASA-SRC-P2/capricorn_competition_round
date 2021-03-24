@@ -25,7 +25,7 @@ int main(int argc, char** argv)
   Client client(EXCAVATOR_ACTIONLIB, true);
   client.waitForServer();
   operations::ExcavatorGoal goal;
-  goal.wrist_pitch_angle = START_DIGGING; // START_DIGGING = 1
+  goal.task = START_DIGGING; // START_DIGGING = 1
   client.sendGoal(goal);
   std::string message1(client.getState().toString().c_str());
   ROS_INFO_STREAM("Current State: " + message1);
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
   if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     ROS_INFO_STREAM("Yay! The scoop is now full");
   ros::Duration(SLEEP_DURATION).sleep(); // Delay between digging and unloading tasks
-  goal.wrist_pitch_angle = START_UNLOADING; // START_UNLOADING = 2
+  goal.task = START_UNLOADING; // START_UNLOADING = 2
   client.sendGoal(goal);
   std::string message2(client.getState().toString().c_str());
   ROS_INFO_STREAM("Current State: " + message2);

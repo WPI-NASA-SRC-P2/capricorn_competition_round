@@ -91,14 +91,14 @@ void publishExcavatorMessage(int task)
  */
 void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_server)
 {
-  if (goal->wrist_pitch_angle == START_DIGGING) // START_DIGGING = 1
+  if (goal->task == START_DIGGING) // START_DIGGING = 1
   {
     publishExcavatorMessage(START_DIGGING);
     ros::Duration(SLEEP_DURATION).sleep();
     // action_server->working(); // might use for feedback
     action_server->setSucceeded();
   }
-  else if (goal->wrist_pitch_angle == START_UNLOADING) // START_UNLOADING = 2
+  else if (goal->task == START_UNLOADING) // START_UNLOADING = 2
   {
     publishExcavatorMessage(START_UNLOADING);
     ros::Duration(SLEEP_DURATION).sleep();
