@@ -3,13 +3,13 @@
         We create one instance of the node for each robot. We pass in the robot name and number as arguments (note the space between and no `_`),
         so that they will publish to the correct wheel topics.
     -->
-    <node pkg="templates" type="template_node" name="hauler_example"    ns="/capricorn/hauler_1"    args="small_hauler_1"    output="screen">
+    <node pkg="templates" type="template_node" name="small_scout_1"    ns="/capricorn/scout_1"    args="small_scout_1"    output="screen">
         <!-- 
             This parameter is defined within the scope of the node tag, making it a private parameter. Node handles must be passed a "~" argument if
             they want to access this value. If this was defined outside of the scope of the node, it would have a different scope (see `rosparam list` from
             the terminal), and could be accessed with a public node handle.
         -->
-        <param name="wheel_effort" value="25.0" />
+        <param name="wheel_effort" value="0.0" />
     </node>
 
     <!--<node pkg="templates" type="template_node" name="excavator_example" ns="/capricorn/excavator_1" args="small_excavator_1" output="screen">
