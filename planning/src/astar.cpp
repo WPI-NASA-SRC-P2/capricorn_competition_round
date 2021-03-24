@@ -59,6 +59,15 @@ bool is_frontier(std::vector<Point> &frontiers, Point point) {
     return false;
 }
 
+bool is_obstacle(std::vector<Point> &obstacles, Point point) {
+    for(auto &pt : obstacles) {
+        if(point == pt) {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::vector<Point> get_neighbors(Point pt) {
     std::vector<Point> neighbors;
 
@@ -113,10 +122,10 @@ std::vector<Point> reconstruct_path(Point current, std::unordered_map<Point, Poi
     return waypoints;
 }
 
-std::vector<Point> AStar::FindPath(std::vector<Point> &frontiers, Point target, Point start) {
+std::vector<Point> AStar::FindPath(std::vector<Point> &frontiers, std::vector<Point> &obstacles, Point target, Point start, bool DirectToDest = false) {
     // A Star Implementation based off https://en.wikipedia.org/wiki/A*_search_algorithm
 
-    Point dest = get_closest_point(frontiers, target);
+    Point dest = DirectToDest ? target : get_closest_point(frontiers, target);
 
     Point origin = start;
 
@@ -140,7 +149,7 @@ std::vector<Point> AStar::FindPath(std::vector<Point> &frontiers, Point target, 
             return reconstruct_path(current, came_from);
         }
 
-        if(is_frontier(frontiers, current)) continue;
+        if(is_obstacle(obstacles, current)) continue;
 
         for(auto &neighbor : get_neighbors(current)) {
 
