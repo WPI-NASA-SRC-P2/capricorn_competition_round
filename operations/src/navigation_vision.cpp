@@ -20,13 +20,13 @@ void objects_callback(const perception::ObjectArray& objects, string desired_obj
     if(execute_service)
     {
         float center_obj = -1;
-        float size_obj = -1;
+        float height_obj = -1;
         
         for(int i = 0; i < objects.number_of_objects; i++) 
         {   
             if(objects.obj[i].label == desired_object_label) {
                 center_obj = objects.obj[i].center.x;
-                size_obj = objects.obj[i].size_y;
+                height_obj = objects.obj[i].size_y;
             }
         }
         
@@ -34,10 +34,10 @@ void objects_callback(const perception::ObjectArray& objects, string desired_obj
         float error_angle;
         int error_angle_threshold = 7;
         
-        int proportional_size = 15;
-        float error_size;
-        int size_threshold = 400;
-        int error_size_threshold = 7;
+        int proportional_height = 15;
+        float error_height;
+        int height_threshold = 400;
+        int error_height_threshold = 7;
         
         if(center_obj == -1)
         {
@@ -48,16 +48,16 @@ void objects_callback(const perception::ObjectArray& objects, string desired_obj
         {
             obj_detected = true;
             error_angle = width - center_obj;
-            error_size = size_threshold - size_obj;
+            error_height = height_threshold - height_obj;
         }
         
         if(error_angle < error_angle_threshold)
         {
             goal.angular_velocity = 0;
             
-            if(error_size < error_size_threshold)
+            if(error_height < error_height_threshold)
             {
-                goal.forward_velocity = error_size * proportional_size;
+                goal.forward_velocity = error_height * proportional_height;
             }
             else
             {
