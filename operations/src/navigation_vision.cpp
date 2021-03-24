@@ -12,21 +12,21 @@ std::string robot_name;
 
 #define UPDATE_HZ 20
 
-void objects_callback(const perception::ObjectArray& objects) 
+void objects_callback(const perception::ObjectArray& objects, string desired_object_label) 
 {  
     operations::NavigationGoal goal;
     goal.manual_driving = true;
     
     if(execute_service)
     {
-        float center_rs = -1;
-        float size_rs = -1;
+        float center_obj = -1;
+        float size_obj = -1;
         
         for(int i = 0; i < objects.number_of_objects; i++) 
         {   
-            if(objects.obj[i].label == "repairStation") {
-                center_rs = objects.obj[i].center.x;
-                size_rs = objects.obj[i].size_y;
+            if(objects.obj[i].label == desired_object_label) {
+                center_obj = objects.obj[i].center.x;
+                size_obj = objects.obj[i].size_y;
             }
         }
         
@@ -39,16 +39,16 @@ void objects_callback(const perception::ObjectArray& objects)
         int size_threshold = 400;
         int error_size_threshold = 7;
         
-        if(center_rs == -1)
+        if(center_obj == -1)
         {
-            rs_detected = false;
+            obj_detected = false;
             return;
         }
         else
         {
-            rs_detected = true;
-            error_angle = width - center_rs;
-            error_size = size_threshold - size_rs;
+            obj_detected = true;
+            error_angle = width - center_obj;
+            error_size = size_threshold - size_obj;
         }
         
         if(error_angle < error_angle_threshold)
