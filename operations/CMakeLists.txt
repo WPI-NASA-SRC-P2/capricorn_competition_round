@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   srcp2_msgs
   tf2
   tf2_ros
+  perception
 )
 
 ## System dependencies are found with CMake's conventions
@@ -119,7 +120,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs
+ CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs perception
  #  DEPENDS system_lib
 )
 
@@ -202,6 +203,12 @@ target_link_libraries(trajectory_processor
 add_executable(wheel_speed_processing src/wheel_speed_processing.cpp)
 add_dependencies(wheel_speed_processing ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(wheel_speed_processing
+  ${catkin_LIBRARIES}
+)
+
+add_executable(navigation_vision src/navigation_vision.cpp)
+add_dependencies(navigation_vision ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(navigation_vision
   ${catkin_LIBRARIES}
 )
 
