@@ -3,8 +3,7 @@
 
     <include file="$(find operations)/launch/navigation.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
-        <arg name="output" value="screen" />
     </include>
 
-    <node name="navigation_client" pkg="operations" type="navigation_client" args="$(arg robot_name)" output="screen" />
+    <node pkg="operations" type="start_scout_sm" name="scout_1_sm" args="$(arg robot_name)" output="screen" />
 </launch>

@@ -134,10 +134,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# add_library(${PROJECT_NAME}
-#   src/navigation_algorithm.cpp
-# )
-
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
@@ -205,6 +201,14 @@ target_link_libraries(wheel_speed_processing
   ${catkin_LIBRARIES}
 )
 
+add_executable(start_scout_sm src/start_scout_sm.cpp)
+add_dependencies(start_scout_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(start_scout_sm
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
+# target_link_libraries(start_scout_sm navigation_algorithm)
+
 #############
 ## Install ##
 #############
@@ -216,7 +220,7 @@ target_link_libraries(wheel_speed_processing
 ## in contrast to setup.py, you can choose the destination
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS navigation_actionlib_server navigation_client trajectory_processor
+install(TARGETS navigation_actionlib_server navigation_client trajectory_processor start_scout_sm
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

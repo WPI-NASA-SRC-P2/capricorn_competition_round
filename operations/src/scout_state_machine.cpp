@@ -10,9 +10,11 @@ ScoutStateMachine::ScoutStateMachine(ros::NodeHandle nh, const std::string& robo
     volatile_sub_ = nh.subscribe("/" + robot_name + VOLATILE_SENSOR_TOPIC, 1000, &ScoutStateMachine::processVolatileMessage, this);
 
     // TODO TODO TODO: Replace (or switch based on debug flat) with real odometry topic
-    robot_odom_sub_ = nh.subscribe(CAPRICORN_TOPIC + CHEAT_ODOM_TOPIC, 1000, &ScoutStateMachine::processOdomMessage, this);
+    robot_odom_sub_ = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, &ScoutStateMachine::processOdomMessage, this);
 
     excavator_ready_sub_ = nh.subscribe(CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000, &ScoutStateMachine::processExcavatorMessage, this);
+
+    volatile_pub_ = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + robot_name + VOLATILE_LOCATION_TOPIC, 1000);
 }
 
 ScoutStateMachine::~ScoutStateMachine()
@@ -23,8 +25,11 @@ ScoutStateMachine::~ScoutStateMachine()
 
 void ScoutStateMachine::processVolatileMessage(const srcp2_msgs::VolSensorMsg::ConstPtr& vol_msg)
 {
-    std::lock_guard<std::mutex> vol_flag_guard(vol_flag_mutex_);
-    vol_detected_ = true;
+    if(vol_msg->vol_type != std::string("none"))
+    {
+        std::lock_guard<std::mutex> vol_flag_guard(vol_flag_mutex_);
+        vol_detected_ = true;
+    }
 }
 
 void ScoutStateMachine::processOdomMessage(const nav_msgs::Odometry::ConstPtr& odom_msg)
@@ -260,5 +265,7 @@ void ScoutStateMachine::startStateMachine()
             break;
         }
         }
+
+        ros::spinOnce();
     }
 }
