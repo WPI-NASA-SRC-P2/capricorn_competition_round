@@ -1,4 +1,5 @@
 #include <include/astar.h>
+#include <nav_msgs/OccupancyGrid.h>
 
 #include <algorithm>
 #include <unordered_map>
@@ -59,8 +60,6 @@ bool contains(std::vector<Point> &frontiers, Point point) {
     return false;
 }
 
-
-
 std::vector<Point> get_neighbors(Point pt) {
     std::vector<Point> neighbors;
 
@@ -115,7 +114,7 @@ std::vector<Point> reconstruct_path(Point current, std::unordered_map<Point, Poi
     return waypoints;
 }
 
-std::vector<Point> AStar::FindPath(std::vector<Point> &frontiers, std::vector<Point> &obstacles, Point target, Point start, bool DirectToDest = false) {
+std::vector<Point> AStar::FindPathFrontier(std::vector<Point> &frontiers, std::vector<Point> &obstacles, Point target, Point start, bool DirectToDest = false) {
     // A Star Implementation based off https://en.wikipedia.org/wiki/A*_search_algorithm
 
     Point dest = DirectToDest ? target : get_closest_point(frontiers, target);
@@ -152,6 +151,53 @@ std::vector<Point> AStar::FindPath(std::vector<Point> &frontiers, std::vector<Po
                 gScores[neighbor] = tentative_gscore;
                 came_from[neighbor] = current;
                 fScores[neighbor] = gScores[neighbor] + distance(neighbor, dest);
+                if(std::find(open_set.begin(), open_set.end(), neighbor) == open_set.end()) { // TODO: prio queue.
+                    open_set.push_back(neighbor);
+                }
+            }
+        }
+    }
+
+    printf("[WARNING] Call to navigation failed to find valid path.\n");
+    return std::vector<Point>();
+}
+
+inline int access_oGrid(int x, int y, nav_msgs::OccupancyGrid oGrid) {
+    return oGrid.data[y * oGrid.info.width + x];
+}
+
+std::vector<Point> AStar::FindPathOccGrid(nav_msgs::OccupancyGrid oGrid, Point target, Point start) {
+    // A Star Implementation based off https://en.wikipedia.org/wiki/A*_search_algorithm
+    std::unordered_map<Point, double> gScores;
+    std::unordered_map<Point, double> fScores;
+
+    std::vector<Point> open_set; // TODO: Optimize by replacing with custom priority queue.
+    open_set.push_back(start);
+
+    std::unordered_map<Point, Point> came_from;
+    came_from[start] = get_point(INFINITY, INFINITY);
+
+    gScores[start] = 0;
+    fScores[start] = distance(start, target);
+
+    while(!open_set.empty()) {
+        auto current = pop_minimum_fscore(open_set, fScores); // TODO: prio queue.
+
+        if(current == target) {
+            return reconstruct_path(current, came_from);
+        }
+
+        printf("Current: %f, %f. Value: %d\n", current.x, current.y, access_oGrid(current.x, current.y, oGrid));
+        if(access_oGrid(current.x, current.y, oGrid) >= 50) continue;
+
+        for(auto &neighbor : get_neighbors(current)) {
+
+            auto tentative_gscore = gScores[current] + distance(current, neighbor);
+            if(gScores.find(neighbor) == gScores.end()) gScores[neighbor] = INFINITY;
+            if(tentative_gscore < gScores[neighbor]) {
+                gScores[neighbor] = tentative_gscore;
+                came_from[neighbor] = current;
+                fScores[neighbor] = gScores[neighbor] + distance(neighbor, target);
                 if(std::find(open_set.begin(), open_set.end(), neighbor) == open_set.end()) { // TODO: prio queue.
                     open_set.push_back(neighbor);
                 }
