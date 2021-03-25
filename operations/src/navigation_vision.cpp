@@ -48,12 +48,12 @@ void objects_callback(const perception::ObjectArray& objects)
   // Initialize error, P Control, and necessary thresholds 
   int proportional_angle = 15;
   float error_angle;
-  int error_angle_threshold = 7;
+  int error_angle_threshold = 3;
 
   int proportional_height = 15;
   float error_height;
-  int height_threshold = 400;
-  int error_height_threshold = 7;
+  int height_threshold = 300;
+  int error_height_threshold = 3;
 
   if(center_obj == -1)
   {
