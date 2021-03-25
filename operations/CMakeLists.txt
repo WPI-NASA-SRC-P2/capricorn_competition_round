@@ -205,6 +205,12 @@ target_link_libraries(wheel_speed_processing
   ${catkin_LIBRARIES}
 )
 
+add_executable(resource_localiser_tester src/resource_localiser_tester.cpp)
+add_dependencies(resource_localiser_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(resource_localiser_tester
+  ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
