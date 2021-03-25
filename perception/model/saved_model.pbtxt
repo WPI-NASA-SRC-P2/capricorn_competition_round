@@ -18,11 +18,16 @@ item {
     id: 5
     name: 'scout'
 }
+
 item {
     id: 6
-    name: 'excavator'
+    name: 'robot_antenna'
 }
 item {
     id: 7
-    name: 'hauler'
+    name: 'furnace'
+}
+item {
+    id: 8
+    name: 'ppSmallThruster'
 }
