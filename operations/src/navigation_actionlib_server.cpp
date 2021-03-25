@@ -361,7 +361,7 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 		{
 			ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
 			operations::NavigationResult res;
-			res.result = COMMON_NAMES::NAV_RESULT::INTERRUPTED;
+			res.result = NAV_RESULT::INTERRUPTED;
 			action_server->setSucceeded(res);
 
 			// Cleanup trajectory
@@ -378,7 +378,7 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 
 		current_waypoint.header.stamp = ros::Time(0);
 
-		current_waypoint = buffer.transform(current_waypoint, COMMON_NAMES::MAP, ros::Duration(0.1));
+		current_waypoint = buffer.transform(current_waypoint, MAP, ros::Duration(0.1));
 
 		// Needed, otherwise we get extrapolation into the past
 		current_waypoint.header.stamp = ros::Time(0);
@@ -393,13 +393,13 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 			if(manual_driving)
 			{
 				ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
-				res.result = COMMON_NAMES::NAV_RESULT::INTERRUPTED;
+				res.result = NAV_RESULT::INTERRUPTED;
 			}
 			else
 			{
 				//AAAH ERROR
 				ROS_ERROR_STREAM("Turn to waypoint " << i << " did not succeed. Exiting.\n");
-				res.result = COMMON_NAMES::NAV_RESULT::FAILED;
+				res.result = NAV_RESULT::FAILED;
 				
 			}
 			action_server->setSucceeded(res);
@@ -425,7 +425,7 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 			if(manual_driving)
 			{
 				ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
-				res.result = COMMON_NAMES::NAV_RESULT::INTERRUPTED;
+				res.result = NAV_RESULT::INTERRUPTED;
 			} else 
 			{
 				//AAAH ERROR
@@ -441,32 +441,28 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 		}
 	}
 
-	//TODO: Change condition to run if we got a pose instead of a point
-	if (false)
+	geometry_msgs::PoseStamped final_pose = goal->pose;
+
+	//Turn to heading
+	bool turned_successfully = rotateRobot(final_pose);
+
+	if (!turned_successfully)
 	{
-		geometry_msgs::PoseStamped final_pose = goal->pose;
+		operations::NavigationResult res;
 
-		//Turn to heading
-		bool turned_successfully = rotateRobot(final_pose);
-
-		if (!turned_successfully)
+		if(manual_driving)
 		{
-			operations::NavigationResult res;
-
-			if(manual_driving)
-			{
-				ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
-				res.result = NAV_RESULT::INTERRUPTED;
-			}
-			else
-			{
-				//AAAH ERROR
-				ROS_ERROR_STREAM("Final turn did not succeed. Exiting.\n");
-				res.result = NAV_RESULT::FAILED;
-				
-			}
-			action_server->setSucceeded(res);
+			ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+			res.result = NAV_RESULT::INTERRUPTED;
 		}
+		else
+		{
+			//AAAH ERROR
+			ROS_ERROR_STREAM("Final turn did not succeed. Exiting.\n");
+			res.result = NAV_RESULT::FAILED;
+			
+		}
+		action_server->setSucceeded(res);
 	}
 	
 	// Cleanup trajectory
@@ -514,26 +510,78 @@ void angularDriving(const operations::NavigationGoalConstPtr &goal, Server *acti
 	return;
 }
 
+void spiralDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
+{
+	printf("Spiral drive: Spiral Away!\n");
+
+	ros::Duration(5).sleep();
+
+	//TODO: actually make it spiral
+
+	operations::NavigationResult res;
+	res.result = NAV_RESULT::SUCCESS;
+	action_server->setSucceeded(res);
+	return;
+}
+
+void followDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
+{
+	printf("Follow drive: Following!\n");
+
+	ros::Duration(5).sleep();
+	
+	//TODO: actually make it follow the thing
+
+	operations::NavigationResult res;
+	res.result = NAV_RESULT::SUCCESS;
+	action_server->setSucceeded(res);
+	return;
+}
+
 void execute(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
     printf("Received NavigationGoal, dispatching\n");
 
-	if(goal->manual_driving)
+	switch(goal->drive_mode)
 	{
-		manual_driving = true;
-		if(goal->angular_velocity != 0)
-		{
-			angularDriving(goal, action_server);
-		}
-		else
-		{
-			linearDriving(goal, action_server);
-		}
-	}
-	else
-	{
-		manual_driving = false;
-		automaticDriving(goal, action_server);
+		case NAV_TYPE::MANUAL:
+
+			manual_driving = true;
+			if(goal->angular_velocity != 0)
+			{
+				angularDriving(goal, action_server);
+			}
+			else
+			{
+				linearDriving(goal, action_server);
+			}		
+
+			break;
+		
+		case NAV_TYPE::GOAL:
+
+			manual_driving = false;
+			automaticDriving(goal, action_server);
+
+			break;
+		
+		case NAV_TYPE::SPIRAL:
+
+			manual_driving = false;
+			spiralDriving(goal, action_server);
+
+			break;
+		
+		case NAV_TYPE::FOLLOW:
+
+			manual_driving = false;
+			followDriving(goal, action_server);
+
+			break;
+
+		default:
+            ROS_ERROR_STREAM(robot_name + " encountered an unknown driving mode!");
+            break;
 	}
 }
 

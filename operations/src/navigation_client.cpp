@@ -28,7 +28,7 @@ void teleopCB(const geometry_msgs::Twist::ConstPtr& twist)
   operations::NavigationGoal goal;
   
   // Manual driving
-  goal.manual_driving = true;
+  goal.drive_mode = NAV_TYPE::MANUAL;
 
   // Diverting values from twist to navigation
   goal.forward_velocity = twist->linear.x;
@@ -61,7 +61,7 @@ void navigationCB(const geometry_msgs::Point::ConstPtr& goal_point)
     t1.pose.orientation.z = 0;
 
     goal.pose = t1;
-    goal.manual_driving = false;
+    goal.drive_mode = NAV_TYPE::GOAL;
 
     printf("Sending auto goal to actionlib server\n");
     client->sendGoal(goal);

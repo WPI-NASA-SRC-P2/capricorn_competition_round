@@ -31,13 +31,17 @@ geometry_msgs::PoseStamped robot_pose;
 void localiseResource(const operations::ResourceLocaliserGoalConstPtr& localiser_goal, ResourceLocaliserServer* server)
 {
     ROS_INFO("Starting locating volatile sequence");
-    if (near_volatile_)
-    {
-        ROS_INFO("");
-    }
+    // if (near_volatile_)
+    // {
+    //     ROS_INFO("");
+    // }
     
     // float volatile_approx_orient_ = robot_pose.pose.pose.orientation;
     
+    // Fake delay to simulate a locate action
+    ros::Duration(5).sleep();
+
+    server->setSucceeded();
 }
 
 void updateSensorData(const srcp2_msgs::VolSensorMsg::ConstPtr& msg)
