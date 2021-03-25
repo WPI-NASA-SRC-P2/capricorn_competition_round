@@ -58,6 +58,8 @@ void objects_callback(const perception::ObjectArray& objects)
   if(center_obj == -1)
   {
     obj_detected = false;
+    goal.angular_velocity = 2;
+    goal.forward_velocity = 0;
     return;
   }
   else
