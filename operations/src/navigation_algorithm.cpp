@@ -184,11 +184,21 @@ double NavigationAlgo::changeInPosition(const geometry_msgs::PoseStamped& curren
 
 double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& current_waypoint, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer)
 {
+  //printf("%f\n", chan)
+
+  // Hack (kind of) for Ashay. If the two poses are within 15cm of each other, we assume that we want to match orientations, not turn to face a waypoint
+  // TODO: Make sure planner team doesn't give us two waypoints that is within this tolerance
+  if(changeInPosition(current_robot_pose, current_waypoint) < 0.15)
+  {
+    printf("Poses are coincident, calculating yaw offset\n");
+    return changeInOrientation(current_waypoint, robot_name, tf_buffer);
+  }
+
 	// Get the next waypoint in the robot's frame
 	geometry_msgs::PoseStamped waypoint_relative_to_robot;
 
   // Should probably wrap this in a try except for tf2::ExtrapolationException, we seem to extrapolate into the past sometimes
-	waypoint_relative_to_robot = tf_buffer.transform(current_waypoint, robot_name + "_small_chassis", ros::Duration(0.1));
+	waypoint_relative_to_robot = tf_buffer.transform(current_waypoint, robot_name + ROBOT_CHASSIS, ros::Duration(0.1));
 
   //Get the change in yaw between the two poses with atan2
 	double change_in_yaw = atan2(waypoint_relative_to_robot.pose.position.y, waypoint_relative_to_robot.pose.position.x);
@@ -205,4 +215,16 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 	}
 	
 	return change_in_yaw;
+}
+
+double NavigationAlgo::changeInOrientation(const geometry_msgs::PoseStamped& desired_pose, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer)
+{
+  geometry_msgs::PoseStamped relative_to_robot = tf_buffer.transform(desired_pose, robot_name + ROBOT_CHASSIS, ros::Duration(0.1));
+
+  printf("Current offset yaw: %f\n", fromQuatToEuler(relative_to_robot)[2]);
+
+  //printf("desired yaw: %f\nrobot yaw: %f\n", fromQuatToEuler(desired_pose)[2], fromQuatToEuler(robot_pose)[2]);
+  //printf("desired frame: %s\trobot frame: %s\n", desired_pose.header.frame_id.c_str(), robot_pose.header.frame_id.c_str());
+  //printf("Yaw offset: %f\n", std::fmod(fromQuatToEuler(desired_pose)[2] - fromQuatToEuler(robot_pose)[2], 2*M_PI));
+  return fromQuatToEuler(relative_to_robot)[2];
 }

@@ -51,14 +51,15 @@ void navigationCB(const geometry_msgs::Point::ConstPtr& goal_point)
     //Simple waypoint 2 meters in front of the robot
     geometry_msgs::PoseStamped t1;
     t1.header.frame_id = robot_name + "_small_chassis";
+    t1.header.stamp = ros::Time::now();
     t1.pose.position.x = goal_point->x;
     t1.pose.position.y = goal_point->y;
     t1.pose.position.z = 0;
 
-    t1.pose.orientation.w = 1;
+    t1.pose.orientation.w = 0.707;
     t1.pose.orientation.x = 0;
     t1.pose.orientation.y = 0;
-    t1.pose.orientation.z = 0;
+    t1.pose.orientation.z = 0.707;
 
     goal.pose = t1;
     goal.drive_mode = NAV_TYPE::GOAL;
@@ -94,8 +95,6 @@ int main(int argc, char** argv)
     // Subscribing to teleop topic
     ros::Subscriber navigation_sub = nh.subscribe( "/capricorn/" + robot_name + "/navigation_tester_topic", 1000, navigationCB);
     ros::Subscriber teleop_sub = nh.subscribe( "/cmd_vel", 1000, teleopCB);
-
-    printf("Nav client: Instantiating client instance\n");
 
     printf("Nav client: Instantiating client instance\n");
 

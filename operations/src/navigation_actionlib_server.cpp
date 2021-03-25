@@ -1,7 +1,5 @@
 #include <ros/ros.h>
 
-#include <utils/common_names.h>
-
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Imu.h>
@@ -261,13 +259,13 @@ bool rotateRobot(const geometry_msgs::PoseStamped& target_robot_pose)
 	geometry_msgs::PoseStamped starting_pose = *getRobotPose();
 
 	double delta_heading = NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name, buffer);
-	printf("Turning %frad\n", delta_heading);
-
-	if (delta_heading == 0)
+	
+	if (abs(delta_heading) <= ANGLE_EPSILON)
 	{
 		return true;
 	}
 
+	printf("Turning %frad\n", delta_heading);
 	steerRobot(wheel_angles);
 
 	// While we have not turned the desired amount
@@ -353,6 +351,8 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 
 	//Forward goal to local planner, and save the returned trajectory
 	operations::TrajectoryWithVelocities *trajectory = sendGoalToPlanner(goal);
+
+	geometry_msgs::PoseStamped final_pose = buffer.transform(goal->pose, MAP, ros::Duration(0.1));
 
 	//Loop over trajectories
 	for (int i = 0; i < trajectory->waypoints.size(); i++)
@@ -441,7 +441,18 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 		}
 	}
 
-	geometry_msgs::PoseStamped final_pose = goal->pose;
+	geometry_msgs::PoseStamped current_robot_pose = *getRobotPose();
+
+	// The final pose is on top of the robot, we only care about orientation
+	final_pose.pose.position.x = current_robot_pose.pose.position.x;
+	final_pose.pose.position.y = current_robot_pose.pose.position.y;
+
+	final_pose.header.stamp = ros::Time(0);
+
+	printf("Final pose yaw: %f\n", NavigationAlgo::fromQuatToEuler(final_pose)[2]);
+	printf("Current robot yaw: %f\n", NavigationAlgo::fromQuatToEuler(current_robot_pose)[2]);
+
+	printf("Final rotate\n");
 
 	//Turn to heading
 	bool turned_successfully = rotateRobot(final_pose);
@@ -467,6 +478,10 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 	
 	// Cleanup trajectory
 	delete trajectory;
+
+	printf("Finished automatic goal!\n");
+
+	brakeRobot(1000);
 
 	operations::NavigationResult res;
 	res.result = NAV_RESULT::SUCCESS;
