@@ -74,7 +74,8 @@ class Models_state:
 def add_obstacle(occGrid, obx, oby, radius):
     # - if the occupancy grid maporigin is set to 'center' then the input obx and oby will reflect the necessary offset
     # - similarly, obx and oby will be input w.r.t. the proper frame reference already
-    
+    print("radius = ", radius)
+
     for theta in range(0,360,2):
         theta = theta*pi/180
 
@@ -82,7 +83,7 @@ def add_obstacle(occGrid, obx, oby, radius):
         obx_p = obx/occGrid.info.resolution
         oby_p = oby/occGrid.info.resolution
         radius_p = radius/occGrid.info.resolution
-
+        print('radius_p = ', radius_p)
         circX = int((obx_p + radius_p*np.cos(theta)))  
         circY = int((oby_p + radius_p*np.sin(theta))) 
         
@@ -96,7 +97,7 @@ def add_initial_obstacles(occGrid, baseFrameEntityName, coordinates):
     #   thus, the locations of each of these obstacles is already with respect to the correct base frame
     # - baseFrameEntityName is to ensure that the base frame object is not published as an obstacle if it is a rover, as that would likely disrupt navigation
 
-    rover_radius = 1.5/2 #m
+    rover_radius = 0.75 #m
 
     if baseFrameEntityName == 'small_scout_1':
         #add small_excavator_1
@@ -216,13 +217,21 @@ if __name__=="__main__":
 
     # add the original five items to the obstacle list, except for the base frame if it is a rover
     obstacleList = initializeObstacleList(baseFrameEntityName)
-
+    #print(obstacleList)
     # set up occupancy grid publisher
     occGridPub = rospy.Publisher("/capricorn/Ground_Truth_Map", OccupancyGrid, queue_size=1)
     
     # loop to keep updating the map
     while not rospy.is_shutdown():
         occGridPub.publish(occGrid)
+        
+        # refresh map
+        occGrid.data = [0] * (occGrid.info.width*occGrid.info.height)
+        states = Models_state()
+        states.setRelativeEntity(baseFrameEntityName) # transform rover, repair station, and processing plant coordinates to w.r.t. base frame
+        coordinates = states.show_gazebo_models() # acquire poses of rover etc.
+        add_initial_obstacles(occGrid, baseFrameEntityName, coordinates)
 
-        obstacleList = initializeObstacleList(baseFrameEntityName) # update the obstacleList by polling the updated gazebo coordinates
-        updateMap(occGrid, obstacleList)
+        # obstacleList = initializeObstacleList(baseFrameEntityName) # update the obstacleList by polling the updated gazebo coordinates
+        # obstacleList.append((10, 10, 6)) # just an example of appending obstacles to obstaclelist
+        # updateMap(occGrid, obstacleList)
