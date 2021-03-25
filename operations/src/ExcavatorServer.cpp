@@ -1,10 +1,8 @@
-#include <operations/ExcavatorAction.h>  // Note: "Action" is appended
+#include <operations/ExcavatorAction.h> 
 #include <actionlib/server/simple_action_server.h>
 #include <string.h>
 #include "ros/ros.h"
 #include <std_msgs/Float64.h>
-#include <std_msgs/Int32.h>
-#include <std_msgs/Float64MultiArray.h>
 #include <utils/common_names.h>
 
 typedef actionlib::SimpleActionServer<operations::ExcavatorAction> Server;
@@ -14,8 +12,8 @@ ros::Publisher excavator_elbow_pitch_publisher_;
 ros::Publisher excavator_wrist_pitch_publisher_;
 using namespace COMMON_NAMES;
 
-float BIN_RESET = 0.0; // This returns the bin to initial position 
-float BIN_EMPTY = 3.0; // This is the angle to empty the bin
+float START_DIGGING = 1.0; // This starts the digging condition
+float START_UNLOADING = 2.0; // This starts the unloading condition
 float SLEEP_DURATION = 5.0; // The sleep duration
 
 /**
@@ -33,48 +31,46 @@ void initExcavatorPublisher(ros::NodeHandle &nh, const std::string &robot_name)
 }
 
 /**
- * @brief publishes the bin angle to the rostopic small_hauler_1/bin/command/position
+ * @brief publishes the excavator angles to the rostopics small_excavator_1/arm/*joint_name/position
  * 
- * @param data the bin angle
+ * @param task the excavator task to be accomplished
  */
-void publishExcavatorMessage(int data)
+void publishExcavatorMessage(int task)
 {
-  // std_msgs::Float64 joint_value;
-  // joint_value.data = 2;
-  // std_msgs::Float64 
-  std_msgs::Float64 dig[4];
-  std_msgs::Float64 undig[4];
-  dig[0].data = 0;
-  dig[1].data = 2;
+  std_msgs::Float64 dig[4]; // This set of values moves the scoop under the surface
+  std_msgs::Float64 undig[4]; // This set of values moves the scoop above the surface
+  std_msgs::Float64 deposit[4]; // This set of values moves in a way to deposit volatiles in hauler
+  dig[0].data = 0; 
+  dig[1].data = 1;
   dig[2].data = 2;
-  dig[3].data = 2;
+  dig[3].data = 1;
   undig[0].data = 0;
-  undig[1].data = -2;
-  undig[2].data = -2;
-  undig[3].data = -2;
-  ROS_INFO_STREAM("The data value in publish method: " + std::to_string(data));
-  // std_msgs::Float64MultiArray dig; //declare Atest 
-  // dig.data.resize(5); //resize the array to assign to existent values 
-  // dig.data[0] = 0; //put the desired value 
-  // dig.data[1] = 2;
-  // dig.data[2] = 2;
-  // dig.data[3] = 2;
-  // std_msgs::Float64MultiArray undig; //declare Atest 
-  // undig.data.resize(5); //resize the array to assign to existent values 
-  // undig.data[0] = 0; //put the desired value 
-  // undig.data[1] = -2;
-  // undig.data[2] = -2;
-  // undig.data[3] = -2;
-  if(data == 1) // digging angles
+  undig[1].data = -1.5;
+  undig[2].data = 1.5;
+  undig[3].data = -1;
+  deposit[0].data = 0;
+  deposit[1].data = -1.5;
+  deposit[2].data = 1.5;
+  deposit[3].data = 2;
+  if(task == START_DIGGING) // digging angles
   {
     excavator_shoulder_yaw_publisher_.publish(dig[0]);
-    ROS_INFO_STREAM("The if inside publish method joint value: " + std::to_string(dig[0].data));
     excavator_shoulder_pitch_publisher_.publish(dig[1]);
     excavator_elbow_pitch_publisher_.publish(dig[2]);
     excavator_wrist_pitch_publisher_.publish(dig[3]);
+    ros::Duration(SLEEP_DURATION).sleep();
+    excavator_shoulder_yaw_publisher_.publish(undig[0]);
+    excavator_shoulder_pitch_publisher_.publish(undig[1]);
+    excavator_elbow_pitch_publisher_.publish(undig[2]);
+    excavator_wrist_pitch_publisher_.publish(undig[3]);
   }
-  else if(data == 0) // undigging angles
+  else if(task == START_UNLOADING) // dumping angles
   {
+    excavator_shoulder_yaw_publisher_.publish(deposit[0]);
+    excavator_shoulder_pitch_publisher_.publish(deposit[1]);
+    excavator_elbow_pitch_publisher_.publish(deposit[2]);
+    excavator_wrist_pitch_publisher_.publish(deposit[3]);
+    ros::Duration(SLEEP_DURATION).sleep();
     excavator_shoulder_yaw_publisher_.publish(undig[0]);
     excavator_shoulder_pitch_publisher_.publish(undig[1]);
     excavator_elbow_pitch_publisher_.publish(undig[2]);
@@ -88,27 +84,30 @@ void publishExcavatorMessage(int data)
 }
 
 /**
- * @brief This is where the action is executed if bin_angle is satisfied
+ * @brief This is where the action to dig or dump are executed
  * 
- * @param goal The desired bin angle
- * @param action_server The server object for hauler action
+ * @param goal The desired excavator task
+ * @param action_server The server object for excavator action
  */
 void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_server)
 {
-  ROS_INFO_STREAM("The first joint value in execute method: " + std::to_string(goal->wrist_pitch_angle));
-  if (goal->wrist_pitch_angle == 1) // BIN_RESET = 0
+  if (goal->task == START_DIGGING) // START_DIGGING = 1
   {
-    ROS_INFO_STREAM("The first joint value in if of execute: ");
-    publishExcavatorMessage(1);
-    // action_server->working(); // might use for feedback
+    publishExcavatorMessage(START_DIGGING);
     ros::Duration(SLEEP_DURATION).sleep();
-    // publishExcavatorMessage(0);
+    // action_server->working(); // might use for feedback
+    action_server->setSucceeded();
+  }
+  else if (goal->task == START_UNLOADING) // START_UNLOADING = 2
+  {
+    publishExcavatorMessage(START_UNLOADING);
+    ros::Duration(SLEEP_DURATION).sleep();
     action_server->setSucceeded();
   }
 }
 
 /**
- * @brief The main method for hauler server
+ * @brief The main method for excavator server
  * 
  * @param argc The number of arguments passed
  * @param argv The array of arguments passed
@@ -131,9 +130,7 @@ int main(int argc, char** argv)
     std::string node_name = robot_name + "_excavator_action_server";
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
-    // Initialise the publishers for steering and wheel velocites
     initExcavatorPublisher(nh, robot_name);
-    // Action server 
     Server server(nh, EXCAVATOR_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.start();
     ros::spin();

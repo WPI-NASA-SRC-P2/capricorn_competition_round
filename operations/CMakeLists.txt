@@ -10,7 +10,7 @@ project(operations)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  # srcp2_msgs
+  #srcp2_msgs
   actionlib_msgs
   genmsg
   message_generation
@@ -18,6 +18,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   utils
   geometry_msgs
+  gazebo_msgs
+  srcp2_msgs
+  tf2
+  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -54,11 +58,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  TrajectoryWithVelocities.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -81,13 +84,9 @@ generate_messages(
   actionlib_msgs
   std_msgs
   geometry_msgs
+  #srcp2_msgs
 )
 
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -121,7 +120,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs #srcp2_msgs
+ CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs
  #  DEPENDS system_lib
 )
 
@@ -136,10 +135,15 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+# add_library(${PROJECT_NAME}
+#   src/navigation_algorithm.cpp
+# )
+
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
 )
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -203,6 +207,18 @@ target_link_libraries(navigation_client
   ${catkin_LIBRARIES}
 )
 
+add_executable(trajectory_processor src/trajectory_processor.cpp)
+add_dependencies(trajectory_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(trajectory_processor
+  ${catkin_LIBRARIES}
+)
+
+add_executable(wheel_speed_processing src/wheel_speed_processing.cpp)
+add_dependencies(wheel_speed_processing ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(wheel_speed_processing
+  ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
@@ -214,7 +230,7 @@ target_link_libraries(navigation_client
 ## in contrast to setup.py, you can choose the destination
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS navigation_actionlib_server navigation_client
+install(TARGETS navigation_actionlib_server navigation_client trajectory_processor
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
@@ -259,3 +275,6 @@ install(TARGETS navigation_actionlib_server navigation_client
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+catkin_add_gtest(${PROJECT_NAME}-test test/algorithm_tests.cpp)
+target_link_libraries(${PROJECT_NAME}-test ${catkin_LIBRARIES} ${PROJECT_NAME})
