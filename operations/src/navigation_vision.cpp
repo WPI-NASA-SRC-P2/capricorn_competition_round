@@ -32,6 +32,7 @@ void objects_callback(const perception::ObjectArray& objects)
   // Initialize location and size variables
   float center_obj = -1;
   float height_obj = -1;
+  float width = -1;
 
   // Find the desired object
   for(int i = 0; i < objects.number_of_objects; i++) 
@@ -40,6 +41,7 @@ void objects_callback(const perception::ObjectArray& objects)
       // Store the object's center and height
       center_obj = objects.obj[i].center.x;
       height_obj = objects.obj[i].size_y;
+      width = objects.obj[i].size_x;
     }
   }
 
