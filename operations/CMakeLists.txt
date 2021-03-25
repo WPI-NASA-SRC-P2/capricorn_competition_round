@@ -19,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   utils
   geometry_msgs
   gazebo_msgs
-  srcp2_msgs
+  #srcp2_msgs
   tf2
   tf2_ros
 )
