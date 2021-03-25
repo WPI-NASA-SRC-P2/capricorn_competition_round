@@ -6,7 +6,7 @@
 #include <utils/common_names.h>
 
 #include <geometry_msgs/Point.h> // To get target point in order to orient shoulder joint
-#include <tf/transform_datatypes.h> // To get shoulder joint location with respect to robot frame (http://wiki.ros.org/tf/Overview/Data%20Types)
+//#include <tf/transform_datatypes.h> // To get shoulder joint location with respect to robot frame (http://wiki.ros.org/tf/Overview/Data%20Types)
 #include <math.h> // used in findShoulderAngle() for atan2()
 
 typedef actionlib::SimpleActionServer<operations::ExcavatorAction> Server;
@@ -19,9 +19,9 @@ using namespace COMMON_NAMES;
 const int arraySize = 4; // Size of arrays used to change joint angles
 
 enum Tasks{
-  START_DIGGING = 1.0; // This starts the digging condition
-  START_UNLOADING = 2.0; // This starts the unloading condition
-  SLEEP_DURATION = 5.0; // The sleep duration
+  START_DIGGING = 1; // This starts the digging condition
+  START_UNLOADING = 2; // This starts the unloading condition
+  SLEEP_DURATION = 5; // The sleep duration
 };
 
 /**
@@ -38,32 +38,16 @@ void initExcavatorPublisher(ros::NodeHandle &nh, const std::string &robot_name)
   excavator_wrist_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_WRIST_PITCH_POSITION, 1000); 
 }
 
-// Calculates the oreintation of the shoulder joint based on the passed target point
+/**
+ * @brief Calculates the orientation of the shoulder joint based on the passed target point
+ * 
+ * @param target the x, y coordinates of the volatiles in the body frame of the excavator
+ * @param shoulder the x, y coordinates of the shoulder joint in the body frame of excavator
+ * @return float the yaw angle of the shoulder joint
+ */
 float findShoulderAngle(const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
 {
-  float x_target = target.x;
-  float y_target = target.y;
-  
-  float x_shoulder = base.x;
-  float y_shoulder = base.y;
-
-  theta = atan((x_target - y_shoulder), (x_target - x_shoulder));
-
-  return theta;
-}
-
-/**
- * @brief This methods updates the array of joint angles based on the values present in a different array
- * 
- * @param array stores joint angles, needs to be updated
- * @param values stores vales to be copied to array
- */
-void updateArray(const int *array, int values[])
-{
-  for (int i = 0; i < arraySize; i++)
-  {
-    array[i] = values[i];
-  }
+  return atan2((target.y - shoulder.y), (target.x - shoulder.x));
 }
 
 /**
@@ -71,12 +55,12 @@ void updateArray(const int *array, int values[])
  * 
  * @param values array of joint angles (ordered)
  */
-void publishAngles(int values[])
+void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, float wrist_pitch)
 {
-  excavator_shoulder_yaw_publisher_.publish(values[0]);
-  excavator_shoulder_pitch_publisher_.publish(values[1]);
-  excavator_elbow_pitch_publisher_.publish(values[2]);
-  excavator_wrist_pitch_publisher_.publish(values[3]);
+  excavator_shoulder_yaw_publisher_.publish(shoulder_yaw);
+  excavator_shoulder_pitch_publisher_.publish(shoulder_pitch);
+  excavator_elbow_pitch_publisher_.publish(elbow_pitch);
+  excavator_wrist_pitch_publisher_.publish(wrist_pitch);
 }
 
 /**
@@ -84,52 +68,25 @@ void publishAngles(int values[])
  * 
  * @param task the excavator task to be accomplished
  */
-void publishExcavatorMessage(int task)
+void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
 {
-  std_msgs::Float64 dig[4]; // This set of values moves the scoop under the surface
-  std_msgs::Float64 undig[4]; // This set of values moves the scoop above the surface
-  std_msgs::Float64 deposit[4]; // This set of values moves in a way to deposit volatiles in hauler
-  dig[0].data = 0; 
-  dig[1].data = 1;
-  dig[2].data = 2;
-  dig[3].data = 1;
-  undig[0].data = 0;
-  undig[1].data = -1.5;
-  undig[2].data = 1.5;
-  undig[3].data = -1;
-  deposit[0].data = 0;
-  deposit[1].data = -1.5;
-  deposit[2].data = 1.5;
-  deposit[3].data = 2;
+  float theta = findShoulderAngle(target, shoulder);
   if(task == START_DIGGING) // digging angles
   {
-    excavator_shoulder_yaw_publisher_.publish(dig[0]);
-    excavator_shoulder_pitch_publisher_.publish(dig[1]);
-    excavator_elbow_pitch_publisher_.publish(dig[2]);
-    excavator_wrist_pitch_publisher_.publish(dig[3]);
+    publishAngles(theta, 1, 2, 1); // This set of values moves the scoop under the surface
     ros::Duration(SLEEP_DURATION).sleep();
-    excavator_shoulder_yaw_publisher_.publish(undig[0]);
-    excavator_shoulder_pitch_publisher_.publish(undig[1]);
-    excavator_elbow_pitch_publisher_.publish(undig[2]);
-    excavator_wrist_pitch_publisher_.publish(undig[3]);
+    publishAngles(0, -1.5, 1.5, -1); // This set of values moves the scoop above the surface and to the front center
   }
   else if(task == START_UNLOADING) // dumping angles
   {
-    excavator_shoulder_yaw_publisher_.publish(deposit[0]);
-    excavator_shoulder_pitch_publisher_.publish(deposit[1]);
-    excavator_elbow_pitch_publisher_.publish(deposit[2]);
-    excavator_wrist_pitch_publisher_.publish(deposit[3]);
+    publishAngles(theta, -1.5, 1.5, 2); // This set of values moves in a way to deposit volatiles in hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    excavator_shoulder_yaw_publisher_.publish(undig[0]);
-    excavator_shoulder_pitch_publisher_.publish(undig[1]);
-    excavator_elbow_pitch_publisher_.publish(undig[2]);
-    excavator_wrist_pitch_publisher_.publish(undig[3]);
+    publishAngles(0, -1.5, 1.5, -1); // This set of values moves the scoop above the surface and to the front center
   }
   else
   {
     // call function here for random joint values
-  }
-  
+  } 
 }
 
 /**
@@ -140,16 +97,20 @@ void publishExcavatorMessage(int task)
  */
 void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_server)
 {
+  geometry_msgs::Point shoulder;
+  shoulder.x = 0.7;
+  shoulder.y = 0.0;
+  shoulder.z = 0.1;
   if (goal->task == START_DIGGING) // START_DIGGING = 1
   {
-    publishExcavatorMessage(START_DIGGING);
+    publishExcavatorMessage(START_DIGGING, goal->target, shoulder);
     ros::Duration(SLEEP_DURATION).sleep();
     // action_server->working(); // might use for feedback
     action_server->setSucceeded();
   }
   else if (goal->task == START_UNLOADING) // START_UNLOADING = 2
   {
-    publishExcavatorMessage(START_UNLOADING);
+    publishExcavatorMessage(START_UNLOADING, goal->target, shoulder);
     ros::Duration(SLEEP_DURATION).sleep();
     action_server->setSucceeded();
   }

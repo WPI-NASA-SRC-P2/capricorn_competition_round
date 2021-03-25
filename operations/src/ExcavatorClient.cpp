@@ -5,10 +5,15 @@
 
 using namespace COMMON_NAMES;
 
-float START_DIGGING = 1.0; // This starts the digging condition
-float START_UNLOADING = 2.0; // This starts the unloading condition
-float SLEEP_DURATION = 5.0; // The sleep duration
-
+/**
+ * @brief The task assigned numbers
+ * 
+ */
+enum Tasks{
+  START_DIGGING = 1; // This starts the digging condition
+  START_UNLOADING = 2; // This starts the unloading condition
+  SLEEP_DURATION = 5; // The sleep duration
+};
 
 typedef actionlib::SimpleActionClient<operations::ExcavatorAction> Client;
 
