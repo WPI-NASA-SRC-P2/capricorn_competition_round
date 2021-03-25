@@ -26,24 +26,21 @@ void objects_callback(const perception::ObjectArray& objects)
   
   goal.drive_mode = NAV_TYPE::MANUAL;
   goal.forward_velocity = 2;
-
-
   client->sendGoal(goal);
-  ros::Duration(2).sleep();
-  
+  ros::Duration(2).sleep();  
+
+
   goal.drive_mode = NAV_TYPE::MANUAL;
   goal.angular_velocity = 2;
-
-
   client->sendGoal(goal);
+
+
   ros::Duration(2).sleep();
-  
-  
+
+
   goal.drive_mode = NAV_TYPE::MANUAL;
+  goal.forward_velocity = 0;
   goal.angular_velocity = 0;
-  goal.angular_velocity = 0;
-
-
   client->sendGoal(goal);
   ros::Duration(10).sleep();
 }
