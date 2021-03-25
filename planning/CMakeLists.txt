@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  nav_msgs
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -134,6 +136,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node src/path_planner_node.cpp)
+add_library(${PROJECT_NAME} src/path_planner.cpp)
+target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

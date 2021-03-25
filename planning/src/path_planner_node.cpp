@@ -16,13 +16,7 @@ int main(int argc, char *argv[])
     PathPlanner planner;
 
     //Subscribe to the node publishing map values 
-    ros::Subscriber indexValues = nh.subscribe("/small_scout1/camera/grid_map", 1000, PrintMessage);
-
-    // std::vector<nav_msgs::GridCell> gridCells = planner.indexToGrid(indexValues);
-
-    // std::vector<nav_msgs::GridCell> neighbors4 = planner.neightborsOf4(gridCells);
-
-    // std::vector<nav_msgs::GridCell> neighbors4 = planner.neightborsOf8(gridCells);
+    ros::Subscriber indexValues = nh.subscribe("/small_scout1/camera/grid_map", 1000, PathPlanner::test);
     
     ros::spin();
 

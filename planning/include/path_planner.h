@@ -3,6 +3,8 @@
 
 #include <ros/ros.h>
 #include <iostream>
+#include <geometry_msgs/Point.h>
+#include <nav_msgs/OccupancyGrid.h>
 
 class PathPlanner
 {
@@ -12,27 +14,31 @@ public:
   PathPlanner();
   ~PathPlanner();
   
-  std::vector<geometry_msgs::Point> PathPlanner::indexToGrid(const int8[] data, uint32 width, uint32 height);
+static void test(const nav_msgs::OccupancyGrid& gridValues);
 
-void PathPlanner::PrintMessage(nav_msgs::OccupancyGrid OccGrid);
+static geometry_msgs::Point indexToGrid(nav_msgs::OccupancyGrid gridValues, int index);
+
+static int gridToIndex(nav_msgs::OccupancyGrid gridValues, geometry_msgs::Point coordinate);
+
+static void PrintMessage(nav_msgs::OccupancyGrid OccGrid);
 
   /**
  * @brief converts grid cell into list of walkable neightbors (full adjacent neightbors only)
  * 
  */
-void PathPlanner::neightborsOf4(nav_msgs::GridCell> coordinate, std::vector<nav_msgs::GridCell> listOfCoordinates);
+static std::vector<geometry_msgs::Point> neightborsOf4(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues);
 
 /**
  * @brief converts grid cell into list of walkable neightbors (adjacent and diagonal)
  * 
  */
-void PathPlanner::neightborsOf8(nav_msgs::GridCell coordinate, std::vector<nav_msgs::GridCell> listOfCoordinates);
+static std::vector<geometry_msgs::Point> neightborsOf8(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues);
 
 /**
  * @brief derives a path from a list of coordinates 
  * 
  */
-void wavefront(void);
+static void wavefront(void);
 
 };
 

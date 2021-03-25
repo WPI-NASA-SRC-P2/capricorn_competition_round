@@ -1,8 +1,8 @@
 #include <ros/ros.h>
-#include <templates/template_class.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/Point.h>
 #include <math.h>
+#include <path_planner.h>
 
 
 PathPlanner::PathPlanner()
@@ -20,7 +20,18 @@ PathPlanner::~PathPlanner()
  */
 void PathPlanner::PrintMessage(nav_msgs::OccupancyGrid OccGrid)
 {
-    printf(OccGrid.data);
+   // printf(OccGrid.data);
+}
+
+/**
+ * @brief test function
+ */
+void PathPlanner::test(const nav_msgs::OccupancyGrid& gridValues)
+{
+    geometry_msgs::Point coordinate = indexToGrid(gridValues, 4);
+    int index = gridToIndex(gridValues, coordinate);
+
+    ROS_INFO("%i", index);
 }
 
 /**
@@ -60,72 +71,81 @@ int PathPlanner::gridToIndex(nav_msgs::OccupancyGrid gridValues, geometry_msgs::
  */
 std::vector<geometry_msgs::Point> PathPlanner::neightborsOf4(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues) 
 {
-    //just add and subract x and ys
-    //use gridToIndex
-    //add one, subtract one, add width, subtract width to get neighbors
-    //check bounds
     //declare a return array 
-    std::vector<geometry_msgs::Points> retPoints;
+    std::vector<geometry_msgs::Point> retPoints;
 
+    //find the index from the given coordinate and grid
     int index = gridToIndex(gridValues, coordinate);
 
-    if(index % gridValues.info.width != 1)
+    int map_width = gridValues.info.width;
+    int map_height = gridValues.info.height;
+    int map_area = gridValues.info.width * gridValues.info.height;
+
+    if(index % map_width != 1)
     {
-        retPoints.pushback(index - 1);
+        retPoints.push_back(indexToGrid(gridValues, (index - 1)));
     }
-    if(index % gridValues.info.width != 0)
+    if(index % map_width != 0)
     {
-        retPoints.pushback(index + 1);
+        retPoints.push_back(indexToGrid(gridValues, (index + 1)));
     }
-    if(index > gridValues.info.width)
+    if(index > map_width)
     {
-        retPoints.pushback(index - gridValues.info.width);
+        retPoints.push_back(indexToGrid(gridValues, (index - map_width)));
     }
-    if(index < ((gridValues.info.width * gridValues.info.height) - gridValues.info.width))
+    if(index < (map_area - map_width))
     {
-        retPoints.pushback(index + gridValues.info.width);
+        retPoints.push_back(indexToGrid(gridValues, (index + map_width)));
     }
 
     //return the return array
-    return retList;
+    return retPoints;
 }
 
 /**
  * @brief converts grid cell into list of walkable neightbors (adjacent and diagonal)
  * 
  */
-std::vector<geometry_msgs::Point> PathPlanner::neightborsOf8(nav_msgs::GridCell coordinate, nav_msgs::OccupancyGrid gridValues)
+std::vector<geometry_msgs::Point> PathPlanner::neightborsOf8(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues)
 {
     //declare a return array 
-    std::vector<geometry_msgs::Points> retPoints;
+    std::vector<geometry_msgs::Point> retPoints;
 
     //add the neightbors of 4 to the return array
-    std::vector<geometry_msgs::Points> existingNeighbors = neightborsOf4(coordinatem, gridValues);
+    std::vector<geometry_msgs::Point> existingNeighbors = neightborsOf4(coordinate, gridValues);
 
     for(int i  = 0; i < existingNeighbors.size(); i++)
     {
-        retPoints.pushback(existingNeightbors[i]);
+        retPoints.push_back(existingNeighbors[i]);
     }
 
-    if(index > gridValues.info.width + 1 && index % gridValues.info.width != 1)
+    //find the index from the given coordinate and grid
+    int index = gridToIndex(gridValues, coordinate);
+
+    int map_width = gridValues.info.width;
+    int map_height = gridValues.info.height;
+    int map_area = gridValues.info.width * gridValues.info.height;
+    
+
+    if(index > map_width + 1 && index % map_width != 1)
     {
-        retPoints.pushback(index - (gridValues.info.width + 1));
+        retPoints.push_back(indexToGrid(gridValues, (index - (map_width + 1))));
     }
-    if(index > gridValues.info.width && index % gridValues.info.width != 0)
+    if(index > map_width && index % map_width != 0)
     {
-        retPoints.pushback(index - (gridValues.info.width + 1));
+        retPoints.push_back(indexToGrid(gridValues, (index - (map_width + 1))));
     }
-    if(index < ((gridValues.info.width * gridVaues.info.height) - gridValues.info.width) && index % gridValues.info.width != 1)
+    if(index < (map_area - map_width) && index % map_width != 1)
     {
-        retPoints.pushback(index + (gridValues.info.width -1));
+        retPoints.push_back(indexToGrid(gridValues, (index + (map_width -1))));
     }
-    if(index < ((gridValues.info.width * gridVaues.info.height) - (gridValues.info.width + 1)) && index % gridValues.info.width != 0)
+    if(index < ((map_area) - (map_width + 1)) && index % map_width != 0)
     {
-        retPoints.pushback(index + gridValues.info.width + 1);
+        retPoints.push_back(indexToGrid(gridValues, (index + (map_width + 1))));
     }
     
     //return the return array
-    return retList;
+    return retPoints;
 }
 
 /**
