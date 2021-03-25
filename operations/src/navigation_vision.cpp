@@ -5,6 +5,17 @@
 #include <actionlib/client/simple_action_client.h>
 #include <utils/common_names.h>
 
+#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <std_msgs/Float64.h>
+
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+// typedef for the Action Server
+typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
+Client* client;
+
 float height = 480;
 float width = 640;
 
@@ -77,7 +88,7 @@ void objects_callback(const perception::ObjectArray& objects, std::string desire
     else
     {
         // If object is not centered, turn.
-        goal.angular_velocity = error_angle / width * 3.14 / proportional;
+        goal.angular_velocity = error_angle / width * 3.14 / proportional_angle;
         goal.forward_velocity = 0;
     }
     
