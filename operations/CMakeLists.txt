@@ -18,14 +18,11 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   utils
   geometry_msgs
-<<<<<<< HEAD
   perception
-=======
   gazebo_msgs
   srcp2_msgs
   tf2
   tf2_ros
->>>>>>> upstream/main
 )
 
 ## System dependencies are found with CMake's conventions
@@ -122,11 +119,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
-<<<<<<< HEAD
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs perception #srcp2_msgs
-=======
  CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs
->>>>>>> upstream/main
  #  DEPENDS system_lib
 )
 
@@ -192,12 +185,6 @@ target_link_libraries(navigation_client
   ${catkin_LIBRARIES}
 )
 
-<<<<<<< HEAD
-# Drives robot using vision
-add_executable(navigation_vision src/navigation_vision.cpp)
-add_dependencies(navigation_vision ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(navigation_vision
-=======
 add_executable(trajectory_processor src/trajectory_processor.cpp)
 add_dependencies(trajectory_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(trajectory_processor
@@ -207,7 +194,6 @@ target_link_libraries(trajectory_processor
 add_executable(wheel_speed_processing src/wheel_speed_processing.cpp)
 add_dependencies(wheel_speed_processing ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(wheel_speed_processing
->>>>>>> upstream/main
   ${catkin_LIBRARIES}
 )
 
