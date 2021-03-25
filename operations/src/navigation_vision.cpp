@@ -78,6 +78,7 @@ void objects_callback(const perception::ObjectArray& objects)
     {
         // If the object is big enough, stop the robot
         goal.forward_velocity = 0;
+        ros::shutdown();
     }
     else
     {
@@ -92,6 +93,7 @@ void objects_callback(const perception::ObjectArray& objects)
     goal.forward_velocity = 0;
   }
 
+  ROS_INFO_STREAM("ERROR Height: "<<error_height<<", Angle: "<<error_angle);
   client->sendGoal(goal);
   ros::Duration(0.1).sleep();
 
