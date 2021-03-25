@@ -190,7 +190,6 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
   // TODO: Make sure planner team doesn't give us two waypoints that is within this tolerance
   if(changeInPosition(current_robot_pose, current_waypoint) < 0.15)
   {
-    printf("Poses are coincident, calculating yaw offset\n");
     return changeInOrientation(current_waypoint, robot_name, tf_buffer);
   }
 
@@ -220,11 +219,5 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 double NavigationAlgo::changeInOrientation(const geometry_msgs::PoseStamped& desired_pose, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer)
 {
   geometry_msgs::PoseStamped relative_to_robot = tf_buffer.transform(desired_pose, robot_name + ROBOT_CHASSIS, ros::Duration(0.1));
-
-  printf("Current offset yaw: %f\n", fromQuatToEuler(relative_to_robot)[2]);
-
-  //printf("desired yaw: %f\nrobot yaw: %f\n", fromQuatToEuler(desired_pose)[2], fromQuatToEuler(robot_pose)[2]);
-  //printf("desired frame: %s\trobot frame: %s\n", desired_pose.header.frame_id.c_str(), robot_pose.header.frame_id.c_str());
-  //printf("Yaw offset: %f\n", std::fmod(fromQuatToEuler(desired_pose)[2] - fromQuatToEuler(robot_pose)[2], 2*M_PI));
   return fromQuatToEuler(relative_to_robot)[2];
 }

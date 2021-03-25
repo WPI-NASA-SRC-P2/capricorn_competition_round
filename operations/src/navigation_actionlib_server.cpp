@@ -449,9 +449,6 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 
 	final_pose.header.stamp = ros::Time(0);
 
-	printf("Final pose yaw: %f\n", NavigationAlgo::fromQuatToEuler(final_pose)[2]);
-	printf("Current robot yaw: %f\n", NavigationAlgo::fromQuatToEuler(current_robot_pose)[2]);
-
 	printf("Final rotate\n");
 
 	//Turn to heading
