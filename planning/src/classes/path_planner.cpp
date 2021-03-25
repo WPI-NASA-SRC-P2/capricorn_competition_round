@@ -65,7 +65,7 @@ std::vector<geometry_msgs::Point> PathPlanner::neightborsOf4(geometry_msgs::Poin
     //add one, subtract one, add width, subtract width to get neighbors
     //check bounds
     //declare a return array 
-    std::vector<geometry_msgs::Points> retPoints;
+    std::vector<geometry_msgs::Point> retPoints;
 
     int index = gridToIndex(gridValues, coordinate);
 
@@ -100,7 +100,7 @@ std::vector<geometry_msgs::Point> PathPlanner::neightborsOf8(nav_msgs::GridCell 
     std::vector<geometry_msgs::Points> retPoints;
 
     //add the neightbors of 4 to the return array
-    std::vector<geometry_msgs::Points> existingNeighbors = neightborsOf4(coordinatem, gridValues);
+    std::vector<geometry_msgs::Points> existingNeighbors = neighborsOf4(coordinatem, gridValues);
 
     for(int i  = 0; i < existingNeighbors.size(); i++)
     {

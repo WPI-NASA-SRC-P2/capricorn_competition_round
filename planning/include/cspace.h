@@ -1,10 +1,8 @@
 // header guards
 // https://www.educative.io/edpresso/what-are--sharpifndef-and--sharpdefine-used-for-in-cpp
 
-
-
-#ifndef PLANNER_CLASS_H
-#define PLANNER_CLASS_H
+#ifndef CSPACE_CLASS_H
+#define CSPACE_CLASS_H
 
 #include <ros/ros.h>
 #include <set>
@@ -16,7 +14,7 @@
 
 // Class names must be CamelCased and has a capital letter for each new word
 // http://wiki.ros.org/CppStyleGuide
-class pathPlanner {
+class CSpace {
 
 /**
  * @brief  Declare the private variables, functions and methods here.
@@ -35,11 +33,6 @@ private:
  * 
  */
 public:
-	
-
-
-
-	
 
 	static std::vector<geometry_msgs::Point> findAllNeighbors(std::vector <geometry_msgs::Point>& grid, int width, std::vector <geometry_msgs::Point> toSearch, int r);
 

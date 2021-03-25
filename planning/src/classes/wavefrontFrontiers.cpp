@@ -1,5 +1,4 @@
 #include <ros/ros.h>
-#include <templates/template_class.h>
 
 WavefrontFrontiersDetector::WavefrontFrontiersDetector()
 {
@@ -48,14 +47,14 @@ static std::float getEuclideanDistance(float x1, float y1, float x2, float y2)
 
 
 /**
- * @brief Get the Frontier Centroid object
+ * @brief Get the Frontier Median object
  * 
  * @param frontierList 
  * @return std::int 
  */
-static std::vector<int> getFrontierCentroid(vector<int> frontierList)
+static std::vector<int> getFrontierMedian(vector<int> frontierList)
 { 
-    return centroid;
+    return Median;
 }
 
 }
