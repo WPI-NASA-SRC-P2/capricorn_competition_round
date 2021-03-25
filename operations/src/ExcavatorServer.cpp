@@ -5,6 +5,10 @@
 #include <std_msgs/Float64.h>
 #include <utils/common_names.h>
 
+#include <geometry_msgs/Point.h> // To get target point in order to orient shoulder joint
+#include <tf/transform_datatypes.h> // To get shoulder joint location with respect to robot frame (http://wiki.ros.org/tf/Overview/Data%20Types)
+#include <math.h> // used in findShoulderAngle() for atan2()
+
 typedef actionlib::SimpleActionServer<operations::ExcavatorAction> Server;
 ros::Publisher excavator_shoulder_yaw_publisher_;
 ros::Publisher excavator_shoulder_pitch_publisher_;
@@ -12,9 +16,13 @@ ros::Publisher excavator_elbow_pitch_publisher_;
 ros::Publisher excavator_wrist_pitch_publisher_;
 using namespace COMMON_NAMES;
 
-float START_DIGGING = 1.0; // This starts the digging condition
-float START_UNLOADING = 2.0; // This starts the unloading condition
-float SLEEP_DURATION = 5.0; // The sleep duration
+const int arraySize = 4; // Size of arrays used to change joint angles
+
+enum Tasks{
+  START_DIGGING = 1.0; // This starts the digging condition
+  START_UNLOADING = 2.0; // This starts the unloading condition
+  SLEEP_DURATION = 5.0; // The sleep duration
+};
 
 /**
  * @brief Initializing the publisher here
@@ -28,6 +36,47 @@ void initExcavatorPublisher(ros::NodeHandle &nh, const std::string &robot_name)
   excavator_shoulder_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_SHOULDER_PITCH_POSITION, 1000);
   excavator_elbow_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_ELBOW_PITCH_POSITION, 1000);
   excavator_wrist_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_WRIST_PITCH_POSITION, 1000); 
+}
+
+// Calculates the oreintation of the shoulder joint based on the passed target point
+float findShoulderAngle(const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
+{
+  float x_target = target.x;
+  float y_target = target.y;
+  
+  float x_shoulder = base.x;
+  float y_shoulder = base.y;
+
+  theta = atan((x_target - y_shoulder), (x_target - x_shoulder));
+
+  return theta;
+}
+
+/**
+ * @brief This methods updates the array of joint angles based on the values present in a different array
+ * 
+ * @param array stores joint angles, needs to be updated
+ * @param values stores vales to be copied to array
+ */
+void updateArray(const int *array, int values[])
+{
+  for (int i = 0; i < arraySize; i++)
+  {
+    array[i] = values[i];
+  }
+}
+
+/**
+ * @brief This function publishes the joint angles to the publishers
+ * 
+ * @param values array of joint angles (ordered)
+ */
+void publishAngles(int values[])
+{
+  excavator_shoulder_yaw_publisher_.publish(values[0]);
+  excavator_shoulder_pitch_publisher_.publish(values[1]);
+  excavator_elbow_pitch_publisher_.publish(values[2]);
+  excavator_wrist_pitch_publisher_.publish(values[3]);
 }
 
 /**
