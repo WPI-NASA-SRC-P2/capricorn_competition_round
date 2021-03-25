@@ -90,7 +90,7 @@ void objects_callback(const perception::ObjectArray& objects)
 
   client->sendGoal(goal);
   ros::Duration(0.1).sleep();
-}
+
 
 
   // operations::NavigationGoal goal;
