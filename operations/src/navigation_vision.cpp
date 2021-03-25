@@ -12,7 +12,7 @@ std::string robot_name;
 
 #define UPDATE_HZ 20
 
-void objects_callback(const perception::ObjectArray& objects, string desired_object_label) 
+void objects_callback(const perception::ObjectArray& objects, std::string desired_object_label) 
 {  
     
     // Create a goal object and turn on manual driving
