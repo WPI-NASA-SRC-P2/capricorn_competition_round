@@ -112,7 +112,7 @@ void navigateRobot(const geometry_msgs::Pose target_pose)
  * 
  * @return geometry_msgs::Pose  Pose which minimises the volatile distance
  */
-geometry_msgs::Pose getBestPose();
+geometry_msgs::Pose getBestPose()
 {
   RotationDirection rotate_direction = CLOCKWISE;
   bool rotate_robot = true;
