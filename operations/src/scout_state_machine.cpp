@@ -159,7 +159,7 @@ void ScoutStateMachine::startStateMachine()
                 first_iter_ = false;
             }
 
-            if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+            if(resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
             {
                 printf("Resource localized.\n");
 
