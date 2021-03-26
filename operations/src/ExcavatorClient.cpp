@@ -10,9 +10,9 @@ using namespace COMMON_NAMES;
  * 
  */
 enum Tasks{
-  START_DIGGING = 1; // This starts the digging condition
-  START_UNLOADING = 2; // This starts the unloading condition
-  SLEEP_DURATION = 5; // The sleep duration
+  START_DIGGING = 1, // This starts the digging condition
+  START_UNLOADING = 2, // This starts the unloading condition
+  SLEEP_DURATION = 5 // The sleep duration
 };
 
 typedef actionlib::SimpleActionClient<operations::ExcavatorAction> Client;
@@ -32,8 +32,8 @@ int main(int argc, char** argv)
 
   operations::ExcavatorGoal goal;
   goal.task = START_DIGGING; // START_DIGGING = 1
-  goal.target.x = 0;
-  goal.target.y = 0;
+  goal.target.x = 0.7; // set of target digging values to the left of the excavator
+  goal.target.y = 2;
   goal.target.z = 0;
   client.sendGoal(goal);
 
@@ -46,8 +46,8 @@ int main(int argc, char** argv)
   ros::Duration(SLEEP_DURATION).sleep(); // Delay between digging and unloading tasks
 
   goal.task = START_UNLOADING; // START_UNLOADING = 2
-  goal.target.x = 0;
-  goal.target.y = 0;
+  goal.target.x = 0.7; // set of target dumping values to the right of the excavator
+  goal.target.y = -2;
   goal.target.z = 0;
   client.sendGoal(goal);
   

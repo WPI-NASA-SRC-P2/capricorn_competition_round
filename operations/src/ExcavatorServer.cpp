@@ -4,9 +4,7 @@
 #include "ros/ros.h"
 #include <std_msgs/Float64.h>
 #include <utils/common_names.h>
-
 #include <geometry_msgs/Point.h> // To get target point in order to orient shoulder joint
-//#include <tf/transform_datatypes.h> // To get shoulder joint location with respect to robot frame (http://wiki.ros.org/tf/Overview/Data%20Types)
 #include <math.h> // used in findShoulderAngle() for atan2()
 
 typedef actionlib::SimpleActionServer<operations::ExcavatorAction> Server;
@@ -16,12 +14,17 @@ ros::Publisher excavator_elbow_pitch_publisher_;
 ros::Publisher excavator_wrist_pitch_publisher_;
 using namespace COMMON_NAMES;
 
-const int arraySize = 4; // Size of arrays used to change joint angles
+// The global variables to save the last values passed to the joints
+float curr_sh_yaw = 0;
+float curr_sh_pitch = 0;
+float curr_elb_pitch = 0;
+float curr_wrt_pitch = 0;
 
+// The task numbers and sleep duration
 enum Tasks{
-  START_DIGGING = 1; // This starts the digging condition
-  START_UNLOADING = 2; // This starts the unloading condition
-  SLEEP_DURATION = 5; // The sleep duration
+  START_DIGGING = 1, // This starts the digging condition
+  START_UNLOADING = 2, // This starts the unloading condition
+  SLEEP_DURATION = 2 // The sleep duration
 };
 
 /**
@@ -43,7 +46,7 @@ void initExcavatorPublisher(ros::NodeHandle &nh, const std::string &robot_name)
  * 
  * @param target the x, y coordinates of the volatiles in the body frame of the excavator
  * @param shoulder the x, y coordinates of the shoulder joint in the body frame of excavator
- * @return float the yaw angle of the shoulder joint
+ * @return atan2((target.y - shoulder.y), (target.x - shoulder.x)) is the required yaw angle of the shoulder joint
  */
 float findShoulderAngle(const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
 {
@@ -55,33 +58,72 @@ float findShoulderAngle(const geometry_msgs::Point &target, const geometry_msgs:
  * 
  * @param values array of joint angles (ordered)
  */
-void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, float wrist_pitch)
+
+/**
+ * @brief This function publishes the joint angles to the publishers
+ * 
+ * @param shoulder_yaw the desired shoulder yaw joint value
+ * @param shoulder_pitch the desired shoulder pitch joint value
+ * @param elbow_pitch the desired elbow pitch joint value
+ * @param wrist_pitch the desired wrist pitch joint value
+ * @param steps the number of simulation steps, higher value corresponds to slower movement
+ * @param dig flag for dig or dump task to adjust the speed
+ */
+void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, float wrist_pitch, int steps, bool dig)
 {
-  excavator_shoulder_yaw_publisher_.publish(shoulder_yaw);
-  excavator_shoulder_pitch_publisher_.publish(shoulder_pitch);
-  excavator_elbow_pitch_publisher_.publish(elbow_pitch);
-  excavator_wrist_pitch_publisher_.publish(wrist_pitch);
+  std_msgs::Float64 shoulder_yaw_msg;
+  std_msgs::Float64 shoulder_pitch_msg;
+  std_msgs::Float64 elbow_pitch_msg;
+  std_msgs::Float64 wrist_pitch_msg;
+  
+  for(int i=0; i<steps; i++)
+  {
+    shoulder_yaw_msg.data = curr_sh_yaw + i*(shoulder_yaw-curr_sh_yaw)/steps;
+    shoulder_pitch_msg.data = curr_sh_pitch + i*(shoulder_pitch-curr_sh_pitch)/steps;
+    elbow_pitch_msg.data = curr_elb_pitch + i*(elbow_pitch-curr_elb_pitch)/steps;
+    if(dig)
+      wrist_pitch_msg.data = -(shoulder_pitch_msg.data + elbow_pitch_msg.data);
+    else
+      wrist_pitch_msg.data = curr_wrt_pitch + i*(wrist_pitch-curr_wrt_pitch)/steps;
+
+    ros::Duration(0.2).sleep();
+
+    excavator_shoulder_yaw_publisher_.publish(shoulder_yaw_msg);
+    excavator_shoulder_pitch_publisher_.publish(shoulder_pitch_msg);
+    excavator_elbow_pitch_publisher_.publish(elbow_pitch_msg);
+    excavator_wrist_pitch_publisher_.publish(wrist_pitch_msg);
+  }
+  curr_sh_yaw = shoulder_yaw_msg.data;
+  curr_sh_pitch = shoulder_pitch_msg.data;
+  curr_elb_pitch = elbow_pitch_msg.data;
+  curr_wrt_pitch = wrist_pitch_msg.data;
 }
 
 /**
  * @brief publishes the excavator angles to the rostopics small_excavator_1/arm/*joint_name/position
  * 
  * @param task the excavator task to be accomplished
+ * @param target the target x, y coordinates in terms of the body frame
+ * @param shoulder the fixed coordinates of the shoulder joint in body frame
  */
 void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
 {
+  int FAST_STEPS = 10;
+  int SLOW_STEPS = 30;
   float theta = findShoulderAngle(target, shoulder);
   if(task == START_DIGGING) // digging angles
   {
-    publishAngles(theta, 1, 2, 1); // This set of values moves the scoop under the surface
+    publishAngles(theta, 0, 0, 0, FAST_STEPS, 1); // Additional step for safe trajectory to not bump into camera
+    publishAngles(theta, 1, 2, -0.75, FAST_STEPS, 1); // This set of values moves the scoop under the surface
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(0, -1.5, 1.5, -1); // This set of values moves the scoop above the surface and to the front center
+    publishAngles(theta, -1.5, 1.5, -0.2, FAST_STEPS, 1); // This set of values moves the scoop over the surface
   }
   else if(task == START_UNLOADING) // dumping angles
   {
-    publishAngles(theta, -1.5, 1.5, 2); // This set of values moves in a way to deposit volatiles in hauler
+    publishAngles(theta, -1.5, 1.5, -0.2, SLOW_STEPS, 1); // This set of values moves the scoop towards the hauler
+    publishAngles(theta, -1.5, 1.5, 2, FAST_STEPS, 0); // This set of values moves the scoop to deposit volatiles in the hauler bin
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(0, -1.5, 1.5, -1); // This set of values moves the scoop above the surface and to the front center
+    publishAngles(0, -1.5, 1.5, -1, FAST_STEPS, 1); // This set of values moves the scoop to the front center
   }
   else
   {
