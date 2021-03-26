@@ -27,12 +27,6 @@ void callback(const nav_msgs::OccupancyGrid oGrid) {
     auto CSpace = CSpace::GetCSpace(oGrid, 50, 1);
     auto path = AStar::FindPathOccGrid(CSpace, target, origin);
 
-    printf("----------------\n");
-    for(auto wp : path.poses) {
-        printf("Waypoint: %f, %f\n", wp.pose.position.x, wp.pose.position.y);
-    }
-    printf("----------------\n");
-
     publisher.publish(path);
 }
 
