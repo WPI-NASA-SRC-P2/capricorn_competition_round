@@ -10,6 +10,10 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+#include <utils/common_names.h>
+
+using namespace COMMON_NAMES;
+
 class NavigationAlgo
 {
 private:
@@ -164,6 +168,8 @@ public:
    * @return double Distance formula between the x and y components of each pose.
    */
   static double changeInPosition(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& target_robot_pose);
+
+  static double changeInOrientation(const geometry_msgs::PoseStamped& desired_pose, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer);
 
 };
 

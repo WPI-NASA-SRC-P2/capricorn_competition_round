@@ -76,6 +76,7 @@ add_message_files(
 add_action_files(DIRECTORY action
   FILES
   Navigation.action
+  ResourceLocaliser.action
 )
 
 generate_messages(
@@ -134,13 +135,10 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# add_library(${PROJECT_NAME}
-#   src/navigation_algorithm.cpp
-# )
-
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
+  src/scout_state_machine.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
@@ -185,6 +183,13 @@ target_link_libraries(navigation_client
   ${catkin_LIBRARIES}
 )
 
+# Drives both robots forwards in task 2. Example node
+add_executable(resource_localiser src/resource_localiser.cpp)
+add_dependencies(resource_localiser ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(resource_localiser
+${catkin_LIBRARIES}
+)
+
 add_executable(trajectory_processor src/trajectory_processor.cpp)
 add_dependencies(trajectory_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(trajectory_processor
@@ -203,6 +208,14 @@ target_link_libraries(navigation_vision
   ${catkin_LIBRARIES}
 )
 
+add_executable(start_scout_sm src/start_scout_sm.cpp)
+add_dependencies(start_scout_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(start_scout_sm
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
+# target_link_libraries(start_scout_sm navigation_algorithm)
+
 #############
 ## Install ##
 #############
@@ -214,7 +227,7 @@ target_link_libraries(navigation_vision
 ## in contrast to setup.py, you can choose the destination
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS navigation_actionlib_server navigation_client trajectory_processor
+install(TARGETS navigation_actionlib_server navigation_client trajectory_processor start_scout_sm
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
