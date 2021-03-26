@@ -2,29 +2,38 @@
 
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Path.h>
+#include <geometry_msgs/Point.h>
 
 
 #include <astar.h>
+#include <cspace.h>
 
 //How fast the main loop of the node will run.
 #define UPDATE_HZ 10
 
 ros::Publisher publisher;
 
+using geometry_msgs::Point;
+
 void callback(const nav_msgs::OccupancyGrid oGrid) {
-    geometry_msgs::Point pt1;
-    pt1.x = 0;
-    pt1.y = 0;
+    Point origin;
+    origin.x = 180;
+    origin.y = 0;
 
-    geometry_msgs::Point pt2;
-    pt2.x = 30;
-    pt2.y = 30;
+    Point target;
+    target.x = 180;
+    target.y = 300;
 
-    auto astar = AStar::FindPathOccGrid(oGrid, pt1, pt2);
+    auto CSpace = CSpace::GetCSpace(oGrid, 50, 1);
+    auto path = AStar::FindPathOccGrid(CSpace, target, origin);
 
-    astar.header.frame_id = oGrid.header.frame_id;
+    printf("----------------\n");
+    for(auto wp : path.poses) {
+        printf("Waypoint: %f, %f\n", wp.pose.position.x, wp.pose.position.y);
+    }
+    printf("----------------\n");
 
-    publisher.publish(astar);
+    publisher.publish(path);
 }
 
 int main(int argc, char *argv[])
