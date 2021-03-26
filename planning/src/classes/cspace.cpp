@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 
-#include "../include/pathPlanner.h"
+#include <include/cspace.h>
 
 
 
@@ -8,7 +8,7 @@
 
 
 
-static std::vector <int8> pathPlanner::cSpace(std::vector <geometry_msgs::Point>& grid, int width, std::vector <int8>& probability, int threshold, int radius) {
+static std::vector <int8_t> pathPlanner::cSpace(std::vector <geometry_msgs::Point>& grid, int width, std::vector <int8>& probability, int threshold, int radius) {
 	std::vector <int8> newProbability = probability;
 	
 	for(int i = 0; i < probability.size(); i++) {

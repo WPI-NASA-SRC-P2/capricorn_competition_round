@@ -36,10 +36,7 @@ public:
 
 	static std::vector<geometry_msgs::Point> findAllNeighbors(std::vector <geometry_msgs::Point>& grid, int width, std::vector <geometry_msgs::Point> toSearch, int r);
 
-	static std::vector <int> cSpace(std::vector <geometry_msgs::Point> grid, int width, std::vector <int> probibility, int threshold, int radius);
-
-
-
+	static nav_msgs::OccupancyGrid pathPlanner::cSpace(std::vector <geometry_msgs::Point>& grid, int width, std::vector <int8>& probability, int threshold, int radius);
 };
 
 #endif // Planner_CLASS_H
