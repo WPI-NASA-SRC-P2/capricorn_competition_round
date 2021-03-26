@@ -61,6 +61,8 @@
   <build_depend>message_generation</build_depend>
   <build_depend>message_runtime</build_depend>
   <build_depend>utils</build_depend>
+  <build_depend>perception</build_depend>
+
   <build_depend>geometry_msgs</build_depend>
   <build_depend>srcp2_msgs</build_depend>
   
@@ -73,6 +75,7 @@
   <build_export_depend>message_runtime</build_export_depend>
   <build_export_depend>utils</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
+  <build_export_depend>perception</build_export_depend>
   <build_export_depend>srcp2_msgs</build_export_depend>
   
   <exec_depend>roscpp</exec_depend>
@@ -84,6 +87,7 @@
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>utils</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>perception</exec_depend>
   <exec_depend>srcp2_msgs</exec_depend>
   
   <test_depend>rosunit</test_depend>

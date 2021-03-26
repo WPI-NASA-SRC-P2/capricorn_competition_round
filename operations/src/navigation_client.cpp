@@ -28,7 +28,7 @@ void teleopCB(const geometry_msgs::Twist::ConstPtr& twist)
   operations::NavigationGoal goal;
   
   // Manual driving
-  goal.manual_driving = true;
+  goal.drive_mode = NAV_TYPE::MANUAL;
 
   // Diverting values from twist to navigation
   goal.forward_velocity = twist->linear.x;
@@ -51,22 +51,28 @@ void navigationCB(const geometry_msgs::Point::ConstPtr& goal_point)
     //Simple waypoint 2 meters in front of the robot
     geometry_msgs::PoseStamped t1;
     t1.header.frame_id = robot_name + "_small_chassis";
+    t1.header.stamp = ros::Time::now();
     t1.pose.position.x = goal_point->x;
     t1.pose.position.y = goal_point->y;
     t1.pose.position.z = 0;
 
-    t1.pose.orientation.w = 1;
+    t1.pose.orientation.w = 0.707;
     t1.pose.orientation.x = 0;
     t1.pose.orientation.y = 0;
-    t1.pose.orientation.z = 0;
+    t1.pose.orientation.z = 0.707;
 
     goal.pose = t1;
-    goal.manual_driving = false;
+    goal.drive_mode = NAV_TYPE::GOAL;
 
     printf("Sending auto goal to actionlib server\n");
     client->sendGoal(goal);
-    ros::Duration(0.1).sleep();
+    // ros::Duration(0.1).sleep();
 
+    // printf("Re-sending auto goal to actionlib server\n");
+    // goal.manual_driving = false;
+    // goal.forward_velocity = 0;
+    // goal.angular_velocity = 0;
+    // client->sendGoal(goal);
 }
 
 int main(int argc, char** argv)
