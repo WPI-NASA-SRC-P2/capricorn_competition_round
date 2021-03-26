@@ -1,0 +1,11 @@
+# Define the goal
+int8 task # The task variable to choose between digging or unloading
+geometry_msgs/Point target # target point for shoulder yaw orientation
+---
+# Define the result
+bool result_mass # Unused
+
+---
+# Define a feedback message
+bool volatile_mass # Flag to check whether volatile present in scoop
+bool regolith_mass # Flag to check whether regolith present in scoop
