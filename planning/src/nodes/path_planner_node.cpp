@@ -6,6 +6,7 @@
 #include <geometry_msgs/PoseStamped.h>
 
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include <astar.h>
 #include <cspace.h>
@@ -18,24 +19,56 @@ ros::Publisher cSpacePublisher;
 
 ros::Publisher originPublisher;
 ros::Publisher targetPublisher;
+ros::Publisher markerArrayPublisher;
 
 using geometry_msgs::Point;
 using geometry_msgs::PoseStamped;
 
-void callback(const nav_msgs::OccupancyGrid oGrid) {
-    Point target;
-    target.x = 20;
-    target.y = 200;
+Point target;
 
+void callback(const nav_msgs::OccupancyGrid oGrid) {
     Point origin;
-    origin.x = 380;
-    origin.y = 200;
+    origin.x = 300;
+    origin.y = 300;
 
     auto CSpace = CSpace::GetCSpace(oGrid, 50, 1);
     auto path = AStar::FindPathOccGrid(CSpace, target, origin);
 
     pathPublisher.publish(path);
     cSpacePublisher.publish(CSpace);
+
+    visualization_msgs::MarkerArray ma;
+
+    for(int i = 1; i < path.poses.size() - 1; i++) {
+        auto wp = path.poses[i];
+        visualization_msgs::Marker mkr;
+
+        mkr.header.frame_id = oGrid.header.frame_id;
+        mkr.header.stamp = ros::Time();
+        mkr.ns = "path_planner";
+        mkr.id = i;
+        mkr.type = visualization_msgs::Marker::SPHERE;
+        mkr.action = visualization_msgs::Marker::ADD;
+
+        mkr.pose.orientation.x = 0.0;
+        mkr.pose.orientation.y = 0.0;
+        mkr.pose.orientation.z = 0.0;
+        mkr.pose.orientation.w = 1.0;
+        mkr.scale.x = .2;
+        mkr.scale.y = .2;
+        mkr.scale.z = .2;
+        mkr.color.a = 1.0; // Don't forget to set the alpha!
+        mkr.color.r = 1.0;
+        mkr.color.g = 1.0;
+        mkr.color.b = 0.0;
+
+        mkr.pose.position.x = wp.pose.position.x;
+        mkr.pose.position.y = wp.pose.position.y;
+
+        ma.markers.push_back(mkr);
+    }
+
+    markerArrayPublisher.publish(ma);
 
     visualization_msgs::Marker p1;
 
@@ -88,10 +121,16 @@ void callback(const nav_msgs::OccupancyGrid oGrid) {
     p2.pose.position.y = target.y / 20;
 
     targetPublisher.publish(p2);
+
 }
 
 int main(int argc, char *argv[])
 {
+    if(argc != 3) printf("Wrong arg count: %d\n", argc);
+
+    target.x = atoi(argv[1]);
+    target.y = atoi(argv[2]);
+
     // ROS initialization
     ros::init(argc, argv, "path_planner");
 
@@ -103,10 +142,11 @@ int main(int argc, char *argv[])
     originPublisher = nh.advertise<visualization_msgs::Marker>("/capricorn/origin", 1000);
     targetPublisher = nh.advertise<visualization_msgs::Marker>("/capricorn/target", 1000);
 
+    markerArrayPublisher = nh.advertise<visualization_msgs::MarkerArray>("/capricorn/marker_array", 1000);
+
     //Subscribe to the node publishing map values 
     ros::Subscriber sub = nh.subscribe("/capricorn/Ground_Truth_Map", 1000, callback);
     // ros::Subscriber sub2 = nh.subscribe("/capricorn/target_point", 1000, target_point_callback);
-    // ros::Subscriber sub3 = nh.subscribe("/capricorn/origin_point", 1000, origin_point_callback);
     
     ros::spin();
 
