@@ -57,7 +57,7 @@ void rotateRobot(const RotationDirection rotate_direction)
 	operations::NavigationGoal goal;
 	
 	// Manual driving
-	goal.manual_driving = true;
+	goal.drive_mode = NAV_TYPE::MANUAL;
 	
 	goal.forward_velocity = 0;
 	goal.angular_velocity = rotate_direction * ROTATION_VELOCITY;
@@ -76,7 +76,7 @@ void stopRobot()
 	operations::NavigationGoal goal;
 	
 	// Manual driving
-	goal.manual_driving = true;
+	goal.drive_mode = NAV_TYPE::MANUAL;
 	
 	goal.forward_velocity = 0;
 	goal.angular_velocity = 0;
@@ -96,7 +96,7 @@ void navigateRobot(const geometry_msgs::Pose target_pose)
 	operations::NavigationGoal goal;
 	
 	// Auto driving
-	goal.manual_driving = false;
+	goal.drive_mode = NAV_TYPE::GOAL;
 	
 	goal.pose.header.frame_id = MAP;
 	goal.pose.pose = target_pose;
