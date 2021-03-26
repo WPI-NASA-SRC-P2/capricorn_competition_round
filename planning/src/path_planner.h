@@ -11,8 +11,6 @@ class PathPlanner
 private:
 
 public:
-  PathPlanner();
-  ~PathPlanner();
   
 static void test(const nav_msgs::OccupancyGrid& gridValues);
 
@@ -26,13 +24,13 @@ static void PrintMessage(nav_msgs::OccupancyGrid OccGrid);
  * @brief converts grid cell into list of walkable neightbors (full adjacent neightbors only)
  * 
  */
-static std::vector<geometry_msgs::Point> neightborsOf4(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues);
+static std::vector<geometry_msgs::Point> neighborsOf4(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues);
 
 /**
  * @brief converts grid cell into list of walkable neightbors (adjacent and diagonal)
  * 
  */
-static std::vector<geometry_msgs::Point> neightborsOf8(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues);
+static std::vector<geometry_msgs::Point> neighborsOf8(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues);
 
 /**
  * @brief derives a path from a list of coordinates 

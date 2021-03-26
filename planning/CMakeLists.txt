@@ -51,8 +51,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 # add_message_files(
 #   FILES
-#   Message1.msg
-#   Message2.msg
+#   std_msgs
+#   nav_msgs
+#   geometry_msgs
 # )
 
 ## Generate services in the 'srv' folder
@@ -73,6 +74,8 @@ find_package(catkin REQUIRED COMPONENTS
 # generate_messages(
 #   DEPENDENCIES
 #   std_msgs
+#   nav_msgs
+#   geometry_msgs
 # )
 
 ################################################
@@ -106,8 +109,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES planning
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+  LIBRARIES planning
+  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -126,6 +129,7 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/planning.cpp
 # )
+add_library(${PROJECT_NAME} src/path_planner.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -136,8 +140,10 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node src/path_planner_node.cpp)
-add_library(${PROJECT_NAME} src/path_planner.cpp)
-target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME})
+add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_node 
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

@@ -2,18 +2,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <geometry_msgs/Point.h>
 #include <math.h>
-#include <path_planner.h>
-
-
-PathPlanner::PathPlanner()
-{
-
-}
-
-PathPlanner::~PathPlanner()
-{
-
-}
+#include "path_planner.h"
 
 /**
  * @brief prints data from the occupancy grid 
@@ -28,10 +17,12 @@ void PathPlanner::PrintMessage(nav_msgs::OccupancyGrid OccGrid)
  */
 void PathPlanner::test(const nav_msgs::OccupancyGrid& gridValues)
 {
-    geometry_msgs::Point coordinate = indexToGrid(gridValues, 4);
-    int index = gridToIndex(gridValues, coordinate);
+    //geometry_msgs::Point coordinate = indexToGrid(gridValues, 408);
+    //int index = gridToIndex(gridValues, coordinate);
 
-    ROS_INFO("%i", index);
+    neighborsOf4(indexToGrid(gridValues, 399), gridValues);
+
+    //ROS_INFO("%i", index);
 }
 
 /**
@@ -48,11 +39,12 @@ geometry_msgs::Point PathPlanner::indexToGrid(nav_msgs::OccupancyGrid gridValues
     int map_height = gridValues.info.height;
 
     //iterate thru the array and convert each occupancy grid index to a grid cell message
-    
-    retCoordinate.x = (index % map_width + 1) * gridValues.info.resolution;
-    retCoordinate.y = ceil((float)index / map_width) * gridValues.info.resolution;
+    retCoordinate.x = (index % map_width) * gridValues.info.resolution;
+    retCoordinate.y = ((float)index / map_width) * gridValues.info.resolution;
 
     //return the array of grid cells
+    ROS_INFO("x: %f", retCoordinate.x);
+    ROS_INFO("y: %f", retCoordinate.y);
     return retCoordinate;
 }
 
@@ -62,14 +54,18 @@ geometry_msgs::Point PathPlanner::indexToGrid(nav_msgs::OccupancyGrid gridValues
  */
 int PathPlanner::gridToIndex(nav_msgs::OccupancyGrid gridValues, geometry_msgs::Point coordinate)
 {
-    return coordinate.x / gridValues.info.resolution + coordinate.y * gridValues.info.resolution * gridValues.info.width;
+    int retInt = coordinate.x / gridValues.info.resolution + (coordinate.y / gridValues.info.resolution) * gridValues.info.width;
+    
+    ROS_INFO("index: %d", retInt);
+
+    return retInt;
 }
 
 /**
  * @brief converts grid cell into list of walkable neightbors (full adjacent neightbors only)
  * 
  */
-std::vector<geometry_msgs::Point> PathPlanner::neightborsOf4(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues) 
+std::vector<geometry_msgs::Point> PathPlanner::neighborsOf4(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues) 
 {
     //declare a return array 
     std::vector<geometry_msgs::Point> retPoints;
@@ -81,24 +77,33 @@ std::vector<geometry_msgs::Point> PathPlanner::neightborsOf4(geometry_msgs::Poin
     int map_height = gridValues.info.height;
     int map_area = gridValues.info.width * gridValues.info.height;
 
-    if(index % map_width != 1)
+    if(index % map_width != 0)
     {
         retPoints.push_back(indexToGrid(gridValues, (index - 1)));
     }
-    if(index % map_width != 0)
+    if(index % map_width != (map_width - 1))
     {
         retPoints.push_back(indexToGrid(gridValues, (index + 1)));
     }
-    if(index > map_width)
+    if(index >= map_width)
     {
         retPoints.push_back(indexToGrid(gridValues, (index - map_width)));
     }
-    if(index < (map_area - map_width))
+    if(index <= (map_area - map_width))
     {
         retPoints.push_back(indexToGrid(gridValues, (index + map_width)));
     }
 
     //return the return array
+    ROS_INFO("X1: %f", retPoints[0].x);
+    ROS_INFO("Y1: %f", retPoints[0].y);
+    ROS_INFO("X2: %f", retPoints[1].x);
+    ROS_INFO("Y2: %f", retPoints[1].y);
+    ROS_INFO("X3: %f", retPoints[2].x);
+    ROS_INFO("Y3: %f", retPoints[2].y);
+    ROS_INFO("X4: %f", retPoints[3].x);
+    ROS_INFO("Y4: %f", retPoints[3].y);
+
     return retPoints;
 }
 
@@ -106,18 +111,10 @@ std::vector<geometry_msgs::Point> PathPlanner::neightborsOf4(geometry_msgs::Poin
  * @brief converts grid cell into list of walkable neightbors (adjacent and diagonal)
  * 
  */
-std::vector<geometry_msgs::Point> PathPlanner::neightborsOf8(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues)
+std::vector<geometry_msgs::Point> PathPlanner::neighborsOf8(geometry_msgs::Point coordinate, nav_msgs::OccupancyGrid gridValues)
 {
     //declare a return array 
     std::vector<geometry_msgs::Point> retPoints;
-
-    //add the neightbors of 4 to the return array
-    std::vector<geometry_msgs::Point> existingNeighbors = neightborsOf4(coordinate, gridValues);
-
-    for(int i  = 0; i < existingNeighbors.size(); i++)
-    {
-        retPoints.push_back(existingNeighbors[i]);
-    }
 
     //find the index from the given coordinate and grid
     int index = gridToIndex(gridValues, coordinate);
@@ -126,7 +123,22 @@ std::vector<geometry_msgs::Point> PathPlanner::neightborsOf8(geometry_msgs::Poin
     int map_height = gridValues.info.height;
     int map_area = gridValues.info.width * gridValues.info.height;
     
-
+    if(index % map_width != 0)
+    {
+        retPoints.push_back(indexToGrid(gridValues, (index - 1)));
+    }
+    if(index % map_width != (map_width - 1))
+    {
+        retPoints.push_back(indexToGrid(gridValues, (index + 1)));
+    }
+    if(index >= map_width)
+    {
+        retPoints.push_back(indexToGrid(gridValues, (index - map_width)));
+    }
+    if(index <= (map_area - map_width))
+    {
+        retPoints.push_back(indexToGrid(gridValues, (index + map_width)));
+    }
     if(index > map_width + 1 && index % map_width != 1)
     {
         retPoints.push_back(indexToGrid(gridValues, (index - (map_width + 1))));
