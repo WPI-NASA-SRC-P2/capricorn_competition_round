@@ -5,10 +5,15 @@
 
 using namespace COMMON_NAMES;
 
-float START_DIGGING = 1.0; // This starts the digging condition
-float START_UNLOADING = 2.0; // This starts the unloading condition
-float SLEEP_DURATION = 5.0; // The sleep duration
-
+/**
+ * @brief The task assigned numbers
+ * 
+ */
+enum Tasks{
+  START_DIGGING = 1, // This starts the digging condition
+  START_UNLOADING = 2, // This starts the unloading condition
+  SLEEP_DURATION = 5 // The sleep duration
+};
 
 typedef actionlib::SimpleActionClient<operations::ExcavatorAction> Client;
 
@@ -24,23 +29,36 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "excavator_client");
   Client client(EXCAVATOR_ACTIONLIB, true);
   client.waitForServer();
+
   operations::ExcavatorGoal goal;
   goal.task = START_DIGGING; // START_DIGGING = 1
+  goal.target.x = 0.7; // set of target digging values to the left of the excavator
+  goal.target.y = 2;
+  goal.target.z = 0;
   client.sendGoal(goal);
+
   std::string message1(client.getState().toString().c_str());
   ROS_INFO_STREAM("Current State: " + message1);
   client.waitForResult(ros::Duration(SLEEP_DURATION));
   if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     ROS_INFO_STREAM("Yay! The scoop is now full");
+
   ros::Duration(SLEEP_DURATION).sleep(); // Delay between digging and unloading tasks
+
   goal.task = START_UNLOADING; // START_UNLOADING = 2
+  goal.target.x = 0.7; // set of target dumping values to the right of the excavator
+  goal.target.y = -2;
+  goal.target.z = 0;
   client.sendGoal(goal);
+  
   std::string message2(client.getState().toString().c_str());
   ROS_INFO_STREAM("Current State: " + message2);
   client.waitForResult(ros::Duration(SLEEP_DURATION));
   if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     ROS_INFO_STREAM("Yay! The scoop is now empty");
+
   std::string message3(client.getState().toString().c_str());
   ROS_INFO_STREAM("Current State: " + message3);
+
   return 0;
 }

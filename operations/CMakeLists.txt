@@ -10,7 +10,6 @@ project(operations)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  #srcp2_msgs
   actionlib_msgs
   genmsg
   message_generation
@@ -84,7 +83,7 @@ generate_messages(
   actionlib_msgs
   std_msgs
   geometry_msgs
-  #srcp2_msgs
+  srcp2_msgs
 )
 
 
