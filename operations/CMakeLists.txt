@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   srcp2_msgs
   tf2
   tf2_ros
+  perception
 )
 
 ## System dependencies are found with CMake's conventions
@@ -121,7 +122,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs
+ CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs perception
  #  DEPENDS system_lib
 )
 
