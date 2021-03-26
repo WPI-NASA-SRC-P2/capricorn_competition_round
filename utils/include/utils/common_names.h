@@ -33,6 +33,7 @@ namespace COMMON_NAMES
 
   /****** ACTIONLIBS ******/
   const std::string NAVIGATION_ACTIONLIB = "navigation";
+  const std::string RESOURCE_LOCALISER_ACTIONLIB = "resource_localiser_actionlib";
 
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";
@@ -75,6 +76,7 @@ namespace COMMON_NAMES
   const std::string WHEEL_PID = "/wheel_pid";
   const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";
   const std::string OBJECT_DETECTION_OBJECTS_TOPIC = "/object_detection/objects";
+  const std::string VOLATILE_SENSOR_TOPIC = "/volatile_sensor";
 
   /****** OBJECT DETECTION CLASS NAMES ******/
   const std::string OBJECT_DETECTION_PROCESSING_PLANT_CLASS = "processingPlant";
