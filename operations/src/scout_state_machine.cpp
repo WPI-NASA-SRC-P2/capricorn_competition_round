@@ -74,8 +74,8 @@ void ScoutStateMachine::startStateMachine()
 
                 unexplored.header.frame_id = MAP;
 
-                unexplored.pose.position.x = 20;
-                unexplored.pose.position.y = 0;
+                unexplored.pose.position.x = 40;
+                unexplored.pose.position.y = 9;
                 unexplored.pose.position.z = 0;
 
                 unexplored.pose.orientation.w = 1;
@@ -159,6 +159,8 @@ void ScoutStateMachine::startStateMachine()
                 first_iter_ = false;
             }
 
+            // What if error abort or something else?
+
             if(resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
             {
                 printf("Resource localized.\n");
@@ -166,6 +168,12 @@ void ScoutStateMachine::startStateMachine()
                 first_iter_ = true;
 
                 robot_state_ = LOCATOR_STATES::FOUND;
+            }
+            else if(resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::ABORTED)
+            {
+                ros::Duration(5.0).sleep();
+                ROS_INFO("Retrying to localise the resource");
+                resource_localiser_client_->sendGoal(resource_localiser_goal_);
             }
             break;
         }

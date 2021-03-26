@@ -187,8 +187,13 @@ void localiseResource(const operations::ResourceLocaliserGoalConstPtr& localiser
 		
     ROS_INFO("Setting to best");
 		navigateRobot(best_robot_pose);		
+	  server->setSucceeded();
 	}
-	server->setSucceeded();
+  else
+  {
+    ROS_ERROR("Resourse localisation called, but rover not near volatile");
+    server->setAborted();
+  }
 }
 
 
