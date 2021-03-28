@@ -159,9 +159,11 @@ def detection_algorithm():
             elif (classes[i] == 5):
                 object_msg.label = "scout"
             elif (classes[i] == 6):
-                object_msg.label = "excavator"
+                object_msg.label = "robot_antenna"
             elif (classes[i] == 7):
-                object_msg.label = "hauler"
+                object_msg.label = "furnace"
+            elif (classes[i] == 8):
+                object_msg.label = "ppSmallThruster"
 
             object_msg.center.x = centerX
             object_msg.center.y = centerY

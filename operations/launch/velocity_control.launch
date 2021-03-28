@@ -1,0 +1,9 @@
+<launch>
+    <arg name="robot_name" default="small_scout_1" />
+
+    <include file="$(find operations)/launch/wheel_controller.launch">
+        <arg name="robot_name" value="$(arg robot_name)" />
+    </include>
+
+    <node pkg="operations" type="wheel_speed_processing" name="wheel_speed_processing" args="$(arg robot_name)_$(arg robot_number)" />
+</launch>
