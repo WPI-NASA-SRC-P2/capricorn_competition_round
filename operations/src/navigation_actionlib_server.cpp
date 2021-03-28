@@ -169,7 +169,7 @@ void steerRobot(const std::vector<double> &angles)
 	publishMessage(back_right_steer_pub_, angles.at(2));
 	publishMessage(back_left_steer_pub_, angles.at(3));
 
-	ros::Duration(0.5).sleep();
+	ros::Duration(0.05).sleep();
 }
 
 /**
@@ -184,7 +184,7 @@ void steerRobot(const double angle)
 	publishMessage(back_right_steer_pub_, angle);
 	publishMessage(back_left_steer_pub_, angle);
 
-	ros::Duration(0.5).sleep();
+	ros::Duration(0.05).sleep();
 }
 
 /**
@@ -492,11 +492,11 @@ void linearDriving(const operations::NavigationGoalConstPtr &goal, Server *actio
 	steerRobot(0);
 	moveRobotWheels(goal->forward_velocity);
 
-	if(0 == goal->forward_velocity)
-	{
-		brakeRobot(1000);
-		ros::Duration(1).sleep();
-	}
+	// if(0 == goal->forward_velocity)
+	// {
+	// 	brakeRobot(1000);
+	// 	ros::Duration(1).sleep();
+	// }
 	
 	operations::NavigationResult res;
 	res.result = NAV_RESULT::SUCCESS;

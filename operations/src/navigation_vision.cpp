@@ -26,10 +26,11 @@ Client* client;
 using namespace COMMON_NAMES;
 
 std::string robot_name;
-float sum_error_angle = 0.0;
-float prev_error_angle = 0.0;
-float sum_error_height = 0.0;
-float prev_error_height = 0.0;
+//float sum_error_angle = 0.0;
+//float prev_error_angle = 0.0;
+bool centered = false;
+operations::NavigationGoal goal;
+
 
 void objects_callback(const perception::ObjectArray& objects) 
 {
@@ -38,13 +39,26 @@ void objects_callback(const perception::ObjectArray& objects)
   bool obj_detected;
 
   // Create a goal object and turn on manual driving
-  operations::NavigationGoal goal;
   goal.drive_mode = NAV_TYPE::MANUAL;
 
   // Initialize location and size variables
   float center_obj = -1;
   float height_obj = -1;
   float width = 640.0;
+
+  // Initialize error, P Control, and necessary thresholds 
+  static float proportional_angle = 0.0005;
+  //float integral_angle = 0.0000001;
+  //float derivative_angle = 0.001;
+  static float error_angle;
+  static int angle_threshold_narrow = 15;
+  static int angle_threshold_wide = 40;
+
+  float error_height;
+  int height_threshold = 300;
+
+  static float prev_angular_velocity;
+  static bool prev_centered;
 
   // Find the desired object
   for(int i = 0; i < objects.number_of_objects; i++) 
@@ -56,24 +70,10 @@ void objects_callback(const perception::ObjectArray& objects)
     }
   }
 
-  // Initialize error, P Control, and necessary thresholds 
-  float proportional_angle = 0.001;
-  float integral_angle = 0.0000001;
-  float derivative_angle = 0.001;
-  float error_angle;
-  int error_angle_threshold = 40;
-
-  float proportional_height = 0.02;
-  float integral_height = 0.0;
-  float derivative_height = 0.0;
-  float error_height;
-  int height_threshold = 300;
-  int error_height_threshold = 10;
-
   if(center_obj == -1)
   {
     obj_detected = false;
-    goal.angular_velocity = 0.3;
+    goal.angular_velocity = 0.2;
     goal.forward_velocity = 0;
   }
   else
@@ -82,41 +82,58 @@ void objects_callback(const perception::ObjectArray& objects)
     error_angle = (width / 2.0) - center_obj;
     error_height = height_threshold - height_obj;
   
-
-    if(abs(error_angle) < error_angle_threshold)
+    if (abs(error_angle) > angle_threshold_wide)
     {
-      // If object is centered, stop turning.
+      centered = false;
+    }
+    
+    if(centered || abs(error_angle) < angle_threshold_narrow)
+    {
+      centered = true;
       goal.angular_velocity = 0;
-
-      if(error_height < error_height_threshold)
+      if(error_height <= 0)
       {
-          // If the object is big enough, stop the robot
-          goal.forward_velocity = 0;
-          client->sendGoal(goal);
-          ros::shutdown();
+        // If the object is big enough, stop the robot
+        goal.forward_velocity = 0;
+        client->sendGoal(goal);
+        ros::shutdown();
       }
       else
       {
-          // Keep driving forward
-          sum_error_height += error_height;
-          goal.forward_velocity = error_height * proportional_height + sum_error_height * integral_height + (error_height - prev_error_height) * derivative_height;
+        // Keep driving forward
+        goal.forward_velocity = 1.1;
       }
     }
     else
     {
-      // If object is not centered, turn.
-      sum_error_angle += error_angle;
-      goal.angular_velocity = error_angle * proportional_angle + sum_error_angle * integral_angle + (error_angle - prev_error_angle) * derivative_angle;
+      //sum_error_angle += error_angle;
+      goal.angular_velocity = error_angle * proportional_angle/* + sum_error_angle * integral_angle + (error_angle - prev_error_angle) * derivative_angle*/;
       goal.forward_velocity = 0;
+
+      if(goal.angular_velocity < prev_angular_velocity - 0.05)
+      {
+        goal.angular_velocity = prev_angular_velocity - 0.05;
+      }
+      if(goal.angular_velocity > prev_angular_velocity + 0.05)
+      {
+        goal.angular_velocity = prev_angular_velocity + 0.05;
+      }
     }
   }
 
-  prev_error_angle = error_angle;
-  prev_error_height = error_height;
+  if(prev_centered && !centered)
+  {
+    goal.angular_velocity = 0;
+    goal.forward_velocity = 0;
+  }
+
+  //prev_error_angle = error_angle;
+  prev_angular_velocity = goal.angular_velocity;
+  prev_centered = centered;
 
   ROS_INFO_STREAM("ERROR Height: "<<error_height<<", Angle: "<<error_angle);
   ROS_INFO_STREAM("Angular velocity: "<<goal.angular_velocity);
-  client->sendGoal(goal);
+  ROS_INFO_STREAM("Centered? "<<centered);
 
 }
 
@@ -144,6 +161,15 @@ int main(int argc, char** argv)
     printf("Waiting for server...\n");
     client->waitForServer();
     printf("Done waiting. Spinning\n");
+
+    ros::Rate update_rate(1);
+
+    while (ros::ok())
+    {
+      ros::spinOnce();
+      client->sendGoal(goal);
+      update_rate.sleep();
+    }
 
     ros::spin();
     return 0;
