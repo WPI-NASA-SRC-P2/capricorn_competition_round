@@ -74,7 +74,7 @@ class Models_state:
 def add_obstacle(occGrid, obx, oby, radius):
     # - if the occupancy grid maporigin is set to 'center' then the input obx and oby will reflect the necessary offset
     # - similarly, obx and oby will be input w.r.t. the proper frame reference already
-    print("radius = ", radius)
+    #print("radius = ", radius)
 
     for theta in range(0,360,2):
         theta = theta*pi/180
@@ -83,7 +83,7 @@ def add_obstacle(occGrid, obx, oby, radius):
         obx_p = obx/occGrid.info.resolution
         oby_p = oby/occGrid.info.resolution
         radius_p = radius/occGrid.info.resolution
-        print('radius_p = ', radius_p)
+        #print('radius_p = ', radius_p)
         circX = int((obx_p + radius_p*np.cos(theta)))  
         circY = int((oby_p + radius_p*np.sin(theta))) 
         
@@ -223,6 +223,7 @@ if __name__=="__main__":
     
     # loop to keep updating the map
     while not rospy.is_shutdown():
+        occGrid.header.frame_id = "map"
         occGridPub.publish(occGrid)
         
         # refresh map
