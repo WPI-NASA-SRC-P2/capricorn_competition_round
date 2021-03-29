@@ -48,7 +48,9 @@
         <xacro:property name="shoulder_yaw_effort_limit"   value="500" />  <!-- Nm -->
         <xacro:property name="shoulder_yaw_damping"        value="2.0" />  <!-- Nm/rad/sec -->
         <xacro:property name="shoulder_yaw_friction"       value="1.0" />  <!-- Nm/rad -->
-    
+        <xacro:property name="shoulder_yaw_upper_limit" value="${pi}" />  <!-- rad -->
+        <xacro:property name="shoulder_yaw_lower_limit" value="${-pi}" /> <!-- rad -->
+
         <xacro:property name="shoulder_pitch_velocity_limit" value="0.5" />       <!-- rad/sec -->
         <xacro:property name="shoulder_pitch_effort_limit"   value="500" />       <!-- Nm -->
         <xacro:property name="shoulder_pitch_damping"        value="2.0" />       <!-- Nm/rad/sec -->
@@ -64,7 +66,7 @@
         <xacro:property name="elbow_pitch_lower_limit"    value="${-pi/4}"/>      <!-- rad -->
 
         <xacro:property name="wrist_pitch_velocity_limit" value="0.5" />       <!-- rad/sec -->
-        <xacro:property name="wrist_pitch_effort_limit"   value="500" />       <!-- Nm -->
+        <xacro:property name="wrist_pitch_effort_limit"   value="15" />       <!-- Nm -->
         <xacro:property name="wrist_pitch_damping"        value="2.0" />       <!-- Nm/rad/sec -->
         <xacro:property name="wrist_pitch_friction"       value="1.0" />       <!-- Nm/rad -->
         <xacro:property name="wrist_pitch_upper_limit"    value="${2*pi/3}" /> <!-- rad -->
@@ -137,7 +139,7 @@
 		</link>
     
 		<!-- Shoulder Yaw Joint -->
-		<joint name="shoulder_yaw_joint" type="continuous">
+		<joint name="shoulder_yaw_joint" type="revolute">
 			<parent link = "${rover_name}_arm_mount"/>
 			<child  link = "${rover_name}_shoulder"/>
 			<origin xyz="0.7 0.0 0.1" rpy="0 0 0"/>
@@ -146,7 +148,9 @@
 				rpy = "0 0 0"/>
 			<limit
 				effort   = "${shoulder_yaw_effort_limit}"
-				velocity = "${shoulder_yaw_velocity_limit}" />
+				velocity = "${shoulder_yaw_velocity_limit}" 				
+                lower    = "${shoulder_yaw_lower_limit}"
+				upper    = "${shoulder_yaw_upper_limit}"/>
 			<dynamics
 				damping  = "${shoulder_yaw_damping}"
 				friction = "${shoulder_yaw_friction}" />
@@ -276,13 +280,13 @@
             </visual>
         
             <inertial>
-				<origin xyz="0.02 0.05 0" rpy="0 ${pi} ${pi/2.0}"/>
+				<origin xyz="0.231837 0.05 -0.1012" rpy="0 0 0"/>
                 <mass value = "0.25"/>
-                <xacro:box_inertia
+                 <xacro:box_inertia
                     m = "0.25"
                     x = "0.33"
-                    y = "0.25"
-                    z = "0.15" />
+                    y = "0.40"
+                    z = "0.05" />
             </inertial>
         </link>
 
