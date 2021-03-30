@@ -4,7 +4,7 @@
 using nav_msgs::OccupancyGrid;
 using geometry_msgs::Point;
 
-std::vector<int> get_neighbors_indicies(int pt, int widthOfGrid, int sizeOfGrid) { // maybe use static array instead
+std::vector<int> CSpace::get_neighbors_indicies(int pt, int widthOfGrid, int sizeOfGrid) { // maybe use static array instead
     std::vector<int> neighbors;
 
     if(!((pt + 1) < 0) 				 || !((pt + 1) > sizeOfGrid))       		neighbors.push_back(pt + 1);
