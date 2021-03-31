@@ -27,11 +27,13 @@ using geometry_msgs::PoseStamped;
 Point target;
 
 void callback(const nav_msgs::OccupancyGrid oGrid) {
+    ROS_INFO("reached callback");
+
     Point origin;
     origin.x = 300;
     origin.y = 300;
 
-    auto CSpace = CSpace::GetCSpace(oGrid, 50, 1);
+    auto CSpace = CSpace::GetCSpace(oGrid, 50, 2);
     auto path = AStar::FindPathOccGrid(CSpace, target, origin);
 
     pathPublisher.publish(path);
