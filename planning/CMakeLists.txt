@@ -112,6 +112,7 @@ include_directories(
 #   src/${PROJECT_NAME}/planning.cpp
 # )
 add_library(${PROJECT_NAME} src/nodes/path_planner_node.cpp src/classes/astar.cpp src/classes/cspace.cpp)
+add_library(demo_marker src/nodes/demo_marker_node.cpp)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -123,6 +124,12 @@ add_executable(${PROJECT_NAME}_node src/nodes/path_planner_node.cpp)
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_node 
   ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
+add_executable(demo_marker_node src/nodes/demo_marker_node.cpp)
+add_dependencies(demo_marker_node ${demo_marker_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(demo_marker_node 
+  ${catkin_LIBRARIES} demo_marker
 )
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
