@@ -1,0 +1,28 @@
+item {
+    id: 1
+    name: 'processingPlant'
+}
+item {
+    id: 2
+    name: 'repairStation'
+}
+item {
+    id: 3
+    name: 'hopper'
+}
+item {
+    id: 4
+    name: 'rock'
+}
+item {
+    id: 5
+    name: 'scout'
+}
+item {
+    id: 6
+    name: 'excavator'
+}
+item {
+    id: 7
+    name: 'hauler'
+}
