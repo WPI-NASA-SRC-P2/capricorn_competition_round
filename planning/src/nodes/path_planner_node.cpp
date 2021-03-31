@@ -1,5 +1,4 @@
 #include <ros/ros.h>
-
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/Point.h>
@@ -26,7 +25,8 @@ using geometry_msgs::PoseStamped;
 
 Point target;
 
-void callback(const nav_msgs::OccupancyGrid oGrid) {
+void callback(const nav_msgs::OccupancyGrid oGrid)
+{
     Point origin;
     origin.x = 300;
     origin.y = 300;
@@ -124,6 +124,12 @@ void callback(const nav_msgs::OccupancyGrid oGrid) {
 
 }
 
+bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
+{
+    res.trajectory = trajectoryGenerator(req.targetPose);
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
     if(argc != 3) printf("Wrong arg count: %d\n", argc);
@@ -133,7 +139,6 @@ int main(int argc, char *argv[])
 
     // ROS initialization
     ros::init(argc, argv, "path_planner");
-
     ros::NodeHandle nh;
 
     pathPublisher = nh.advertise<nav_msgs::Path>("/capricorn/navigation_path", 1000);
@@ -148,7 +153,11 @@ int main(int argc, char *argv[])
     ros::Subscriber sub = nh.subscribe("/capricorn/Ground_Truth_Map", 1000, callback);
     // ros::Subscriber sub2 = nh.subscribe("/capricorn/target_point", 1000, target_point_callback);
     
+    //Subscribe to the node publishing map values
+    ros::Subscriber indexValues = nh.subscribe("/capricorn/Ground_Truth_Map", 1000, callback);
+   
+    //creates a service
+    ros::ServiceServer service = n.advertiseService("trajectoryGenerator", trajectoryGenerator);
     ros::spin();
-
     return 0;
 }
