@@ -1,0 +1,3 @@
+geometry_msgs/PoseStamped targetPose
+---
+planning/TrajectoryWithVelocities trajectory
