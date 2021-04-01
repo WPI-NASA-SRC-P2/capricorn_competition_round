@@ -88,6 +88,13 @@ namespace COMMON_NAMES
   const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";
   const std::string OBJECT_DETECTION_OBJECTS_TOPIC = "/object_detection/objects";
 
+  /****** EXCAVATOR TASK ENUM ******/
+  enum Tasks{
+    START_DIGGING = 1, 
+    START_UNLOADING = 2, 
+  };
+
+
   /****** OBJECT DETECTION CLASS NAMES ******/
   const std::string OBJECT_DETECTION_PROCESSING_PLANT_CLASS = "processingPlant";
   const std::string OBJECT_DETECTION_REPAIR_STATION_CLASS = "repairStation";

@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   utils
   geometry_msgs
   gazebo_msgs
-  #srcp2_msgs
+  srcp2_msgs
   tf2
   tf2_ros
 )
@@ -173,7 +173,7 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 # Drives both robots forwards in task 2. Example node
 add_executable(navigation_actionlib_server src/navigation_actionlib_server.cpp)
-add_executable(hauler_actionlib_server src/HaulerServerNew.cpp)
+add_executable(hauler_actionlib_server src/HaulerServer.cpp)
 add_executable(hauler_actionlib_client src/HaulerClient.cpp)
 add_executable(excavator_actionlib_client src/ExcavatorClient.cpp)
 add_executable(excavator_actionlib_server src/ExcavatorServer.cpp)

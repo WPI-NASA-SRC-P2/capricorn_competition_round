@@ -20,12 +20,7 @@ float curr_sh_pitch = 0;
 float curr_elb_pitch = 0;
 float curr_wrt_pitch = 0;
 
-// The task numbers and sleep duration
-enum Tasks{
-  START_DIGGING = 1, // This starts the digging condition
-  START_UNLOADING = 2, // This starts the unloading condition
-  SLEEP_DURATION = 2 // The sleep duration
-};
+int SLEEP_DURATION = 2; // The sleep duration
 
 /**
  * @brief Initializing the publisher here
@@ -127,7 +122,7 @@ void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
   }
   else
   {
-    // call function here for random joint values
+    ROS_ERROR("Unhandled state encountered in Excavator actionlib server");
   } 
 }
 
