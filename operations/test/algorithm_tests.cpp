@@ -14,8 +14,33 @@ class HeadingTests :public ::testing::TestWithParam<std::tuple<double, double,
         origin->pose.orientation.x = 0.0;
         origin->pose.orientation.y = 0.0;
         origin->pose.orientation.z = 0.0;
-        origin->pose.orientation.w = 0.0;
+        origin->pose.orientation.w = 1.0;
         target = new geometry_msgs::PoseStamped();
+        target->pose.orientation.x = 0.0;
+        target->pose.orientation.y = 0.0;
+        target->pose.orientation.z = 0.0;
+        target->pose.orientation.w = 1.0;
+      }
+};
+
+class PositionTests :public ::testing::TestWithParam<std::tuple<double, double,
+  double, double, double, double, double>> {
+    protected:
+    // Add handling to test poses in different frames of reference
+    geometry_msgs::PoseStamped* origin;
+    geometry_msgs::PoseStamped* target;
+    double distance;
+      virtual void SetUp() {
+        origin = new geometry_msgs::PoseStamped();
+        origin->pose.position.x = 0.0;
+        origin->pose.position.y = 0.0;
+        origin->pose.position.z = 0.0;
+        target = new geometry_msgs::PoseStamped();
+        target->pose.position.x = 0.0;
+        target->pose.position.y = 0.0;
+        target->pose.position.z = 0.0;
+
+        distance = 0.0;
       }
 };
 
@@ -35,6 +60,19 @@ TEST_P(HeadingTests, CheckHeadingDelta) {
     ASSERT_EQ(expectedRoll, NavigationAlgo::fromQuatToEuler(target)[0]);
     ASSERT_EQ(expectedPitch, NavigationAlgo::fromQuatToEuler(target)[1]);
     ASSERT_EQ(expectedYaw, NavigationAlgo::fromQuatToEuler(target)[2]);
+}
+
+TEST_P(PositionTests, CheckPositionDelta) {
+    geometry_msgs::PoseStamped* target = new geometry_msgs::PoseStamped();
+    target->pose.position.x = std::get<0>(GetParam());
+    target->pose.position.y = std::get<1>(GetParam());
+    target->pose.position.z = std::get<2>(GetParam());
+    geometry_msgs::PoseStamped* origin = new geometry_msgs::PoseStamped();
+    origin->pose.position.x = std::get<3>(GetParam());
+    origin->pose.position.y = std::get<4>(GetParam());
+    origin->pose.position.z = std::get<5>(GetParam());
+    double distance = std::get<6>(GetParam());
+    ASSERT_EQ(distance, NavigationAlgo::changeInPosition(origin, target));
 }
 
 class QuaternionTests :public ::testing::TestWithParam<std::tuple<double, double,
@@ -80,12 +118,18 @@ INSTANTIATE_TEST_CASE_P(
         HeadingTests,
         ::testing::Values(
                 std::make_tuple(0,0,0,1,0,0,0,1,0,0,0,0),
-                // XYZ
-                // 0.283, -0.711, -2.393
-                // ZYX
-                // 0.296, 0.706, -2.388
                 std::make_tuple(0,0,0,1,0,0,0,1,0,0,0,0),
                 std::make_tuple(0,0,0,1,0,0,0,1,0,0,0,0))
+);
+
+//Format:(homex,y,z,targetx,y,z,distance)
+INSTANTIATE_TEST_CASE_P(
+        DumbTests,
+        PositionTests,
+        ::testing::Values(
+                std::make_tuple(5,4,0,3,2,0,1.4142135623730951),
+                std::make_tuple(50,32,0,78,9,0,36.235341863986875),
+                std::make_tuple(59.545,-74.1052,0,-15.144,-0.007,0,105.20926748266999))
 );
 
 // Run all the tests that were declared with TEST()
