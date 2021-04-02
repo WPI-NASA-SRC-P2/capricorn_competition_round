@@ -17,11 +17,11 @@ using geometry_msgs::Point;
 
 void callback(const nav_msgs::OccupancyGrid oGrid) {
     Point origin;
-    origin.x = 180;
-    origin.y = 0;
+    origin.x = 1;
+    origin.y = 1;
 
     Point target;
-    target.x = 180;
+    target.x = 300;
     target.y = 300;
 
     auto CSpace = CSpace::GetCSpace(oGrid, 50, 1);
