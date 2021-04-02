@@ -1,7 +1,7 @@
 <launch>
 
   <!-- Initialising parameters -->
-  <arg name="robot_name" default="small_scout_1" />
+  <arg name="robot_name" default="small_scout_1" /> 
 
   <!-- Running Teleop -->
   <node name="teleop_twist_keyboard" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" output="screen"/>

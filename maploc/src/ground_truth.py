@@ -50,7 +50,7 @@ print(coordinates)
 # set the metadata variables defining map size/specifics
 # source: https://www.programcreek.com/python/example/95997/nav_msgs.msg.OccupancyGrid
 height = 200
-width = 200
+width = 200 #simulation is 200m by 200m 
 resolution = 0.25
 
 metadata = MapMetaData()
@@ -104,10 +104,14 @@ def add_initial_obstacles(initial_origin_x, initial_origin_y):
 rospy.init_node("Ground_Truth")
 
 while not rospy.is_shutdown():
-    occGridPub = rospy.Publisher("Ground_Truth_Map", OccupancyGrid, queue_size=1)
+    states = Models_state()
+    coordinates = states.show_gazebo_models()
+    print(coordinates)
     
-    initial_origin_x = coordinates[4][0]
-    initial_origin_y = coordinates[4][1]
+    occGridPub = rospy.Publisher("/capricorn/Ground_Truth_Map", OccupancyGrid, queue_size=1)
+    
+    initial_origin_x = coordinates[0][0]
+    initial_origin_y = coordinates[0][1]
     add_initial_obstacles(initial_origin_x, initial_origin_y)
     occGridPub.publish(occGrid)
 
