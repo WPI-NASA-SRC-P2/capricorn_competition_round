@@ -1,2 +1,2 @@
-PoseStamped[] poses
-Float64[] velocities
+geometry_msgs/PoseStamped[] poses
+std_msgs/Float64[] velocities

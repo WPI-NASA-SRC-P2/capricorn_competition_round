@@ -3,6 +3,8 @@
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
+#include "path_planner.h"
+#include "planning/trajectory.h"
 
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -124,7 +126,7 @@ void callback(const nav_msgs::OccupancyGrid oGrid)
 
 }
 
-bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
+bool trajectoryGeneration(PathPlanner::trajectory::Request &req, planning::trajectory::Response &res)
 {
     res.trajectory = trajectoryGenerator(req.targetPose);
     return true;
