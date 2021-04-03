@@ -77,6 +77,7 @@ add_action_files(DIRECTORY action
   FILES
   Navigation.action
   ResourceLocaliser.action
+  NavigationVision.action
 )
 
 generate_messages(
@@ -206,9 +207,16 @@ target_link_libraries(wheel_speed_processing
   ${catkin_LIBRARIES}
 )
 
-add_executable(navigation_vision src/navigation_vision.cpp)
-add_dependencies(navigation_vision ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(navigation_vision
+add_executable(navigation_vision_server src/navigation_vision_server.cpp)
+add_dependencies(navigation_vision_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(navigation_vision_server
+  ${catkin_LIBRARIES}
+)
+
+
+add_executable(radial_turn_tester src/radial_turn_tester.cpp)
+add_dependencies(radial_turn_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(radial_turn_tester
   ${catkin_LIBRARIES}
 )
 
