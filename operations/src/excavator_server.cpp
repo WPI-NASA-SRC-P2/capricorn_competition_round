@@ -134,23 +134,15 @@ void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
  */
 void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_server)
 {
-  geometry_msgs::Point shoulder;
-  shoulder.x = 0.7;
-  shoulder.y = 0.0;
-  shoulder.z = 0.1;
-  if (goal->task == START_DIGGING) // START_DIGGING = 1
-  {
-    publishExcavatorMessage(START_DIGGING, goal->target, shoulder);
-    ros::Duration(SLEEP_DURATION).sleep();
-    // action_server->working(); // might use for feedback
-    action_server->setSucceeded();
-  }
-  else if (goal->task == START_UNLOADING) // START_UNLOADING = 2
-  {
-    publishExcavatorMessage(START_UNLOADING, goal->target, shoulder);
-    ros::Duration(SLEEP_DURATION).sleep();
-    action_server->setSucceeded();
-  }
+  geometry_msgs::Point shoulder_wrt_base_footprint; // Transforming from robot base frame to shoulder joint frame
+  shoulder_wrt_base_footprint.x = 0.7; // Value from tf topic from the simulation, all values in meters
+  shoulder_wrt_base_footprint.y = 0.0;
+  shoulder_wrt_base_footprint.z = 0.1;
+
+  publishExcavatorMessage(goal->task, goal->target, shoulder_wrt_base_footprint);
+  ros::Duration(SLEEP_DURATION).sleep();
+  // action_server->working(); // might use for feedback
+  action_server->setSucceeded();
 }
 
 /**
@@ -164,11 +156,11 @@ int main(int argc, char** argv)
 {
   ROS_INFO_STREAM(std::to_string(argc) + "\n");
   // Check if the node is being run through roslauch, and have one parameter of RobotName_Number
-  if (argc != 2)
+  if (argc != 2 && argc != 4)
   {
-      // Displaying an error message for correct usage of the script, and returning error.
-      ROS_ERROR_STREAM("This Node must be launched via 'roslaunch' and needs an argument as <RobotName_Number>");
-      return -1;
+    // Displaying an error message for correct usage of the script, and returning error.
+    ROS_ERROR_STREAM("This Node must be launched via 'roslaunch' and needs an argument as <RobotName_Number>");
+    return -1;
   }
   else
   {
