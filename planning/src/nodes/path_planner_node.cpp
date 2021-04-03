@@ -5,6 +5,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include "path_planner.h"
 #include "planning/trajectory.h"
+#include "planning/TrajectoryWithVelocities.h"
 
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -126,9 +127,11 @@ void callback(const nav_msgs::OccupancyGrid oGrid)
 
 }
 
-bool trajectoryGeneration(PathPlanner::trajectory::Request &req, planning::trajectory::Response &res)
+bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
-    res.trajectory = trajectoryGenerator(req.targetPose);
+    //res.trajectory = trajectoryGenerator(req.targetPose);
+    planning::TrajectoryWithVelocities trajectory;
+    res.trajectory  = trajectory;
     return true;
 }
 
@@ -159,7 +162,7 @@ int main(int argc, char *argv[])
     ros::Subscriber indexValues = nh.subscribe("/capricorn/Ground_Truth_Map", 1000, callback);
    
     //creates a service
-    ros::ServiceServer service = n.advertiseService("trajectoryGenerator", trajectoryGenerator);
+    ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", trajectoryGeneration);
     ros::spin();
     return 0;
 }
