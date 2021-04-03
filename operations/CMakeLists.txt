@@ -10,7 +10,6 @@ project(operations)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  # srcp2_msgs
   actionlib_msgs
   genmsg
   message_generation
@@ -18,6 +17,12 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   utils
   geometry_msgs
+  perception
+  gazebo_msgs
+  srcp2_msgs
+  tf2
+  tf2_ros
+  perception
 )
 
 ## System dependencies are found with CMake's conventions
@@ -72,6 +77,9 @@ find_package(Boost REQUIRED COMPONENTS system)
 add_action_files(DIRECTORY action
   FILES
   Navigation.action
+  ResourceLocaliser.action
+  Hauler.action
+  Excavator.action
 )
 
 generate_messages(
@@ -79,6 +87,7 @@ generate_messages(
   actionlib_msgs
   std_msgs
   geometry_msgs
+  srcp2_msgs
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -119,7 +128,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs #srcp2_msgs
+ CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs perception
  #  DEPENDS system_lib
 )
 
@@ -137,7 +146,9 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
+  src/scout_state_machine.cpp
 )
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -168,17 +179,77 @@ add_library(${PROJECT_NAME}
 
 # Drives both robots forwards in task 2. Example node
 add_executable(navigation_actionlib_server src/navigation_actionlib_server.cpp)
+add_executable(hauler_actionlib_server src/HaulerServerNew.cpp)
+add_executable(hauler_actionlib_client src/HaulerClient.cpp)
+add_executable(excavator_actionlib_client src/ExcavatorClient.cpp)
+add_executable(excavator_actionlib_server src/ExcavatorServer.cpp)
+
 add_dependencies(navigation_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(excavator_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(excavator_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 target_link_libraries(navigation_actionlib_server ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
-
+target_link_libraries(excavator_actionlib_server ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(excavator_actionlib_client ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+add_dependencies(hauler_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(hauler_actionlib_server ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+add_dependencies(hauler_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(hauler_actionlib_client ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
 # Drives both robots forwards in task 2. Example node
 add_executable(navigation_client src/navigation_client.cpp)
 add_dependencies(navigation_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_client
   ${catkin_LIBRARIES}
 )
+
+# Drives both robots forwards in task 2. Example node
+add_executable(resource_localiser src/resource_localiser.cpp)
+add_dependencies(resource_localiser ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(resource_localiser
+${catkin_LIBRARIES}
+)
+
+add_executable(trajectory_processor src/trajectory_processor.cpp)
+add_dependencies(trajectory_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(trajectory_processor
+  ${catkin_LIBRARIES}
+)
+
+add_executable(wheel_speed_processing src/wheel_speed_processing.cpp)
+add_dependencies(wheel_speed_processing ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(wheel_speed_processing
+  ${catkin_LIBRARIES}
+)
+
+add_executable(resource_localiser_tester src/resource_localiser_tester.cpp)
+add_dependencies(resource_localiser_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(resource_localiser_tester
+  ${catkin_LIBRARIES}
+)
+
+add_executable(navigation_vision src/navigation_vision.cpp)
+add_dependencies(navigation_vision ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(navigation_vision
+  ${catkin_LIBRARIES}
+)
+
+add_executable(start_scout_sm src/start_scout_sm.cpp)
+add_dependencies(start_scout_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(start_scout_sm
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
+# target_link_libraries(start_scout_sm navigation_algorithm)
 
 #############
 ## Install ##
@@ -191,7 +262,7 @@ target_link_libraries(navigation_client
 ## in contrast to setup.py, you can choose the destination
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS navigation_actionlib_server navigation_client
+install(TARGETS navigation_actionlib_server navigation_client trajectory_processor start_scout_sm
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
@@ -236,3 +307,6 @@ install(TARGETS navigation_actionlib_server navigation_client
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+catkin_add_gtest(${PROJECT_NAME}-test test/algorithm_tests.cpp)
+target_link_libraries(${PROJECT_NAME}-test ${catkin_LIBRARIES} ${PROJECT_NAME})

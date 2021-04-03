@@ -1,7 +1,13 @@
 #include <operations/NavigationAction.h> // Note: "Action" is appended
 #include <actionlib/client/simple_action_client.h>
 #include <utils/common_names.h>
+
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <std_msgs/Float64.h>
+
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 // typedef for the Action Server
 typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
@@ -9,37 +15,70 @@ Client* client;
 
 using namespace COMMON_NAMES;
 
+std::string robot_name;
+
 /**
  * @brief Callback for the twist message of teleop message twist
  * 
  * @param twist twist message from teleop
  */
-void chatterCallback(const geometry_msgs::Twist::ConstPtr& twist)
+void teleopCB(const geometry_msgs::Twist::ConstPtr& twist)
+{
+  // Action message goal
+  operations::NavigationGoal goal;
+  
+  // Manual driving
+  goal.drive_mode = NAV_TYPE::MANUAL;
+
+  // Diverting values from twist to navigation
+  goal.forward_velocity = twist->linear.x;
+  goal.angular_velocity = twist->angular.z;
+  
+  client->sendGoal(goal);
+  ros::Duration(0.1).sleep();
+}
+
+/**
+ * @brief Callback for the navigation testing topic
+ * 
+ * @param twist geometry_msgs::Point for the goal 
+ */
+void navigationCB(const geometry_msgs::Point::ConstPtr& goal_point)
 {
     // Action message goal
     operations::NavigationGoal goal;
     
-    // Diverting values from twist to navigation
-    goal.forward_velocity = 0;
-    goal.angular_velocity = 0;
-    
-    client->sendGoal(goal);
-    
-    // // Not really needed here. 
-    // // This can be better used as an actual feedback.
-    // client->waitForResult(ros::Duration(5.0));
-    // if (client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-    //   printf("Yay! Robot should be moving\n");
-    // printf("Robot navigation state: %s\n", client->getState().toString().c_str());
+    //Simple waypoint 2 meters in front of the robot
+    geometry_msgs::PoseStamped t1;
+    t1.header.frame_id = robot_name + "_small_chassis";
+    t1.header.stamp = ros::Time::now();
+    t1.pose.position.x = goal_point->x;
+    t1.pose.position.y = goal_point->y;
+    t1.pose.position.z = 0;
 
+    t1.pose.orientation.w = 0.707;
+    t1.pose.orientation.x = 0;
+    t1.pose.orientation.y = 0;
+    t1.pose.orientation.z = 0.707;
+
+    goal.pose = t1;
+    goal.drive_mode = NAV_TYPE::GOAL;
+
+    printf("Sending auto goal to actionlib server\n");
+    client->sendGoal(goal);
+    // ros::Duration(0.1).sleep();
+
+    // printf("Re-sending auto goal to actionlib server\n");
+    // goal.manual_driving = false;
+    // goal.forward_velocity = 0;
+    // goal.angular_velocity = 0;
+    // client->sendGoal(goal);
 }
 
 int main(int argc, char** argv)
 {
-
-  std::cout << argc << std::endl;
   // Ensure the robot name is passed in
-  if (argc != 2)
+  if (argc != 2 && argc != 4)
   {
       // Displaying an error message for correct usage of the script, and returning error.
       ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
@@ -48,21 +87,22 @@ int main(int argc, char** argv)
   else
   {
     // Robot Name from argument
-    std::string robot_name(argv[1]);
+    robot_name = argv[1];
     std::string node_name = robot_name + "_navigation_action_client";
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
 
     // Subscribing to teleop topic
-    ros::Subscriber sub = nh.subscribe("/cmd_vel", 1000, chatterCallback);
+    ros::Subscriber navigation_sub = nh.subscribe( "/capricorn/" + robot_name + "/navigation_tester_topic", 1000, navigationCB);
+    ros::Subscriber teleop_sub = nh.subscribe( "/cmd_vel", 1000, teleopCB);
 
-    std::cout << "Nav client: Instantiating client instance" << std::endl;
+    printf("Nav client: Instantiating client instance\n");
 
     // initialize client
     client = new Client(NAVIGATION_ACTIONLIB, true);
-    std::cout << "Waiting for server..." << std::endl;
+    printf("Waiting for server...\n");
     client->waitForServer();
-    std::cout << "Done waiting. Spinning" << std::endl;
+    printf("Done waiting. Spinning\n");
 
     ros::spin();
     return 0;

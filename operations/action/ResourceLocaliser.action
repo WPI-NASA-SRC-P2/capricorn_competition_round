@@ -1,0 +1,8 @@
+# Define the goal
+
+---
+# Define the result
+uint32 resource_final_distance
+---
+# Define a feedback message
+float32 percent_complete

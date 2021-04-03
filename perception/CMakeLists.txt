@@ -11,10 +11,13 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   cv_bridge
+  message_generation
   sensor_msgs
   std_msgs
   message_filters
   utils
+  actionlib_msgs
+  actionlib
 )
 
 ## System dependencies are found with CMake's conventions
@@ -65,17 +68,23 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+add_action_files(
+  FILES
+  Find_PP_RS.action
+)
 
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
 #   std_msgs
 # )
+
+## Generate messages in the 'msg' folder
+add_message_files(
+  FILES
+  Object.msg
+  ObjectArray.msg
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -97,6 +106,14 @@ find_package(catkin REQUIRED COMPONENTS
 #   cfg/DynReconf2.cfg
 # )
 
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+  actionlib_msgs
+)
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -108,7 +125,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
- LIBRARIES perception
  CATKIN_DEPENDS roscpp rospy std_msgs utils sensor_msgs message_filters
 #  DEPENDS system_lib
 )
@@ -161,6 +177,12 @@ target_link_libraries(noisy_image_eliminate
   ${catkin_LIBRARIES}
 )
 
+add_executable(find_pp_rs_server src/find_pp_rs_server.cpp)
+add_dependencies(find_pp_rs_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(find_pp_rs_server
+  ${catkin_LIBRARIES}
+)
+
 
 #############
 ## Install ##
@@ -175,6 +197,12 @@ target_link_libraries(noisy_image_eliminate
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
+
+
+install(PROGRAMS
+src/object_detection.py
+DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
