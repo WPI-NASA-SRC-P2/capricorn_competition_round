@@ -250,8 +250,6 @@ void brakeRobot(double brake_force)
 bool rotateWheels(const geometry_msgs::PoseStamped& target_robot_pose)
 {
 	brakeRobot(0);
-	std::vector<double> wheel_angles = {-M_PI/4, M_PI/4, -M_PI/4, M_PI/4};
-
 	double delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), target_robot_pose, robot_name, buffer);
 	printf("Steering to %frad\n", delta_heading);
 	steerRobot(delta_heading);
