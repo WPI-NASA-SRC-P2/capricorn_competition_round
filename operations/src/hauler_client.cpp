@@ -13,7 +13,7 @@ int main(int argc, char** argv)
   Client client(HAULER_ACTIONLIB, true);
   client.waitForServer();
   operations::HaulerGoal goal;
-  goal.desired_angle = 1;
+  goal.desired_angle = 1; //true
   client.sendGoal(goal);
   std::string message1(client.getState().toString().c_str());
   ROS_INFO_STREAM("Current State: " + message1);
