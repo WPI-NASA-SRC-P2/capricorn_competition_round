@@ -247,6 +247,18 @@ void brakeRobot(double brake_force)
 	brake_client_.call(srv);
 }
 
+bool rotateWheels(const geometry_msgs::PoseStamped& target_robot_pose)
+{
+	brakeRobot(0);
+	std::vector<double> wheel_angles = {-M_PI/4, M_PI/4, -M_PI/4, M_PI/4};
+
+	double delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), target_robot_pose, robot_name, buffer);
+	printf("Steering to %frad\n", delta_heading);
+	steerRobot(delta_heading);
+	ros::Duration(0.5).sleep();
+	return true;
+}
+
 bool rotateRobot(const geometry_msgs::PoseStamped& target_robot_pose)
 {
 	brakeRobot(0);
@@ -312,9 +324,6 @@ bool driveDistance(double delta_distance)
 	brakeRobot(0);
 	ros::Duration(.5).sleep();
 	printf("Driving forwards %fm\n", delta_distance);
-
-	// Point the wheels forward
-	steerRobot(0);
 
 	// Save the starting robot pose so we can track delta distance
 	geometry_msgs::PoseStamped starting_pose = *getRobotPose();
@@ -384,7 +393,7 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 		current_waypoint.header.stamp = ros::Time(0);
 
 		//Turn to heading
-		bool turned_successfully = rotateRobot(current_waypoint);
+		bool turned_successfully = rotateWheels(current_waypoint);
 
 		if (!turned_successfully)
 		{
