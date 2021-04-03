@@ -57,9 +57,9 @@ TEST_P(HeadingTests, CheckHeadingDelta) {
     double expectedPitch = std::get<9>(GetParam());
     double expectedYaw = std::get<10>(GetParam());
     double expectedDelta = std::get<11>(GetParam());
-    ASSERT_EQ(expectedRoll, NavigationAlgo::fromQuatToEuler(target)[0]);
-    ASSERT_EQ(expectedPitch, NavigationAlgo::fromQuatToEuler(target)[1]);
-    ASSERT_EQ(expectedYaw, NavigationAlgo::fromQuatToEuler(target)[2]);
+    ASSERT_EQ(expectedRoll, NavigationAlgo::fromQuatToEuler(*target)[0]);
+    ASSERT_EQ(expectedPitch, NavigationAlgo::fromQuatToEuler(*target)[1]);
+    ASSERT_EQ(expectedYaw, NavigationAlgo::fromQuatToEuler(*target)[2]);
 }
 
 TEST_P(PositionTests, CheckPositionDelta) {
@@ -72,7 +72,7 @@ TEST_P(PositionTests, CheckPositionDelta) {
     origin->pose.position.y = std::get<4>(GetParam());
     origin->pose.position.z = std::get<5>(GetParam());
     double distance = std::get<6>(GetParam());
-    ASSERT_EQ(distance, NavigationAlgo::changeInPosition(origin, target));
+    ASSERT_EQ(distance, NavigationAlgo::changeInPosition(*origin, *target));
 }
 
 class QuaternionTests :public ::testing::TestWithParam<std::tuple<double, double,
@@ -90,9 +90,9 @@ TEST_P(QuaternionTests, CheckQuat) {
     double expectedRoll = std::get<4>(GetParam());
     double expectedPitch = std::get<5>(GetParam());
     double expectedYaw = std::get<6>(GetParam());
-    double aproxRoll = NavigationAlgo::fromQuatToEuler(p)[0];
-    double aproxPitch = NavigationAlgo::fromQuatToEuler(p)[1];
-    double aproxYaw = NavigationAlgo::fromQuatToEuler(p)[2];
+    double aproxRoll = NavigationAlgo::fromQuatToEuler(*p)[0];
+    double aproxPitch = NavigationAlgo::fromQuatToEuler(*p)[1];
+    double aproxYaw = NavigationAlgo::fromQuatToEuler(*p)[2];
     ASSERT_LE(std::abs(aproxRoll - expectedRoll), epsilon);
     ASSERT_LE(std::abs(aproxPitch - expectedPitch), epsilon);
     ASSERT_LE(std::abs(aproxYaw - expectedYaw), epsilon);
