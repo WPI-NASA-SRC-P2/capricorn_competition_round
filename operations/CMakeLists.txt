@@ -10,7 +10,6 @@ project(operations)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  srcp2_msgs
   actionlib_msgs
   genmsg
   message_generation
@@ -78,7 +77,8 @@ add_action_files(DIRECTORY action
   FILES
   Navigation.action
   ResourceLocaliser.action
-  NavigationVision.action
+  Hauler.action
+  Excavator.action
 )
 
 generate_messages(
@@ -137,10 +137,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# add_library(${PROJECT_NAME}
-#   src/navigation_algorithm.cpp
-# )
-
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
@@ -175,14 +171,15 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 #######################################################################################################
 
-# Drives both robots forwards in task 2. Example node
+#################
+##  NAVIGATION ##
+#################
 add_executable(navigation_actionlib_server src/navigation_actionlib_server.cpp)
 add_dependencies(navigation_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_actionlib_server ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
+${catkin_LIBRARIES}
 )
 
-# Drives both robots forwards in task 2. Example node
 add_executable(navigation_client src/navigation_client.cpp)
 add_dependencies(navigation_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_client
@@ -220,6 +217,54 @@ target_link_libraries(navigation_vision_client
   ${catkin_LIBRARIES}
 )
 
+###################
+#### EXCAVATOR ####
+###################
+add_executable(excavator_actionlib_server src/ExcavatorServer.cpp)
+add_dependencies(excavator_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(excavator_actionlib_server ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+add_executable(excavator_actionlib_client src/ExcavatorClient.cpp)
+add_dependencies(excavator_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(excavator_actionlib_client ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+##################
+##### HAULER #####
+##################
+add_executable(hauler_actionlib_server src/HaulerServerNew.cpp)
+add_dependencies(hauler_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(hauler_actionlib_server ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+add_executable(hauler_actionlib_client src/HaulerClient.cpp)
+add_dependencies(hauler_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(hauler_actionlib_client ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+###################
+###### SCOUT ######
+###################
+
+add_executable(start_scout_sm src/start_scout_sm.cpp)
+add_dependencies(start_scout_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(start_scout_sm
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
+add_executable(resource_localiser_tester src/resource_localiser_tester.cpp)
+add_dependencies(resource_localiser_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(resource_localiser_tester
+  ${catkin_LIBRARIES}
+)
+
+# target_link_libraries(start_scout_sm navigation_algorithm)
+
 #############
 ## Install ##
 #############
@@ -231,7 +276,9 @@ target_link_libraries(navigation_vision_client
 ## in contrast to setup.py, you can choose the destination
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS navigation_actionlib_server navigation_client trajectory_processor
+install(TARGETS navigation_actionlib_server navigation_client trajectory_processor wheel_speed_processing
+                excavator_actionlib_client hauler_actionlib_server #excavator_actionlib_server
+                hauler_actionlib_client start_scout_sm resource_localiser resource_localiser_tester
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

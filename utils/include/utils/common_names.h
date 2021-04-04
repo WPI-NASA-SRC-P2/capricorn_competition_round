@@ -35,6 +35,8 @@ namespace COMMON_NAMES
   /****** ACTIONLIBS ******/
   const std::string NAVIGATION_ACTIONLIB = "navigation";
   const std::string RESOURCE_LOCALISER_ACTIONLIB = "resource_localiser_actionlib";
+  const std::string HAULER_ACTIONLIB = "hauler_bin";
+  const std::string EXCAVATOR_ACTIONLIB = "excavator";
 
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";
@@ -77,6 +79,16 @@ namespace COMMON_NAMES
   const std::string RIGHT_CAMERAINFO_TOPIC = "/camera/right/camera_info";
   const std::string LEFT_CAMERAINFO_TOPIC = "/camera/left/camera_info";
   const std::string SET_SENSOR_PITCH_TOPIC = "/sensor/pitch/command/position";
+
+  /****** HAULER NAMES ******/
+  const std::string SET_BIN_POSITION = "/bin/command/position";
+
+  /****** EXCAVATOR NAMES ******/
+  const std::string SET_ELBOW_PITCH_POSITION = "/arm/elbow_pitch/command/position";
+  const std::string SET_SHOULDER_PITCH_POSITION = "/arm/shoulder_pitch/command/position";
+  const std::string SET_SHOULDER_YAW_POSITION = "/arm/shoulder_yaw/command/position";
+  const std::string SET_WRIST_PITCH_POSITION = "/arm/wrist_pitch/command/position";
+
   const std::string WHEEL_PID = "/wheel_pid";
   const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";
   const std::string OBJECT_DETECTION_OBJECTS_TOPIC = "/object_detection/objects";
@@ -107,5 +119,4 @@ namespace COMMON_NAMES
     INTERRUPTED = 2
   };
 
-  
 } // namespace CAPRICORN_COMMON_NAMES

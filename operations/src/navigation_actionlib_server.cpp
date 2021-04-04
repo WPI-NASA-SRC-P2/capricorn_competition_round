@@ -23,7 +23,7 @@
 using namespace COMMON_NAMES;
 
 // Base speed for rotating and driving the robot. TODO: PID controller does not properly match this value
-#define BASE_SPEED 1
+#define BASE_SPEED 0.6
 
 // Tolerances for drives and turns
 #define DIST_EPSILON 0.05
