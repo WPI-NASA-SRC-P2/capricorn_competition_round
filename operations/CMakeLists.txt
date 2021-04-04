@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   srcp2_msgs
   tf2
   tf2_ros
+  perception
 )
 
 ## System dependencies are found with CMake's conventions
@@ -76,6 +77,8 @@ add_message_files(
 add_action_files(DIRECTORY action
   FILES
   Navigation.action
+  ResourceLocaliser.action
+  NavigationVision.action
 )
 
 generate_messages(
@@ -119,7 +122,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs
+ CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs perception
  #  DEPENDS system_lib
 )
 
@@ -141,6 +144,7 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
+  src/scout_state_machine.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
@@ -185,6 +189,13 @@ target_link_libraries(navigation_client
   ${catkin_LIBRARIES}
 )
 
+# Drives both robots forwards in task 2. Example node
+add_executable(resource_localiser src/resource_localiser.cpp)
+add_dependencies(resource_localiser ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(resource_localiser
+${catkin_LIBRARIES}
+)
+
 add_executable(trajectory_processor src/trajectory_processor.cpp)
 add_dependencies(trajectory_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(trajectory_processor
@@ -197,9 +208,9 @@ target_link_libraries(wheel_speed_processing
   ${catkin_LIBRARIES}
 )
 
-add_executable(navigation_vision src/navigation_vision.cpp)
-add_dependencies(navigation_vision ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(navigation_vision
+add_executable(navigation_vision_server src/navigation_vision_server.cpp)
+add_dependencies(navigation_vision_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(navigation_vision_server
   ${catkin_LIBRARIES}
 )
 
