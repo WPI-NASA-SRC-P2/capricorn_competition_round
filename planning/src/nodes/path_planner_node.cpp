@@ -32,8 +32,8 @@ void callback(const nav_msgs::OccupancyGrid oGrid) {
     Point origin;
     origin.x = 300;
     origin.y = 300;
-
-    auto CSpace = CSpace::GetCSpace(oGrid, 50, 2);
+    ROS_INFO("STARTED NEW CSPACE");
+    auto CSpace = CSpace::GetCSpace(oGrid, 50, 3);
     auto path = AStar::FindPathOccGrid(CSpace, target, origin);
 
     pathPublisher.publish(path);
