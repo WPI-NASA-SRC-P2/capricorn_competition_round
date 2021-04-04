@@ -10,11 +10,9 @@ ScoutStateMachine::ScoutStateMachine(ros::NodeHandle nh, const std::string& robo
     volatile_sub_ = nh.subscribe("/" + robot_name + VOLATILE_SENSOR_TOPIC, 1000, &ScoutStateMachine::processVolatileMessage, this);
 
     // TODO TODO TODO: Replace (or switch based on debug flat) with real odometry topic
-    robot_odom_sub_ = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, &ScoutStateMachine::processOdomMessage, this);
+    robot_odom_sub_ = nh.subscribe(CAPRICORN_TOPIC + CHEAT_ODOM_TOPIC, 1000, &ScoutStateMachine::processOdomMessage, this);
 
     excavator_ready_sub_ = nh.subscribe(CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000, &ScoutStateMachine::processExcavatorMessage, this);
-
-    volatile_pub_ = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + robot_name + VOLATILE_LOCATION_TOPIC, 1000);
 }
 
 ScoutStateMachine::~ScoutStateMachine()
@@ -25,11 +23,8 @@ ScoutStateMachine::~ScoutStateMachine()
 
 void ScoutStateMachine::processVolatileMessage(const srcp2_msgs::VolSensorMsg::ConstPtr& vol_msg)
 {
-    if(vol_msg->vol_type != std::string("none"))
-    {
-        std::lock_guard<std::mutex> vol_flag_guard(vol_flag_mutex_);
-        vol_detected_ = true;
-    }
+    std::lock_guard<std::mutex> vol_flag_guard(vol_flag_mutex_);
+    vol_detected_ = true;
 }
 
 void ScoutStateMachine::processOdomMessage(const nav_msgs::Odometry::ConstPtr& odom_msg)
@@ -74,8 +69,8 @@ void ScoutStateMachine::startStateMachine()
 
                 unexplored.header.frame_id = MAP;
 
-                unexplored.pose.position.x = 40;
-                unexplored.pose.position.y = 9;
+                unexplored.pose.position.x = 20;
+                unexplored.pose.position.y = 0;
                 unexplored.pose.position.z = 0;
 
                 unexplored.pose.orientation.w = 1;
@@ -159,21 +154,13 @@ void ScoutStateMachine::startStateMachine()
                 first_iter_ = false;
             }
 
-            // What if error abort or something else?
-
-            if(resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+            if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
             {
                 printf("Resource localized.\n");
 
                 first_iter_ = true;
 
                 robot_state_ = LOCATOR_STATES::FOUND;
-            }
-            else if(resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::ABORTED)
-            {
-                ros::Duration(5.0).sleep();
-                ROS_INFO("Retrying to localise the resource");
-                resource_localiser_client_->sendGoal(resource_localiser_goal_);
             }
             break;
         }
@@ -273,7 +260,5 @@ void ScoutStateMachine::startStateMachine()
             break;
         }
         }
-
-        ros::spinOnce();
     }
 }
