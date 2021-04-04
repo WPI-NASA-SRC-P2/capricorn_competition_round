@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   utils
   geometry_msgs
+  perception
   gazebo_msgs
   srcp2_msgs
   tf2
@@ -210,13 +211,6 @@ target_link_libraries(wheel_speed_processing
 add_executable(navigation_vision_server src/navigation_vision_server.cpp)
 add_dependencies(navigation_vision_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_vision_server
-  ${catkin_LIBRARIES}
-)
-
-
-add_executable(radial_turn_tester src/radial_turn_tester.cpp)
-add_dependencies(radial_turn_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(radial_turn_tester
   ${catkin_LIBRARIES}
 )
 
