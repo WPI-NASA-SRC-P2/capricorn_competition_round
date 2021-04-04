@@ -8,9 +8,9 @@ NavigationAlgo::~NavigationAlgo()
 {
 }
 
-std::vector<float> NavigationAlgo::getSteeringAnglesRadialTurn(const float radius)
+std::vector<double> NavigationAlgo::getSteeringAnglesRadialTurn(const float radius)
 {
-  std::vector<float> wheels_steer_angles;
+  std::vector<double> wheels_steer_angles;
  
   wheels_steer_angles.resize(4);
   wheels_steer_angles.at(0) = atan((wheel_sep_length_ / 2) / (radius - wheel_sep_width_ / 2));
@@ -21,16 +21,16 @@ std::vector<float> NavigationAlgo::getSteeringAnglesRadialTurn(const float radiu
   return wheels_steer_angles;
 }
 
-std::vector<float> NavigationAlgo::getDrivingVelocitiessRadialTurn(const float radius, const float effort)
+std::vector<double> NavigationAlgo::getDrivingVelocitiesRadialTurn(const float radius, const float effort)
 {
   int radius_within_robot = copysign(1, (std::abs(radius) - wheel_sep_width_/2 ));
-  std::vector<float> wheels_steer_angles;
+  std::vector<double> wheels_steer_angles;
   wheels_steer_angles.resize(4);
-  float hypoteneus_left = std::hypot(wheel_sep_length_ / 2, (radius - wheel_sep_width_/2));
-  float hypoteneus_right = std::hypot(wheel_sep_length_ / 2, (radius + wheel_sep_width_/2));
+  double hypoteneus_left = std::hypot(wheel_sep_length_ / 2, (radius - wheel_sep_width_/2));
+  double hypoteneus_right = std::hypot(wheel_sep_length_ / 2, (radius + wheel_sep_width_/2));
 
-  float ratio_left = (radius != 0) ? hypoteneus_left / std::abs(radius) : 1;
-  float ratio_right = (radius != 0) ? hypoteneus_right / std::abs(radius) : 1;
+  double ratio_left = (radius != 0) ? hypoteneus_left / std::abs(radius) : 1;
+  double ratio_right = (radius != 0) ? hypoteneus_right / std::abs(radius) : 1;
 
   wheels_steer_angles.at(0) = (ratio_left) * effort;
   wheels_steer_angles.at(1) = (ratio_right) * effort * radius_within_robot;
@@ -40,20 +40,20 @@ std::vector<float> NavigationAlgo::getDrivingVelocitiessRadialTurn(const float r
   return wheels_steer_angles;
 }
 
-std::vector<float> NavigationAlgo::getSteeringAnglesRadialTurn(const geometry_msgs::Point center_of_rotation)
+std::vector<double> NavigationAlgo::getSteeringAnglesRadialTurn(const geometry_msgs::Point center_of_rotation)
 {
-  std::vector<float> wheels_steer_angles;
+  std::vector<double> wheels_steer_angles;
   wheels_steer_angles.resize(4);
 
   // Distances of the wheels from the center of rotation
-  float front_left_x = center_of_rotation.x - wheel_sep_length_/2;
-  float front_left_y = center_of_rotation.y - wheel_sep_width_/2;
-  float front_right_x = center_of_rotation.x - wheel_sep_length_/2;
-  float front_right_y = center_of_rotation.y + wheel_sep_width_/2;
-  float back_right_x = center_of_rotation.x + wheel_sep_length_/2;
-  float back_right_y = center_of_rotation.y + wheel_sep_width_/2;
-  float back_left_x = center_of_rotation.x + wheel_sep_length_/2;
-  float back_left_y = center_of_rotation.y - wheel_sep_width_/2;
+  double front_left_x = center_of_rotation.x - wheel_sep_length_/2;
+  double front_left_y = center_of_rotation.y - wheel_sep_width_/2;
+  double front_right_x = center_of_rotation.x - wheel_sep_length_/2;
+  double front_right_y = center_of_rotation.y + wheel_sep_width_/2;
+  double back_right_x = center_of_rotation.x + wheel_sep_length_/2;
+  double back_right_y = center_of_rotation.y + wheel_sep_width_/2;
+  double back_left_x = center_of_rotation.x + wheel_sep_length_/2;
+  double back_left_y = center_of_rotation.y - wheel_sep_width_/2;
 
   // Output Angles
   wheels_steer_angles.at(0) = -atan(front_left_x / front_left_y);
@@ -73,7 +73,7 @@ std::vector<float> NavigationAlgo::getSteeringAnglesRadialTurn(const geometry_ms
   return wheels_steer_angles;
 }
 
-std::vector<float> NavigationAlgo::getDrivingVelocitiessRadialTurn(const geometry_msgs::Point center_of_rotation, const float velocity)
+std::vector<double> NavigationAlgo::getDrivingVelocitiesRadialTurn(const geometry_msgs::Point center_of_rotation, const float velocity)
 {
   // Distances of the wheels from the center of rotation
   float front_left_x = center_of_rotation.x - wheel_sep_length_/2;
@@ -101,12 +101,12 @@ std::vector<float> NavigationAlgo::getDrivingVelocitiessRadialTurn(const geometr
   // If the center of rotation lies at the center of rotation, then 
   // the radius will be 0. Hence the output will be inf. 
   // Hence the if else condition
-  float ratio_front_left = radius !=0 ? hypoteneus_front_left / radius : 1;
-  float ratio_front_right = radius !=0 ? hypoteneus_front_right / radius : 1;
-  float ratio_back_right = radius !=0 ? hypoteneus_back_right / radius : 1;
-  float ratio_back_left = radius !=0 ? hypoteneus_back_left / radius : 1;
+  float ratio_front_left = radius != 0 ? hypoteneus_front_left / radius : 1;
+  float ratio_front_right = radius != 0 ? hypoteneus_front_right / radius : 1;
+  float ratio_back_right = radius != 0 ? hypoteneus_back_right / radius : 1;
+  float ratio_back_left = radius != 0 ? hypoteneus_back_left / radius : 1;
 
-  std::vector<float> wheels_drive_velocities;
+  std::vector<double> wheels_drive_velocities;
   wheels_drive_velocities.resize(4);
 
   // If the center of rotation lies between the two wheels, and in front 
@@ -197,18 +197,19 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 	geometry_msgs::PoseStamped waypoint_relative_to_robot;
 
   // Should probably wrap this in a try except for tf2::ExtrapolationException, we seem to extrapolate into the past sometimes
-	waypoint_relative_to_robot = tf_buffer.transform(current_waypoint, robot_name + ROBOT_CHASSIS, ros::Duration(0.1));
+  transformPose(waypoint_relative_to_robot, robot_name + ROBOT_CHASSIS, tf_buffer, 0.1);
+	// waypoint_relative_to_robot = tf_buffer.transform(current_waypoint, robot_name + ROBOT_CHASSIS, ros::Duration(0.1));
 
   //Get the change in yaw between the two poses with atan2
 	double change_in_yaw = atan2(waypoint_relative_to_robot.pose.position.y, waypoint_relative_to_robot.pose.position.x);
 	
 	// We want the robot to turn in the direction of the smallest angle change, so if abs(change) > 180, flip its direction
-	if(change_in_yaw >= M_PI/2)
+	if(change_in_yaw >= M_PI)
 	{
 		change_in_yaw -= 2*M_PI;
 	}
 	
-	if (change_in_yaw <= -M_PI/2) 
+	if (change_in_yaw <= -M_PI) 
 	{
 		change_in_yaw += 2*M_PI;
 	}
@@ -218,6 +219,36 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 
 double NavigationAlgo::changeInOrientation(const geometry_msgs::PoseStamped& desired_pose, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer)
 {
-  geometry_msgs::PoseStamped relative_to_robot = tf_buffer.transform(desired_pose, robot_name + ROBOT_CHASSIS, ros::Duration(0.1));
-  return fromQuatToEuler(relative_to_robot)[2];
+  geometry_msgs::PoseStamped relative_to_robot;
+
+  if(transformPose(relative_to_robot, robot_name + ROBOT_CHASSIS, tf_buffer, 0.1))
+  {
+    return fromQuatToEuler(relative_to_robot)[2];
+  }
+  else
+  {
+    ROS_ERROR_STREAM("transformPose failed in changeInOrientation. Returning 0.\n");
+
+    return 0;
+  }
+}
+
+bool NavigationAlgo::transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries)
+{
+  int count = 0;
+  while(count < tries) {
+    try
+    {
+      pose = tf_buffer.transform(pose, frame, ros::Duration(0.1));
+      return true;
+    }
+    catch(tf2::ExtrapolationException e)
+    {
+      // do nothing, this is fine if count < tries
+    }
+  }
+
+  ROS_ERROR_STREAM("tf2::ExtrapolationException too many times in a row! Failed while transforming from " << pose.header.frame_id << " to " << frame << " at time " << pose.header.stamp.sec << "." << pose.header.stamp.nsec);
+
+	return false;
 }

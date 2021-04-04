@@ -46,7 +46,7 @@ public:
    *          element 2: Back Right Wheel
    *          element 3: Back Left Wheel
    */
-  static std::vector<float> getSteeringAnglesRadialTurn(const float radius);
+  static std::vector<double> getSteeringAnglesRadialTurn(const float radius);
 
   /**
    * @brief Get the Steering Angles for Making Radial Turn 
@@ -66,7 +66,7 @@ public:
    *                      element 2: Back Right Wheel
    *                      element 3: Back Left Wheel
    */
-  static std::vector<float> getSteeringAnglesRadialTurn(const geometry_msgs::Point center_of_rotation);
+  static std::vector<double> getSteeringAnglesRadialTurn(const geometry_msgs::Point center_of_rotation);
 
   /**
    * @brief Get the Driving Velocities for Making Radial Turn 
@@ -87,7 +87,7 @@ public:
    *                      element 2: Back Right Wheel
    *                      element 3: Back Left Wheel
    */
-  static std::vector<float> getDrivingVelocitiessRadialTurn(const geometry_msgs::Point center_of_rotation, const float velocity);
+  static std::vector<double> getDrivingVelocitiesRadialTurn(const geometry_msgs::Point center_of_rotation, const float velocity);
 
   /**
    * @brief **DEPRICATED** Get the Driving Efforts for Making Radial Turn 
@@ -107,7 +107,7 @@ public:
    *          element 2: Back Right Wheel
    *          element 3: Back Left Wheel
    */
-  static std::vector<float> getDrivingVelocitiessRadialTurn(const float radius, const float effort);
+  static std::vector<double> getDrivingVelocitiesRadialTurn(const float radius, const float effort);
 
   /**
    * @brief Get the radius of Osculating circle for Archimedean Spiral
@@ -164,12 +164,22 @@ public:
    * @brief Calculates the distance between two poses in XY.
    * 
    * @param current_robot_pose The current robot pose (map frame)
-   * @param target_robot_pose The next pose (map frame)
-   * @return double Distance formula between the x and y components of each pose.
+   * @param target_robot_pose  The next pose (map frame)
+   * @return double            Distance formula between the x and y components of each pose.
    */
   static double changeInPosition(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& target_robot_pose);
 
+  /**
+   * @brief Calculates the yaw of the desired_pose relative to the robot.
+   * 
+   * @param desired_pose The pose that we want the yaw of.
+   * @param robot_name   The name of the robot we want the orientation relative to.
+   * @param tf_buffer    The transform buffer, used to transform the desired_pose into the robot's frame
+   * @return double      The yaw in radians. A positive rotation is CCW about the z axis.
+   */
   static double changeInOrientation(const geometry_msgs::PoseStamped& desired_pose, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer);
+
+  static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries = 1);
 
 };
 

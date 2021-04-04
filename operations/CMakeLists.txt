@@ -141,6 +141,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
   src/scout_state_machine.cpp
+  src/navigation_actionlib_server.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
@@ -172,17 +173,17 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 #######################################################################################################
 
 # Drives both robots forwards in task 2. Example node
-add_executable(navigation_actionlib_server src/navigation_actionlib_server.cpp)
+add_executable(start_nav_server src/start_nav_server.cpp)
 add_executable(hauler_actionlib_server src/HaulerServerNew.cpp)
 add_executable(hauler_actionlib_client src/HaulerClient.cpp)
 add_executable(excavator_actionlib_client src/ExcavatorClient.cpp)
 add_executable(excavator_actionlib_server src/ExcavatorServer.cpp)
 
-add_dependencies(navigation_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(start_nav_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(excavator_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(excavator_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(navigation_actionlib_server ${PROJECT_NAME}
+target_link_libraries(start_nav_server ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_link_libraries(excavator_actionlib_server ${PROJECT_NAME}
@@ -243,8 +244,6 @@ target_link_libraries(start_scout_sm
   ${catkin_LIBRARIES} ${PROJECT_NAME}
 )
 
-# target_link_libraries(start_scout_sm navigation_algorithm)
-
 #############
 ## Install ##
 #############
@@ -256,7 +255,7 @@ target_link_libraries(start_scout_sm
 ## in contrast to setup.py, you can choose the destination
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS navigation_actionlib_server navigation_client trajectory_processor start_scout_sm
+install(TARGETS navigation_client trajectory_processor start_scout_sm
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

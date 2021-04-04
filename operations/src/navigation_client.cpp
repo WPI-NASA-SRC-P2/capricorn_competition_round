@@ -101,7 +101,15 @@ int main(int argc, char** argv)
     // initialize client
     client = new Client(NAVIGATION_ACTIONLIB, true);
     printf("Waiting for server...\n");
-    client->waitForServer();
+    
+    bool serverExists = client->waitForServer(ros::Duration(5.0));
+
+    if(!serverExists)
+    {
+      ROS_ERROR_STREAM("Server does not exist! Exiting.\n");
+      return -1;
+    }
+
     printf("Done waiting. Spinning\n");
 
     ros::spin();

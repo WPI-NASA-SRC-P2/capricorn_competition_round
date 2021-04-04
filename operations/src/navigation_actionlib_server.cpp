@@ -1,68 +1,42 @@
-#include <ros/ros.h>
+#include <operations/navigation_server.h>
 
-#include <std_msgs/String.h>
-#include <std_msgs/Float64.h>
-#include <sensor_msgs/Imu.h>
-#include <operations/TrajectoryWithVelocities.h>
-#include <nav_msgs/Odometry.h>
-#include <srcp2_msgs/BrakeRoverSrv.h>
+NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
+{
+	robot_name_ = robot_name;
+	std::string node_name = robot_name + "_navigation_action_server";
 
-#include <operations/navigation_algorithm.h>
-#include <operations/NavigationAction.h> // Note: "Action" is appended
-#include <actionlib/server/simple_action_server.h>
+	// Initialise the publishers for steering and wheel velocites
+	initPublishers(nh, robot_name);
+	initSubscribers(nh, robot_name);
 
-#include <math.h>
-#include <string.h>
+	printf("Starting navigation server...\n");
 
-#include <tf2_ros/transform_listener.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+	// Action server
 
-#include <mutex>
+	// TODO: Add this back in but with more interesting stuff to make it work
+	Server server(nh, NAVIGATION_ACTIONLIB, boost::bind(&NavigationServer::execute, this, _1, &server), false);
+	server.registerPreemptCallback(boost::bind(&NavigationServer::cancelGoal, this));
+	server.start();
 
-// Allow us to omit the COMMON_NAMES:: prefix to common strings
-using namespace COMMON_NAMES;
+	printf("Navigation server started.\n");
 
-// Base speed for rotating and driving the robot. TODO: PID controller does not properly match this value
-#define BASE_SPEED 0.6
+	listener_ = new tf2_ros::TransformListener(buffer_);
 
-// Tolerances for drives and turns
-#define DIST_EPSILON 0.05
-#define ANGLE_EPSILON 0.02
+	moveRobotWheels(0);
+	steerRobot(0);
+}
 
-// Simplify creation of action servers
-typedef actionlib::SimpleActionServer<operations::NavigationAction> Server;
+NavigationServer::~NavigationServer()
+{
+	// Cleanup the TransformListener
+	delete listener_;
+}
 
-// Publishers for each wheel velocity and steering controller
-ros::Publisher front_left_vel_pub_, front_right_vel_pub_, back_left_vel_pub_, back_right_vel_pub_;
-ros::Publisher front_left_steer_pub_, front_right_steer_pub_, back_left_steer_pub_, back_right_steer_pub_;
-
-// Used to get the current robot pose
-ros::Subscriber update_current_robot_pose;
-
-ros::ServiceClient brake_client_;
-
-// Declared globally so that execute() can access. TODO: probably temporary
-std::string robot_name;
-
-// Declare robot pose to be used globally
-geometry_msgs::PoseStamped robot_pose;
-std::mutex pose_mutex;
-
-// Used to perform transforms between the robot and map reference frames
-tf2_ros::Buffer buffer;
-tf2_ros::TransformListener* listener;
-
-// Whether we are currently manually driving, or automatically following a trajectory
-bool manual_driving = false;
-
-/*******************************************************************************/
-/****************** I N I T I A L I Z E   P U B L I S H E R S ******************/
-/*******************************************************************************/
 /**
  * @brief Initialise the publishers for wheel velocities
  * 
  */
-void initVelocityPublisher(ros::NodeHandle &nh, const std::string &robot_name)
+void NavigationServer::initVelocityPublisher(ros::NodeHandle& nh, const std::string& robot_name)
 {
 	front_left_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + FRONT_LEFT_WHEEL + DESIRED_VELOCITY, 1000);
 	front_right_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + FRONT_RIGHT_WHEEL + DESIRED_VELOCITY, 1000);
@@ -74,7 +48,7 @@ void initVelocityPublisher(ros::NodeHandle &nh, const std::string &robot_name)
  * @brief Initialise the publishers for wheel steering angles
  * 
  */
-void initSteerPublisher(ros::NodeHandle &nh, const std::string &robot_name)
+void NavigationServer::initSteerPublisher(ros::NodeHandle& nh, const std::string& robot_name)
 {
 	front_left_steer_pub_ = nh.advertise<std_msgs::Float64>(robot_name + FRONT_LEFT_WHEEL + STEERING_TOPIC, 1000);
 	front_right_steer_pub_ = nh.advertise<std_msgs::Float64>(robot_name + FRONT_RIGHT_WHEEL + STEERING_TOPIC, 1000);
@@ -86,7 +60,7 @@ void initSteerPublisher(ros::NodeHandle &nh, const std::string &robot_name)
  * @brief Initialise publihers used to debug
  * 
  */
-void initDebugPublisher(ros::NodeHandle &nh, const std::string &robot_name)
+void NavigationServer::initDebugPublisher(ros::NodeHandle& nh, const std::string& robot_name)
 {
 	//waypoint_pub_ = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + robot_name + "/current_waypoint", 1000);
 }
@@ -95,7 +69,7 @@ void initDebugPublisher(ros::NodeHandle &nh, const std::string &robot_name)
  * @brief Call Publisher initializers
  * 
  */
-void initPublishers(ros::NodeHandle &nh, const std::string &robot_name)
+void NavigationServer::initPublishers(ros::NodeHandle& nh, const std::string& robot_name)
 {
 	initVelocityPublisher(nh, robot_name);
 	initSteerPublisher(nh, robot_name);
@@ -107,28 +81,28 @@ void initPublishers(ros::NodeHandle &nh, const std::string &robot_name)
  * 
  * @param msg The odometry message to process
  */
-void updateRobotPose(const nav_msgs::Odometry::ConstPtr &msg)
+void NavigationServer::updateRobotPose(const nav_msgs::Odometry::ConstPtr& msg)
 {
-	std::lock_guard<std::mutex> pose_lock(pose_mutex);
-	robot_pose.header = msg->header;
-	robot_pose.pose = msg->pose.pose;
+	std::lock_guard<std::mutex> pose_lock(pose_mutex_);
+	robot_pose_.header = msg->header;
+	robot_pose_.pose = msg->pose.pose;
 	return;
 }
 
-geometry_msgs::PoseStamped* getRobotPose()
+geometry_msgs::PoseStamped* NavigationServer::getRobotPose()
 {
-	std::lock_guard<std::mutex> pose_lock(pose_mutex);
-	return &robot_pose;
+	std::lock_guard<std::mutex> pose_lock(pose_mutex_);
+	return &robot_pose_;
 }
 
 /**
  * @brief Initialize the subscriber for robot position
  * 
  */
-void initSubscribers(ros::NodeHandle &nh, std::string &robot_name)
+void NavigationServer::initSubscribers(ros::NodeHandle& nh, std::string& robot_name)
 {
 	// TODO: Swap this topic from CHEAT_ODOM_TOPIC to the real odom topic. Or, add a flag in the launch file and switch between the two
-	update_current_robot_pose = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
+	update_current_robot_pose_ = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
 	brake_client_ = nh.serviceClient<srcp2_msgs::BrakeRoverSrv>("/" + robot_name + BRAKE_ROVER);
 }
 
@@ -142,7 +116,7 @@ void initSubscribers(ros::NodeHandle &nh, std::string &robot_name)
  * @param publisher   publisher over which message will be published
  * @param data        data that will be published over the publisher
  */
-void publishMessage(ros::Publisher &publisher, float data)
+void NavigationServer::publishMessage(ros::Publisher& publisher, float data)
 {
 	std_msgs::Float64 pub_data;
 	pub_data.data = data;
@@ -162,7 +136,7 @@ void publishMessage(ros::Publisher &publisher, float data)
 	 *          element 2: Back Right Wheel
 	 *          element 3: Back Left Wheel
  */
-void steerRobot(const std::vector<double> &angles)
+void NavigationServer::steerRobot(const std::vector<double>& angles)
 {
 	publishMessage(front_left_steer_pub_, angles.at(0));
 	publishMessage(front_right_steer_pub_, angles.at(1));
@@ -177,7 +151,7 @@ void steerRobot(const std::vector<double> &angles)
  * 
  * @param angle Angles at which the robot wheels will be steered
  */
-void steerRobot(const double angle)
+void NavigationServer::steerRobot(const double angle)
 {
 	publishMessage(front_left_steer_pub_, angle);
 	publishMessage(front_right_steer_pub_, angle);
@@ -199,7 +173,7 @@ void steerRobot(const double angle)
 	 *          element 2: Back Right Wheel
 	 *          element 3: Back Left Wheel
  */
-void moveRobotWheels(const std::vector<double> velocity)
+void NavigationServer::moveRobotWheels(const std::vector<double> velocity)
 {
 	publishMessage(front_left_vel_pub_, velocity.at(0));
 	publishMessage(front_right_vel_pub_, velocity.at(1));
@@ -212,7 +186,7 @@ void moveRobotWheels(const std::vector<double> velocity)
  * 
  * @param velocity velocity for the wheels
  */
-void moveRobotWheels(const double velocity)
+void NavigationServer::moveRobotWheels(const double velocity)
 {
 	publishMessage(front_left_vel_pub_, velocity);
 	publishMessage(front_right_vel_pub_, velocity);
@@ -224,12 +198,11 @@ void moveRobotWheels(const double velocity)
 /****************** P U B L I S H E R   L O G I C ******************/
 /*******************************************************************/
 
-operations::TrajectoryWithVelocities* sendGoalToPlanner(const operations::NavigationGoalConstPtr &goal)
+operations::TrajectoryWithVelocities* NavigationServer::sendGoalToPlanner(const operations::NavigationGoalConstPtr& goal)
 {
 	operations::TrajectoryWithVelocities *traj = new operations::TrajectoryWithVelocities();
 
 	// Temporary, replace with service call once the planner is complete
-	// TODO: Stop assuming we'll always get a PoseStamped. Adapt this to allow for PointStamped as well
 	geometry_msgs::PoseStamped goal_pose = goal->pose;
 	std_msgs::Float64 speed;
 	speed.data = BASE_SPEED;
@@ -240,25 +213,34 @@ operations::TrajectoryWithVelocities* sendGoalToPlanner(const operations::Naviga
 	return traj;
 }
 
-void brakeRobot(double brake_force)
+void NavigationServer::brakeRobot(bool brake)
 {
 	srcp2_msgs::BrakeRoverSrv srv;
-	srv.request.brake_force = brake_force;
+
+	if(brake)
+		srv.request.brake_force = 1000;
+	else
+		srv.request.brake_force = 0;
+
 	brake_client_.call(srv);
 }
 
-bool rotateRobot(const geometry_msgs::PoseStamped& target_robot_pose)
+bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robot_pose)
 {
-	brakeRobot(0);
+	brakeRobot(false);
 	ros::Duration(.5).sleep();
-	std::vector<double> wheel_angles = {-M_PI/4, M_PI/4, -M_PI/4, M_PI/4};
-	std::vector<double> wheel_speeds_right = {BASE_SPEED, -BASE_SPEED, -BASE_SPEED, BASE_SPEED};
-	std::vector<double> wheel_speeds_left = {-BASE_SPEED, BASE_SPEED, BASE_SPEED, -BASE_SPEED};
+
+	// For these function calls, a point at (0,0,0) represents the center of the robot. For a turn in place, this is what we want.
+	geometry_msgs::Point center_of_robot;
+
+	std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesRadialTurn(center_of_robot);
+	std::vector<double> wheel_speeds_right = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, BASE_SPEED);
+	std::vector<double> wheel_speeds_left = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, -BASE_SPEED);
 
 	// Save starting robot pose to track the change in heading
 	geometry_msgs::PoseStamped starting_pose = *getRobotPose();
 
-	double delta_heading = NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name, buffer);
+	double delta_heading = NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_);
 	
 	if (abs(delta_heading) <= ANGLE_EPSILON)
 	{
@@ -269,9 +251,9 @@ bool rotateRobot(const geometry_msgs::PoseStamped& target_robot_pose)
 	steerRobot(wheel_angles);
 
 	// While we have not turned the desired amount
-	while (abs(NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name, buffer)) > ANGLE_EPSILON && ros::ok())
+	while (abs(NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_)) > ANGLE_EPSILON && ros::ok())
 	{
-		if(manual_driving)
+		if(manual_driving_)
 		{
 			return false;
 		}
@@ -301,15 +283,15 @@ bool rotateRobot(const geometry_msgs::PoseStamped& target_robot_pose)
 	// Reset steering of wheels
 	steerRobot(0);
 
-	brakeRobot(1000);
+	brakeRobot(true);
 	ros::Duration(1.5).sleep();
 
 	return true;
 }
 
-bool driveDistance(double delta_distance)
+bool NavigationServer::driveDistance(double delta_distance)
 {
-	brakeRobot(0);
+	brakeRobot(false);
 	ros::Duration(.5).sleep();
 	printf("Driving forwards %fm\n", delta_distance);
 
@@ -322,7 +304,7 @@ bool driveDistance(double delta_distance)
 	// While we have not traveled the
 	while (abs(NavigationAlgo::changeInPosition(starting_pose, *getRobotPose()) - delta_distance) > DIST_EPSILON && ros::ok())
 	{
-		if(manual_driving)
+		if(manual_driving_)
 		{
 			return false;
 		}
@@ -339,25 +321,25 @@ bool driveDistance(double delta_distance)
 	// Stop moving the robot after we are done moving
 	moveRobotWheels(0);
 
-	brakeRobot(1000);
+	brakeRobot(true);
 	ros::Duration(1).sleep();
 
 	return true;
 }
 
-void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
+void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
 	printf("Auto drive\n");
 
 	//Forward goal to local planner, and save the returned trajectory
 	operations::TrajectoryWithVelocities *trajectory = sendGoalToPlanner(goal);
 
-	geometry_msgs::PoseStamped final_pose = buffer.transform(goal->pose, MAP, ros::Duration(0.1));
+	geometry_msgs::PoseStamped final_pose = buffer_.transform(goal->pose, MAP, ros::Duration(0.1));
 
 	//Loop over trajectories
 	for (int i = 0; i < trajectory->waypoints.size(); i++)
 	{
-		if(manual_driving)
+		if(manual_driving_)
 		{
 			ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
 			operations::NavigationResult res;
@@ -378,7 +360,7 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 
 		current_waypoint.header.stamp = ros::Time(0);
 
-		current_waypoint = buffer.transform(current_waypoint, MAP, ros::Duration(0.1));
+		current_waypoint = buffer_.transform(current_waypoint, MAP, ros::Duration(0.1));
 
 		// Needed, otherwise we get extrapolation into the past
 		current_waypoint.header.stamp = ros::Time(0);
@@ -390,7 +372,7 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 		{
 			operations::NavigationResult res;
 
-			if(manual_driving)
+			if(manual_driving_)
 			{
 				ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
 				res.result = NAV_RESULT::INTERRUPTED;
@@ -422,7 +404,7 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 		if (!drove_successfully)
 		{
 			operations::NavigationResult res;
-			if(manual_driving)
+			if(manual_driving_)
 			{
 				ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
 				res.result = NAV_RESULT::INTERRUPTED;
@@ -458,7 +440,7 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 	{
 		operations::NavigationResult res;
 
-		if(manual_driving)
+		if(manual_driving_)
 		{
 			ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
 			res.result = NAV_RESULT::INTERRUPTED;
@@ -478,23 +460,23 @@ void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *ac
 
 	printf("Finished automatic goal!\n");
 
-	brakeRobot(1000);
+	brakeRobot(true);
 
 	operations::NavigationResult res;
 	res.result = NAV_RESULT::SUCCESS;
 	action_server->setSucceeded(res);
 }
 
-void linearDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
+void NavigationServer::linearDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
 	printf("Manual drive: Linear velocity\n");
-	brakeRobot(0);
+	brakeRobot(false);
 	steerRobot(0);
 	moveRobotWheels(goal->forward_velocity);
 
 	if(0 == goal->forward_velocity)
 	{
-		brakeRobot(1000);
+		brakeRobot(true);
 		ros::Duration(1).sleep();
 	}
 	
@@ -504,10 +486,10 @@ void linearDriving(const operations::NavigationGoalConstPtr &goal, Server *actio
 	return;
 }
 
-void angularDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
+void NavigationServer::angularDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
 	printf("Manual drive: Angular velocity\n");
-	brakeRobot(0);
+	brakeRobot(false);
 	double angular_velocity = goal->angular_velocity;
 
 	std::vector<double> wheel_angles = {-M_PI/4, M_PI/4, -M_PI/4, M_PI/4};
@@ -522,7 +504,7 @@ void angularDriving(const operations::NavigationGoalConstPtr &goal, Server *acti
 	return;
 }
 
-void spiralDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
+void NavigationServer::spiralDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
 	printf("Spiral drive: Spiral Away!\n");
 
@@ -536,7 +518,7 @@ void spiralDriving(const operations::NavigationGoalConstPtr &goal, Server *actio
 	return;
 }
 
-void followDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
+void NavigationServer::followDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
 	printf("Follow drive: Following!\n");
 
@@ -550,7 +532,7 @@ void followDriving(const operations::NavigationGoalConstPtr &goal, Server *actio
 	return;
 }
 
-void execute(const operations::NavigationGoalConstPtr &goal, Server *action_server)
+void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
     printf("Received NavigationGoal, dispatching\n");
 
@@ -558,7 +540,7 @@ void execute(const operations::NavigationGoalConstPtr &goal, Server *action_serv
 	{
 		case NAV_TYPE::MANUAL:
 
-			manual_driving = true;
+			manual_driving_ = true;
 			if(goal->angular_velocity != 0)
 			{
 				angularDriving(goal, action_server);
@@ -572,40 +554,41 @@ void execute(const operations::NavigationGoalConstPtr &goal, Server *action_serv
 		
 		case NAV_TYPE::GOAL:
 
-			manual_driving = false;
+			manual_driving_ = false;
 			automaticDriving(goal, action_server);
 
 			break;
 		
 		case NAV_TYPE::SPIRAL:
 
-			manual_driving = false;
+			manual_driving_ = false;
 			spiralDriving(goal, action_server);
 
 			break;
 		
 		case NAV_TYPE::FOLLOW:
 
-			manual_driving = false;
+			manual_driving_ = false;
 			followDriving(goal, action_server);
 
 			break;
 
 		default:
-            ROS_ERROR_STREAM(robot_name + " encountered an unknown driving mode!");
+            ROS_ERROR_STREAM(robot_name_ + " encountered an unknown driving mode!");
             break;
 	}
 }
 
-void cancelGoal()
+void NavigationServer::cancelGoal()
 {
-	manual_driving = true;
+	manual_driving_ = true;
 	printf("Clearing current goal, got a new one\n");
 }
 /*********************************************/
 /****************** M A I N ******************/
 /*********************************************/
 
+/*
 int main(int argc, char **argv)
 {
 	// Check if the node is being run through roslauch, and have one parameter of RobotName_Number
@@ -648,4 +631,4 @@ int main(int argc, char **argv)
 
 		return 0;
 	}
-}
+}*/
