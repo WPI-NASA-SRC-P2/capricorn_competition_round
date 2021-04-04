@@ -3,6 +3,10 @@
   <!-- Initialising parameters -->
   <arg name="robot_name" default="small_scout_1" />
 
+    <include file="$(find operations)/launch/wheel_controller.launch">
+        <arg name="robot_name" value="$(arg robot_name)" />
+    </include>
+
   <!-- Running Teleop -->
   <node name="teleop_twist_keyboard" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" output="screen"/>
   
@@ -11,5 +15,6 @@
 
   <!-- Actionlib Client -->
   <node name="navigation_client" pkg="operations" type="navigation_client"  args="$(arg robot_name)" output="screen"/>
+  <node name="wheel_speed_processing" pkg="operations" type="wheel_speed_processing" args="$(arg robot_name)" />
 
 </launch>

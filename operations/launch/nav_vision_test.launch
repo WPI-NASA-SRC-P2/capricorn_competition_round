@@ -1,0 +1,11 @@
+<launch>
+    <arg name="robot_name" default="small_scout_1" />
+
+    <include file="$(find operations)/launch/wheel_controller.launch">
+        <arg name="robot_name" value="$(arg robot_name)" />
+    </include>
+
+    <node name="navigation_actionlib_server" pkg="operations" type="navigation_actionlib_server" args="$(arg robot_name)"/>
+    <node name="wheel_speed_processing" pkg="operations" type="wheel_speed_processing" args="$(arg robot_name)"/>
+    <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
+</launch>
