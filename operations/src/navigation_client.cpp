@@ -93,7 +93,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     // Subscribing to teleop topic
-    ros::Subscriber navigation_sub = nh.subscribe( "/capricorn/" + robot_name + "/navigation_tester_topic", 1000, navigationCB);
+    ros::Subscriber navigation_sub = nh.subscribe("/capricorn/" + robot_name + "/navigation_tester_topic", 1000, navigationCB);
     ros::Subscriber teleop_sub = nh.subscribe( "/cmd_vel", 1000, teleopCB);
 
     printf("Nav client: Instantiating client instance\n");

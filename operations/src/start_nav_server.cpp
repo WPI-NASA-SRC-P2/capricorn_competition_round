@@ -2,6 +2,8 @@
 #include <ros/ros.h>
 #include <operations/navigation_server.h>
 
+typedef actionlib::SimpleActionServer<operations::NavigationAction> Server;
+
 int main(int argc, char* argv[])
 {
     if(argc != 2 && argc != 4)
@@ -14,7 +16,7 @@ int main(int argc, char* argv[])
     std::string robot_name(argv[1]);
 
     ros::init(argc, argv, robot_name + "_nav_server");
-    ros::NodeHandle nh("~");
+    ros::NodeHandle nh;
 
     printf("Constructing nav server\n");
 

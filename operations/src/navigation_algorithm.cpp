@@ -194,10 +194,9 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
   }
 
 	// Get the next waypoint in the robot's frame
-	geometry_msgs::PoseStamped waypoint_relative_to_robot;
-
-  // Should probably wrap this in a try except for tf2::ExtrapolationException, we seem to extrapolate into the past sometimes
+	geometry_msgs::PoseStamped waypoint_relative_to_robot = current_waypoint;
   transformPose(waypoint_relative_to_robot, robot_name + ROBOT_CHASSIS, tf_buffer, 0.1);
+
 	// waypoint_relative_to_robot = tf_buffer.transform(current_waypoint, robot_name + ROBOT_CHASSIS, ros::Duration(0.1));
 
   //Get the change in yaw between the two poses with atan2
@@ -219,7 +218,7 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 
 double NavigationAlgo::changeInOrientation(const geometry_msgs::PoseStamped& desired_pose, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer)
 {
-  geometry_msgs::PoseStamped relative_to_robot;
+  geometry_msgs::PoseStamped relative_to_robot = desired_pose;
 
   if(transformPose(relative_to_robot, robot_name + ROBOT_CHASSIS, tf_buffer, 0.1))
   {
@@ -236,15 +235,17 @@ double NavigationAlgo::changeInOrientation(const geometry_msgs::PoseStamped& des
 bool NavigationAlgo::transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries)
 {
   int count = 0;
-  while(count < tries) {
+  while(count < tries)
+  {
     try
     {
-      pose = tf_buffer.transform(pose, frame, ros::Duration(0.1));
+      pose = tf_buffer.transform(pose, frame, ros::Duration(duration));
       return true;
     }
     catch(tf2::ExtrapolationException e)
     {
       // do nothing, this is fine if count < tries
+      ros::spinOnce();
     }
   }
 
