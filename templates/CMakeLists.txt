@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   rostest
   operations
+  planning
 )
 
 
@@ -108,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES templates
- CATKIN_DEPENDS roscpp rospy sensor_msgs operations
+ CATKIN_DEPENDS roscpp rospy sensor_msgs operations planning
  # DEPENDS system_lib
 )
 
