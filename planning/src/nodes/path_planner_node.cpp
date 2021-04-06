@@ -130,6 +130,7 @@ void callback(const nav_msgs::OccupancyGrid oGrid)
 bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
     //res.trajectory = trajectoryGenerator(req.targetPose);
+    ROS_INFO("Entered trajectoryGeneration");
     planning::TrajectoryWithVelocities trajectory;
     res.trajectory  = trajectory;
     return true;
@@ -137,10 +138,13 @@ bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajecto
 
 int main(int argc, char *argv[])
 {
-    if(argc != 3) printf("Wrong arg count: %d\n", argc);
+    //if(argc != 3) printf("Wrong arg count: %d\n", argc);
 
-    target.x = atoi(argv[1]);
-    target.y = atoi(argv[2]);
+    // target.x = atoi(argv[1]);
+    // target.y = atoi(argv[2]);
+
+    target.x = 10;
+    target.y = 10;
 
     // ROS initialization
     ros::init(argc, argv, "path_planner");
@@ -164,5 +168,8 @@ int main(int argc, char *argv[])
     //creates a service
     ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", trajectoryGeneration);
     ros::spin();
+
+    ros::Duration(10).sleep();
+
     return 0;
 }

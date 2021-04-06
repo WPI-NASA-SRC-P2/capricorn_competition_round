@@ -17,7 +17,10 @@ int main(int argc, char** argv)
 
   ros::ServiceClient client = n.serviceClient<planning::trajectory>("trajectory_client");
 
+  //
   planning::trajectory srv;
+
+  
 
   //probably needs to not use argument
   geometry_msgs::PoseStamped pose;
@@ -28,7 +31,6 @@ int main(int argc, char** argv)
   pose.pose.orientation.y = 0;
   pose.pose.orientation.z = 0;
   pose.pose.orientation.w = 0;
-  
 
   srv.request.targetPose = pose;
 

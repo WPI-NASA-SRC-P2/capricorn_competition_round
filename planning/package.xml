@@ -66,6 +66,7 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>message_runtime</exec_depend>
+  <depend>TrajectoryWithVelocities</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
