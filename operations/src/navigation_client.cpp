@@ -99,7 +99,7 @@ int main(int argc, char** argv)
     printf("Nav client: Instantiating client instance\n");
 
     // initialize client
-    client = new Client(NAVIGATION_ACTIONLIB, true);
+    client = new Client(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
     printf("Waiting for server...\n");
     
     bool serverExists = client->waitForServer(ros::Duration(5.0));
