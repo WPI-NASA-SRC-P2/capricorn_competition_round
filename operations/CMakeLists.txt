@@ -179,44 +179,18 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 # Drives both robots forwards in task 2. Example node
 add_executable(start_nav_server src/start_nav_server.cpp)
-add_executable(hauler_actionlib_server src/HaulerServerNew.cpp)
-add_executable(hauler_actionlib_client src/HaulerClient.cpp)
-add_executable(excavator_actionlib_client src/ExcavatorClient.cpp)
-add_executable(excavator_actionlib_server src/ExcavatorServer.cpp)
 
 add_dependencies(start_nav_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(excavator_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(excavator_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(start_nav_server ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
-target_link_libraries(excavator_actionlib_server ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(excavator_actionlib_client ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-add_dependencies(hauler_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(hauler_actionlib_server ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-add_dependencies(hauler_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(hauler_actionlib_client ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+
 # Drives both robots forwards in task 2. Example node
 add_executable(navigation_client src/navigation_client.cpp)
 add_dependencies(navigation_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_client
   ${catkin_LIBRARIES}
-)
-
-# Drives both robots forwards in task 2. Example node
-add_executable(resource_localiser src/resource_localiser.cpp)
-add_dependencies(resource_localiser ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(resource_localiser
-${catkin_LIBRARIES}
 )
 
 add_executable(trajectory_processor src/trajectory_processor.cpp)
@@ -231,23 +205,65 @@ target_link_libraries(wheel_speed_processing
   ${catkin_LIBRARIES}
 )
 
-add_executable(resource_localiser_tester src/resource_localiser_tester.cpp)
-add_dependencies(resource_localiser_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(resource_localiser_tester
-  ${catkin_LIBRARIES}
-)
-
 add_executable(navigation_vision src/navigation_vision.cpp)
 add_dependencies(navigation_vision ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_vision
   ${catkin_LIBRARIES}
 )
 
+###################
+#### EXCAVATOR ####
+###################
+add_executable(excavator_actionlib_server src/ExcavatorServer.cpp)
+add_dependencies(excavator_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(excavator_actionlib_server ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+add_executable(excavator_actionlib_client src/ExcavatorClient.cpp)
+add_dependencies(excavator_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(excavator_actionlib_client ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+##################
+##### HAULER #####
+##################
+add_executable(hauler_actionlib_server src/HaulerServerNew.cpp)
+add_dependencies(hauler_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(hauler_actionlib_server ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+add_executable(hauler_actionlib_client src/HaulerClient.cpp)
+add_dependencies(hauler_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(hauler_actionlib_client ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+###################
+###### SCOUT ######
+###################
+
 add_executable(start_scout_sm src/start_scout_sm.cpp)
 add_dependencies(start_scout_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(start_scout_sm
   ${catkin_LIBRARIES} ${PROJECT_NAME}
 )
+
+add_executable(resource_localiser src/resource_localiser.cpp)
+add_dependencies(resource_localiser ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(resource_localiser
+${catkin_LIBRARIES}
+)
+
+add_executable(resource_localiser_tester src/resource_localiser_tester.cpp)
+add_dependencies(resource_localiser_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(resource_localiser_tester
+  ${catkin_LIBRARIES}
+)
+
+# target_link_libraries(start_scout_sm navigation_algorithm)
 
 #############
 ## Install ##
@@ -260,7 +276,9 @@ target_link_libraries(start_scout_sm
 ## in contrast to setup.py, you can choose the destination
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS navigation_client trajectory_processor start_scout_sm
+install(TARGETS navigation_client trajectory_processor wheel_speed_processing
+                navigation_vision excavator_actionlib_client hauler_actionlib_server #excavator_actionlib_server
+                hauler_actionlib_client start_scout_sm resource_localiser resource_localiser_tester
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

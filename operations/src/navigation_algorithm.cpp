@@ -197,8 +197,6 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 	geometry_msgs::PoseStamped waypoint_relative_to_robot = current_waypoint;
   transformPose(waypoint_relative_to_robot, robot_name + ROBOT_CHASSIS, tf_buffer, 0.1);
 
-	// waypoint_relative_to_robot = tf_buffer.transform(current_waypoint, robot_name + ROBOT_CHASSIS, ros::Duration(0.1));
-
   //Get the change in yaw between the two poses with atan2
 	double change_in_yaw = atan2(waypoint_relative_to_robot.pose.position.y, waypoint_relative_to_robot.pose.position.x);
 	

@@ -250,10 +250,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	// Save starting robot pose to track the change in heading
 	geometry_msgs::PoseStamped starting_pose = *getRobotPose();
 
-	std::cout << "Starting pose frame: " << starting_pose.header.frame_id << std::endl;
-	std::cout << "Target pose frame: " << target_robot_pose.header.frame_id << std::endl;
 	double delta_heading = NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_);
-	printf("Got change in heading\n");
 	
 	if (abs(delta_heading) <= ANGLE_EPSILON)
 	{
@@ -450,7 +447,6 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 	final_pose.pose.position.y = current_robot_pose.pose.position.y;
 
 	final_pose.header.stamp = ros::Time(0);
-	// final_pose.header.frame_id = robot_name_ + ROBOT_CHASSIS;
 
 	printf("Final rotate\n");
 

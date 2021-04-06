@@ -179,6 +179,17 @@ public:
    */
   static double changeInOrientation(const geometry_msgs::PoseStamped& desired_pose, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer);
 
+  /**
+   * @brief Calls tf_buffer.transform, but handles tf2::ExtrapolationException
+   * 
+   * @param pose The pose to transform. Passed as a reference, and is changed in place.
+   * @param frame The frame to transform the pose into.
+   * @param tf_buffer A transform buffer that is populated with up-to-date transforms.
+   * @param duration The longest time any one iteration can take to try and transform
+   * @param tries How many iterations this function can try to transform. Defaults to 1
+   * @return true Transform succeeded
+   * @return false Transform failed
+   */
   static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries = 1);
 
 };

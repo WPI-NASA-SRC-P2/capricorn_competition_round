@@ -75,6 +75,19 @@ TEST_P(PositionTests, CheckPositionDelta) {
     ASSERT_EQ(distance, NavigationAlgo::changeInPosition(*origin, *target));
 }
 
+TEST_P(PositionTests, CheckPositionDelta) {
+    geometry_msgs::PoseStamped* target = new geometry_msgs::PoseStamped();
+    target->pose.position.x = std::get<0>(GetParam());
+    target->pose.position.y = std::get<1>(GetParam());
+    target->pose.position.z = std::get<2>(GetParam());
+    geometry_msgs::PoseStamped* origin = new geometry_msgs::PoseStamped();
+    origin->pose.position.x = std::get<3>(GetParam());
+    origin->pose.position.y = std::get<4>(GetParam());
+    origin->pose.position.z = std::get<5>(GetParam());
+    double distance = std::get<6>(GetParam());
+    ASSERT_EQ(distance, NavigationAlgo::changeInPosition(origin, target));
+}
+
 class QuaternionTests :public ::testing::TestWithParam<std::tuple<double, double,
   double, double, double, double, double>> {
     protected:
