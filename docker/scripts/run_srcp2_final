@@ -24,6 +24,7 @@ run_gui="true"
 sim_seed="42"
 use_noise="true"
 base_model_path=""
+use_lockstep=""
 
 # robot team config
 config_file="" # use default
@@ -83,6 +84,11 @@ ${B}General Options:${rs}
     ${B}-n | --no-gui${rs}
         Run the the simulation in a headless mode, without the Gazebo GUI
 
+    ${B}-S | --sync${rs}
+        The lockstep sync feature allows the sensor update rate to be strictly followed. 
+        This means that on computers with different computing resources, 
+        the specified update rate can always be respected, allowing for sensor 
+        updates and physics to be in sync.
  
 ${B}Dev and Testing Options${rs}
     These are container commands and configuration that are used by
@@ -143,6 +149,7 @@ for arg in "$@"; do
     "--strict")       set -- "$@" "-s" ;; 
     "--log")          set -- "$@" "-l" ;;
     "--no-gui")       set -- "$@" "-n" ;;
+    "--sync")         set -- "$@" "-S" ;;
     #
     "--dev")          set -- "$@" "-d" ;;
     "--local-docker") set -- "$@" "-L" ;;
@@ -156,7 +163,7 @@ for arg in "$@"; do
 done
 
 OPTIND=1
-while getopts hC:sl:nd:Lic:m:D arg; do
+while getopts hC:sl:nd:Lic:m:SD arg; do
     case $arg in
 
         h)
@@ -195,11 +202,13 @@ while getopts hC:sl:nd:Lic:m:D arg; do
         m)
             mem="${OPTARG}g"
             ;;
+        S)
+            use_lockstep="--lockstep"
+            echo -e "$echo_ok using lockstep sync option for the simulation"
+            ;;
         D)
             detach_option="-d"
             ;;
-
-
         *)
             echo -e "$echo_error input option '$arg' is not supported"
             quit_with_popd 1
@@ -373,6 +382,7 @@ docker run --rm $detach_option $interactive \
     --env=ROS_HOME="/home/srcp2" \
     --env=ROSCONSOLE_STDOUT_LINE_BUFFERED="1" \
     \
+    --env=SRCP2_SYNC=$use_lockstep \
     --env GAZEBO_MODEL_DATABASE_URI="" \
     --env GAZEBO_MODEL_PATH=\
 "${base_model_path}":\

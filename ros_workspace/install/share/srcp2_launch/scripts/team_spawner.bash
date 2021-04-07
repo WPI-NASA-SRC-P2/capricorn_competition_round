@@ -101,10 +101,8 @@ origin_x=$SRCP2_SPAWN_CENTER_Y
 # ****************************************************************
 # Repair Station Spawn
 # Just make the Repair far enough from the last bots
-k_x_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
-k_y_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
-x_rs=$(echo "$origin_x - (1.5+$k_x_rand)*$uniform_model_clearance" | bc)
-y_rs=$(echo "$origin_y - (1.5+$k_y_rand)*$uniform_model_clearance" | bc)
+x_rs=$(echo "$origin_x - $uniform_model_clearance - 2.0" | bc)
+y_rs=$(echo "$origin_y - $uniform_model_clearance - 2.0" | bc)
 yaw_rs=$(echo "scale=3;3.14*$SRCP2_SEED_FACTOR / 32767" | bc)
 
 pose_rs="-x $x_rs -y $y_rs -z 0.65 -R 0 -P 0 -Y $yaw_rs"
@@ -116,10 +114,8 @@ fi
 # ****************************************************************
 #  Processing Plant Spawn Spawn
 # Just make the Processing plant far enough from the last repair station
-k_x_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
-k_y_rand=$(echo "scale=3;-0.5+($SRCP2_SEED_FACTOR / 32767)" | bc)
-x_pp=$(echo "$origin_x - (1.5+$k_x_rand)*$uniform_model_clearance"    | bc)
-y_pp=$(echo "$origin_y - (1.5+$k_y_rand)*$uniform_model_clearance*-1" | bc)
+x_pp=$(echo "$origin_x - $uniform_model_clearance - 2.0"    | bc)
+y_pp=$(echo "$origin_y - $uniform_model_clearance + 11.0"    | bc)
 yaw_pp=$(echo "scale=3; 1.57+0.125*3.14*$SRCP2_SEED_FACTOR / 32767" | bc)
 
 pose_pp="-x $x_pp -y $y_pp -z 0.45 -R 0 -P 0 -Y $yaw_pp"

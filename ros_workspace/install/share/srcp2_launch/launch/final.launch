@@ -21,6 +21,7 @@
   <arg name="system_monitor_enabled"    default="$(env SRCP2_SYSTEM_MONITOR_ENABLED)"/>
   <arg name="use_noise"                 default="$(env SRCP2_USE_NOISE)"/>
   <arg name="start_power_percentage"    default="$(env SRCP2_START_POWER_PERCENTAGE)"/>
+  <arg name="sync"                      default="$(env SRCP2_SYNC)"/>
 
   <!-- hard-coded default args -->
   <arg name="spawning_delay" default="10.0"/>
@@ -42,7 +43,7 @@
       <arg name="verbose"           value="true"/>
       <arg name="use_sim_time"      value="true"/>
       <arg name="recording"         value="false"/>
-      <arg name="extra_gazebo_args" value="--seed $(arg seed)"/>
+      <arg name="extra_gazebo_args" value="$(arg sync) --seed $(arg seed)"/>
   </include>
 
   <!-- Inject the robot team -->

@@ -101,13 +101,13 @@
       <limit
               upper    = "${pi/3}" 
               lower    = "-${pi/3}" 
-              effort   = "10" 
-              velocity = "0.01"/>
+              effort   = "3.0" 
+              velocity = "0.25"/>
      <!-- Some joint damping is necessary for this joint, as it's a powerful -->
      <!-- motor and a light link. Without this, the PID controller must be  -->
      <!-- perfectly tuned to prevent oscillations -->
       <dynamics
-          damping  = "10"
+          damping  = "20"
           friction = "1"/>
     </joint>
 
