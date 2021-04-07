@@ -20,7 +20,7 @@ float curr_sh_pitch = 0;
 float curr_elb_pitch = 0;
 float curr_wrt_pitch = 0;
 
-int SLEEP_DURATION = 2; // The sleep duration
+int SLEEP_DURATION = 5; // The sleep duration
 
 /**
  * @brief Initializing the publisher here
@@ -33,8 +33,10 @@ void initExcavatorPublisher(ros::NodeHandle &nh, const std::string &robot_name)
   excavator_shoulder_yaw_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_SHOULDER_YAW_POSITION, 1000);
   excavator_shoulder_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_SHOULDER_PITCH_POSITION, 1000);
   excavator_elbow_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_ELBOW_PITCH_POSITION, 1000);
-  excavator_wrist_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_WRIST_PITCH_POSITION, 1000); 
+  excavator_wrist_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_WRIST_PITCH_POSITION, 1000);
 }
+
+// void initExcavatorSubscriber()
 
 /**
  * @brief Calculates the orientation of the shoulder joint based on the passed target point
@@ -64,34 +66,52 @@ float findShoulderAngle(const geometry_msgs::Point &target, const geometry_msgs:
  * @param steps the number of simulation steps, higher value corresponds to slower movement
  * @param dig flag for dig or dump task to adjust the speed
  */
-void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, float wrist_pitch, int steps, bool dig)
+// void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, float wrist_pitch, int steps, bool dig)
+// {
+//   std_msgs::Float64 shoulder_yaw_msg;
+//   std_msgs::Float64 shoulder_pitch_msg;
+//   std_msgs::Float64 elbow_pitch_msg;
+//   std_msgs::Float64 wrist_pitch_msg;
+  
+//   for(int i=0; i<steps; i++)
+//   {
+//     shoulder_yaw_msg.data = curr_sh_yaw + i*(shoulder_yaw-curr_sh_yaw)/steps;
+//     shoulder_pitch_msg.data = curr_sh_pitch + i*(shoulder_pitch-curr_sh_pitch)/steps;
+//     elbow_pitch_msg.data = curr_elb_pitch + i*(elbow_pitch-curr_elb_pitch)/steps;
+//     if(dig)
+//       wrist_pitch_msg.data = -(shoulder_pitch_msg.data + elbow_pitch_msg.data);
+//     else
+//       wrist_pitch_msg.data = curr_wrt_pitch + i*(wrist_pitch-curr_wrt_pitch)/steps;
+
+//     ros::Duration(0.2).sleep();
+
+//     excavator_shoulder_yaw_publisher_.publish(shoulder_yaw_msg);
+//     excavator_shoulder_pitch_publisher_.publish(shoulder_pitch_msg);
+//     excavator_elbow_pitch_publisher_.publish(elbow_pitch_msg);
+//     excavator_wrist_pitch_publisher_.publish(wrist_pitch_msg);
+//   }
+//   curr_sh_yaw = shoulder_yaw_msg.data;
+//   curr_sh_pitch = shoulder_pitch_msg.data;
+//   curr_elb_pitch = elbow_pitch_msg.data;
+//   curr_wrt_pitch = wrist_pitch_msg.data;
+// }
+
+void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, float wrist_pitch)
 {
   std_msgs::Float64 shoulder_yaw_msg;
   std_msgs::Float64 shoulder_pitch_msg;
   std_msgs::Float64 elbow_pitch_msg;
   std_msgs::Float64 wrist_pitch_msg;
   
-  for(int i=0; i<steps; i++)
-  {
-    shoulder_yaw_msg.data = curr_sh_yaw + i*(shoulder_yaw-curr_sh_yaw)/steps;
-    shoulder_pitch_msg.data = curr_sh_pitch + i*(shoulder_pitch-curr_sh_pitch)/steps;
-    elbow_pitch_msg.data = curr_elb_pitch + i*(elbow_pitch-curr_elb_pitch)/steps;
-    if(dig)
-      wrist_pitch_msg.data = -(shoulder_pitch_msg.data + elbow_pitch_msg.data);
-    else
-      wrist_pitch_msg.data = curr_wrt_pitch + i*(wrist_pitch-curr_wrt_pitch)/steps;
+  shoulder_yaw_msg.data = shoulder_yaw;
+  shoulder_pitch_msg.data = shoulder_pitch;
+  elbow_pitch_msg.data = elbow_pitch;
+  wrist_pitch_msg.data = wrist_pitch;
 
-    ros::Duration(0.2).sleep();
-
-    excavator_shoulder_yaw_publisher_.publish(shoulder_yaw_msg);
-    excavator_shoulder_pitch_publisher_.publish(shoulder_pitch_msg);
-    excavator_elbow_pitch_publisher_.publish(elbow_pitch_msg);
-    excavator_wrist_pitch_publisher_.publish(wrist_pitch_msg);
-  }
-  curr_sh_yaw = shoulder_yaw_msg.data;
-  curr_sh_pitch = shoulder_pitch_msg.data;
-  curr_elb_pitch = elbow_pitch_msg.data;
-  curr_wrt_pitch = wrist_pitch_msg.data;
+  excavator_shoulder_yaw_publisher_.publish(shoulder_yaw_msg);
+  excavator_shoulder_pitch_publisher_.publish(shoulder_pitch_msg);
+  excavator_elbow_pitch_publisher_.publish(elbow_pitch_msg);
+  excavator_wrist_pitch_publisher_.publish(wrist_pitch_msg);
 }
 
 /**
@@ -108,17 +128,28 @@ void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
   float theta = findShoulderAngle(target, shoulder);
   if(task == START_DIGGING) // digging angles
   {
-    publishAngles(theta, 0, 0, 0, FAST_STEPS, 1); // Additional step for safe trajectory to not bump into camera
-    publishAngles(theta, 1, 2, -0.75, FAST_STEPS, 1); // This set of values moves the scoop under the surface
+    publishAngles(theta, 0, 0, 0); // Additional step for safe trajectory to not bump into camera
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(theta, -1.5, 1.5, -0.2, FAST_STEPS, 1); // This set of values moves the scoop over the surface
+    publishAngles(theta, 1, 1, -2); // This set of values moves the scoop under the surface
+    ros::Duration(SLEEP_DURATION).sleep();
+    publishAngles(theta, -1, 1, 0); // This set of values moves the scoop under the surface
+    ros::Duration(SLEEP_DURATION).sleep();
+    publishAngles(theta, -1.5, 1.5, -0.6); // This set of values moves the scoop over the surface
+    //ros::Duration(SLEEP_DURATION).sleep();
+    // *** Check here if any volatiles found inside the scoop
+    // while(!feedback->volatile_mass)
+    // {
+    //   Increment the yaw angle and continue digging
+    // }
   }
   else if(task == START_UNLOADING) // dumping angles
   {
-    publishAngles(theta, -1.5, 1.5, -0.2, SLOW_STEPS, 1); // This set of values moves the scoop towards the hauler
-    publishAngles(theta, -1.5, 1.5, 2, FAST_STEPS, 0); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    publishAngles(theta, -1.5, 1.5, -0.6); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(0, -1.5, 1.5, -1, FAST_STEPS, 1); // This set of values moves the scoop to the front center
+    publishAngles(theta, -1.5, 1.5, 2); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    ros::Duration(SLEEP_DURATION).sleep();
+    publishAngles(0, -1.5, 1.5, -1); // This set of values moves the scoop to the front center
+    ros::Duration(SLEEP_DURATION).sleep();
   }
   else
   {
@@ -126,13 +157,15 @@ void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
   } 
 }
 
+
+
 /**
  * @brief This is where the action to dig or dump are executed
  * 
  * @param goal The desired excavator task
  * @param action_server The server object for excavator action
  */
-void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_server)
+void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_server) //const operations::ExcavatorFeedbackConstPtr& feedback,
 {
   geometry_msgs::Point shoulder_wrt_base_footprint; // Transforming from robot base frame to shoulder joint frame
   shoulder_wrt_base_footprint.x = 0.7; // Value from tf topic from the simulation, all values in meters
