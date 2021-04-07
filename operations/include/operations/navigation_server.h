@@ -216,6 +216,14 @@ private:
     void angularDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server);
 
     /**
+     * @brief Revolve the robot around a geometry_msgs::Point. NAV_TYPE::REVOLVE
+     * 
+     * @param goal The goal of the action. Uses the angular_velocity member to choose a velocity
+     * @param action_server 
+     */
+    void revolveDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server);
+
+    /**
      * @brief Spirals the robot. Used to locate volatiles. NAV_TYPE::SPIRAL. NOT YET IMPLEMENTED
      * 
      * @param goal The goal of the action.

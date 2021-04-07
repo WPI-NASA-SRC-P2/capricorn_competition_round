@@ -251,3 +251,17 @@ bool NavigationAlgo::transformPose(geometry_msgs::PoseStamped& pose, const std::
 
 	return false;
 }
+
+bool NavigationAlgo::transformPoint(geometry_msgs::PointStamped& point, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries)
+{
+  geometry_msgs::PoseStamped to_transform;
+  to_transform.pose.position = point.point;
+  to_transform.header = point.header;
+
+  bool ret = transformPose(to_transform, frame, tf_buffer, duration, tries);
+
+  point.point = to_transform.pose.position;
+  point.header = to_transform.header;
+
+  return ret;
+}

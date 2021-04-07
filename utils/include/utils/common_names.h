@@ -104,17 +104,18 @@ namespace COMMON_NAMES
   /****** NAVIGATION ENUMS ******/
   enum NAV_TYPE
   {
-    MANUAL = 0,  // Manual driving
-    GOAL = 1,    // Trajectory generation with the planner from a goal
-    SPIRAL = 2,  // Archimedean spiral (scout finding volatiles)
-    FOLLOW = 3,  // Follow an object in frame
+    MANUAL,  // Manual driving
+    GOAL,    // Trajectory generation with the planner from a goal
+    REVOLVE, // Revolve the robot around a fixed point
+    SPIRAL,  // Archimedean spiral (scout finding volatiles)
+    FOLLOW,  // Follow an object in frame
   };
   
   enum NAV_RESULT
   {
-    FAILED = 0,
-    SUCCESS = 1,
-    INTERRUPTED = 2
+    FAILED,
+    SUCCESS,
+    INTERRUPTED
   };
 
 } // namespace CAPRICORN_COMMON_NAMES

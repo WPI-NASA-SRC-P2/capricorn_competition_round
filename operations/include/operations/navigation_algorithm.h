@@ -5,6 +5,7 @@
 #include <math.h>
 #include <tf/transform_datatypes.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 
 #include <tf2_ros/transform_listener.h>
@@ -191,6 +192,19 @@ public:
    * @return false Transform failed
    */
   static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries = 1);
+
+  /**
+   * @brief Same as transformPose, but for a point. Passes through to transformPose.
+   * 
+   * @param point The point to transform. Passed as a reference, and is changed in place.
+   * @param frame See transformPose
+   * @param tf_buffer See transformPose
+   * @param duration See transformPose
+   * @param tries See transformPose
+   * @return true See transformPose
+   * @return false See transformPose
+   */
+  static bool transformPoint(geometry_msgs::PointStamped& point, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries = 1);
 
 };
 

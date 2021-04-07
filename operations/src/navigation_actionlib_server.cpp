@@ -158,8 +158,6 @@ void NavigationServer::steerRobot(const double angle)
 	publishMessage(front_right_steer_pub_, angle);
 	publishMessage(back_right_steer_pub_, angle);
 	publishMessage(back_left_steer_pub_, angle);
-
-	ros::Duration(0.5).sleep();
 }
 
 /**
@@ -490,13 +488,13 @@ void NavigationServer::linearDriving(const operations::NavigationGoalConstPtr &g
 {
 	printf("Manual drive: Linear velocity\n");
 	brakeRobot(false);
-	steerRobot(0);
+	steerRobot(goal->direction);
 	moveRobotWheels(goal->forward_velocity);
 
 	if(0 == goal->forward_velocity)
 	{
+		printf("0 linear, braking\n");
 		brakeRobot(true);
-		ros::Duration(1).sleep();
 	}
 	
 	operations::NavigationResult res;
@@ -517,6 +515,28 @@ void NavigationServer::angularDriving(const operations::NavigationGoalConstPtr &
 	steerRobot(wheel_angles);
 	moveRobotWheels(wheel_speeds);
 	
+	operations::NavigationResult res;
+	res.result = NAV_RESULT::SUCCESS;
+	action_server->setSucceeded(res);
+	return;
+}
+
+void NavigationServer::revolveDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
+{
+	printf("Revolve drive\n");
+
+	brakeRobot(false);
+
+	geometry_msgs::PointStamped revolve_about = goal->point;
+
+	NavigationAlgo::transformPoint(revolve_about, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
+
+	std::vector<double> angles = NavigationAlgo::getSteeringAnglesRadialTurn(revolve_about.point);
+	std::vector<double> speeds = NavigationAlgo::getDrivingVelocitiesRadialTurn(revolve_about.point, goal->forward_velocity);
+
+	steerRobot(angles);
+	moveRobotWheels(speeds);
+
 	operations::NavigationResult res;
 	res.result = NAV_RESULT::SUCCESS;
 	action_server->setSucceeded(res);
@@ -575,6 +595,12 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 
 			manual_driving_ = false;
 			automaticDriving(goal, server_);
+
+			break;
+
+		case NAV_TYPE::REVOLVE:
+			manual_driving_ = false;
+			revolveDriving(goal, server_);
 
 			break;
 		
