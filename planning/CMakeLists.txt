@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   nav_msgs
   geometry_msgs
+  message_generation
+  #TrajectoryWithVelocities
 )
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -47,12 +49,24 @@ find_package(catkin REQUIRED COMPONENTS
 #   nav_msgs
 #   geometry_msgs
 # )
+
+ add_message_files(
+   FILES
+   TrajectoryWithVelocities.msg
+ )
+
 ## Generate services in the 'srv' folder
 # add_service_files(
 #   FILES
 #   Service1.srv
 #   Service2.srv
 # )
+
+ add_service_files(
+   FILES
+   trajectory.srv
+ )
+
 ## Generate actions in the 'action' folder
 # add_action_files(
 #   FILES
@@ -66,6 +80,15 @@ find_package(catkin REQUIRED COMPONENTS
 #   nav_msgs
 #   geometry_msgs
 # )
+
+ generate_messages(
+   DEPENDENCIES
+   std_msgs
+   nav_msgs
+   geometry_msgs
+   #TrajectoryWithVelocities
+ )
+
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
@@ -95,7 +118,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES planning
-  CATKIN_DEPENDS roscpp rospy std_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs nav_msgs message_runtime
 #  DEPENDS system_lib
 )
 ###########
@@ -112,6 +135,7 @@ include_directories(
 #   src/${PROJECT_NAME}/planning.cpp
 # )
 add_library(${PROJECT_NAME} src/nodes/path_planner_node.cpp src/classes/astar.cpp src/classes/cspace.cpp)
+add_library(demo_marker src/nodes/demo_marker_node.cpp)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -124,6 +148,28 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 target_link_libraries(${PROJECT_NAME}_node 
   ${catkin_LIBRARIES} ${PROJECT_NAME}
 )
+
+add_executable(demo_marker_node src/nodes/demo_marker_node.cpp)
+add_dependencies(demo_marker_node ${demo_marker_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(demo_marker_node 
+  ${catkin_LIBRARIES} demo_marker
+)
+
+##server
+add_executable(trajectory_server src/nodes/path_planner_server.cpp)
+add_dependencies(trajectory_server ${demo_marker_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(trajectory_server
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
+
+##client
+add_executable(trajectory_client src/nodes/path_planner_client_node.cpp)
+add_dependencies(trajectory_client ${demo_marker_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(trajectory_client
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
