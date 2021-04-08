@@ -83,6 +83,7 @@ namespace COMMON_NAMES
   const std::string SET_SHOULDER_PITCH_POSITION = "/arm/shoulder_pitch/command/position";
   const std::string SET_SHOULDER_YAW_POSITION = "/arm/shoulder_yaw/command/position";
   const std::string SET_WRIST_PITCH_POSITION = "/arm/wrist_pitch/command/position";
+  const std::string SCOOP_INFO = "/scoop_info";
 
   const std::string WHEEL_PID = "/wheel_pid";
   const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";

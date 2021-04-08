@@ -19,6 +19,7 @@ float curr_sh_yaw = 0;
 float curr_sh_pitch = 0;
 float curr_elb_pitch = 0;
 float curr_wrt_pitch = 0;
+bool volatile_flag = 0;
 
 int SLEEP_DURATION = 5; // The sleep duration
 
@@ -178,6 +179,11 @@ void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_serve
   action_server->setSucceeded();
 }
 
+void scoopCallback(const srcp2_msgs::ExcavatorScoopMsg::ConstPtr& msg)
+{
+  ROS_INFO("I heard: [%s]", msg->data.c_str());
+}
+
 /**
  * @brief The main method for excavator server
  * 
@@ -203,6 +209,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
     initExcavatorPublisher(nh, robot_name);
+    ros::Subscriber sub = n.subscribe(robot_name + SCOOP_INFO, 1000, scoopCallback);
     Server server(nh, EXCAVATOR_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.start();
     ros::spin();
