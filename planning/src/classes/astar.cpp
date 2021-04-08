@@ -2,11 +2,13 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <queue>
 
 #include <algorithm>
 #include <unordered_map>
 #include <math.h>
 #include <string>
+#include <set>
 
 using geometry_msgs::Point;
 using geometry_msgs::PoseStamped;
@@ -14,16 +16,10 @@ using nav_msgs::Path;
 
 geometry_msgs::Point point;
 
-namespace std {
-    template <>
-    struct hash<Point> {
-        size_t operator()(const Point& node) const {
-            return std::hash<double>()(node.x) ^ std::hash<double>()(node.y);
-        }
-    };
-}
+#define RVIZ_COMPATABILITY
 
-Point get_point(double x, double y) {
+Point get_point(double x, double y)
+{
     // ROS should really add constructors...
     Point p;
     p.x = x;
@@ -31,197 +27,139 @@ Point get_point(double x, double y) {
     return p;
 }
 
-Point pop_minimum_fscore(std::vector<Point> &points, std::unordered_map<Point, double> &fscores) {
-    // Get the minimum fscore. This function should be removed and replaced by a priority queue (binsearch insert) eventually.
-
-    Point min;
-    double minFScore = INFINITY;
-    int minIter = -1;
-
-    for(int i = 0; i < points.size(); ++i) {
-        if(fscores[points[i]] < minFScore) {
-            minFScore = fscores[points[i]];
-            min = points[i];
-            minIter = i;
-        }
-    }
-
-    points.erase(points.begin() + minIter);
-
-    return min;
-}
-
-inline double distance(Point gridpoint, Point tgt) {
+double distance(int ind1, int ind2, int width)
+{
     // Return Euclidean Distance.
-    return(sqrt((gridpoint.x - tgt.x)*(gridpoint.x - tgt.x) + (gridpoint.y - tgt.y)*(gridpoint.y - tgt.y)));
+    auto pt1 = std::make_pair<int, int>(ind1 % width, (int)floor(ind1 / width));
+    auto pt2 = std::make_pair<int, int>(ind2 % width, (int)floor(ind2 / width));
+    return sqrt((pt1.first - pt2.first) * (pt1.first - pt2.first) + (pt1.second - pt2.second) * (pt1.second - pt2.second));
 }
 
-bool contains(std::vector<Point> &frontiers, Point point) {
-    for(auto &pt : frontiers) {
-        if(point == pt) {
-            return true;
-        }
-    }
-    return false;
-}
+std::array<int, 8> get_neighbors_indicies_array(int pt, int widthOfGrid, int sizeOfGrid)
+{ 
+    std::array<int, 8> neighbors;
 
-std::vector<Point> get_neighbors(Point pt) {
-    std::vector<Point> neighbors;
-
-    neighbors.push_back(get_point(pt.x - 1, pt.y - 1));
-    neighbors.push_back(get_point(pt.x - 1, pt.y    ));
-    neighbors.push_back(get_point(pt.x - 1, pt.y + 1));
-    neighbors.push_back(get_point(pt.x,     pt.y - 1));
-    neighbors.push_back(get_point(pt.x,     pt.y + 1));
-    neighbors.push_back(get_point(pt.x + 1, pt.y - 1));
-    neighbors.push_back(get_point(pt.x + 1, pt.y    ));
-    neighbors.push_back(get_point(pt.x + 1, pt.y + 1));
+    neighbors[0] = ((pt + 1) < 0) || ((pt + 1) > sizeOfGrid) ? -1 : pt + 1;
+    neighbors[1] = ((pt - 1) < 0) || ((pt - 1) > sizeOfGrid) ? -1 : pt - 1;
+    neighbors[2] = ((pt + widthOfGrid) < 0) || ((pt + widthOfGrid) > sizeOfGrid) ? -1 : pt + widthOfGrid;
+    neighbors[3] = ((pt + widthOfGrid + 1) < 0) || !((pt + widthOfGrid + 1) > sizeOfGrid) ? -1 : pt + widthOfGrid + 1;
+    neighbors[4] = ((pt + widthOfGrid - 1) < 0) || !((pt + widthOfGrid - 1) > sizeOfGrid) ? -1 : pt + widthOfGrid - 1;
+    neighbors[5] = ((pt - widthOfGrid) < 0) || !((pt - widthOfGrid) > sizeOfGrid) ? -1 : pt - widthOfGrid;
+    neighbors[6] = ((pt - widthOfGrid + 1) < 0) || !((pt - widthOfGrid + 1) > sizeOfGrid) ? -1 : pt - widthOfGrid + 1;
+    neighbors[7] = ((pt - widthOfGrid - 1) < 0) || !((pt - widthOfGrid - 1) > sizeOfGrid) ? -1 : pt - widthOfGrid - 1;
 
     return neighbors;
 }
 
-Point get_closest_point(std::vector<Point> &points, Point target) {
-    Point closest;
-    double min_dist = INFINITY;
-
-    for(auto& pt : points) {
-        if(distance(pt, target) < min_dist) {
-            min_dist = distance(pt, target);
-            closest = pt;
-        }
-    }
-    return closest;
-}
-
-inline bool collinear(Point pt1, Point pt2, Point pt3) {
+inline bool collinear(int pt1, int pt2, int pt3, int width)
+{
     // Checks if three points lie on the same line.
-    return (pt2.y - pt1.y)*(pt3.x - pt2.x) == (pt3.y - pt2.y)*(pt2.x - pt1.x);
+    int pt1x = pt1 % width;
+    int pt1y = (int)floor(pt1 / width);
+
+    int pt2x = pt2 % width;
+    int pt2y = (int)floor(pt2 / width);
+
+    int pt3x = pt3 % width;
+    int pt3y = (int)floor(pt3 / width);
+
+    return (pt2y - pt1y) * (pt3x - pt2x) == (pt3y - pt2y) * (pt2x - pt1x);
 }
 
-PoseStamped posestamped_from_point(Point pt, std::string frame_id) {
+PoseStamped posestamped_from_index(int ind, std::string frame_id, int width)
+{
+    // Helper function to turn a grid index into a posedstamped point.
+    double indx = ind % width;
+    double indy = floor(ind / width);
+
     PoseStamped ps;
 
-    // The divide by 20 is there to adjust for rviz map sizes. should probably fix in rviz and remove before use.
-    ps.pose.position.x = pt.x / 20;
-    ps.pose.position.y = pt.y / 20;
+#ifdef RVIZ_COMPATABILITY
+    ps.pose.position.x = indx / 20;
+    ps.pose.position.y = indy / 20;
+#else
+    ps.pose.position.x = indx;
+    ps.pose.position.y = indy;
+#endif
+
+    printf("%f, %f\n", indx / 20, indy / 20);
+
     ps.header.frame_id = frame_id;
     return ps;
 }
 
-Path reconstruct_path(Point origin, Point current, std::unordered_map<Point, Point> &reverse_list, std::string frame_id) {
+Path reconstruct_path(int current, int last, std::unordered_map<int, int> &reverse_list, std::string frame_id, int width)
+{
     // This function takes the list of nodes generated by A* and converts it into a list of waypoints.
+    // It does this by taking the last point and retracing its steps back to the starting point
+    // It also removes any collinear points.
 
-    Path path;
-
-    path.header.frame_id = frame_id;
-
-    Point last_added = current;
-    path.poses.push_back(posestamped_from_point(current, frame_id));
+    Path p;
+    PoseStamped lastPs = posestamped_from_index(last, frame_id, width);
+    PoseStamped firstPs = posestamped_from_index(current, frame_id, width);
+    p.poses.push_back(firstPs);
+    int lastPt = current;
     current = reverse_list[current];
 
-    while(reverse_list[current].x != INFINITY) {
-        if(!collinear(last_added, current, reverse_list[current])) {
-            path.poses.push_back(posestamped_from_point(current, frame_id));
-            last_added = current;
-        }
+    p.header.frame_id = frame_id;
+
+    while (current != -1)
+    {
+        if (!collinear(lastPt, current, reverse_list[current], width))
+            p.poses.push_back(posestamped_from_index(current, frame_id, width));
+
+        lastPt = current;
         current = reverse_list[current];
     }
 
-    path.poses.push_back(posestamped_from_point(origin, frame_id));
-
-    return path;
+    p.poses.push_back(lastPs);
+    return p;
 }
 
-Path AStar::FindPathFrontier(std::vector<Point> &frontiers, std::vector<Point> &obstacles, Point target, Point start, bool DirectToDest = false) {
+Path AStar::FindPathOccGrid(nav_msgs::OccupancyGrid oGrid, Point target, Point start)
+{
     // A Star Implementation based off https://en.wikipedia.org/wiki/A*_search_algorithm
-
-    Point dest = DirectToDest ? target : get_closest_point(frontiers, target);
-
-    Point origin = start;
-
-    std::unordered_map<Point, double> gScores;
-    std::unordered_map<Point, double> fScores;
-
-    std::vector<Point> open_set; // TODO: Optimize by replacing with custom priority queue.
-    open_set.push_back(origin);
-
-    std::unordered_map<Point, Point> came_from;
-    came_from[origin] = get_point(INFINITY, INFINITY);
-
     
-    gScores[origin] = 0;
-    fScores[origin] = distance(origin, dest);
+    std::vector<double> gScores(oGrid.data.size(), INFINITY);
 
-    while(!open_set.empty()) {
-        auto current = pop_minimum_fscore(open_set, fScores); // TODO: prio queue.
+    int endIndex = target.y * oGrid.info.width + target.x;
+    int startIndex = start.y * oGrid.info.width + start.x;
 
-        if(current == dest) {
-            return reconstruct_path(origin, current, came_from, "frameidplaceholder");
+    auto origin = std::make_pair<double, int>(0, std::move(startIndex));
+
+    std::set<std::pair<double, int>> open_set;
+    open_set.insert(origin);
+
+    std::unordered_map<int, int> came_from;
+    came_from[startIndex] = -1;
+
+    gScores[start.y * oGrid.info.width + start.x] = 0;
+
+    while (!open_set.empty())
+    {
+        auto iter = open_set.lower_bound(std::make_pair<double, int>(0, 0));
+        auto current = *iter;
+        open_set.erase(iter);
+
+        if (current.second == endIndex)
+        {
+            return reconstruct_path(current.second, startIndex, came_from, oGrid.header.frame_id.c_str(), oGrid.info.width);
         }
 
-        if(contains(obstacles, current) || contains(frontiers, current)) continue;
+        if (oGrid.data[current.second] >= 50)
+            continue;
 
-        for(auto &neighbor : get_neighbors(current)) {
+        for (int neighbor : get_neighbors_indicies_array(current.second, oGrid.info.width, oGrid.data.size()))
+        {
+            if (neighbor == -1)
+                continue;
 
-            auto tentative_gscore = gScores[current] + distance(current, neighbor);
-            if(gScores.find(neighbor) == gScores.end()) gScores[neighbor] = INFINITY;
-            if(tentative_gscore < gScores[neighbor]) {
+            double tentative_gscore = gScores[current.second] + distance(current.second, neighbor, oGrid.info.width);
+            if (tentative_gscore < gScores[neighbor])
+            {
                 gScores[neighbor] = tentative_gscore;
-                came_from[neighbor] = current;
-                fScores[neighbor] = gScores[neighbor] + distance(neighbor, dest);
-                if(std::find(open_set.begin(), open_set.end(), neighbor) == open_set.end()) { // TODO: prio queue.
-                    open_set.push_back(neighbor);
-                }
-            }
-        }
-    }
-
-    printf("[WARNING] Call to navigation failed to find valid path.\n");
-    return Path();
-}
-
-inline int access_oGrid(int x, int y, nav_msgs::OccupancyGrid oGrid) {
-    if((y * oGrid.info.width + x) > oGrid.data.size()) return 100;
-    if((y * oGrid.info.width + x) < 0) return 100;
-    return oGrid.data[y * oGrid.info.width + x];
-}
-
-Path AStar::FindPathOccGrid(nav_msgs::OccupancyGrid oGrid, Point target, Point start) {
-    // A Star Implementation based off https://en.wikipedia.org/wiki/A*_search_algorithm
-    std::unordered_map<Point, double> gScores;
-    std::unordered_map<Point, double> fScores;
-
-    Point origin = start;
-
-    std::vector<Point> open_set; // TODO: Optimize by replacing with custom priority queue.
-    open_set.push_back(start);
-
-    std::unordered_map<Point, Point> came_from;
-    came_from[start] = get_point(INFINITY, INFINITY);
-
-    gScores[start] = 0;
-    fScores[start] = distance(start, target);
-
-    while(!open_set.empty()) {
-        auto current = pop_minimum_fscore(open_set, fScores); // TODO: prio queue.
-
-        if(current == target) {
-            return reconstruct_path(origin, current, came_from, oGrid.header.frame_id.c_str());
-        }
-
-        if(access_oGrid(current.x, current.y, oGrid) >= 50) continue;
-
-        for(auto &neighbor : get_neighbors(current)) {
-
-            auto tentative_gscore = gScores[current] + distance(current, neighbor);
-            if(gScores.find(neighbor) == gScores.end()) gScores[neighbor] = INFINITY;
-            if(tentative_gscore < gScores[neighbor]) {
-                gScores[neighbor] = tentative_gscore;
-                came_from[neighbor] = current;
-                fScores[neighbor] = gScores[neighbor] + distance(neighbor, target);
-                if(std::find(open_set.begin(), open_set.end(), neighbor) == open_set.end()) { // TODO: prio queue.
-                    open_set.push_back(neighbor);
-                }
+                came_from[neighbor] = current.second;
+                open_set.insert(std::make_pair<double, int>((tentative_gscore + distance(neighbor, endIndex, oGrid.info.width)), std::move(neighbor)));
             }
         }
     }
