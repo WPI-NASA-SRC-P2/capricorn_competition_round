@@ -19,6 +19,12 @@ std::string robot_name;
 
 /**
  * @brief Callback for the twist message of teleop message twist
+ *        Inspite of us commenting again and again that callback 
+ *        must be short, this in fact can be longer callbacks
+ * 
+ *        We only trigger these when needed, and when called on 
+ *        top of each other, they need to be overwriting the 
+ *        ongoing functionality
  * 
  * @param twist twist message from teleop
  */
@@ -26,13 +32,28 @@ void teleopCB(const geometry_msgs::Twist::ConstPtr& twist)
 {
   // Action message goal
   operations::NavigationGoal goal;
+  goal.point.header.frame_id = robot_name + ROBOT_CHASSIS;
   
-  // Manual driving
-  goal.drive_mode = NAV_TYPE::MANUAL;
+  if( twist->linear.x==0 || twist->angular.z==0 )
+  {
+    // Manual driving
+    goal.drive_mode = NAV_TYPE::MANUAL;
 
-  // Diverting values from twist to navigation
-  goal.forward_velocity = twist->linear.x;
-  goal.angular_velocity = twist->angular.z;
+    // Diverting values from twist to navigation
+    goal.forward_velocity = twist->linear.x;
+    goal.angular_velocity = twist->angular.z;
+  }
+  else
+  {
+    // Radial Turn
+    goal.drive_mode = NAV_TYPE::REVOLVE;
+
+    // Hardcoded for a good enough radial turn
+    // Taking radius sign depending on the direction of turn
+    double radial_turn_radius = std::copysign(2.0, twist->angular.z); 
+    goal.point.point.y = radial_turn_radius;   
+    goal.forward_velocity = twist->linear.x;
+  }
 
   printf("Teleop twist forward: %f\n", twist->linear.x);
   
