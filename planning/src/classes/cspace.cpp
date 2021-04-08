@@ -14,8 +14,8 @@ using nav_msgs::OccupancyGrid;
  * @return std::vector<int> the indexes of the neighbors of pt
  */
 
-std::vector<int> get_neighbors_indicies(int pt, int widthOfGrid, int sizeOfGrid) 
-{
+std::vector<int> CSpace::get_neighbors_indicies(int pt, int widthOfGrid, int sizeOfGrid) { // maybe use static array instead
+
     std::vector<int> neighbors;
 
     if(!((pt + 1) < 0) && !((pt + 1) > sizeOfGrid)) 

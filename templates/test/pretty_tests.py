@@ -9,7 +9,6 @@ def runTestsInPackage(pkg):
 
     # Turn bytes into utf-8, and split based on newline
     lines = res.stdout.decode("utf-8").split("\n")
-
     # These following lines are to grab just gtest output, as catkin clutters stdout with a lot of unnecessary logs.
     # Does this work in all cases? Almost certainly not. Does it work in the extremely limited cases I've tested it in? Absolutely!
     start_idx = 0

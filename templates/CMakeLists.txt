@@ -12,9 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   rostest
-  actionlib
-  actionlib_msgs
-  message_generation
+  operations
+  planning
 )
 
 
@@ -66,17 +65,17 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate actions in the 'action' folder
- add_action_files(
-   FILES
-   template_actionMSG.action
+# add_action_files(
+#   FILES
+#   Action1.action
 #   Action2.action
- )
+# )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   actionlib_msgs std_msgs  # Or other packages containing msgs
- )
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -110,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES templates
- CATKIN_DEPENDS roscpp rospy sensor_msgs
+ CATKIN_DEPENDS roscpp rospy sensor_msgs operations planning
  # DEPENDS system_lib
 )
 
@@ -158,23 +157,16 @@ include_directories(
 #######################################################################################################
 
 # Drives both robots forwards in task 2. Example node
-add_executable(template_node src/template_node.cpp)
+add_executable(template_node src/templates_nodes/template_node.cpp)
 add_dependencies(template_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(template_node
   ${catkin_LIBRARIES}
 )
 
 # example class and its node to test the class functions
-add_executable(template_class src/template_class.cpp)
+add_executable(template_class src/templates_class/template_class.cpp)
 add_dependencies(template_class ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(template_class
-  ${catkin_LIBRARIES} 
-)
-
-# template action server node
-add_executable(action_server src/templates_actionlib/template_actionServer.cpp)
-add_dependencies(action_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(action_server
   ${catkin_LIBRARIES} 
 )
 
