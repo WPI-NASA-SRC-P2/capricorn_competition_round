@@ -5,6 +5,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include "path_planner.h"
 #include "planning/trajectory.h"
+#include "planning/TrajectoryWithVelocities.h"
 
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -126,18 +127,24 @@ void callback(const nav_msgs::OccupancyGrid oGrid)
 
 }
 
-bool trajectoryGeneration(PathPlanner::trajectory::Request &req, planning::trajectory::Response &res)
+bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
-    res.trajectory = trajectoryGenerator(req.targetPose);
+    //res.trajectory = trajectoryGenerator(req.targetPose);
+    ROS_INFO("Entered trajectoryGeneration");
+    planning::TrajectoryWithVelocities trajectory;
+    res.trajectory  = trajectory;
     return true;
 }
 
 int main(int argc, char *argv[])
 {
-    if(argc != 3) printf("Wrong arg count: %d\n", argc);
+    //if(argc != 3) printf("Wrong arg count: %d\n", argc);
 
-    target.x = atoi(argv[1]);
-    target.y = atoi(argv[2]);
+    // target.x = atoi(argv[1]);
+    // target.y = atoi(argv[2]);
+
+    target.x = 10;
+    target.y = 10;
 
     // ROS initialization
     ros::init(argc, argv, "path_planner");
@@ -159,7 +166,10 @@ int main(int argc, char *argv[])
     ros::Subscriber indexValues = nh.subscribe("/capricorn/Ground_Truth_Map", 1000, callback);
    
     //creates a service
-    ros::ServiceServer service = n.advertiseService("trajectoryGenerator", trajectoryGenerator);
+    ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", trajectoryGeneration);
     ros::spin();
+
+    ros::Duration(10).sleep();
+
     return 0;
 }

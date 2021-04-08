@@ -1,8 +1,9 @@
 #include "ros/ros.h"
-#include "beginner_tutorials/AddTwoInts.h"
+#include "planning/trajectory.h"
+#include <geometry_msgs/PoseStamped.h>
 #include <cstdlib>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   ros::init(argc, argv, "trajectory_client");
 
@@ -14,20 +15,34 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n;
 
-  ros::ServiceClient client = n.serviceClient<path_planner_client_node::TrajectoryGenerator>("trajectory_client");
+  ros::ServiceClient client = n.serviceClient<planning::trajectory>("trajectoryGenerator");
 
+  
   planning::trajectory srv;
 
+  
+
   //probably needs to not use argument
-  srv.request.targetPose = argv[1];
+  geometry_msgs::PoseStamped pose;
+  pose.pose.position.x = 9;
+  pose.pose.position.y = 0;
+  pose.pose.position.z = 0;
+  pose.pose.orientation.x = 0;
+  pose.pose.orientation.y = 0;
+  pose.pose.orientation.z = 0;
+  pose.pose.orientation.w = 0;
+
+  srv.request.targetPose = pose;
+
+  //printf(client.isValid());
 
   if (client.call(srv))
   {
-    ROS_INFO("Sum: %ld", (long int)srv.response.trajectory);
+    ROS_INFO("client call succeeded");
   }
   else
   {
-    ROS_ERROR("Failed to call service add_two_ints");
+    ROS_ERROR("Failed to call service trajectory generator");
     return 1;
   }
 

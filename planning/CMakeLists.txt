@@ -155,6 +155,14 @@ target_link_libraries(demo_marker_node
   ${catkin_LIBRARIES} demo_marker
 )
 
+##server
+add_executable(trajectory_server src/nodes/path_planner_server.cpp)
+add_dependencies(trajectory_server ${demo_marker_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(trajectory_server
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
+
 ##client
 add_executable(trajectory_client src/nodes/path_planner_client_node.cpp)
 add_dependencies(trajectory_client ${demo_marker_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
