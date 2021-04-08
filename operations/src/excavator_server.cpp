@@ -3,6 +3,7 @@
 #include <string.h>
 #include "ros/ros.h"
 #include <std_msgs/Float64.h>
+#include <srcp2_msgs/ExcavatorScoopMsg.h>
 #include <utils/common_names.h>
 #include <geometry_msgs/Point.h> // To get target point in order to orient shoulder joint
 #include <math.h> // used in findShoulderAngle() for atan2()
@@ -19,7 +20,7 @@ float curr_sh_yaw = 0;
 float curr_sh_pitch = 0;
 float curr_elb_pitch = 0;
 float curr_wrt_pitch = 0;
-bool volatile_flag = 0;
+bool volatile_found = false; // flag to store value received from scoop_info topic
 
 int SLEEP_DURATION = 5; // The sleep duration
 
@@ -27,6 +28,7 @@ int SLEEP_DURATION = 5; // The sleep duration
  * @brief Initializing the publisher here
  * 
  * @param nh nodeHandle
+ *
  * @param robot_name Passed in the terminal/launch file to target a particular rover
  */
 void initExcavatorPublisher(ros::NodeHandle &nh, const std::string &robot_name)
@@ -37,7 +39,11 @@ void initExcavatorPublisher(ros::NodeHandle &nh, const std::string &robot_name)
   excavator_wrist_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_WRIST_PITCH_POSITION, 1000);
 }
 
-// void initExcavatorSubscriber()
+
+void scoopCallback(const srcp2_msgs::ExcavatorScoopMsg::ConstPtr& msg)
+{
+  volatile_found = msg->volatile_clod_mass;
+}
 
 /**
  * @brief Calculates the orientation of the shoulder joint based on the passed target point
@@ -51,11 +57,6 @@ float findShoulderAngle(const geometry_msgs::Point &target, const geometry_msgs:
   return atan2((target.y - shoulder.y), (target.x - shoulder.x));
 }
 
-/**
- * @brief This function publishes the joint angles to the publishers
- * 
- * @param values array of joint angles (ordered)
- */
 
 /**
  * @brief This function publishes the joint angles to the publishers
@@ -67,36 +68,6 @@ float findShoulderAngle(const geometry_msgs::Point &target, const geometry_msgs:
  * @param steps the number of simulation steps, higher value corresponds to slower movement
  * @param dig flag for dig or dump task to adjust the speed
  */
-// void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, float wrist_pitch, int steps, bool dig)
-// {
-//   std_msgs::Float64 shoulder_yaw_msg;
-//   std_msgs::Float64 shoulder_pitch_msg;
-//   std_msgs::Float64 elbow_pitch_msg;
-//   std_msgs::Float64 wrist_pitch_msg;
-  
-//   for(int i=0; i<steps; i++)
-//   {
-//     shoulder_yaw_msg.data = curr_sh_yaw + i*(shoulder_yaw-curr_sh_yaw)/steps;
-//     shoulder_pitch_msg.data = curr_sh_pitch + i*(shoulder_pitch-curr_sh_pitch)/steps;
-//     elbow_pitch_msg.data = curr_elb_pitch + i*(elbow_pitch-curr_elb_pitch)/steps;
-//     if(dig)
-//       wrist_pitch_msg.data = -(shoulder_pitch_msg.data + elbow_pitch_msg.data);
-//     else
-//       wrist_pitch_msg.data = curr_wrt_pitch + i*(wrist_pitch-curr_wrt_pitch)/steps;
-
-//     ros::Duration(0.2).sleep();
-
-//     excavator_shoulder_yaw_publisher_.publish(shoulder_yaw_msg);
-//     excavator_shoulder_pitch_publisher_.publish(shoulder_pitch_msg);
-//     excavator_elbow_pitch_publisher_.publish(elbow_pitch_msg);
-//     excavator_wrist_pitch_publisher_.publish(wrist_pitch_msg);
-//   }
-//   curr_sh_yaw = shoulder_yaw_msg.data;
-//   curr_sh_pitch = shoulder_pitch_msg.data;
-//   curr_elb_pitch = elbow_pitch_msg.data;
-//   curr_wrt_pitch = wrist_pitch_msg.data;
-// }
-
 void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, float wrist_pitch)
 {
   std_msgs::Float64 shoulder_yaw_msg;
@@ -127,21 +98,22 @@ void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
   int FAST_STEPS = 10;
   int SLOW_STEPS = 30;
   float theta = findShoulderAngle(target, shoulder);
+  std::string scoop_value;
   if(task == START_DIGGING) // digging angles
   {
     publishAngles(theta, 0, 0, 0); // Additional step for safe trajectory to not bump into camera
-    ros::Duration(SLEEP_DURATION).sleep();
+    ros::Duration(SLEEP_DURATION).sleep(); 
     publishAngles(theta, 1, 1, -2); // This set of values moves the scoop under the surface
-    ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(theta, -1, 1, 0); // This set of values moves the scoop under the surface
+    float yaw_angle = theta;
+    while (!volatile_found)
+    {
+      // move the shoulder yaw joint from left to right under the surface
+      publishAngles(yaw_angle, 1, 1, 1);
+      yaw_angle += 0.1;
+    }
     ros::Duration(SLEEP_DURATION).sleep();
     publishAngles(theta, -1.5, 1.5, -0.6); // This set of values moves the scoop over the surface
-    //ros::Duration(SLEEP_DURATION).sleep();
-    // *** Check here if any volatiles found inside the scoop
-    // while(!feedback->volatile_mass)
-    // {
-    //   Increment the yaw angle and continue digging
-    // }
+    
   }
   else if(task == START_UNLOADING) // dumping angles
   {
@@ -157,8 +129,6 @@ void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     ROS_ERROR("Unhandled state encountered in Excavator actionlib server");
   } 
 }
-
-
 
 /**
  * @brief This is where the action to dig or dump are executed
@@ -177,11 +147,6 @@ void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_serve
   ros::Duration(SLEEP_DURATION).sleep();
   // action_server->working(); // might use for feedback
   action_server->setSucceeded();
-}
-
-void scoopCallback(const srcp2_msgs::ExcavatorScoopMsg::ConstPtr& msg)
-{
-  ROS_INFO("I heard: [%s]", msg->data.c_str());
 }
 
 /**
@@ -209,7 +174,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
     initExcavatorPublisher(nh, robot_name);
-    ros::Subscriber sub = n.subscribe(robot_name + SCOOP_INFO, 1000, scoopCallback);
+    ros::Subscriber sub = nh.subscribe(robot_name + SCOOP_INFO, 1000, scoopCallback); // scoop info subscriber
     Server server(nh, EXCAVATOR_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.start();
     ros::spin();
