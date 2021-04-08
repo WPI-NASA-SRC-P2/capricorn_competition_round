@@ -1,5 +1,4 @@
-#ifndef PATH_PLANNER_H
-#define PATH_PLANNER_H
+#pragma once
 
 #include <ros/ros.h>
 #include <iostream>
@@ -12,7 +11,7 @@ public:
   PathPlanner();
   ~PathPlanner();
   
-  std::vector<geometry_msgs::Point> PathPlanner::indexToGrid(const int8[] data, uint32 width, uint32 height);
+std::vector<geometry_msgs::Point> PathPlanner::indexToGrid(const int8[] data, uint32 width, uint32 height);
 
 void PathPlanner::PrintMessage(nav_msgs::OccupancyGrid OccGrid);
 
@@ -33,6 +32,7 @@ void PathPlanner::neightborsOf8(nav_msgs::GridCell coordinate, std::vector<nav_m
  * 
  */
 void wavefront(void);
+
 
 };
 

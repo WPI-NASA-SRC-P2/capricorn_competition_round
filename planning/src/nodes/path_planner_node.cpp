@@ -1,9 +1,11 @@
 #include <ros/ros.h>
-
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
+#include "path_planner.h"
+#include "planning/trajectory.h"
+#include "planning/TrajectoryWithVelocities.h"
 
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -24,16 +26,16 @@ ros::Publisher markerArrayPublisher;
 using geometry_msgs::Point;
 using geometry_msgs::PoseStamped;
 
-Point target;
-
 void callback(const nav_msgs::OccupancyGrid oGrid) {
     ROS_INFO("reached callback");
 
     Point origin;
+
     origin.x = 300;
     origin.y = 300;
     ROS_INFO("STARTED NEW CSPACE");
     auto CSpace = CSpace::GetCSpace(oGrid, 50, 3);
+
     auto path = AStar::FindPathOccGrid(CSpace, target, origin);
 
     pathPublisher.publish(path);
@@ -126,16 +128,27 @@ void callback(const nav_msgs::OccupancyGrid oGrid) {
 
 }
 
+bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
+{
+    //res.trajectory = trajectoryGenerator(req.targetPose);
+    ROS_INFO("Entered trajectoryGeneration");
+    planning::TrajectoryWithVelocities trajectory;
+    res.trajectory  = trajectory;
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
-    if(argc != 3) printf("Wrong arg count: %d\n", argc);
+    //if(argc != 3) printf("Wrong arg count: %d\n", argc);
 
-    target.x = atoi(argv[1]);
-    target.y = atoi(argv[2]);
+    // target.x = atoi(argv[1]);
+    // target.y = atoi(argv[2]);
+
+    target.x = 10;
+    target.y = 10;
 
     // ROS initialization
     ros::init(argc, argv, "path_planner");
-
     ros::NodeHandle nh;
 
     pathPublisher = nh.advertise<nav_msgs::Path>("/capricorn/navigation_path", 1000);
@@ -150,7 +163,14 @@ int main(int argc, char *argv[])
     ros::Subscriber sub = nh.subscribe("/capricorn/Ground_Truth_Map", 1000, callback);
     // ros::Subscriber sub2 = nh.subscribe("/capricorn/target_point", 1000, target_point_callback);
     
+    //Subscribe to the node publishing map values
+    ros::Subscriber indexValues = nh.subscribe("/capricorn/Ground_Truth_Map", 1000, callback);
+   
+    //creates a service
+    ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", trajectoryGeneration);
     ros::spin();
+
+    ros::Duration(10).sleep();
 
     return 0;
 }

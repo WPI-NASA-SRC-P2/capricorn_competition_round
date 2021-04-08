@@ -2,8 +2,8 @@
 #include <cspace.h>
 #include <geometry_msgs/Point.h>
 
-using nav_msgs::OccupancyGrid;
 using geometry_msgs::Point;
+using nav_msgs::OccupancyGrid;
 
 /**
  * @brief Get the neighbors indicies of a point in the occupancy Grid
@@ -77,6 +77,7 @@ void recursive_search_neighbors(int pt, int radius, int threshold, OccupancyGrid
 	
 }
 
+
 /**
  * @brief This will return a modified oGrid to include the CSpace
  * 
@@ -86,15 +87,18 @@ void recursive_search_neighbors(int pt, int radius, int threshold, OccupancyGrid
  * @return OccupancyGrid The Occupancy Grid with the CSpace included
  */
 OccupancyGrid CSpace::GetCSpace(const nav_msgs::OccupancyGrid& oGrid, int threshold, int radius) 
+
 {
 
 	OccupancyGrid paddedGrid = oGrid;
 
+  
 	for(int i = 0; i < oGrid.data.size(); ++i) 
 	{
 		if(oGrid.data[i] > threshold) 
 		{
 			recursive_search_neighbors(i, radius, threshold, &paddedGrid, &oGrid);
+
 		}
 	}
 
