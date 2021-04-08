@@ -50,27 +50,27 @@ void navigationCB(const geometry_msgs::Point::ConstPtr& goal_point)
     // Action message goal
     operations::NavigationGoal goal;
     
-    //Simple waypoint 2 meters in front of the robot
-    // geometry_msgs::PoseStamped t1;
-    // t1.header.frame_id = robot_name + "_small_chassis";
-    // t1.header.stamp = ros::Time::now();
-    // t1.pose.position.x = goal_point->x;
-    // t1.pose.position.y = goal_point->y;
-    // t1.pose.position.z = 0;
+    //Simple waypoint x meters in front of the robot
+    geometry_msgs::PoseStamped t1;
+    t1.header.frame_id = robot_name + "_small_chassis";
+    t1.header.stamp = ros::Time::now();
+    t1.pose.position.x = goal_point->x;
+    t1.pose.position.y = goal_point->y;
+    t1.pose.position.z = 0;
 
-    // t1.pose.orientation.w = 0.707;
-    // t1.pose.orientation.x = 0;
-    // t1.pose.orientation.y = 0;
-    // t1.pose.orientation.z = 0.707;
+    t1.pose.orientation.w = 0.707;
+    t1.pose.orientation.x = 0;
+    t1.pose.orientation.y = 0;
+    t1.pose.orientation.z = 0.707;
 
-    // goal.pose = t1;
+    goal.pose = t1;
 
-    goal.point.point.x = goal_point->x;
-    goal.forward_velocity = goal_point->z;
+    // goal.point.point.x = goal_point->x;
+    // goal.forward_velocity = goal_point->z;
 
-    goal.point.header.frame_id = robot_name + ROBOT_CHASSIS;
+    // goal.point.header.frame_id = robot_name + ROBOT_CHASSIS;
 
-    goal.drive_mode = NAV_TYPE::REVOLVE;
+    goal.drive_mode = NAV_TYPE::GOAL;
 
     printf("Sending auto goal to actionlib server\n");
     client->sendGoal(goal);

@@ -2,9 +2,9 @@
     <arg name="robot_name" default="small_scout_1" />
     <arg name="output" default="log" />
 
-    <include file="$(find operations)/launch/wheel_controller.launch">
+    <!-- <include file="$(find operations)/launch/wheel_controller.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
-    </include>
+    </include> -->
 
     <group ns="/capricorn/$(arg robot_name)">
         <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" args="$(arg robot_name)" />
