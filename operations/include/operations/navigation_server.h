@@ -62,6 +62,9 @@ private:
     // Whether we are currently manually driving, or automatically following a trajectory
     bool manual_driving_ = false;
 
+    // Continue tracing spiral until this variable is true
+    bool spiral_motion_continue_ = true;
+
     /**
      * @brief 
      * 
@@ -223,6 +226,15 @@ private:
      */
     void revolveDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server);
 
+    /**
+     * @brief Revolve the robot around a geometry_msgs::Point.
+     *        Actual rotation logic
+     * 
+     * @param revolve_about      Point of rotation of the robot
+     * @param forward_velocity   Velocity with which the center of the robot should travel
+     */
+    void revolveRobot(geometry_msgs::PointStamped &revolve_about, double forward_velocity);
+    
     /**
      * @brief Spirals the robot. Used to locate volatiles. NAV_TYPE::SPIRAL. NOT YET IMPLEMENTED
      * 
