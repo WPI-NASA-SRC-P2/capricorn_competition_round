@@ -26,13 +26,14 @@ ros::Publisher markerArrayPublisher;
 using geometry_msgs::Point;
 using geometry_msgs::PoseStamped;
 
-Point target;
-
-void callback(const nav_msgs::OccupancyGrid oGrid)
-{
+void callback(const nav_msgs::OccupancyGrid oGrid) {
     Point origin;
-    origin.x = 300;
-    origin.y = 300;
+    origin.x = 1;
+    origin.y = 1;
+
+    Point target;
+    target.x = 300;
+    target.y = 300;
 
     auto CSpace = CSpace::GetCSpace(oGrid, 50, 1);
     auto path = AStar::FindPathOccGrid(CSpace, target, origin);
