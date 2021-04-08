@@ -13,7 +13,7 @@
 #define UPDATE_HZ 10
 
 
-bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
+bool TrajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
     //res.trajectory = trajectoryGenerator(req.targetPose);
     ROS_INFO("Entered trajectoryGeneration");
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     TrajectoryMethods methods;
 
     //Instantiating ROS server for generating trajectory
-    ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &trajectoryMethods::trajectoryGeneration, &methods);
+    ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &trajectoryMethods::TrajectoryGeneration, &methods);
     
     ros::spin();
     ros::Duration(10).sleep();
