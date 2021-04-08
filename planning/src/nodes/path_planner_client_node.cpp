@@ -15,9 +15,9 @@ int main(int argc, char** argv)
 
   ros::NodeHandle n;
 
-  ros::ServiceClient client = n.serviceClient<planning::trajectory>("trajectory_client");
+  ros::ServiceClient client = n.serviceClient<planning::trajectory>("trajectoryGenerator");
 
-  //
+  
   planning::trajectory srv;
 
   
@@ -33,6 +33,8 @@ int main(int argc, char** argv)
   pose.pose.orientation.w = 0;
 
   srv.request.targetPose = pose;
+
+  //printf(client.isValid());
 
   if (client.call(srv))
   {

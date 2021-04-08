@@ -6,42 +6,39 @@
 #include "path_planner.h"
 #include "planning/trajectory.h"
 #include "planning/TrajectoryWithVelocities.h"
+#include "trajectory_methods.h"
 
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
 
-#include <astar.h>
-#include <cspace.h>
-
-//How fast the main loop of the node will run.
+//Setting the node's update rate
 #define UPDATE_HZ 10
 
-class trajectoryMethods {
 
-public:
-    trajectoryMethods() {}
+bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
+{
+    //res.trajectory = trajectoryGenerator(req.targetPose);
+    ROS_INFO("Entered trajectoryGeneration");
+    planning::TrajectoryWithVelocities trajectory;
+    res.trajectory  = trajectory;
+    return true;
+}
 
-    bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
-    {
-        //res.trajectory = trajectoryGenerator(req.targetPose);
-        ROS_INFO("Entered trajectoryGeneration");
-        planning::TrajectoryWithVelocities trajectory;
-        res.trajectory  = trajectory;
-        return true;
-    }
 
-};
 
 int main(int argc, char *argv[])
-{
+{   
+    //initialize node 
     ros::init(argc, argv, "path_planner_server");
+
+    //create a nodehandle
     ros::NodeHandle nh;
 
-    trajectoryMethods methods;
+    //Instantiating TrajectoryMethods object
+    TrajectoryMethods methods;
 
+    //Instantiating ROS server for generating trajectory
     ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &trajectoryMethods::trajectoryGeneration, &methods);
+    
     ros::spin();
-
     ros::Duration(10).sleep();
 
     return 0;
