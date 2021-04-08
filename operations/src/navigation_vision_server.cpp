@@ -173,7 +173,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, robot_name + COMMON_NAMES::NAVIGATION_VISION_SERVER_NODE_NAME);
   ros::NodeHandle nh;
 
-  client = new Client(COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
+  client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
 
   ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objects_callback);
 
