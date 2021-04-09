@@ -61,7 +61,7 @@ void rotateRobot(const RotationDirection rotate_direction)
 	
 	goal.forward_velocity = 0;
 	goal.angular_velocity = rotate_direction * ROTATION_VELOCITY;
-
+  
 	navigation_client_->sendGoal(goal);
 	ros::Duration(0.5).sleep();
 }
@@ -248,7 +248,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
     
-    ros::Subscriber subscriber = nh.subscribe(robot_name + VOLATILE_SENSOR_TOPIC, 1000, updateSensorData);
+    ros::Subscriber subscriber = nh.subscribe("/" + robot_name + VOLATILE_SENSOR_TOPIC, 1000, updateSensorData);
     ros::Subscriber update_current_robot_pose_ = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
 
     ResourceLocaliserServer resource_localiser_server(nh, RESOURCE_LOCALISER_ACTIONLIB, boost::bind(&localiseResource, _1, &resource_localiser_server), false);

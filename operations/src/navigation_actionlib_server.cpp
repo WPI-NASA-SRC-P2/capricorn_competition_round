@@ -697,6 +697,7 @@ void NavigationServer::cancelGoal()
 	manual_driving_ = true;
 	moveRobotWheels(0);
 	steerRobot(0);
+	spiral_motion_continue_ = false;
 	brakeRobot(true);
 	printf("Clearing current goal, got a new one\n");
 }
