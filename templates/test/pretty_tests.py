@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import subprocess, os
 
 def runTestsInPackage(pkg):
@@ -30,7 +32,7 @@ def runTestsInPackage(pkg):
 if __name__ == "__main__":
     print("Pretty test formatter. Please note that if your tests don't build properly, this is not guaranteed to run as expected.")
     print("In these cases, there will probably be no stdout. Please run `catkin run_tests` if this is the case.")
-    print("If your tests require ROS (i.e. startup a node), please run `roscore` before this script.")
+    print("If your tests require ROS (i.e. startup a node), please run `roscore` before this script.\n")
     package = input("Package to run tests for: ")
 
     print("Running tests, output will not show until all tests are complete...\n\n")

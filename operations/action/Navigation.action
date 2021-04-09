@@ -1,10 +1,17 @@
 # Define the goal
-float32 forward_velocity  # For manual driving
-float32 angular_velocity  # For manual driving
-geometry_msgs/Point point # Will not contain orientation information
-geometry_msgs/Pose pose   # Will contain orientation information
+float32 forward_velocity  # NAV_TYPE::MANUAL and NAV_TYPE::REVOLVE
+float32 angular_velocity  # Positive is counterclockwise, negative is clockwise
+float32 direction         # For use with forward_velocity. Direction to point the robot. 0-2PI, where 0 is straight forwards relative to the robot, CCW from above.
+
+geometry_msgs/PoseStamped pose   # NAV_TYPE::GOAL
+
+geometry_msgs/PointStamped point # NAV_TYPE::REVOLVE
+
+
+uint32 drive_mode              # Whether or not this is a manual drive. Corresponds to COMMON_NAMES::NAV_TYPE
 ---
 # Define the result
+# See COMMON_NAMES::NAV_RESULT for possible values
 uint32 result
 ---
 # Define a feedback message

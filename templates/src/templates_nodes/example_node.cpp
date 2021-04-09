@@ -123,8 +123,6 @@ int main(int argc, char *argv[])
             wheel_effort = 20.0;
         }
 
-
-
         //ros::ok() will return false once either ROS has been shut down or the node has been shut down. This allows the node to exit without hanging.
         while(ros::ok())
         {
