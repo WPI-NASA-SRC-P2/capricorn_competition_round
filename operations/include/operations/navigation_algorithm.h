@@ -29,6 +29,7 @@ public:
 
   static constexpr float wheel_sep_width_ = 1.0;
   static constexpr float wheel_sep_length_ = 1.076;
+  static constexpr float wheel_rad_ = 0.17;
 
   /**
    * @brief **DEPRICATED** Get the Steering Angles for Making Radial Turn 
@@ -140,6 +141,14 @@ public:
   {
     return 0.5 * (robot_mass) * (std::pow(vel, 2));
   }
+
+  /**
+   * @brief Converts a desired linear velocity to an angular velocity for the wheels
+   * 
+   * @param linear_vel Desired linear velocity
+   * @return double Angular velocity, in rad/s
+   */
+  static double linearToAngularVelocity(double linear_vel);
 
   /**
    * @brief Returns a set of Euler angles

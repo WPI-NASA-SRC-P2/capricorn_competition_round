@@ -20,6 +20,9 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 
 	listener_ = new tf2_ros::TransformListener(buffer_);
 
+	// Initialize the rate limiter to 100 HZ
+	update_rate_ = new ros::Rate(100);
+
 	moveRobotWheels(0);
 	steerRobot(0);
 }
@@ -31,6 +34,9 @@ NavigationServer::~NavigationServer()
 
 	// Cleanup the actionlib server
 	delete server_;
+
+	// Cleanup the rate limiter
+	delete update_rate_;
 }
 
 /**
@@ -39,10 +45,15 @@ NavigationServer::~NavigationServer()
  */
 void NavigationServer::initVelocityPublisher(ros::NodeHandle& nh, const std::string& robot_name)
 {
-	front_left_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + FRONT_LEFT_WHEEL + DESIRED_VELOCITY, 1000);
-	front_right_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + FRONT_RIGHT_WHEEL + DESIRED_VELOCITY, 1000);
-	back_left_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + BACK_LEFT_WHEEL + DESIRED_VELOCITY, 1000);
-	back_right_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + BACK_RIGHT_WHEEL + DESIRED_VELOCITY, 1000);
+	// front_left_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + FRONT_LEFT_WHEEL + DESIRED_VELOCITY, 1000);
+	// front_right_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + FRONT_RIGHT_WHEEL + DESIRED_VELOCITY, 1000);
+	// back_left_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + BACK_LEFT_WHEEL + DESIRED_VELOCITY, 1000);
+	// back_right_vel_pub_ = nh.advertise<std_msgs::Float64>(CAPRICORN_TOPIC + robot_name + WHEEL_PID + BACK_RIGHT_WHEEL + DESIRED_VELOCITY, 1000);
+
+	front_left_vel_pub_ = nh.advertise<std_msgs::Float64>("/" + robot_name + FRONT_LEFT_WHEEL + VELOCITY_TOPIC, 1000);
+	front_right_vel_pub_ = nh.advertise<std_msgs::Float64>("/" + robot_name + FRONT_RIGHT_WHEEL + VELOCITY_TOPIC, 1000);
+	back_left_vel_pub_ = nh.advertise<std_msgs::Float64>("/" + robot_name + BACK_LEFT_WHEEL + VELOCITY_TOPIC, 1000);
+	back_right_vel_pub_ = nh.advertise<std_msgs::Float64>("/" + robot_name + BACK_RIGHT_WHEEL + VELOCITY_TOPIC, 1000);
 }
 
 /**
@@ -174,10 +185,17 @@ void NavigationServer::steerRobot(const double angle)
  */
 void NavigationServer::moveRobotWheels(const std::vector<double> velocity)
 {
-	publishMessage(front_left_vel_pub_, velocity.at(0));
-	publishMessage(front_right_vel_pub_, velocity.at(1));
-	publishMessage(back_right_vel_pub_, velocity.at(2));
-	publishMessage(back_left_vel_pub_, velocity.at(3));
+	std::vector<double> angular_vels;
+
+	for(int i = 0; i < velocity.size(); i++)
+	{
+		angular_vels.push_back(NavigationAlgo::linearToAngularVelocity(velocity.at(i)));
+	}
+
+	publishMessage(front_left_vel_pub_, angular_vels.at(0));
+	publishMessage(front_right_vel_pub_, angular_vels.at(1));
+	publishMessage(back_right_vel_pub_, angular_vels.at(2));
+	publishMessage(back_left_vel_pub_, angular_vels.at(3));
 }
 
 /**
@@ -187,10 +205,12 @@ void NavigationServer::moveRobotWheels(const std::vector<double> velocity)
  */
 void NavigationServer::moveRobotWheels(const double velocity)
 {
-	publishMessage(front_left_vel_pub_, velocity);
-	publishMessage(front_right_vel_pub_, velocity);
-	publishMessage(back_left_vel_pub_, velocity);
-	publishMessage(back_right_vel_pub_, velocity);
+	double angular_velocity = NavigationAlgo::linearToAngularVelocity(velocity);
+
+	publishMessage(front_left_vel_pub_, angular_velocity);
+	publishMessage(front_right_vel_pub_, angular_velocity);
+	publishMessage(back_left_vel_pub_, angular_velocity);
+	publishMessage(back_right_vel_pub_, angular_velocity);
 }
 
 /*******************************************************************/
@@ -204,7 +224,7 @@ operations::TrajectoryWithVelocities* NavigationServer::sendGoalToPlanner(const 
 	// Temporary, replace with service call once the planner is complete
 	geometry_msgs::PoseStamped goal_pose = goal->pose;
 	std_msgs::Float64 speed;
-	speed.data = BASE_SPEED;
+	speed.data = BASE_DRIVE_SPEED;
 
 	traj->waypoints.push_back(goal_pose);
 	traj->velocities.push_back(speed);
@@ -242,8 +262,8 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	geometry_msgs::Point center_of_robot;
 
 	std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesRadialTurn(center_of_robot);
-	std::vector<double> wheel_speeds_right = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, -BASE_SPEED);
-	std::vector<double> wheel_speeds_left = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, BASE_SPEED);
+	std::vector<double> wheel_speeds_right = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, -BASE_SPIN_SPEED);
+	std::vector<double> wheel_speeds_left = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, BASE_SPIN_SPEED);
 
 	// Save starting robot pose to track the change in heading
 	geometry_msgs::PoseStamped starting_pose = *getRobotPose();
@@ -289,6 +309,9 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 
 		// Allow ROS to catch up and update our subscribers
 		ros::spinOnce();
+
+		// Slow this loop down a bit
+		update_rate_->sleep();
 	}
 
 	printf("Done rotating\n");
@@ -321,10 +344,13 @@ bool NavigationServer::driveDistance(double delta_distance)
 		}
 
 		// Move the wheels forward at a constant speed
-		moveRobotWheels(BASE_SPEED);
+		moveRobotWheels(BASE_DRIVE_SPEED);
 
 		// Allow ROS to catch up and update our subscribers
 		ros::spinOnce();
+
+		// Slow this loop down a bit
+		update_rate_->sleep();
 	}
 
 	printf("Done driving forwards\n");

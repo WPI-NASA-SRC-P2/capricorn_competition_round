@@ -32,13 +32,17 @@ public:
     ~NavigationServer();
 
 private:
-    const float BASE_SPEED = 0.6;
+    const float BASE_DRIVE_SPEED = 0.6;
+    const float BASE_SPIN_SPEED = 0.3;
     const float DIST_EPSILON = 0.05;
     const float ANGLE_EPSILON = 0.01;
 
     std::string robot_name_;
 
     Server* server_;
+
+    // Rate limiter
+    ros::Rate* update_rate_;
 
     // Publishers for each wheel velocity and steering controller
     ros::Publisher front_left_vel_pub_, front_right_vel_pub_, back_left_vel_pub_, back_right_vel_pub_;

@@ -271,6 +271,13 @@ target_link_libraries(resource_localiser_tester
 )
 
 
+add_executable(park_hauler_excavator src/park_hauler_excavator.cpp)
+add_dependencies(park_hauler_excavator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(park_hauler_excavator ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+
 # target_link_libraries(start_scout_sm navigation_algorithm)
 
 #############

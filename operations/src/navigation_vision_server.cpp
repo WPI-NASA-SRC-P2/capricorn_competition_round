@@ -19,8 +19,8 @@ operations::NavigationGoal nav_goal;
 
 bool execute_called = false;
 int height_threshold = 400;
-int angle_threshold_narrow = 15;
-int angle_threshold_wide = 40;
+int angle_threshold_narrow = 10;
+int angle_threshold_wide = 30;
 
 float width = 640.0;
 
@@ -29,6 +29,10 @@ void set_desired_label_height_threshold()
   if(desired_label == "hopper")
   {
       height_threshold = 250;
+  }
+  if(desired_label == "excavator")
+  {
+      height_threshold = 240;
   }
   else
   {
@@ -51,7 +55,7 @@ void objects_callback(const perception::ObjectArray& objects)
   float height_obj = -1;
 
   // Initialize error, P Control, and necessary thresholds 
-  static float proportional_angle = 0.0005;
+  static float proportional_angle = 0.0010;
   //float integral_angle = 0.0000001;
   //float derivative_angle = 0.001;
   static float error_angle;
@@ -74,7 +78,7 @@ void objects_callback(const perception::ObjectArray& objects)
   if(center_obj == -1)
   {
     obj_detected = false;
-    nav_goal.angular_velocity = 0.2;
+    nav_goal.angular_velocity = 0.35;
     nav_goal.forward_velocity = 0;
   }
   else
@@ -95,7 +99,7 @@ void objects_callback(const perception::ObjectArray& objects)
       if(error_height <= 0)
       {
         // If the object is big enough, stop the robot
-        nav_goal.forward_velocity = 0;
+        nav_goal.forward_velocity = 0.0000001;
         execute_called = false;
         for(int i = 0; i < 20; i++)
         {
