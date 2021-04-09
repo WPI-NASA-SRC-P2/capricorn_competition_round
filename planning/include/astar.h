@@ -8,7 +8,7 @@
 class AStar
 {
 public:
-    /**
+  /**
      * @brief Calculated the shortest path using an occupancy grid based approach.
      * 
      * @param oGrid The occupancy grid, ranging 0 (unoccupied) to 100 (completely blocked)
@@ -18,5 +18,5 @@ public:
      * @return A ROS Path message containing the points in the shortest path.
     **/
 
-    static nav_msgs::Path FindPathOccGrid(nav_msgs::OccupancyGrid oGrid, geometry_msgs::Point target, geometry_msgs::Point start);
+  static nav_msgs::Path FindPathOccGrid(nav_msgs::OccupancyGrid oGrid, geometry_msgs::Point target, geometry_msgs::Point start);
 };

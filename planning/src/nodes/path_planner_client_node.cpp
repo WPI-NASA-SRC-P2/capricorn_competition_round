@@ -3,7 +3,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <cstdlib>
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "trajectory_client");
 
@@ -17,10 +17,7 @@ int main(int argc, char** argv)
 
   ros::ServiceClient client = n.serviceClient<planning::trajectory>("trajectoryGenerator");
 
-  
   planning::trajectory srv;
-
-  
 
   //probably needs to not use argument
   geometry_msgs::PoseStamped pose;
