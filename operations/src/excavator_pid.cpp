@@ -9,17 +9,27 @@ using namespace COMMON_NAMES;
 
 typedef actionlib::SimpleActionClient<operations::HaulerAction> Client;
 
+/**
+ * @brief Main PID function for the node
+ * 
+ * @param argc No arguments passed from command line
+ * @param argv No arguments passed from command line
+ * @return 0 for success and 1 for failed
+ */
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "excavator_pid_client");
   ros::NodeHandle nh;
   srcp2_msgs::PidTuningSrv excavator_pid;
   
+  // Initializing joint names
   std::string shoulder_yaw_joint = "shoulder_yaw_joint";
   std::string shoulder_pitch_joint = "shoulder_pitch_joint";
   std::string elbow_pitch_joint = "elbow_pitch_joint";
   std::string wrist_pitch_joint = "wrist_pitch_joint";
   
+  // Initializing joint values
   float shoulder_yaw_kp = 30;
   float shoulder_yaw_ki = 2;
   float shoulder_yaw_kd = 10;
@@ -32,6 +42,8 @@ int main(int argc, char** argv)
   float wrist_pitch_kp = 75;
   float wrist_pitch_ki = 5;
   float wrist_pitch_kd = 5;
+
+  // String variable to store PID setting result
   std::string joint_pid_set;
 
   ros::ServiceClient client = nh.serviceClient<srcp2_msgs::PidTuningSrv>(EXCAVATOR_1 + "/pid_tuning");
@@ -48,7 +60,7 @@ int main(int argc, char** argv)
   }
   else
   {
-    ROS_ERROR("Failed to call service");
+    ROS_ERROR("Failed to call service for shoulder yaw joint");
     return 1;
   }
 
@@ -64,7 +76,7 @@ int main(int argc, char** argv)
   }
   else
   {
-    ROS_ERROR("Failed to call service");
+    ROS_ERROR("Failed to call service for shoulder pitch joint");
     return 1;
   }
 
@@ -80,7 +92,7 @@ int main(int argc, char** argv)
   }
   else
   {
-    ROS_ERROR("Failed to call service");
+    ROS_ERROR("Failed to call service for elbow pitch joint");
     return 1;
   }
 
@@ -96,7 +108,7 @@ int main(int argc, char** argv)
   }
   else
   {
-    ROS_ERROR("Failed to call service");
+    ROS_ERROR("Failed to call service for wrist pitch joint");
     return 1;
   }
 
