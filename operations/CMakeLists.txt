@@ -177,10 +177,12 @@ add_executable(hauler_actionlib_server src/hauler_server.cpp)
 add_executable(hauler_actionlib_client src/hauler_client.cpp)
 add_executable(excavator_actionlib_client src/excavator_client.cpp)
 add_executable(excavator_actionlib_server src/excavator_server.cpp)
+add_executable(excavator_pid_node src/excavator_pid.cpp)
 
 add_dependencies(navigation_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(excavator_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(excavator_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(excavator_pid_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(navigation_actionlib_server ${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -189,6 +191,9 @@ target_link_libraries(excavator_actionlib_server ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 target_link_libraries(excavator_actionlib_client ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(excavator_pid_node ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 add_dependencies(hauler_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

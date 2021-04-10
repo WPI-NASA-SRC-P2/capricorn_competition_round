@@ -95,8 +95,6 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
  */
 void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
 {
-  int FAST_STEPS = 10;
-  int SLOW_STEPS = 30;
   float theta = findShoulderAngle(target, shoulder);
   std::string scoop_value;
   if(task == START_DIGGING) // digging angles
@@ -105,23 +103,32 @@ void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     ros::Duration(SLEEP_DURATION).sleep(); 
     publishAngles(theta, 1, 1, -2); // This set of values moves the scoop under the surface
     float yaw_angle = theta;
-    while (!volatile_found)
+    scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
+    ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
+    while (!volatile_found && yaw_angle > -1.2)
     {
       // move the shoulder yaw joint from left to right under the surface
-      publishAngles(yaw_angle, 1, 1, 1);
-      yaw_angle += 0.1;
+      publishAngles(yaw_angle, 1, 1, -0.6);
+      ros::Duration(1).sleep();
+      yaw_angle -= 0.2;
+      ROS_INFO_STREAM(std::to_string(yaw_angle));
+      scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
+      ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
     }
+    publishAngles(yaw_angle, 1, 1, -2.6);
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(theta, -1.5, 1.5, -0.6); // This set of values moves the scoop over the surface
+    publishAngles(yaw_angle, -0.5, 1, -1.1);
+    ros::Duration(SLEEP_DURATION).sleep();
+    publishAngles(yaw_angle, -2, 1, 0.4); // This set of values moves the scoop over the surface
     
   }
   else if(task == START_UNLOADING) // dumping angles
   {
-    publishAngles(theta, -1.5, 1.5, -0.6); // This set of values moves the scoop towards the hauler
+    publishAngles(theta, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(theta, -1.5, 1.5, 2); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    publishAngles(theta, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(0, -1.5, 1.5, -1); // This set of values moves the scoop to the front center
+    publishAngles(0, -2, 1, -1); // This set of values moves the scoop to the front center
     ros::Duration(SLEEP_DURATION).sleep();
   }
   else
