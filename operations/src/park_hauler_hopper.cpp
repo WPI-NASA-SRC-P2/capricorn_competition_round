@@ -17,6 +17,7 @@ int hopper_x;
 double hopper_z;
 int processingPlant_z;
 int furnace_x;
+int hopper_height; 
 
 void publishMessage(std::vector<double> velocity, std::vector<double> angle)
 {
@@ -50,6 +51,7 @@ void ppCentroid(const perception::ObjectArray::ConstPtr& msg){
         if(object.label == "hopper"){
             hopper_x = object.center.x; // in pixels
             hopper_z = object.point.z;
+            hopper_height = object.size_y;
             ROS_INFO_STREAM("Detected Hopper");
         }
         //If processingPlant is detected store processingPlantZ 
@@ -68,17 +70,15 @@ void goToHopper()
 {
     std::vector<double> forward_steer{0, 0, 0, 0}, drive{3, 3, 3, 3}, stop{0, 0, 0, 0};
     int center_image_x = 320;
-    // int distance_threshold = 4.5
-    // if (processingPlant_z <  distance_threshold)
-    // {
-        if ((abs(hopper_x - center_image_x) < 50) && (abs(furnace_x - center_image_x) < 500))
+    int target_height = 385; 
+        if ((abs(hopper_x - center_image_x) < 50) && (abs(furnace_x - center_image_x) < 500)) //check to see if hopper is close to center and if furnace is detected
         {
-            if(hopper_z < 3.5)
+            if(hopper_height >= target_height) //if hopper is too close, stop the robot
             {
                 ROS_INFO_STREAM("Stopping Hauler");
                 publishMessage(stop, forward_steer);
             }
-            else
+            else //otherwise drive towards hopper
             {
                 ROS_INFO_STREAM("Driving To Hopper");
                 publishMessage(drive, forward_steer);
@@ -86,7 +86,7 @@ void goToHopper()
         }
         else
         {
-            if (hopper_x > 320)
+            if (hopper_x > 320) // if the hopper is on the right side of the screen, orbit right 
             {
                 double radius = processingPlant_z + 1.8;
                 double velocity = 3;
@@ -97,7 +97,7 @@ void goToHopper()
                 std::vector<double> steer = NavigationAlgo::getSteeringAnglesRadialTurn(pt);
                 publishMessage(drive, steer);
             }
-            else
+            else //otherwise orbit left 
             {
                 double radius = processingPlant_z + 1.8;
                 double velocity = 3;
@@ -110,11 +110,6 @@ void goToHopper()
             }
             
         }
-    // }
-    // else{
-    //     //vision_based_nav
-    // } 
-
 }
 
 
