@@ -5,7 +5,10 @@ ExcavatorStateMachine::ExcavatorStateMachine(ros::NodeHandle nh, const std::stri
     robot_name_ = robot_name;
     navigation_client_ = new NavigationClient_(NAVIGATION_ACTIONLIB, true);
     excavator_arm_client_ = new ExcavatorClient_(EXCAVATOR_ACTIONLIB, true);
+    ROS_INFO_STREAM(CAPRICORN_TOPIC + SCOUT_1 + VOLATILE_LOCATION_TOPIC);
+    ros::Duration(10).sleep();
     sub_scout_vol_location_ = nh_.subscribe(CAPRICORN_TOPIC + SCOUT_1 + VOLATILE_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::scoutVolLocCB, this);
+    ros::Duration(10).sleep();
 }
 
 ExcavatorStateMachine::~ExcavatorStateMachine()
@@ -16,9 +19,10 @@ ExcavatorStateMachine::~ExcavatorStateMachine()
 
 void ExcavatorStateMachine::scoutVolLocCB(const geometry_msgs::PoseStamped &msg)
 {
+    std::cout << "Print this" << std::endl;
     vol_pose = msg;
     volatile_found_ = true;
-    ROS_INFO("Testing for message");
+    ROS_INFO_STREAM("Testing for message");
 }
 
 void ExcavatorStateMachine::startStateMachine()
