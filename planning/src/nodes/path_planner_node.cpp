@@ -3,7 +3,6 @@
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
-#include "path_planner.h"
 #include "planning/trajectory.h"
 #include "planning/TrajectoryWithVelocities.h"
 
@@ -26,6 +25,8 @@ ros::Publisher markerArrayPublisher;
 using geometry_msgs::Point;
 using geometry_msgs::PoseStamped;
 
+Point target;
+
 void callback(const nav_msgs::OccupancyGrid oGrid)
 {
   ROS_INFO("reached callback");
@@ -35,9 +36,9 @@ void callback(const nav_msgs::OccupancyGrid oGrid)
   origin.x = 300;
   origin.y = 300;
   ROS_INFO("STARTED NEW CSPACE");
-  auto CSpace = CSpace::GetCSpace(oGrid, 50, 3);
+  auto CSpace = CSpace::getCSpace(oGrid, 50, 3);
 
-  auto path = AStar::FindPathOccGrid(CSpace, target, origin);
+  auto path = AStar::findPathOccGrid(CSpace, target, origin);
 
   pathPublisher.publish(path);
   cSpacePublisher.publish(CSpace);
