@@ -19,6 +19,12 @@ std::string robot_name;
 
 /**
  * @brief Callback for the twist message of teleop message twist
+ *        Inspite of us commenting again and again that callback 
+ *        must be short, this in fact can be longer callbacks
+ * 
+ *        We only trigger these when needed, and when called on 
+ *        top of each other, they need to be overwriting the 
+ *        ongoing functionality
  * 
  * @param twist twist message from teleop
  */
@@ -26,13 +32,30 @@ void teleopCB(const geometry_msgs::Twist::ConstPtr& twist)
 {
   // Action message goal
   operations::NavigationGoal goal;
+  goal.point.header.frame_id = robot_name + ROBOT_CHASSIS;
   
-  // Manual driving
-  goal.drive_mode = NAV_TYPE::MANUAL;
+  if( twist->linear.x==0 || twist->angular.z==0 )
+  {
+    // Manual driving
+    goal.drive_mode = NAV_TYPE::MANUAL;
 
-  // Diverting values from twist to navigation
-  goal.forward_velocity = twist->linear.x;
-  goal.angular_velocity = twist->angular.z;
+    // Diverting values from twist to navigation
+    goal.forward_velocity = twist->linear.x;
+    goal.angular_velocity = twist->angular.z;
+  }
+  else
+  {
+    // Radial Turn
+    goal.drive_mode = NAV_TYPE::REVOLVE;
+
+    // Hardcoded for a good enough radial turn
+    // Taking radius sign depending on the direction of turn
+    double radial_turn_radius = std::copysign(2.0, twist->angular.z); 
+    goal.point.point.y = radial_turn_radius;   
+    goal.forward_velocity = twist->linear.x;
+  }
+
+  printf("Teleop twist forward: %f\n", twist->linear.x);
   
   client->sendGoal(goal);
   ros::Duration(0.1).sleep();
@@ -62,6 +85,12 @@ void navigationCB(const geometry_msgs::Point::ConstPtr& goal_point)
     t1.pose.orientation.z = 0.707;
 
     goal.pose = t1;
+
+    // goal.point.point.x = goal_point->x;
+    // goal.forward_velocity = goal_point->z;
+
+    goal.point.header.frame_id = robot_name + ROBOT_CHASSIS;
+
     goal.drive_mode = NAV_TYPE::GOAL;
 
     printf("Sending auto goal to actionlib server\n");
@@ -93,15 +122,23 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     // Subscribing to teleop topic
-    ros::Subscriber navigation_sub = nh.subscribe( "/capricorn/" + robot_name + "/navigation_tester_topic", 1000, navigationCB);
+    ros::Subscriber navigation_sub = nh.subscribe("/capricorn/" + robot_name + "/navigation_tester_topic", 1000, navigationCB);
     ros::Subscriber teleop_sub = nh.subscribe( "/cmd_vel", 1000, teleopCB);
 
     printf("Nav client: Instantiating client instance\n");
 
     // initialize client
-    client = new Client(NAVIGATION_ACTIONLIB, true);
+    client = new Client(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
     printf("Waiting for server...\n");
-    client->waitForServer();
+    
+    bool serverExists = client->waitForServer(ros::Duration(5.0));
+
+    if(!serverExists)
+    {
+      ROS_ERROR_STREAM("Server does not exist! Exiting.\n");
+      return -1;
+    }
+
     printf("Done waiting. Spinning\n");
 
     ros::spin();

@@ -89,6 +89,11 @@ generate_messages(
   srcp2_msgs
 )
 
+## Generate added messages and services with any dependencies listed here
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -141,6 +146,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
   src/scout_state_machine.cpp
+  src/navigation_actionlib_server.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
@@ -171,15 +177,16 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 #######################################################################################################
 
-#################
-##  NAVIGATION ##
-#################
-add_executable(navigation_actionlib_server src/navigation_actionlib_server.cpp)
-add_dependencies(navigation_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(navigation_actionlib_server ${PROJECT_NAME}
-${catkin_LIBRARIES}
+# Drives both robots forwards in task 2. Example node
+add_executable(start_nav_server src/start_nav_server.cpp)
+
+add_dependencies(start_nav_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(start_nav_server ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
 )
 
+# Drives both robots forwards in task 2. Example node
 add_executable(navigation_client src/navigation_client.cpp)
 add_dependencies(navigation_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_client
@@ -269,7 +276,7 @@ target_link_libraries(resource_localiser_tester
 ## in contrast to setup.py, you can choose the destination
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS navigation_actionlib_server navigation_client trajectory_processor wheel_speed_processing
+install(TARGETS navigation_client trajectory_processor wheel_speed_processing
                 navigation_vision excavator_actionlib_client hauler_actionlib_server #excavator_actionlib_server
                 hauler_actionlib_client start_scout_sm resource_localiser resource_localiser_tester
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
