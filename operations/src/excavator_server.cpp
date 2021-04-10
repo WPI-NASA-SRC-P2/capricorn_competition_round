@@ -115,12 +115,33 @@ void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
       scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
       ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
     }
-    publishAngles(yaw_angle, 1, 1, -2.6);
-    ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(yaw_angle, -0.5, 1, -1.1);
-    ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(yaw_angle, -2, 1, 0.4); // This set of values moves the scoop over the surface
-    
+    if(yaw_angle<-1)
+    {
+      publishAngles(0, 1, 1, -0.6);
+      ros::Duration(SLEEP_DURATION).sleep();
+      if(volatile_found)
+      {
+        publishAngles(0, 1, 1, -2.6);
+        ros::Duration(SLEEP_DURATION).sleep();
+        publishAngles(0, -0.5, 1, -1.1);
+        ros::Duration(SLEEP_DURATION).sleep();
+        publishAngles(0, -2, 1, 0.4); // This set of values moves the scoop over the surface
+      }
+      else
+      {
+        publishAngles(0, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
+        ros::Duration(SLEEP_DURATION).sleep();
+        publishAngles(0, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
+      }
+    }
+    else
+    {
+      publishAngles(yaw_angle, 1, 1, -2.6);
+      ros::Duration(SLEEP_DURATION).sleep();
+      publishAngles(yaw_angle, -0.5, 1, -1.1);
+      ros::Duration(SLEEP_DURATION).sleep();
+      publishAngles(yaw_angle, -2, 1, 0.4); // This set of values moves the scoop over the surface
+    }
   }
   else if(task == START_UNLOADING) // dumping angles
   {

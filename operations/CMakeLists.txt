@@ -233,6 +233,12 @@ target_link_libraries(excavator_pid_node ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
+add_executable(start_excavator_sm src/start_excavator_sm.cpp)
+add_dependencies(start_excavator_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(start_excavator_sm ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
 ##################
 ##### HAULER #####
 ##################

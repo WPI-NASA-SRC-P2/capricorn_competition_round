@@ -5,12 +5,20 @@ ExcavatorStateMachine::ExcavatorStateMachine(ros::NodeHandle nh, const std::stri
     robot_name_ = robot_name;
     navigation_client_ = new NavigationClient_(NAVIGATION_ACTIONLIB, true);
     excavator_arm_client_ = new ExcavatorClient_(EXCAVATOR_ACTIONLIB, true);
+    sub_scout_vol_location_ = nh_.subscribe(CAPRICORN_TOPIC + SCOUT_1 + VOLATILE_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::scoutVolLocCB, this);
 }
 
 ExcavatorStateMachine::~ExcavatorStateMachine()
 {
     delete navigation_client_;
     delete excavator_arm_client_;
+}
+
+void ExcavatorStateMachine::scoutVolLocCB(const geometry_msgs::PoseStamped &msg)
+{
+    vol_pose = msg;
+    volatile_found_ = true;
+    ROS_INFO("Testing for message");
 }
 
 void ExcavatorStateMachine::startStateMachine()
@@ -22,7 +30,7 @@ void ExcavatorStateMachine::startStateMachine()
         switch (robot_state_)
         {
         case EXCAVATOR_STATES::INIT:
-            // initState();
+            initState();
             break;
         case EXCAVATOR_STATES::GO_TO_VOLATILE:
             // goToVolatile();
@@ -48,6 +56,8 @@ void ExcavatorStateMachine::startStateMachine()
             break;
         }
         // sleep for some time
+        ros::Duration(0.5).sleep();
+        ros::spinOnce();
 
         // call function to update the states (Because most of these things are actionlibs
         // So they will be running in a seperate node)
@@ -56,16 +66,16 @@ void ExcavatorStateMachine::startStateMachine()
     }
 }
 
-// void ExcavatorStateMachine::initState()
-// {
-//     if(volatile_found)
-//     {
-//         robot_state_ = GO_TO_VOLATILE;
-//         volatile_found = false;
-//         ROS_INF0("Going to location");
-//     }
-//     return;
-// }
+void ExcavatorStateMachine::initState()
+{
+    if(volatile_found_)
+    {
+        robot_state_ = GO_TO_VOLATILE;
+        volatile_found_ = false;
+        ROS_INFO("Going to location");
+    }
+    return;
+}
 
 // Subscribe to: CAPRICORN_TOPIC + robot_name + VOLATILE_LOCATION_TOPIC
 // void ExcavatorStateMachine::volatileLocationCB()

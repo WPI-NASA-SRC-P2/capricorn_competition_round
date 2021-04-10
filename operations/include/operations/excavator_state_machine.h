@@ -34,9 +34,12 @@ class ExcavatorStateMachine
 private:
   ros::NodeHandle nh_;
 
+  ros::Subscriber sub_scout_vol_location_;
+
   EXCAVATOR_STATES robot_state_ = EXCAVATOR_STATES::INIT;
   std::string robot_name_;
   bool state_machine_continue_ = true;
+  bool volatile_found_ = true;
 
   typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient_;
   NavigationClient_* navigation_client_;
@@ -46,8 +49,10 @@ private:
   ExcavatorClient_* excavator_arm_client_;
   operations::ExcavatorGoal excavator_arm_goal_;
 
-  
+  geometry_msgs::PoseStamped vol_pose;
 
+  void initState();
+  void scoutVolLocCB(const geometry_msgs::PoseStamped &msg);
 
 public:
   ExcavatorStateMachine(ros::NodeHandle nh, const std::string& robot_name);
