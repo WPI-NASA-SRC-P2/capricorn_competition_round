@@ -21,24 +21,24 @@ void ExcavatorStateMachine::startStateMachine()
     {
         switch (robot_state_)
         {
-        case LOCATOR_STATES::INIT:
+        case EXCAVATOR_STATES::INIT:
             // initState();
             break;
-        case LOCATOR_STATES::GO_TO_VOLATILE:
+        case EXCAVATOR_STATES::GO_TO_VOLATILE:
             // goToVolatile();
             break;
-        case LOCATOR_STATES::PARK_AND_PUB:
+        case EXCAVATOR_STATES::PARK_AND_PUB:
             // Call actionlib for resource_locate
             // ResourceLocator
             break;
-        case LOCATOR_STATES::FIND_VOLATILE:
+        case EXCAVATOR_STATES::FIND_VOLATILE:
             // Stop the robot, brake.
             // Wait for a flag from excavator that it is ready to take over
             break;
-        case LOCATOR_STATES::DIG_AND_DUMP:
+        case EXCAVATOR_STATES::DIG_AND_DUMP:
             // Once flag is received, move some distance aside. 
             break;
-        case LOCATOR_STATES::NEXT_QUE_TASK:
+        case EXCAVATOR_STATES::NEXT_QUE_TASK:
             // Mahimana's method to go back to the recharge station
             // Find and get to the recharge station
             break;

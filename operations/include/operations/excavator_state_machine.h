@@ -7,6 +7,7 @@
 #include <operations/ResourceLocaliserAction.h> 
 #include <actionlib/client/simple_action_client.h>
 #include <utils/common_names.h>
+#include <operations/ExcavatorAction.h>
 
 using namespace COMMON_NAMES;
 
