@@ -1,13 +1,10 @@
 <launch>
     <arg name="robot_name" default="small_scout_1" />
 
-    <include file="$(find operations)/launch/wheel_controller.launch">
+    <include file="$(find operations)/launch/navigation.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
+        <arg name="output" value="screen" />
     </include>
 
-    <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" args="$(arg robot_name)" />
-
-    <node name="navigation_actionlib_server" pkg="operations" type="navigation_actionlib_server" args="$(arg robot_name)" output="screen"/>
     <node name="navigation_client" pkg="operations" type="navigation_client" args="$(arg robot_name)" output="screen" />
-    <node name="wheel_speed_processing" pkg="operations" type="wheel_speed_processing" args="$(arg robot_name)" />
 </launch>

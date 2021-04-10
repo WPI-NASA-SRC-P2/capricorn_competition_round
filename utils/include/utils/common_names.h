@@ -16,7 +16,8 @@ namespace COMMON_NAMES
   /****** ROBOT FRAMES ******/
   const std::string MAP = "map";
   const std::string ODOM = "odom";
-  const std::string ROBOT_BASE = "base_footprint";  
+  const std::string ROBOT_BASE = "base_footprint";
+  const std::string ROBOT_CHASSIS = "_small_chassis";
 
   /****** WHEELS ******/
   const std::string FRONT_LEFT_WHEEL = "/front_left_wheel";
@@ -33,6 +34,7 @@ namespace COMMON_NAMES
 
   /****** ACTIONLIBS ******/
   const std::string NAVIGATION_ACTIONLIB = "navigation";
+  const std::string RESOURCE_LOCALISER_ACTIONLIB = "resource_localiser_actionlib";
   const std::string HAULER_ACTIONLIB = "hauler_bin";
   const std::string EXCAVATOR_ACTIONLIB = "excavator";
 
@@ -53,6 +55,7 @@ namespace COMMON_NAMES
   const std::string FIND_PP_RS_ACTIONLIB_NAME = "_find_pp_rs";
 
   /****** ROS NODE NAMES ******/
+  const std::string NAVIGATION_VISION_NODE_NAME = "_navigation_vision";
   const std::string PR_DATASET_NODE_NAME = "_pr_dataset";
   const std::string GROUND_TRUTH_PR_NODE_NAME = "_ground_truth_pr";
   const std::string PR_LOCALIZATION_NODE_NAME = "_pr_localization";
@@ -88,6 +91,12 @@ namespace COMMON_NAMES
   const std::string WHEEL_PID = "/wheel_pid";
   const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";
   const std::string OBJECT_DETECTION_OBJECTS_TOPIC = "/object_detection/objects";
+  const std::string VOLATILE_SENSOR_TOPIC = "/volatile_sensor";
+  const std::string VOLATILE_LOCATION_TOPIC = "/volatile_location";
+
+  // Used to communicate between excavators and scouts when the excavator is ready to move in to pick up a volatile
+  // TODO: Choose a real message type for this topic, instead of std_msgs::Empty
+  const std::string EXCAVATOR_ARRIVED_TOPIC = "/excavator_arrived";
 
   /****** EXCAVATOR TASK ENUM ******/
   enum Tasks{
@@ -100,12 +109,21 @@ namespace COMMON_NAMES
   const std::string OBJECT_DETECTION_PROCESSING_PLANT_CLASS = "processingPlant";
   const std::string OBJECT_DETECTION_REPAIR_STATION_CLASS = "repairStation";
 
-  /****** NAVIGATION ACTION RESULT ENUM ******/
+  /****** NAVIGATION ENUMS ******/
+  enum NAV_TYPE
+  {
+    MANUAL,  // Manual driving
+    GOAL,    // Trajectory generation with the planner from a goal
+    REVOLVE, // Revolve the robot around a fixed point
+    SPIRAL,  // Archimedean spiral (scout finding volatiles)
+    FOLLOW,  // Follow an object in frame
+  };
+  
   enum NAV_RESULT
   {
-    FAILED = 0,
-    SUCCESS = 1,
-    INTERRUPTED = 2
+    FAILED,
+    SUCCESS,
+    INTERRUPTED
   };
 
 } // namespace CAPRICORN_COMMON_NAMES

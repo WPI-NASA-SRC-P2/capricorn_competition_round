@@ -24,7 +24,7 @@ import numpy as np
 
 physical_devices = tf.config.list_physical_devices('GPU') 
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
-tf.config.experimental.set_virtual_device_configuration(physical_devices[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=800)])
+# tf.config.experimental.set_virtual_device_configuration(physical_devices[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=800)])
 
 bridge = CvBridge()
 K = [381.36246688113556, 0.0, 320.5, 0.0, 381.36246688113556, 240.5, 0.0, 0.0, 1.0]
@@ -159,9 +159,11 @@ def detection_algorithm():
             elif (classes[i] == 5):
                 object_msg.label = "scout"
             elif (classes[i] == 6):
-                object_msg.label = "excavator"
+                object_msg.label = "robot_antenna"
             elif (classes[i] == 7):
-                object_msg.label = "hauler"
+                object_msg.label = "furnace"
+            elif (classes[i] == 8):
+                object_msg.label = "ppSmallThruster"
 
             object_msg.center.x = centerX
             object_msg.center.y = centerY
