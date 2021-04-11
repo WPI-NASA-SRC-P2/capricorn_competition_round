@@ -282,6 +282,6 @@ private:
     *								this on-going rotation
     * @return double 				Theta travelled
     */
-    double getTravelTheta(double yaw, int &rotation_counter);
+    double getCumulativeTheta(double yaw, int &rotation_counter);
     
 };

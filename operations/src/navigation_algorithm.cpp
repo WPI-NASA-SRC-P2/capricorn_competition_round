@@ -124,6 +124,8 @@ std::vector<double> NavigationAlgo::getDrivingVelocitiesRadialTurn(const geometr
 
 float NavigationAlgo::getRadiusInArchimedeanSpiral(const float t)
 {
+  const double SCALING_FACTOR = 0.4; // Tuning paramter for scaling the spiral up or down. 
+
   float neum = (2 + std::pow(t, 2));
   float denom = std::pow((1 + std::pow(t, 2)), 1.5);
   float curvature = neum / denom;
@@ -132,8 +134,7 @@ float NavigationAlgo::getRadiusInArchimedeanSpiral(const float t)
   // This is to make sure that the spiral center lies to the side of the robot and not within the robot. 
   radius += NavigationAlgo::wheel_sep_width_;
   
-  // Tuning paramter for scaling the spiral up or down. 
-  radius = 0.4*radius;
+  radius = SCALING_FACTOR*radius;
   
   return radius;
 }
