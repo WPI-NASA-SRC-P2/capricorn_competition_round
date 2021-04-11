@@ -214,6 +214,7 @@ void NavigationServer::moveRobotWheels(const double velocity)
 
 operations::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geometry_msgs::PoseStamped& goal)
 {
+	// Declare a trajectory message
 	operations::TrajectoryWithVelocities traj;
 
 	// Temporary, replace with service call once the planner is complete
@@ -223,6 +224,7 @@ operations::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const g
 	traj.waypoints.push_back(goal);
 	traj.velocities.push_back(speed);
 
+	// Make sure that all trajectory waypoints are in the map frame before returning it
 	return getTrajInMapFrame(traj);
 }
 
@@ -230,12 +232,15 @@ operations::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const o
 {
 	operations::TrajectoryWithVelocities in_map_frame;
 
+	// For each waypoint in the trajectories message
 	for(int pt = 0; pt < traj.waypoints.size(); pt++)
 	{
 		geometry_msgs::PoseStamped map_pose = traj.waypoints[pt];
 
+		// Transform that waypoint into the map frame
 		NavigationAlgo::transformPose(map_pose, MAP, buffer_);
 
+		// Push this waypoint and its velocity to the trajectory message to return
 		in_map_frame.waypoints.push_back(map_pose);
 		in_map_frame.velocities.push_back(traj.velocities[pt]);
 	}
@@ -257,10 +262,15 @@ void NavigationServer::brakeRobot(bool brake)
 
 bool NavigationServer::rotateWheels(const geometry_msgs::PoseStamped& target_robot_pose)
 {
-	brakeRobot(0);
+	brakeRobot(false);
+
+	// Calculate the change in heading between the current and target pose
 	double delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), target_robot_pose, robot_name_, buffer_);
-	printf("Steering to %frad\n", delta_heading);
+	
+	ROS_INFO("Steering wheels to %frad\n", delta_heading);
 	steerRobot(delta_heading);
+
+	// Currently, we never expect rotating wheels to fail.
 	return true;
 }
 
@@ -340,7 +350,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 bool NavigationServer::driveDistance(double delta_distance)
 {
 	brakeRobot(false);
-	printf("Driving forwards %fm\n", delta_distance);
+	ROS_INFO("Driving forwards %fm\n", delta_distance);
 
 	// Save the starting robot pose so we can track delta distance
 	geometry_msgs::PoseStamped starting_pose = *getRobotPose();
@@ -351,8 +361,6 @@ bool NavigationServer::driveDistance(double delta_distance)
 	// While we have not traveled the desired distance, keep driving.
 	while (abs(distance_traveled - delta_distance) > DIST_EPSILON && ros::ok())
 	{
-		distance_traveled = abs(NavigationAlgo::changeInPosition(starting_pose, *getRobotPose()));
-
 		if(manual_driving_)
 		{
 			// Stop moving the robot, as we were interrupted.
@@ -362,8 +370,10 @@ bool NavigationServer::driveDistance(double delta_distance)
 			return false;
 		}
 
-		If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
-		we want to get a new trajectory from the planner.
+		distance_traveled = abs(NavigationAlgo::changeInPosition(starting_pose, *getRobotPose()));
+
+		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
+		// we want to get a new trajectory from the planner.
 		if(distance_traveled + total_distance_traveled_ > TRAJECTORY_RESET_DIST)
 		{
 			ROS_INFO("driveDistance detected total distance > trajectory reset, setting trajectory flag.\n");
@@ -395,7 +405,6 @@ bool NavigationServer::driveDistance(double delta_distance)
 
 	// Stop moving the robot after we are done moving
 	moveRobotWheels(0);
-
 	brakeRobot(true);
 
 	return true;
@@ -485,7 +494,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			ROS_INFO("Going the distance, going for speed\n");
 			bool drove_successfully = driveDistance(delta_distance);
 
-			If driveDistance set the get_new_trajectory_ flag, we should quit out of the for loop, which will get a new trajectory.
+			// If driveDistance set the get_new_trajectory_ flag, we should quit out of the for loop, which will get a new trajectory.
 			if(get_new_trajectory_)
 			{
 				ROS_INFO("Distance planner interrupt. Getting new trajectory.\n");
