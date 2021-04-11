@@ -32,13 +32,20 @@ public:
     ~NavigationServer();
 
 private:
+    // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
     const float BASE_DRIVE_SPEED = 0.6;
     const float BASE_SPIN_SPEED = 0.3;
+
+    // Tolerances for linear and angular moves
     const float DIST_EPSILON = 0.05;
     const float ANGLE_EPSILON = 0.01;
 
+    // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
+    const double TRAJECTORY_RESET_DIST = 5;
+
     std::string robot_name_;
 
+    // The actionlib server
     Server* server_;
 
     // Rate limiter
@@ -48,6 +55,7 @@ private:
     ros::Publisher front_left_vel_pub_, front_right_vel_pub_, back_left_vel_pub_, back_right_vel_pub_;
     ros::Publisher front_left_steer_pub_, front_right_steer_pub_, back_left_steer_pub_, back_right_steer_pub_;
 
+    // Debug publisher. Can be used to publish any PoseStamped. Used to visualize in RViz
     ros::Publisher waypoint_pub_;
 
     // Used to get the current robot pose
@@ -66,8 +74,14 @@ private:
     // Whether we are currently manually driving, or automatically following a trajectory
     bool manual_driving_ = false;
 
+    // How much distance the robot has traveled since the last planner call. Compared against TRAJECTORY_RESET_DIST.
+    double total_distance_traveled_ = 0;
+
+    // Whether we should get a new trajectory from the planner. Set by driveDistance in automaticDriving.
+    bool get_new_trajectory_ = false;
+
     /**
-     * @brief 
+     * @brief Initialize the publishers for wheel speeds
      * 
      */
     void initVelocityPublisher(ros::NodeHandle &nh, const std::string &robot_name);
@@ -159,7 +173,15 @@ private:
      * @param goal The end goal for the robot to go to
      * @return operations::TrajectoryWithVelocities* 
      */
-    operations::TrajectoryWithVelocities* sendGoalToPlanner(const operations::NavigationGoalConstPtr &goal);
+    operations::TrajectoryWithVelocities sendGoalToPlanner(const geometry_msgs::PoseStamped& goal);
+
+    /**
+     * @brief Used to transform each pose in the trajectory into the map frame.
+     * 
+     * @param traj The trajectory to transform the poses of
+     * @return operations::TrajectoryWithVelocities The resulting trajectory
+     */
+    operations::TrajectoryWithVelocities getTrajInMapFrame(const operations::TrajectoryWithVelocities& traj);
 
     /**
      * @brief Set the manual brake on the robot.
