@@ -29,6 +29,7 @@ public:
 
   static constexpr float wheel_sep_width_ = 1.0;
   static constexpr float wheel_sep_length_ = 1.076;
+  static constexpr float wheel_rad_ = 0.17;
 
   /**
    * @brief **DEPRICATED** Get the Steering Angles for Making Radial Turn 
@@ -142,6 +143,14 @@ public:
   }
 
   /**
+   * @brief Converts a desired linear velocity to an angular velocity for the wheels
+   * 
+   * @param linear_vel Desired linear velocity
+   * @return double Angular velocity, in rad/s
+   */
+  static double linearToAngularVelocity(double linear_vel);
+
+  /**
    * @brief Returns a set of Euler angles
    * 
    * @param pose            Current robot pose
@@ -186,12 +195,12 @@ public:
    * @param pose The pose to transform. Passed as a reference, and is changed in place.
    * @param frame The frame to transform the pose into.
    * @param tf_buffer A transform buffer that is populated with up-to-date transforms.
-   * @param duration The longest time any one iteration can take to try and transform
+   * @param duration The longest time any one iteration can take to try and transform. Defaults to 0.1 seconds
    * @param tries How many iterations this function can try to transform. Defaults to 1
    * @return true Transform succeeded
    * @return false Transform failed
    */
-  static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries = 1);
+  static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration = 0.1, int tries = 1);
 
   /**
    * @brief Same as transformPose, but for a point. Passes through to transformPose.

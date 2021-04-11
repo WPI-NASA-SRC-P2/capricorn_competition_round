@@ -14,7 +14,7 @@ ScoutStateMachine::ScoutStateMachine(ros::NodeHandle nh, const std::string& robo
 
     excavator_ready_sub_ = nh.subscribe(CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000, &ScoutStateMachine::processExcavatorMessage, this);
 
-    volatile_pub_ = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + robot_name + VOLATILE_LOCATION_TOPIC, 1000);
+    volatile_pub_ = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + SCHEDULER_TOPIC + VOLATILE_LOCATION_TOPIC, 1000);
 }
 
 ScoutStateMachine::~ScoutStateMachine()
