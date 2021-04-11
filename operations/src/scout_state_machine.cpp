@@ -75,7 +75,7 @@ void ScoutStateMachine::startStateMachine()
                 unexplored.header.frame_id = MAP;
 
                 unexplored.pose.position.x = 40;
-                unexplored.pose.position.y = 9;
+                unexplored.pose.position.y = 0;
                 unexplored.pose.position.z = 0;
 
                 unexplored.pose.orientation.w = 1;

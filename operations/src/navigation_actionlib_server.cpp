@@ -215,6 +215,7 @@ operations::TrajectoryWithVelocities* NavigationServer::sendGoalToPlanner(const 
 void NavigationServer::brakeRobot(bool brake)
 {
 	srcp2_msgs::BrakeRoverSrv srv;
+	moveRobotWheels(0); // Its better to stop wheels from rotating if we are braking
 
 	if(brake)
 		srv.request.brake_force = 1000;
@@ -261,9 +262,6 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	// While we have not turned the desired amount
 	while (abs(NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_)) > ANGLE_EPSILON && ros::ok())
 	{
-		printf("Heading error: %f\n", abs(NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_)));
-
-		// target_robot_pose in the robot's frame of reference
 		geometry_msgs::PoseStamped target_in_robot_frame = target_robot_pose;
 		NavigationAlgo::transformPose(target_in_robot_frame, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
 		
@@ -521,6 +519,17 @@ void NavigationServer::angularDriving(const operations::NavigationGoalConstPtr &
 	return;
 }
 
+void NavigationServer::revolveRobot(geometry_msgs::PointStamped &revolve_about, double forward_velocity)
+{
+	NavigationAlgo::transformPoint(revolve_about, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
+
+	std::vector<double> angles = NavigationAlgo::getSteeringAnglesRadialTurn(revolve_about.point);
+	std::vector<double> speeds = NavigationAlgo::getDrivingVelocitiesRadialTurn(revolve_about.point, forward_velocity);
+
+	steerRobot(angles);
+	moveRobotWheels(speeds);
+}
+
 void NavigationServer::revolveDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
 	printf("Revolve drive\n");
@@ -528,14 +537,9 @@ void NavigationServer::revolveDriving(const operations::NavigationGoalConstPtr &
 	brakeRobot(false);
 
 	geometry_msgs::PointStamped revolve_about = goal->point;
+	double forward_velocity = goal->forward_velocity;
 
-	NavigationAlgo::transformPoint(revolve_about, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
-
-	std::vector<double> angles = NavigationAlgo::getSteeringAnglesRadialTurn(revolve_about.point);
-	std::vector<double> speeds = NavigationAlgo::getDrivingVelocitiesRadialTurn(revolve_about.point, goal->forward_velocity);
-
-	steerRobot(angles);
-	moveRobotWheels(speeds);
+	revolveRobot(revolve_about, forward_velocity);
 
 	operations::NavigationResult res;
 	res.result = NAV_RESULT::SUCCESS;
@@ -543,15 +547,71 @@ void NavigationServer::revolveDriving(const operations::NavigationGoalConstPtr &
 	return;
 }
 
+double NavigationServer::getCumulativeTheta(double yaw, int &rotation_counter)
+{
+  // static variable, hence will retain its value
+  static double last_yaw = 0;
+
+  // If yaw if positive, then consider actual value of yaw (first two quads)
+  // Else consider 2PI plus yaw, becaues its the third and fourth quadrants
+  yaw = yaw >= 0 ? yaw : 2 * M_PI + yaw;
+  yaw /= 2; // Not sure why, but this is needed for theta calculation.
+
+  if ((last_yaw > M_PI_2 && yaw < M_PI_2))
+  {
+    ROS_INFO_STREAM("Rotation Complete");
+    rotation_counter++;
+  }
+  last_yaw = yaw;
+  return (rotation_counter * M_PI + yaw);
+}
+
 void NavigationServer::spiralDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
-	printf("Spiral drive: Spiral Away!\n");
+	ROS_INFO("Starting spiral motion");
+	brakeRobot(false);
+	
+	geometry_msgs::PoseStamped robot_start_pose = *getRobotPose();
 
-	ros::Duration(5).sleep();
+	// Stamp must be set to 0 for the latest transform
+	robot_start_pose.header.stamp = ros::Time(0);
 
-	//TODO: actually make it spiral
+	// Counts the number of rotations complited in a spiral
+	int rotation_counter = 0;
 
-	operations::NavigationResult res;
+	double current_yaw;
+
+	geometry_msgs::PointStamped rotation_point;
+	rotation_point.header = getRobotPose()->header;
+	
+	/**
+	 * @brief Continue loop until interrupted externally (through cancel goal)
+	 * 				This depends on the concept of osculating circles for a spiral
+	 * 				Depending on how much the robot has already travelled, get and 
+	 * 					execute the instantaneous radial turn to produce spiral motion
+	 * 					motion as a whole
+	 *				Source: https://en.wikipedia.org/wiki/Osculating_circle
+	 */
+	while (spiral_motion_continue_)
+	{		
+		current_yaw = NavigationAlgo::changeInOrientation(robot_start_pose, robot_name_, buffer_);
+
+		double spiral_t = getCumulativeTheta(current_yaw, rotation_counter);
+		double inst_radius = NavigationAlgo::getRadiusInArchimedeanSpiral(spiral_t);
+
+		rotation_point.point.x = 0;
+		rotation_point.point.y = inst_radius;
+		rotation_point.point.z = 0;
+
+		revolveRobot(rotation_point, SPIRAL_SPEED);
+		ros::Duration(0.1).sleep();
+	}
+
+	ROS_INFO_STREAM("Spiraling Complete");
+	steerRobot(0);
+	brakeRobot(true);
+
+  operations::NavigationResult res;
 	res.result = NAV_RESULT::SUCCESS;
 	action_server->setSucceeded(res);
 	return;
@@ -627,5 +687,8 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 void NavigationServer::cancelGoal()
 {
 	manual_driving_ = true;
+	spiral_motion_continue_ = false;
+	steerRobot(0);
+	brakeRobot(true);
 	printf("Clearing current goal, got a new one\n");
 }
