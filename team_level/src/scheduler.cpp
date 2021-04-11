@@ -4,11 +4,18 @@
 
 using namespace COMMON_NAMES;
 
-void doSomething(const geometry_msgs::PoseStamped::ConstPtr& msg)
-{
-    ROS_INFO("Sending robot task & volatile location [%f]\n", msg->pose.position.x);
+ros::Publisher vol_location_excavator_pub, vol_location_hauler_pub;
 
-    
+/**
+ * @brief Listens to the volatile location topic, and republishes received poses to both the hauler and excavator.
+ * 
+ * @param vol_loc 
+ */
+void volLocationCB(const geometry_msgs::PoseStamped::ConstPtr& vol_loc)
+{
+    ROS_INFO("Received volatile location at [%f, %f]. Sending to hauler and excavator.\n", vol_loc->pose.position.x, vol_loc->pose.position.y);
+    vol_location_excavator_pub.publish(vol_loc);
+    vol_location_hauler_pub.publish(vol_loc);
 }
 
 int main(int argc, char* argv[])
@@ -16,26 +23,19 @@ int main(int argc, char* argv[])
     ros::init(argc, argv, "scheduler"); 
     ros::NodeHandle nh;
 
-    /**
-    *   Put publishers here
-    *   ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
-    */
+    // Listens to any messages published about detecting new volatiles.
+    ros::Subscriber volatile_location_sub = nh.subscribe(CAPRICORN_TOPIC + SCHEDULER_TOPIC + VOLATILE_LOCATION_TOPIC, 1000, volLocationCB);
 
-    // /capricorn/scheduler/volatile_location
-    std::string vol_location_topic = CAPRICORN_TOPIC + SCHEDULER_TOPIC + VOLATILE_LOCATION_TOPIC;
+    // Publishers to redistribute any messages on the volatile location topic to the hauler and excavator.
+    // In the future, we will select which hauler and excavator to send off (or wait for one to be ready), but for now we just send the volatile off to the first of each.
+    vol_location_excavator_pub = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + "/" + EXCAVATOR_1 + VOLATILE_LOCATION_TOPIC, 1000);
+    vol_location_hauler_pub = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + "/" + HAULER_1 + VOLATILE_LOCATION_TOPIC, 1000);
 
-    ros::Subscriber sub = nh.subscribe(vol_location_topic, 1000, doSomething);
-    
+    ROS_INFO("Scheduler started, listening for volatiles.\n");
 
-    ros::Rate loop_rate(10);
-    
-    //int count = 0;
-    while(ros::ok())
-    {
-        //ROS_INFO("test\n");
-        ros::spinOnce();
-        loop_rate.sleep();
-    }
+    ros::spin();
+
+    ROS_WARN("Scheduler died!\n");
 
     return 0;
 }
