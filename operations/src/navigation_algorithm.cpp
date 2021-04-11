@@ -155,6 +155,11 @@ std::vector<geometry_msgs::Point> NavigationAlgo::getNArchimedeasSpiralPoints(co
   return points;
 }
 
+double NavigationAlgo::linearToAngularVelocity(double linear_vel)
+{
+  return linear_vel/wheel_rad_;
+}
+
 std::vector<double> NavigationAlgo::fromQuatToEuler(const geometry_msgs::PoseStamped& pose)
 {
   geometry_msgs::Quaternion q = pose.pose.orientation;
