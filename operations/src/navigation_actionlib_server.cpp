@@ -215,6 +215,7 @@ operations::TrajectoryWithVelocities* NavigationServer::sendGoalToPlanner(const 
 void NavigationServer::brakeRobot(bool brake)
 {
 	srcp2_msgs::BrakeRoverSrv srv;
+  moveRobotWheels(0); // Its better to stop wheels from rotating if we are braking
 
 	if(brake)
 		srv.request.brake_force = 1000;
@@ -549,12 +550,15 @@ void NavigationServer::revolveDriving(const operations::NavigationGoalConstPtr &
 	return;
 }
 
-double getTravelTheta(double yaw, int &rotation_counter)
+double NavigationServer::getTravelTheta(double yaw, int &rotation_counter)
 {
+  // static variable, hence will retain its value
   static double last_yaw = 0;
 
+  // If yaw if positive, then consider actual value of yaw (first two quads)
+  // Else consider 2PI plus yaw, becaues its the third and fourth quadrants
   yaw = yaw >= 0 ? yaw : 2 * M_PI + yaw;
-  yaw /= 2;
+  yaw /= 2; // Not sure why, but this is needed for theta calculation.
 
   if ((last_yaw > M_PI_2 && yaw < M_PI_2))
   {
@@ -571,55 +575,39 @@ void NavigationServer::spiralDriving(const operations::NavigationGoalConstPtr &g
 	brakeRobot(0);
 	
 	geometry_msgs::PoseStamped robot_start_pose = *getRobotPose();
+
+	// seq and stamp must be set to 0 for the latest transpose
 	robot_start_pose.header.seq = 0;
 	robot_start_pose.header.stamp = ros::Time(0);
-	
-	double effort_loc = 0.5;
 
+	// Counts the number of rotations complited in a spiral
 	int rotation_counter = 0;
+
 	double current_yaw = NavigationAlgo::changeInOrientation(robot_start_pose, robot_name_, buffer_);
 
 	geometry_msgs::PointStamped rotation_point;
 	rotation_point.header = getRobotPose()->header;
-	// if (current_yaw < 0)
-	// {
-	// 	revolveRobot(rotation_point, -effort_loc);
-	// }
-
-	// while (current_yaw < 0 && ros::ok())
-	// {
-	// 	current_yaw = NavigationAlgo::changeInOrientation(robot_start_pose, robot_name_, buffer_);
-	// }
-
-	moveRobotWheels(0);
-	
-	//   ROS_INFO_STREAM("yaw:"<<current_yaw);
-	//   ROS_INFO_STREAM("From Frame:"<<robot_start_pose.header.frame_id);
-	//   ROS_INFO_STREAM("To Frame:"<<base_frame_name);
 	
 	while (spiral_motion_continue_)
 	{		
 		current_yaw = NavigationAlgo::changeInOrientation(robot_start_pose, robot_name_, buffer_);
 
-		double spiral_t_ = getTravelTheta(current_yaw, rotation_counter);
-		double inst_radius = NavigationAlgo::getRadiusInArchimedeanSpiral(spiral_t_);
-
-		inst_radius += NavigationAlgo::wheel_sep_width_;
-		inst_radius = 0.4*inst_radius;
+		double spiral_t = getTravelTheta(current_yaw, rotation_counter);
+		double inst_radius = NavigationAlgo::getRadiusInArchimedeanSpiral(spiral_t);
 
 		rotation_point.point.x = 0;
 		rotation_point.point.y = inst_radius;
 		rotation_point.point.z = 0;
-		ROS_INFO_STREAM(rotation_point);
 
-		revolveRobot(rotation_point, effort_loc);
-		// ROS_INFO_STREAM(temp << "--" << spiral_t_);
+		revolveRobot(rotation_point, SPIRAL_SPEED);
 		ros::Duration(0.1).sleep();
 	}
+
 	ROS_INFO_STREAM("Spiraling Complete");
-	moveRobotWheels(0);
 	steerRobot(0);
-  	operations::NavigationResult res;
+  brakeRobot(true);
+
+  operations::NavigationResult res;
 	res.result = NAV_RESULT::SUCCESS;
 	action_server->setSucceeded(res);
 	return;

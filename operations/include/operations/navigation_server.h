@@ -35,6 +35,7 @@ private:
     const float BASE_SPEED = 0.6;
     const float DIST_EPSILON = 0.05;
     const float ANGLE_EPSILON = 0.01;
+    const float SPIRAL_SPEED = 0.5;
 
     std::string robot_name_;
 
@@ -263,5 +264,24 @@ private:
      * 
      */
     void cancelGoal();
+
+
+    /**
+    * @brief Get the Travel Theta object
+    * 	 			 The spiral motion generator requires the 'theta' covered by
+    * 	 			 the robot in terms of radian. 
+    * 	 			 This theta is incremental, [0, inf]
+    * 	 			 If the robot traverses one complete rotation, output will
+    * 	 			 be 2PI, and on completition of two rotations, the output
+    * 	 			 should be 4PI. This function returns this traveling theta
+    * 	 			 Please suggest if you can find a more intuitive name
+    *				
+    * 
+    * @param yaw 	 Current Yaw of the robot with respect to the initial position.
+    * @param rotation_counter 		Number of rotations already completed prior to 
+    *								this on-going rotation
+    * @return double 				Theta travelled
+    */
+    double getTravelTheta(double yaw, int &rotation_counter);
     
 };

@@ -128,6 +128,13 @@ float NavigationAlgo::getRadiusInArchimedeanSpiral(const float t)
   float denom = std::pow((1 + std::pow(t, 2)), 1.5);
   float curvature = neum / denom;
   float radius = 1 / std::abs(curvature);
+  
+  // This is to make sure that the spiral center lies to the side of the robot and not within the robot. 
+  radius += NavigationAlgo::wheel_sep_width_;
+  
+  // Tuning paramter for scaling the spiral up or down. 
+  radius = 0.4*radius;
+  
   return radius;
 }
 
