@@ -50,13 +50,8 @@ int main(int argc, char *argv[])
     // service client for calling the LocalizationSrv service for each rover
     ros::ServiceClient get_true_pose_client;
 
-    // start by setting up the proper rosservice call name: /robot_name/get_true_pose
-    std::ostringstream srv_name;
-    srv_name << "/" << robot_name << "/get_true_pose";
-    std::string srv_name_string = srv_name.str();
-
-    // initialize the LocalizationSrv client
-    get_true_pose_client = nh.serviceClient<srcp2_msgs::LocalizationSrv>(srv_name_string);
+    // initialize the LocalizationSrv client on proper rosservice call name: /robot_name/get_true_pose
+    get_true_pose_client = nh.serviceClient<srcp2_msgs::LocalizationSrv>("/" + robot_name + COMMON_NAMES::TRUE_POSE_SRV);
 
     // set up the request/response message for LocalizationSrv
     srcp2_msgs::LocalizationSrv loc_pose;
