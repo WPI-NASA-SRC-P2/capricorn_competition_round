@@ -37,7 +37,9 @@ namespace COMMON_NAMES
   const std::string RESOURCE_LOCALISER_ACTIONLIB = "resource_localiser_actionlib";
   const std::string HAULER_ACTIONLIB = "hauler_bin";
   const std::string EXCAVATOR_ACTIONLIB = "excavator";
-  const std::string PARK_HAULER_ACTIONLIB_NAME = "park_hauler";
+  const std::string PARK_HAULER_ACTIONLIB = "park_hauler";
+  const std::string FIND_PP_RS_ACTIONLIB = "_find_pp_rs";
+  const std::string NAVIGATION_VISION_ACTIONLIB = "_navigation_vision";
 
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";
@@ -51,10 +53,6 @@ namespace COMMON_NAMES
 
   /****** RTABMAP ******/
   const std::string RESET_POSE_CLIENT = "/camera/reset_odom_to_pose";
-
-  /****** ACTIONLIB NAMES ******/
-  const std::string FIND_PP_RS_ACTIONLIB_NAME = "_find_pp_rs";
-  const std::string NAVIGATION_VISION_ACTIONLIB_NAME = "_navigation_vision";
 
   /****** ROS NODE NAMES ******/
   const std::string NAVIGATION_VISION_SERVER_NODE_NAME = "_navigation_vision_server";

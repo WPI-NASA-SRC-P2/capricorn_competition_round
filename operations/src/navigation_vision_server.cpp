@@ -103,15 +103,12 @@ void vision_navigation()
           nav_goal.angular_velocity = 0;
           if(error_height <= 0)
           {
-              // If the object is big enough, stop the robot
-              nav_goal.forward_velocity = 0.0000001;
-              execute_called = false;
-              for(int i = 0; i < 20; i++)
-              {
-                  client->sendGoal(nav_goal);
-              }
-              ROS_INFO("Reached Goal");
-              return;
+                // If the object is big enough, stop the robot
+            nav_goal.forward_velocity = 0.0000001;
+            execute_called = false;
+            client->sendGoal(nav_goal);
+            ROS_INFO("Reached Goal");
+            return;
           }
           else
           {
@@ -190,7 +187,7 @@ int main(int argc, char** argv)
 
     ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objects_callback);
 
-    Server server(nh, robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB_NAME, boost::bind(&execute, _1, &server), false);
+    Server server(nh, robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.start();
     ROS_INFO("Starting Navigation Vision Server");
     ros::spin();

@@ -77,7 +77,7 @@ add_action_files(DIRECTORY action
   FILES
   Navigation.action
   NavigationVision.action
-  ParkHauler.action
+  ParkRobot.action
   NavigationVision.action
   ResourceLocaliser.action
   Hauler.action

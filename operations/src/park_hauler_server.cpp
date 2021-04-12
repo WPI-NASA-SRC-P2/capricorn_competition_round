@@ -7,7 +7,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/server/simple_action_server.h>
 
-#include <operations/ParkHaulerAction.h>
+#include <operations/ParkRobotAction.h>
 #include <operations/NavigationAction.h> 
 #include <string>
 #include <utils/common_names.h>
@@ -26,7 +26,7 @@ double hopper_z;
 bool execute_called = false;
 perception::ObjectArray objects;
 
-typedef actionlib::SimpleActionServer<operations::ParkHaulerAction> Server;
+typedef actionlib::SimpleActionServer<operations::ParkRobotAction> Server;
 
 typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
 Client* client;
@@ -182,7 +182,7 @@ void park_excavator()
     }
 }
 
-void execute(const operations::ParkHaulerGoalConstPtr& goal, Server* as)
+void execute(const operations::ParkRobotGoalConstPtr& goal, Server* as)
 {
     execute_called = true; 
     parked = false;
@@ -256,10 +256,11 @@ int main(int argc, char *argv[])
     ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objects_callback);
     client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
 
-    Server server(nh, robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB_NAME, boost::bind(&execute, _1, &server), false);
+    Server server(nh, robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.start();
     ROS_INFO("Starting Park Hauler Server");
     ros::spin();
     
     ROS_INFO("Exiting");
+    return 0;
 }

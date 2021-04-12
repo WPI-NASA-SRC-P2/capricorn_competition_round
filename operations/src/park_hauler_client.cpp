@@ -1,17 +1,17 @@
-#include <operations/ParkHaulerAction.h> // Note: "Action" is appended
+#include <operations/ParkRobotAction.h> // Note: "Action" is appended
 #include <actionlib/client/simple_action_client.h>
 #include <utils/common_names.h>
 
-typedef actionlib::SimpleActionClient<operations::ParkHaulerAction> Client;
+typedef actionlib::SimpleActionClient<operations::ParkRobotAction> Client;
 
 int main(int argc, char** argv)
 {
     std::string robot_name = argv[1];
     ros::init(argc, argv, robot_name + COMMON_NAMES::PARK_HAULER_HOPPER_CLIENT_NODE_NAME);
-    Client client(robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB_NAME, true); // true -> don't need ros::spin()
+    Client client(robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true); // true -> don't need ros::spin()
     client.waitForServer();
 
-    operations::ParkHaulerGoal goal; 
+    operations::ParkRobotGoal goal; 
     goal.hopper_or_excavator = argv[2]; 
 
     client.sendGoal(goal);
