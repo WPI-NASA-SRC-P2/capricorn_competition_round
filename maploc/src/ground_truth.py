@@ -15,8 +15,11 @@ class Block:
         self._name = name
         self._relative_entity_name = relative_entity_name
 
-class Models_state:
-
+# class ModelsState keeps track of the ground truths of each object 
+# of interest in the Gazebo file, with respect to the heightmap frame
+class ModelsState:
+    # dictionary for obtaining location of the objects of interest wrt heightmap
+    # ('link' is the same as heightmap for all intents and purposes)
     _blockListDict = {
         'small_scout_1': Block('small_scout_1', 'link'),
         'small_excavator_1': Block('small_excavator_1', 'link'),
@@ -25,8 +28,9 @@ class Models_state:
         'processing_plant': Block('processing_plant', 'link')
     }
     
+    # function returns the xyz coordinates of each object of interest to be plotted by addObstacle function
     def show_gazebo_models(self):
-        All_coordinate = []
+        all_coordinate = []
         try:
             model_coordinates = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
             for block in self._blockListDict.values():
@@ -35,15 +39,15 @@ class Models_state:
                 x = resp_coordinates.pose.position.x
                 y = resp_coordinates.pose.position.y
                 z = resp_coordinates.pose.position.z
-                All_coordinate.append((x, y, z))
+                all_coordinate.append((x, y, z))
 
         except rospy.ServiceException as e:
             rospy.loginfo("Get Model State service call failed:  {0}".format(e))
 
-        return All_coordinate
+        return all_coordinate
 
 # acquire model coordinates before running the class for mapgen
-states = Models_state()
+states = ModelsState()
 coordinates = states.show_gazebo_models()
 print(coordinates)
 
@@ -104,7 +108,7 @@ def add_initial_obstacles(initial_origin_x, initial_origin_y):
 rospy.init_node("Ground_Truth")
 
 while not rospy.is_shutdown():
-    states = Models_state()
+    states = ModelsState()
     coordinates = states.show_gazebo_models()
     print(coordinates)
     
