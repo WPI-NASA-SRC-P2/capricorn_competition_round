@@ -37,6 +37,7 @@ namespace COMMON_NAMES
   const std::string RESOURCE_LOCALISER_ACTIONLIB = "resource_localiser_actionlib";
   const std::string HAULER_ACTIONLIB = "hauler_bin";
   const std::string EXCAVATOR_ACTIONLIB = "excavator";
+  const std::string PARK_HAULER_ACTIONLIB_NAME = "park_hauler";
 
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";
@@ -67,6 +68,8 @@ namespace COMMON_NAMES
   const std::string NOISY_IMAGE_NODE_NAME = "_noisy_image_eliminate";
   const std::string HORIZON_TRACKING_NODE_NAME = "_horzion_tracking";
   const std::string FIND_PP_RS_SERVER_NODE_NAME = "_find_pp_rs_server";
+  const std::string PARK_HAULER_HOPPER_SERVER_NODE_NAME = "_park_hauler_server_hopper";
+  const std::string PARK_HAULER_HOPPER_CLIENT_NODE_NAME = "_park_hauler_vision_hopper";
 
   /****** TOPIC NAMES ******/
   const std::string CAPRICORN_TOPIC = "/capricorn/";
@@ -102,6 +105,15 @@ namespace COMMON_NAMES
   /****** OBJECT DETECTION CLASS NAMES ******/
   const std::string OBJECT_DETECTION_PROCESSING_PLANT_CLASS = "processingPlant";
   const std::string OBJECT_DETECTION_REPAIR_STATION_CLASS = "repairStation";
+  const std::string OBJECT_DETECTION_EXCAVATOR_CLASS = "excavator";
+  const std::string OBJECT_DETECTION_EXCAVATOR_ARM_CLASS = "excavatorArm";
+  const std::string OBJECT_DETECTION_SCOUT_CLASS = "scout";
+  const std::string OBJECT_DETECTION_HAULER_CLASS = "hauler";
+  const std::string OBJECT_DETECTION_FURNACE_CLASS = "furnace";
+  const std::string OBJECT_DETECTION_HOPPER_CLASS = "hopper";
+  const std::string OBJECT_DETECTION_ROBOT_ANTENNA_CLASS = "robotAntenna";
+  const std::string OBJECT_DETECTION_PP_SMALL_THRUSTER_CLASS = "ppSmallThruster";
+  const std::string OBJECT_DETECTION_ROCK_CLASS = "rock";
 
   /****** NAVIGATION ENUMS ******/
   enum NAV_TYPE

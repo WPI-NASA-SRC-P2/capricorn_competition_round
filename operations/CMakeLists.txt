@@ -76,6 +76,7 @@ add_message_files(
 add_action_files(DIRECTORY action
   FILES
   Navigation.action
+  ParkHauler.action
   NavigationVision.action
   ResourceLocaliser.action
   Hauler.action
@@ -271,18 +272,17 @@ target_link_libraries(resource_localiser_tester
   ${catkin_LIBRARIES}
 )
 
-add_executable(park_hauler_excavator src/park_hauler_excavator.cpp)
-add_dependencies(park_hauler_excavator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(park_hauler_excavator ${PROJECT_NAME}
+add_executable(park_hauler_server src/park_hauler_server.cpp)
+add_dependencies(park_hauler_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(park_hauler_server ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
-add_executable(park_hauler_hopper src/park_hauler_hopper.cpp)
-add_dependencies(park_hauler_hopper ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(park_hauler_hopper ${PROJECT_NAME}
+add_executable(park_hauler_client src/park_hauler_client.cpp)
+add_dependencies(park_hauler_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(park_hauler_client ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
-
 
 # target_link_libraries(start_scout_sm navigation_algorithm)
 

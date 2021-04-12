@@ -7,4 +7,5 @@
     </include>
 
     <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
+    <node name="park_hauler_server" pkg="operations" type="park_hauler_server" args="$(arg robot_name)" output="screen"/>
 </launch>
