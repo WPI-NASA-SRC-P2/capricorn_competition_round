@@ -1,5 +1,5 @@
 # Define the goal
-bool desired_angle # The angle to empty the bin
+bool desired_state # The task to empty the bin
 ---
 # Define the result
 float64 final_angle # 

@@ -49,12 +49,12 @@ private:
   bool nav_server_idle_ = true;
   bool excavator_server_idle_ = true;
 
-  typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient_;
-  NavigationClient_* navigation_client_;
+  typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
+  NavigationClient* navigation_client_;
   operations::NavigationGoal navigation_action_goal_;
 
-  typedef actionlib::SimpleActionClient<operations::ExcavatorAction> ExcavatorClient_;
-  ExcavatorClient_* excavator_arm_client_;
+  typedef actionlib::SimpleActionClient<operations::ExcavatorAction> ExcavatorClient;
+  ExcavatorClient* excavator_arm_client_;
   operations::ExcavatorGoal excavator_arm_goal_;
 
   geometry_msgs::PoseStamped vol_pose_;

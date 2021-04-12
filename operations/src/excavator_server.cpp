@@ -201,7 +201,7 @@ int main(int argc, char** argv)
   if (argc != 2 && argc != 4)
   {
     // Displaying an error message for correct usage of the script, and returning error.
-    ROS_ERROR_STREAM("This Node must be launched via 'roslaunch' and needs an argument as <RobotName_Number>");
+    ROS_ERROR_STREAM("This Node needs an argument as <RobotName_Number>");
     return -1;
   }
   else
