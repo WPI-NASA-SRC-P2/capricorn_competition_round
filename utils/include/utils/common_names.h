@@ -37,6 +37,7 @@ namespace COMMON_NAMES
   const std::string RESOURCE_LOCALISER_ACTIONLIB = "resource_localiser_actionlib";
   const std::string HAULER_ACTIONLIB = "hauler_bin";
   const std::string EXCAVATOR_ACTIONLIB = "excavator";
+  const std::string PARK_HAULER_ACTIONLIB_NAME = "park_hauler";
 
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";
@@ -67,6 +68,8 @@ namespace COMMON_NAMES
   const std::string NOISY_IMAGE_NODE_NAME = "_noisy_image_eliminate";
   const std::string HORIZON_TRACKING_NODE_NAME = "_horzion_tracking";
   const std::string FIND_PP_RS_SERVER_NODE_NAME = "_find_pp_rs_server";
+  const std::string PARK_HAULER_HOPPER_SERVER_NODE_NAME = "_park_hauler_server_hopper";
+  const std::string PARK_HAULER_HOPPER_CLIENT_NODE_NAME = "_park_hauler_vision_hopper";
 
   /****** TOPIC NAMES ******/
   const std::string CAPRICORN_TOPIC = "/capricorn/";
@@ -79,6 +82,8 @@ namespace COMMON_NAMES
   const std::string RIGHT_CAMERAINFO_TOPIC = "/camera/right/camera_info";
   const std::string LEFT_CAMERAINFO_TOPIC = "/camera/left/camera_info";
   const std::string SET_SENSOR_PITCH_TOPIC = "/sensor/pitch/command/position";
+  const std::string VOLATILE_LOCATION_TOPIC = "/volatile_location";
+  const std::string SCHEDULER_TOPIC = "/scheduler";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
@@ -93,7 +98,6 @@ namespace COMMON_NAMES
   const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";
   const std::string OBJECT_DETECTION_OBJECTS_TOPIC = "/object_detection/objects";
   const std::string VOLATILE_SENSOR_TOPIC = "/volatile_sensor";
-  const std::string VOLATILE_LOCATION_TOPIC = "/volatile_location";
 
   // Used to communicate between excavators and scouts when the excavator is ready to move in to pick up a volatile
   // TODO: Choose a real message type for this topic, instead of std_msgs::Empty
@@ -102,6 +106,15 @@ namespace COMMON_NAMES
   /****** OBJECT DETECTION CLASS NAMES ******/
   const std::string OBJECT_DETECTION_PROCESSING_PLANT_CLASS = "processingPlant";
   const std::string OBJECT_DETECTION_REPAIR_STATION_CLASS = "repairStation";
+  const std::string OBJECT_DETECTION_EXCAVATOR_CLASS = "excavator";
+  const std::string OBJECT_DETECTION_EXCAVATOR_ARM_CLASS = "excavatorArm";
+  const std::string OBJECT_DETECTION_SCOUT_CLASS = "scout";
+  const std::string OBJECT_DETECTION_HAULER_CLASS = "hauler";
+  const std::string OBJECT_DETECTION_FURNACE_CLASS = "furnace";
+  const std::string OBJECT_DETECTION_HOPPER_CLASS = "hopper";
+  const std::string OBJECT_DETECTION_ROBOT_ANTENNA_CLASS = "robotAntenna";
+  const std::string OBJECT_DETECTION_PP_SMALL_THRUSTER_CLASS = "ppSmallThruster";
+  const std::string OBJECT_DETECTION_ROCK_CLASS = "rock";
 
   /****** NAVIGATION ENUMS ******/
   enum NAV_TYPE
