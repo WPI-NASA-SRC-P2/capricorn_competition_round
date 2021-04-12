@@ -50,6 +50,7 @@ namespace COMMON_NAMES
 
   /****** RTABMAP ******/
   const std::string RESET_POSE_CLIENT = "/camera/reset_odom_to_pose";
+  const std::string TRUE_POSE_SRV = "/get_true_pose";
 
   /****** ACTIONLIB NAMES ******/
   const std::string FIND_PP_RS_ACTIONLIB_NAME = "_find_pp_rs";
