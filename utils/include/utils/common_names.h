@@ -82,6 +82,8 @@ namespace COMMON_NAMES
   const std::string RIGHT_CAMERAINFO_TOPIC = "/camera/right/camera_info";
   const std::string LEFT_CAMERAINFO_TOPIC = "/camera/left/camera_info";
   const std::string SET_SENSOR_PITCH_TOPIC = "/sensor/pitch/command/position";
+  const std::string VOLATILE_LOCATION_TOPIC = "/volatile_location";
+  const std::string SCHEDULER_TOPIC = "/scheduler";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
@@ -96,7 +98,6 @@ namespace COMMON_NAMES
   const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";
   const std::string OBJECT_DETECTION_OBJECTS_TOPIC = "/object_detection/objects";
   const std::string VOLATILE_SENSOR_TOPIC = "/volatile_sensor";
-  const std::string VOLATILE_LOCATION_TOPIC = "/volatile_location";
 
   // Used to communicate between excavators and scouts when the excavator is ready to move in to pick up a volatile
   // TODO: Choose a real message type for this topic, instead of std_msgs::Empty

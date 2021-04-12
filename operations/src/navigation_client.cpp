@@ -71,7 +71,7 @@ void navigationCB(const geometry_msgs::Point::ConstPtr& goal_point)
     // Action message goal
     operations::NavigationGoal goal;
     
-    //Simple waypoint 2 meters in front of the robot
+    //Simple waypoint x meters in front of the robot
     geometry_msgs::PoseStamped t1;
     t1.header.frame_id = robot_name + "_small_chassis";
     t1.header.stamp = ros::Time::now();
