@@ -3,8 +3,10 @@
 ExcavatorStateMachine::ExcavatorStateMachine(ros::NodeHandle nh, const std::string& robot_name):nh_(nh)
 {
     robot_name_ = robot_name;
+    
     navigation_client_ = new NavigationClient(NAVIGATION_ACTIONLIB, true);
     excavator_arm_client_ = new ExcavatorClient(EXCAVATOR_ACTIONLIB, true);
+
     sub_scout_vol_location_ = nh_.subscribe("/"+CAPRICORN_TOPIC + SCOUT_1 + VOLATILE_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::scoutVolLocCB, this);
     excavator_ready_pub_ = nh.advertise<std_msgs::Empty>("/"+CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000);
 }
@@ -27,8 +29,10 @@ void ExcavatorStateMachine::scoutVolLocCB(const geometry_msgs::PoseStamped &msg)
 
 void ExcavatorStateMachine::startStateMachine()
 {
+    // Waiting for the servers to start
     navigation_client_->waitForServer();
     excavator_arm_client_->waitForServer();
+
     while (ros::ok() && state_machine_continue_)
     {   
         switch (robot_state_)
@@ -42,10 +46,6 @@ void ExcavatorStateMachine::startStateMachine()
         case EXCAVATOR_STATES::PARK_AND_PUB:
             parkExcavator();
             break;
-        // case EXCAVATOR_STATES::FIND_VOLATILE:
-        //     // Stop the robot, brake.
-        //     // Wait for a flag from excavator that it is ready to take over
-        //     break;
         case EXCAVATOR_STATES::DIG_VOLATILE:
             digVolatile();
             break;
@@ -53,7 +53,10 @@ void ExcavatorStateMachine::startStateMachine()
             dumpVolatile();
             break;
         case EXCAVATOR_STATES::NEXT_QUE_TASK:
-            robot_state_ = INIT;
+            robot_state_ = INIT; 
+            // this is temporary, ideally it should publish to schedular
+            // that it is available, and schedular should send the next
+            // Goal to follow. 
             break;
 
         default:
@@ -88,15 +91,20 @@ void ExcavatorStateMachine::goToVolatile()
     if(nav_server_idle_)
     {
         ROS_INFO("Goal action requested");
+        
+        // This is big hack for the demo. Ideally, it should still try to get to the location, and 
+        // terminate when it is close enough. We don't have a functionality for 'close enough' 
+        // Hence this hack
         geometry_msgs::PoseStamped temp_location = vol_pose_;
         temp_location.pose.position.y -= 5;
+
         navigation_action_goal_.pose = temp_location;
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
         navigation_client_->sendGoal(navigation_action_goal_);
         nav_server_idle_ = false;
     }
-    else if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) // ( || scout_found)
+    else if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) // ( || scout_found || close_enough)
     {
         ROS_INFO("GOAL FINISHED");
         robot_state_ = PARK_AND_PUB;
@@ -112,6 +120,8 @@ void ExcavatorStateMachine::parkExcavator()
     if(nav_server_idle_)
     {
         ROS_INFO("Goal action requested");
+        // Again, hack for the demo. It should register the location of scout, and 
+        // go to the location where it thought the scout was.
         navigation_action_goal_.pose = vol_pose_;
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
@@ -131,10 +141,12 @@ void ExcavatorStateMachine::digVolatile()
     if(excavator_server_idle_)
     {
         operations::ExcavatorGoal goal;
-        goal.task = START_DIGGING; // START_DIGGING = 1
+        goal.task = START_DIGGING; 
         
         // Odom location is unreliable to use. 
         // How to get these values / Do we need it?
+        // These are the testing values, can be chagned
+        // They start digging from the left of the robot
         goal.target.x = 0.7; 
         goal.target.y = 2;
         goal.target.z = 0;
@@ -144,8 +156,8 @@ void ExcavatorStateMachine::digVolatile()
     }
     else
     {
-        // if(Change location or something if volatile not found)
-        //      change state
+        // if(volatile not found)
+        //      Change location or something 
         // else if
         if (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         {    
@@ -160,11 +172,11 @@ void ExcavatorStateMachine::dumpVolatile()
     if(excavator_server_idle_)
     {
         operations::ExcavatorGoal goal;
-        goal.task = START_UNLOADING; // START_UNLOADING = 2
+        goal.task = START_UNLOADING; 
         
-        // Odom location is unreliable to use. 
-        // How to get these values / Do we need it?
-        goal.target.x = 0.7; // set of target dumping values to the right of the excavator
+        // Should be tested with Endurance's parking code and 
+        // These values should be tuned accordingly
+        goal.target.x = 0.7; 
         goal.target.y = -2;
         goal.target.z = 0;
 
