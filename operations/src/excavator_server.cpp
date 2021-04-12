@@ -34,10 +34,10 @@ int SLEEP_DURATION = 5; // The sleep duration
  */
 void initExcavatorPublisher(ros::NodeHandle &nh, const std::string &robot_name)
 {
-  excavator_shoulder_yaw_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_SHOULDER_YAW_POSITION, 1000);
-  excavator_shoulder_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_SHOULDER_PITCH_POSITION, 1000);
-  excavator_elbow_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_ELBOW_PITCH_POSITION, 1000);
-  excavator_wrist_pitch_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_WRIST_PITCH_POSITION, 1000);
+  excavator_shoulder_yaw_publisher_ = nh.advertise<std_msgs::Float64>("/"+robot_name + SET_SHOULDER_YAW_POSITION, 1000);
+  excavator_shoulder_pitch_publisher_ = nh.advertise<std_msgs::Float64>("/"+robot_name + SET_SHOULDER_PITCH_POSITION, 1000);
+  excavator_elbow_pitch_publisher_ = nh.advertise<std_msgs::Float64>("/"+robot_name + SET_ELBOW_PITCH_POSITION, 1000);
+  excavator_wrist_pitch_publisher_ = nh.advertise<std_msgs::Float64>("/"+robot_name + SET_WRIST_PITCH_POSITION, 1000);
 }
 
 /**
@@ -182,6 +182,8 @@ void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_serve
   publishExcavatorMessage(goal->task, goal->target, shoulder_wrt_base_footprint);
   ros::Duration(SLEEP_DURATION).sleep();
   // action_server->working(); // might use for feedback
+  
+  // SUCCEESS or FAILED depending upon if it could find volatile
   action_server->setSucceeded();
 }
 
@@ -210,7 +212,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
     initExcavatorPublisher(nh, robot_name);
-    ros::Subscriber sub = nh.subscribe(robot_name + SCOOP_INFO, 1000, scoopCallback); // scoop info subscriber
+    ros::Subscriber sub = nh.subscribe("/"+robot_name + SCOOP_INFO, 1000, scoopCallback); // scoop info subscriber
     Server server(nh, EXCAVATOR_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.start();
     ros::spin();
