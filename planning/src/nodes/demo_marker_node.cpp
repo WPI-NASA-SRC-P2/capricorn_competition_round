@@ -28,7 +28,7 @@ void callback(nav_msgs::Path path)
 
   Point target;
   target.x = 0;
-  target.y = 0;I
+  target.y = 0;
 
   locationPublisher.publish(origin);
   targetPublisher.publish(target);

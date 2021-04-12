@@ -14,7 +14,7 @@ using nav_msgs::OccupancyGrid;
  * @return std::vector<int> the indexes of the neighbors of pt
  */
 
-std::vector<int> CSpace::get_neighbors_indicies(int pt, int widthOfGrid, int sizeOfGrid)
+std::vector<int> CSpace::getNeighborsIndicies(int pt, int widthOfGrid, int sizeOfGrid)
 { // maybe use static array instead
 
 	std::vector<int> neighbors;
@@ -64,15 +64,15 @@ std::vector<int> CSpace::get_neighbors_indicies(int pt, int widthOfGrid, int siz
  * @param editGrid the edited searchGrid
  * @param searchGrid the original grid passed to the funciton
  */
-void recursive_search_neighbors(int pt, int radius, int threshold, OccupancyGrid *editGrid, const OccupancyGrid *searchGrid)
+void CSpace::recursiveSearchNeighbors(int pt, int radius, int threshold, OccupancyGrid *editGrid, const OccupancyGrid *searchGrid)
 {
 	if (radius > 0)
 	{
-		auto neighbors = get_neighbors_indicies(pt, editGrid->info.width, editGrid->data.size());
+		auto neighbors = getNeighborsIndicies(pt, editGrid->info.width, editGrid->data.size());
 		for (int i = 0; i < neighbors.size(); ++i)
 		{
 			editGrid->data[neighbors[i]] = 100;
-			recursive_search_neighbors(neighbors[i], radius - 1, threshold, editGrid, searchGrid);
+			recursiveSearchNeighbors(neighbors[i], radius - 1, threshold, editGrid, searchGrid);
 		}
 	}
 }
@@ -85,8 +85,7 @@ void recursive_search_neighbors(int pt, int radius, int threshold, OccupancyGrid
  * @param radius the radius in cell units of the CSpace
  * @return OccupancyGrid The Occupancy Grid with the CSpace included
  */
-OccupancyGrid CSpace::GetCSpace(const nav_msgs::OccupancyGrid &oGrid, int threshold, int radius)
-
+OccupancyGrid CSpace::getCSpace(const nav_msgs::OccupancyGrid &oGrid, int threshold, int radius)
 {
 
 	OccupancyGrid paddedGrid = oGrid;
@@ -95,7 +94,7 @@ OccupancyGrid CSpace::GetCSpace(const nav_msgs::OccupancyGrid &oGrid, int thresh
 	{
 		if (oGrid.data[i] > threshold)
 		{
-			recursive_search_neighbors(i, radius, threshold, &paddedGrid, &oGrid);
+			recursiveSearchNeighbors(i, radius, threshold, &paddedGrid, &oGrid);
 		}
 	}
 

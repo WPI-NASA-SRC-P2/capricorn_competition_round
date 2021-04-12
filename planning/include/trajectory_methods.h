@@ -3,11 +3,7 @@
 
 class TrajectoryMethods
 {
-private:
 public:
-  TrajectoryMethods();
-  ~TrajectoryMethods();
-
   /**
      * @brief Assigns the service response based on the output
      * of trajectory generation function 
