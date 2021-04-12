@@ -90,10 +90,10 @@ void park_hopper()
     }
     else
     {
-        double radius = processingPlant_z + 1.8;
-        geometry_msgs::PointStamped pt;
-        pt.point.x = radius;
-        nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::REVOLVE;
+        double radius = processingPlant_z + 1.8; //set radius of orbit, 1.8 is the depth of the object 
+        geometry_msgs::PointStamped pt; 
+        pt.point.x = radius; 
+        nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::REVOLVE; //all nav goals will be using the revolve drive
         nav_goal.point = pt;
         if (hopper_x > 320) // if the hopper is on the right side of the screen, orbit right 
         {
@@ -249,10 +249,14 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    //take in robot name as arg1, usually small_hauler_1
     std::string robot_name = argv[1];
 
+    //initialize node and node handler
     ros::init(argc, argv, robot_name + COMMON_NAMES::PARK_HAULER_HOPPER_SERVER_NODE_NAME);
     ros::NodeHandle nh;
+
+    //subscriber for object detection
     ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objects_callback);
     client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
 
