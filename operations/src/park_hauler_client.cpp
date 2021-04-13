@@ -22,9 +22,9 @@ typedef actionlib::SimpleActionClient<operations::ParkRobotAction> g_client;
 
 int main(int argc, char** argv)
 {
-    if(argc != 3)
+    if(argc != 3 && argc != 5)
     {
-        ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
+        ROS_ERROR_STREAM("This node must be launched with the robotname and the target location (should be hopper or excavator) passed as first and second command line arguments!");
         return -1;
     }
 

@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 {
     if(argc < 2)
     {
-        ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
+        ROS_ERROR_STREAM("This node must be launched with the robotname and the target object detection class that you want to go passed asfirst and second command line arguments!");
         return -1;
     }
 

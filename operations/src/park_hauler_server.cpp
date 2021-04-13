@@ -63,11 +63,6 @@ std::string robot_name;
  */
 void objectsCallback(const perception::ObjectArray& objs) 
 {
-    if(!g_execute_called)
-    {
-        return;
-    }
-
     const std::lock_guard<std::mutex> lock(g_objects_mutex); 
     g_objects = objs;
 }

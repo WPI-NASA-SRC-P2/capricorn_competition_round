@@ -30,7 +30,7 @@ operations::NavigationGoal g_nav_goal;
 perception::ObjectArray g_objects;
 
 const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 30, HEIGHT_IMAGE = 480;
-const float WIDTH_IMAGE = 640.0, PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35;
+const float WIDTH_IMAGE = 640.0, PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00;
 std::mutex g_objects_mutex;
 std::string g_desired_label;
 bool g_centered = false;
@@ -91,8 +91,8 @@ void visionNavigation()
     const std::lock_guard<std::mutex> lock(g_objects_mutex);   
     perception::ObjectArray objects = g_objects;
     // Initialize location and size variables
-    float center_obj = -1;
-    float height_obj = -1;
+    float center_obj = INIT_VALUE;
+    float height_obj = INIT_VALUE;
 
     // Initialize error, P Control, and necessary thresholds 
     static float error_angle = WIDTH_IMAGE;
@@ -105,10 +105,11 @@ void visionNavigation()
     // Find the desired object
     for(int i = 0; i < objects.number_of_objects; i++) 
     {   
-        if(objects.obj[i].label == g_desired_label) {
+        perception::Object object = objects.obj.at(i);
+        if(object.label == g_desired_label) {
             // Store the object's center and height
-            center_obj = objects.obj[i].center.x;
-            height_obj = objects.obj[i].size_y;
+            center_obj = object.center.x;
+            height_obj = object.size_y;
             break;
         }
     }
