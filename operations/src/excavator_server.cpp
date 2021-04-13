@@ -8,13 +8,14 @@
 #include <geometry_msgs/Point.h> // To get target point in order to orient shoulder joint
 #include <math.h> // used in findShoulderAngle() for atan2()
 
+using namespace COMMON_NAMES;
+
 // Initialization for joint angle publishers
 typedef actionlib::SimpleActionServer<operations::ExcavatorAction> Server;
 ros::Publisher excavator_shoulder_yaw_publisher_;
 ros::Publisher excavator_shoulder_pitch_publisher_;
 ros::Publisher excavator_elbow_pitch_publisher_;
 ros::Publisher excavator_wrist_pitch_publisher_;
-using namespace COMMON_NAMES;
 
 // The global variables to save the last values passed to the joints
 float curr_sh_yaw = 0;
@@ -34,10 +35,10 @@ int SLEEP_DURATION = 5; // The sleep duration
  */
 void initExcavatorPublisher(ros::NodeHandle &nh, const std::string &robot_name)
 {
-  excavator_shoulder_yaw_publisher_ = nh.advertise<std_msgs::Float64>("/"+robot_name + SET_SHOULDER_YAW_POSITION, 1000);
-  excavator_shoulder_pitch_publisher_ = nh.advertise<std_msgs::Float64>("/"+robot_name + SET_SHOULDER_PITCH_POSITION, 1000);
-  excavator_elbow_pitch_publisher_ = nh.advertise<std_msgs::Float64>("/"+robot_name + SET_ELBOW_PITCH_POSITION, 1000);
-  excavator_wrist_pitch_publisher_ = nh.advertise<std_msgs::Float64>("/"+robot_name + SET_WRIST_PITCH_POSITION, 1000);
+  excavator_shoulder_yaw_publisher_ = nh.advertise<std_msgs::Float64>("/" + robot_name + SET_SHOULDER_YAW_POSITION, 1000);
+  excavator_shoulder_pitch_publisher_ = nh.advertise<std_msgs::Float64>("/" + robot_name + SET_SHOULDER_PITCH_POSITION, 1000);
+  excavator_elbow_pitch_publisher_ = nh.advertise<std_msgs::Float64>("/" + robot_name + SET_ELBOW_PITCH_POSITION, 1000);
+  excavator_wrist_pitch_publisher_ = nh.advertise<std_msgs::Float64>("/" + robot_name + SET_WRIST_PITCH_POSITION, 1000);
 }
 
 /**
@@ -98,7 +99,7 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
  * @param target the target x, y coordinates in terms of the body frame
  * @param shoulder the fixed coordinates of the shoulder joint in body frame
  */
-void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
+bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
 {
   float theta = findShoulderAngle(target, shoulder);
   std::string scoop_value;
@@ -140,6 +141,7 @@ void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
         publishAngles(0, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
         ros::Duration(SLEEP_DURATION).sleep();
         publishAngles(0, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
+        return false;
       }
     }
     else // Else raise the arms where volatiles were found and proceed to dumping
@@ -164,6 +166,7 @@ void publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
   {
     ROS_ERROR("Unhandled state encountered in Excavator actionlib server");
   } 
+  return true;
 }
 
 /**
@@ -179,12 +182,12 @@ void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_serve
   shoulder_wrt_base_footprint.y = 0.0;
   shoulder_wrt_base_footprint.z = 0.1;
 
-  publishExcavatorMessage(goal->task, goal->target, shoulder_wrt_base_footprint);
+  bool dig_dump_result = publishExcavatorMessage(goal->task, goal->target, shoulder_wrt_base_footprint);
   ros::Duration(SLEEP_DURATION).sleep();
   // action_server->working(); // might use for feedback
   
   // SUCCEESS or FAILED depending upon if it could find volatile
-  action_server->setSucceeded();
+  dig_dump_result ? action_server->setSucceeded() : action_server->setAborted();
 }
 
 /**
@@ -196,7 +199,6 @@ void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_serve
  */
 int main(int argc, char** argv)
 {
-  ROS_INFO_STREAM(std::to_string(argc) + "\n");
   // Check if the node is being run through roslauch, and have one parameter of RobotName_Number
   if (argc != 2 && argc != 4)
   {
