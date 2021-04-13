@@ -162,16 +162,16 @@ target_link_libraries(demo_marker_node
 )
 
 ##server
-add_executable(trajectory_server src/nodes/path_planner_server.cpp)
-add_dependencies(trajectory_server ${demo_marker_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(trajectory_server
+add_executable(${PROJECT_NAME}_node src/nodes/path_planner_server.cpp)
+add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES} ${PROJECT_NAME}
 )
 
 
 ##client
 add_executable(trajectory_client src/nodes/path_planner_client_node.cpp)
-add_dependencies(trajectory_client ${demo_marker_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(trajectory_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(trajectory_client
   ${catkin_LIBRARIES} ${PROJECT_NAME}
 )

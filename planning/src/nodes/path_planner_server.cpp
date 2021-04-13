@@ -1,6 +1,9 @@
-#include <path_planner_server.h>
+#include "path_planner_server.h"
+
 #include <cspace.h>
 #include <astar.h>
+#include "planning/TrajectoryWithVelocities.h"
+#include <geometry_msgs/Point.h>
 
 const std::string oGrid_topic = "";
 const std::string location_topic = "";
@@ -10,8 +13,8 @@ const std::string location_topic = "";
 
 bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
-  std::unique_lock<std::mutex> oGridLock(oGrid_mutex);
-  auto paddedGrid = CSpace::getCSpace(global_oGrid, 50, 3);
+  std::unique_lock<std::mutex> oGridLock(oGrid_mutex);  
+  auto paddedGrid = CSpace::getCSpace(global_oGrid, 50, 3); // Maybe want to make a copy and unlock mutex, then calculate? Performance improvement is probably neglible.
   oGridLock.unlock();
 
   std::unique_lock<std::mutex> locationLock(location_mutex);
@@ -46,11 +49,13 @@ int main(int argc, char *argv[])
   //create a nodehandle
   ros::NodeHandle nh;
 
-  PathServer::oGrid_subscriber = nh.subscribe(oGrid_topic, 1000, PathServer::oGridCallback);
-  PathServer::location_subscriber = nh.subscribe(location_topic, 1000, PathServer::locationCallback);
+  PathServer server;
+
+  server.oGrid_subscriber = nh.subscribe(oGrid_topic, 1000, &PathServer::oGridCallback, &server);
+  server.location_subscriber = nh.subscribe(location_topic, 1000, &PathServer::locationCallback, &server);
 
   //Instantiating ROS server for generating trajectory
-  ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &PathServer::trajectoryGeneration);
+  ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &PathServer::trajectoryGeneration, &server);
 
   ros::spin();
   ros::Duration(10).sleep();
