@@ -44,7 +44,7 @@ void publishHaulerBinMessage(float data)
  */
 void execute(const operations::HaulerGoalConstPtr& goal, Server* action_server)
 {
-  if (goal->desired_angle > BIN_RESET) // BIN_RESET = 0
+  if (goal->desired_state == true) // BIN_RESET = 0
   {
     publishHaulerBinMessage(BIN_EMPTY);
     // action_server->working(); // might use for feedback
