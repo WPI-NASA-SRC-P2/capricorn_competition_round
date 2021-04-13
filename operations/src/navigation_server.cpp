@@ -149,8 +149,6 @@ void NavigationServer::steerRobot(const std::vector<double>& angles)
 	publishMessage(front_right_steer_pub_, angles.at(1));
 	publishMessage(back_right_steer_pub_, angles.at(2));
 	publishMessage(back_left_steer_pub_, angles.at(3));
-
-	ros::Duration(0.5).sleep();
 }
 
 /**
