@@ -1,6 +1,6 @@
 #include <string>
 #include <ros/ros.h>
-#include <operations/scout_state_machine.h>
+#include <operations/excavator_state_machine.h>
 
 int main(int argc, char* argv[])
 {
@@ -14,12 +14,11 @@ int main(int argc, char* argv[])
     std::string robot_name(argv[1]);
 
     ros::init(argc, argv, robot_name + "_sm");
-    ros::NodeHandle nh;
+    ros::NodeHandle nh("~");
 
-    ScoutStateMachine* sm = new ScoutStateMachine(nh, robot_name);
+    ExcavatorStateMachine* sm = new ExcavatorStateMachine(nh, robot_name);
 
     sm->startStateMachine();
 
-    ROS_INFO("Scout state machine died!\n");
-    return 0;
+    ROS_INFO("Excavator state machine died!\n");
 }

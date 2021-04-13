@@ -77,7 +77,7 @@ add_action_files(DIRECTORY action
   FILES
   Navigation.action
   NavigationVision.action
-  ParkHauler.action
+  ParkRobot.action
   NavigationVision.action
   ResourceLocaliser.action
   Hauler.action
@@ -148,6 +148,7 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
+  src/excavator_state_machine.cpp
   src/scout_state_machine.cpp
   src/navigation_server.cpp
 )
@@ -223,28 +224,40 @@ target_link_libraries(navigation_vision_client
 ###################
 #### EXCAVATOR ####
 ###################
-add_executable(excavator_actionlib_server src/ExcavatorServer.cpp)
+add_executable(excavator_actionlib_server src/excavator_server.cpp)
 add_dependencies(excavator_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(excavator_actionlib_server ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
-add_executable(excavator_actionlib_client src/ExcavatorClient.cpp)
+add_executable(excavator_actionlib_client src/excavator_client.cpp)
 add_dependencies(excavator_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(excavator_actionlib_client ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+add_executable(excavator_pid_node src/excavator_pid.cpp)
+add_dependencies(excavator_pid_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(excavator_pid_node ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+add_executable(start_excavator_sm src/start_excavator_sm.cpp)
+add_dependencies(start_excavator_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(start_excavator_sm ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
 ##################
 ##### HAULER #####
 ##################
-add_executable(hauler_actionlib_server src/HaulerServerNew.cpp)
+add_executable(hauler_actionlib_server src/hauler_server.cpp)
 add_dependencies(hauler_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(hauler_actionlib_server ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
-add_executable(hauler_actionlib_client src/HaulerClient.cpp)
+add_executable(hauler_actionlib_client src/hauler_client.cpp)
 add_dependencies(hauler_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(hauler_actionlib_client ${PROJECT_NAME}
   ${catkin_LIBRARIES}
