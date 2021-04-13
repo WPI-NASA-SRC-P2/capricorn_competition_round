@@ -1,8 +1,24 @@
+/*
+Author BY: Mahimana Bhatt
+Email: mbhatt@wpi.edu
+
+TEAM CAPRICORN
+NASA SPACE ROBOTICS CHALLENGE
+
+This ros node calls an actionlib to take the specified robot near to the given target. This code does not wait for getting the actionlib
+finished with the task, just sends the goal (waits if server is not available) to actionlib and exits.
+
+Command Line Arguments Required:
+1. robot_name: eg. small_scout_1, small_excavator_2
+2. target object: it can be any object detection class eg. hauler, excavator, scout, processingPlant, repairStation, furnace, hopper, all 
+object detection classes are given in COMMON_NAMES
+*/
+
 #include <operations/NavigationVisionAction.h> // Note: "Action" is appended
 #include <actionlib/client/simple_action_client.h>
 #include <utils/common_names.h>
 
-typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> Client;
+typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> g_client;
 
 int main(int argc, char** argv)
 {
@@ -13,17 +29,21 @@ int main(int argc, char** argv)
     }
 
     std::string robot_name(argv[1]);
-    ros::init(argc, argv, robot_name + COMMON_NAMES::NAVIGATION_VISION_CLIENT_NODE_NAME);
-    Client client(robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true); // true -> don't need ros::spin()
+    ros::init(argc, argv, robot_name + COMMON_NAMES::NAVIGATION_VISION_CLIENT_NODE_NAME);  // please launch from capricorn namespace
+
+    g_client client(robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
     client.waitForServer();
 
     operations::NavigationVisionGoal goal; 
-    goal.desired_object_label = argv[2]; 
+
+    // desired target object, any object detection class
+    goal.desired_object_label = std::string(argv[2]); 
 
     client.sendGoal(goal);
-    //client.waitForResult(ros::Duration(5.0));
+    
     if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-        printf("Reached goal");
-    printf("Current State: %s\n", client.getState().toString().c_str());
+        ROS_INFO("Reached goal");
+        
+    ROS_INFO("Current State: %s\n", client.getState().toString().c_str());
     return 0;
 }

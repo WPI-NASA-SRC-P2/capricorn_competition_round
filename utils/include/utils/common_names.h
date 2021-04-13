@@ -51,6 +51,9 @@ namespace COMMON_NAMES
   const std::string LINK_STATE_QUERY = "/gazebo/get_link_state";
   const std::string SENSOR_BAR_GAZEBO = "_sensor_bar";
 
+  /****** ROBOT LINKS ******/
+  const std::string LEFT_CAMERA_ROBOT_LINK = "_left_camera_optical";
+
   /****** RTABMAP ******/
   const std::string RESET_POSE_CLIENT = "/camera/reset_odom_to_pose";
 
