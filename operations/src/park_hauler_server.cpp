@@ -41,7 +41,7 @@ const float FORWARD_VELOCITY = 0.4;
 std::mutex g_objects_mutex;
 
 // global variables for park excavator
-const int MIN_DIFF_THRESH = 150, DIFF_CHANGE_THRESH = 20, ROBOT_ANTENNA_HEIGHT_THRESH = 3;
+const int MIN_DIFF_THRESH = 150, DIFF_CHANGE_THRESH = 20, ROBOT_ANTENNA_DIST_THRESH = 3;
 const float DEFAULT_RADIUS = 3.5;
 bool g_parked = false, g_found_orientation = false;
 float g_max_diff = -1;
@@ -143,7 +143,7 @@ void parkWrtHopper()
         double radius = g_processing_plant_z + PROCESSING_PLANT_RADIUS; //set radius of orbit, 1.8 is the depth of the object 
         geometry_msgs::PointStamped pt; 
         pt.point.x = radius; 
-        pt.header.frame_id = robot_name + COMMON_NAMES::LEFT_CAMERA_ROBOT_LINK;
+        pt.header.frame_id = robot_name + COMMON_NAMES::ROBOT_CHASSIS;
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::REVOLVE; //all nav goals will be using the revolve drive
         g_nav_goal.point = pt;
         
@@ -184,7 +184,7 @@ void computeProperties(perception::Object& object, bool& found, float& size_x, f
  * 1. Rotate around excavator assuming robot is already near the excavator and has excavator in the center of the image
  * 2. Stop rotation when you reach desired orientation i.e. excavator arm on right of robot antenna and having maximum distance between their center
  *    This is done assuming that when camera looks exactly in between robot antenna and excavator arm, their difference between centers is maximum, thats our interest point
- * 3. Drive forward until you reach a required robot antenna height
+ * 3. Drive forward until you reach a required distance from robot antenna
  */
 void parkWrtExcavator()
 {
@@ -194,7 +194,7 @@ void parkWrtExcavator()
     // bool if excavator arm and robot antenna are found previously
     bool found_ea = false, found_ra = false;
     // float values for center_x (in pixels), size_x (width of bounding box in pixels), size_y (height of bounding box in pixels) of robot antenna and excavator arm
-    // height of robot antenna (z_ra in pixels)
+    // distance from robot antenna (z_ra in m)
     float center_x_ea = INT_MAX, center_x_ra = INT_MAX, z_ra = INT_MAX, size_x_ea = INT_MAX, size_y_ea = INT_MAX, size_x_ra = INT_MAX, size_y_ra= INT_MAX;
     // variable to hold area of robot antenna and excavator arm bounding box (in pixels*2)
     long area_ra = -1, area_ea = -1;
@@ -226,9 +226,9 @@ void parkWrtExcavator()
         }
     }
 
-    if(found_ra && z_ra < ROBOT_ANTENNA_HEIGHT_THRESH && g_found_orientation)
+    if(found_ra && z_ra < ROBOT_ANTENNA_DIST_THRESH && g_found_orientation)
     {
-        // Stopping and exiting once correct orientation wrt excavator is found and robot antenna's bounding box is greater than minimum height
+        // Stopping and exiting once correct orientation wrt excavator is found and robot antenna's distance is less than threshold
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = 0;
         g_nav_goal.angular_velocity = 0;
@@ -314,7 +314,7 @@ void execute(const operations::ParkRobotGoalConstPtr& goal, Server* as)
         // rotate robot around excavator
         geometry_msgs::PointStamped pt;
         pt.point.x = DEFAULT_RADIUS;
-        pt.header.frame_id = robot_name + COMMON_NAMES::LEFT_CAMERA_ROBOT_LINK;
+        pt.header.frame_id = robot_name + COMMON_NAMES::ROBOT_CHASSIS;
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::REVOLVE;
         g_nav_goal.point = pt;
         g_nav_goal.forward_velocity = FORWARD_VELOCITY;

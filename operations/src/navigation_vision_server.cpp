@@ -1,71 +1,103 @@
+/*
+Author BY: Mahimana Bhatt, Chris DeMaio
+Email: mbhatt@wpi.edu
+
+TEAM CAPRICORN
+NASA SPACE ROBOTICS CHALLENGE
+
+This is an actionlib server for parking hauler with hopper or excavator
+
+Command Line Arguments Required:
+1. robot_name: eg. small_scout_1, small_excavator_2
+*/
+#include <mutex>
 #include <operations/NavigationAction.h> // Note: "Action" is appended
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/server/simple_action_server.h>
 #include <utils/common_names.h>
 #include <perception/ObjectArray.h>
 #include <perception/Object.h>
-
 #include <operations/NavigationVisionAction.h>
 
-typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
-Client* client;
+#define UPDATE_HZ 10
 
+typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
 typedef actionlib::SimpleActionServer<operations::NavigationVisionAction> Server;
 
-operations::NavigationGoal nav_goal;
-perception::ObjectArray objects;
+Client* g_client;
 
-std::string desired_label;
-bool centered = false;
-bool execute_called = false;
-int height_threshold = 400;
-const int angle_threshold_narrow = 10;
-const int angle_threshold_wide = 30;
-const float width = 640.0;
+operations::NavigationGoal g_nav_goal;
+perception::ObjectArray g_objects;
 
-void set_desired_label_height_threshold()
+const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 30, HEIGHT_IMAGE = 480;
+const float WIDTH_IMAGE = 640.0, PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35;
+std::mutex g_objects_mutex;
+std::string g_desired_label;
+bool g_centered = false;
+bool g_execute_called = false;
+int g_height_threshold = 400;
+
+enum HEIGHT_THRESHOLD
 {
-    if(desired_label == "hopper")
+    HOPPER = 250,
+    EXCAVATOR = 240,
+    OTHER = 400,
+};
+
+/**
+ * @brief Set the Desired Label Bounding BoxHeight Threshold object
+ * 
+ */
+void setDesiredLabelHeightThreshold()
+{
+    if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_HOPPER_CLASS)
     {
-        height_threshold = 250;
+        g_height_threshold = HEIGHT_THRESHOLD::HOPPER;
     }
-    if(desired_label == "excavator")
+    if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS)
     {
-        height_threshold = 240;
+        g_height_threshold = HEIGHT_THRESHOLD::EXCAVATOR;
     }
     else
     {
-        height_threshold = 400;
+        g_height_threshold = HEIGHT_THRESHOLD::OTHER;
     }    
 }
 
-void objects_callback(const perception::ObjectArray& objs) 
+/**
+ * @brief Callback function which subscriber to Objects message published from object detection
+ * 
+ * @param objs 
+ */
+void objectsCallback(const perception::ObjectArray& objs) 
 {
-    if(!execute_called)
-    {
-        return;
-    }
-    
-    objects = objs;
+    const std::lock_guard<std::mutex> lock(g_objects_mutex); 
+    g_objects = objs;
 }
 
-void vision_navigation()
+
+/**
+ * @brief Function for navigating a robot near to an object detection based class
+ * 
+ * Steps:
+ * 1. Rotate robot util the desired object detection class has its bounding box in the center of the frame
+ * 2. Drive forward until you reach the desired class bounding box's minimum height
+ * If the object is lost while the above process, the process will be started again * 
+ * Two thresholds are used for centering the object in the image, narrow threshold for initial centering and wide threshold if the object was centered
+ * but looses the center afterwards
+ */
+void visionNavigation()
 {
-
-    bool obj_detected;
-    nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-
+    const std::lock_guard<std::mutex> lock(g_objects_mutex);   
+    perception::ObjectArray objects = g_objects;
     // Initialize location and size variables
     float center_obj = -1;
     float height_obj = -1;
 
     // Initialize error, P Control, and necessary thresholds 
-    static float proportional_angle = 0.0010;
-    //float integral_angle = 0.0000001;
-    //float derivative_angle = 0.001;
-    static float error_angle;
+    static float error_angle = WIDTH_IMAGE;
 
-    float error_height;
+    float error_height = HEIGHT_IMAGE;
 
     static float prev_angular_velocity;
     static bool prev_centered;
@@ -73,99 +105,109 @@ void vision_navigation()
     // Find the desired object
     for(int i = 0; i < objects.number_of_objects; i++) 
     {   
-        if(objects.obj[i].label == desired_label) {
+        if(objects.obj[i].label == g_desired_label) {
             // Store the object's center and height
             center_obj = objects.obj[i].center.x;
             height_obj = objects.obj[i].size_y;
+            break;
         }
     }
     
     if(center_obj == -1)
     {
-        obj_detected = false;
-        nav_goal.angular_velocity = 0.35;
-        nav_goal.forward_velocity = 0;
+        // object not detected, rotate on robot's axis to find the object
+        ROS_INFO("Object Not Found");
+        g_nav_goal.angular_velocity = ANGULAR_VELOCITY;
+        g_nav_goal.forward_velocity = 0;
+        return;
     }
     else
     {
-        obj_detected = true;
-        error_angle = (width / 2.0) - center_obj;
-        error_height = height_threshold - height_obj;
+        // object found, compute the error in angle i.e. the error between the center of image and center of bounding box
+        error_angle = (WIDTH_IMAGE / 2.0) - center_obj;
+        // compute error in height, desired height minus current height of bounding box
+        error_height = g_height_threshold - height_obj;
     
-      if (abs(error_angle) > angle_threshold_wide)
-      {
-         centered = false;
-      }
+        if (abs(error_angle) > ANGLE_THRESHOLD_WIDE)
+        {
+            // if the bounding box is not in the center of the image
+            g_centered = false;
+        }
       
-      if(centered || abs(error_angle) < angle_threshold_narrow)
-      {
-          centered = true;
-          nav_goal.angular_velocity = 0;
-          if(error_height <= 0)
-          {
+        if(g_centered || abs(error_angle) < ANGLE_THRESHOLD_NARROW)
+        {
+            // if the bounding box is in the center of image following the narrow angle
+            g_centered = true;
+            g_nav_goal.angular_velocity = 0;
+            if(error_height <= 0)
+            {
                 // If the object is big enough, stop the robot
-            nav_goal.forward_velocity = 0.0000001;
-            execute_called = false;
-            client->sendGoal(nav_goal);
-            ROS_INFO("Reached Goal");
-            return;
-          }
-          else
-          {
-              // Keep driving forward
-              nav_goal.forward_velocity = 1.1;
-          }
-      }
-      else
-      {
-          //sum_error_angle += error_angle;
-          nav_goal.angular_velocity = error_angle * proportional_angle/* + sum_error_angle * integral_angle + (error_angle - prev_error_angle) * derivative_angle*/;
-          nav_goal.forward_velocity = 0;
+                g_nav_goal.forward_velocity = 0;
+                g_execute_called = false;
+                g_centered = false;
+                ROS_INFO("Reached Goal");
+                return;
+            }
+            else
+            {
+                // Keep driving forward
+                g_nav_goal.forward_velocity = 1.1;
+            }
+        }
+        else
+        {
+            // proportional controller for calculating angular velocity needed to center the object in the image
+            g_nav_goal.angular_velocity = error_angle * PROPORTIONAL_ANGLE;
+            g_nav_goal.forward_velocity = 0;
 
-          if(nav_goal.angular_velocity < prev_angular_velocity - 0.05)
-          {
-              nav_goal.angular_velocity = prev_angular_velocity - 0.05;
-          }
-          if(nav_goal.angular_velocity > prev_angular_velocity + 0.05)
-          {
-              nav_goal.angular_velocity = prev_angular_velocity + 0.05;
-          }
+            if(g_nav_goal.angular_velocity < prev_angular_velocity - 0.05)
+            {
+                g_nav_goal.angular_velocity = prev_angular_velocity - 0.05;
+            }
+            if(g_nav_goal.angular_velocity > prev_angular_velocity + 0.05)
+            {
+                g_nav_goal.angular_velocity = prev_angular_velocity + 0.05;
+            }
         }
     }
 
-    if(prev_centered && !centered)
+    if(prev_centered && !g_centered)
     {
-        nav_goal.angular_velocity = 0;
-        nav_goal.forward_velocity = 0;
+        g_nav_goal.angular_velocity = 0;
+        g_nav_goal.forward_velocity = 0;
     }
 
-      //prev_error_angle = error_angle;
-      prev_angular_velocity = nav_goal.angular_velocity;
-      prev_centered = centered;
-      ROS_INFO_STREAM("-----------------------------------------------------------");
-      ROS_INFO_STREAM("Height: "<<height_obj);
-      ROS_INFO_STREAM("ERROR Height: "<<error_height<<", Angle: "<<error_angle);
-      ROS_INFO_STREAM("Angular velocity: "<<nav_goal.angular_velocity);
-      ROS_INFO_STREAM("Forward velocity: "<<nav_goal.forward_velocity);
-      ROS_INFO_STREAM("Centered? "<<centered);
+    // maintaing previous values
+    prev_angular_velocity = g_nav_goal.angular_velocity;
+    prev_centered = g_centered;
+
+    // ROS_INFO_STREAM("-----------------------------------------------------------");
+    // ROS_INFO_STREAM("Height: "<<height_obj);
+    // ROS_INFO_STREAM("ERROR Height: "<<error_height<<", Angle: "<<error_angle);
+    // ROS_INFO_STREAM("Angular velocity: "<<g_nav_goal.angular_velocity);
+    // ROS_INFO_STREAM("Forward velocity: "<<g_nav_goal.forward_velocity);
+    // ROS_INFO_STREAM("Centered? "<<g_centered);
 }
 
+/**
+ * @brief Function which gets executed when any goal is received to actionlib
+ * 
+ * @param goal for action lib
+ * @param as variable to send feedback
+ */
 void execute(const operations::NavigationVisionGoalConstPtr& goal, Server* as)
 {
-    execute_called = true;
+    g_execute_called = true;
     ROS_INFO("Goal Received");
-    desired_label = goal->desired_object_label;
-    set_desired_label_height_threshold();
+    g_desired_label = goal->desired_object_label;
+    setDesiredLabelHeightThreshold();
+    ros::Rate update_rate(UPDATE_HZ);
     
-    while (ros::ok())
+    while (ros::ok() && g_execute_called)
     {
-        vision_navigation();
-        ros::Duration(0.1).sleep();
-        client->sendGoal(nav_goal);
-        if(!execute_called)
-        {
-            break;
-        }
+        visionNavigation();
+        update_rate.sleep();
+        g_client->sendGoal(g_nav_goal);
     }
 
     as->setSucceeded();
@@ -173,19 +215,20 @@ void execute(const operations::NavigationVisionGoalConstPtr& goal, Server* as)
 
 int main(int argc, char** argv)
 {
-    if(argc < 2)
+    if(argc != 2 && argc != 4)
     {
         ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
         return -1;
     }
 
-    std::string robot_name = argv[1];
+    std::string robot_name(argv[1]);
     ros::init(argc, argv, robot_name + COMMON_NAMES::NAVIGATION_VISION_SERVER_NODE_NAME);
     ros::NodeHandle nh;
 
-    client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
+    g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+    g_client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
 
-    ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objects_callback);
+    ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
 
     Server server(nh, robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.start();
