@@ -9,14 +9,7 @@
 
 //Setting the node's update rate
 #define UPDATE_HZ 10
-/**
- * @brief 
- * 
- * @param req 
- * @param res 
- * @return true 
- * @return false 
- */
+
 bool TrajectoryMethods::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
   //res.trajectory = trajectoryGenerator(req.targetPose);
