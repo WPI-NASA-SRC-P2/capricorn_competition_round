@@ -26,7 +26,11 @@ using geometry_msgs::Point;
 using geometry_msgs::PoseStamped;
 
 Point target;
-
+/**
+ * @brief callback that generates a navigation path once Ground Truth Map publishes a map
+ * 
+ * @param oGrid The Occupancy Grid obtained from the Ground Truth Map
+ */
 void callback(const nav_msgs::OccupancyGrid oGrid)
 {
   ROS_INFO("reached callback");
@@ -130,6 +134,14 @@ void callback(const nav_msgs::OccupancyGrid oGrid)
   targetPublisher.publish(p2);
 }
 
+/**
+ * @brief 
+ * 
+ * @param req 
+ * @param res 
+ * @return true 
+ * @return false 
+ */
 bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
   //res.trajectory = trajectoryGenerator(req.targetPose);

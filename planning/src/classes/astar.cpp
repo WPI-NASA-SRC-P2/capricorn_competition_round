@@ -13,6 +13,7 @@ geometry_msgs::Point point;
 
 #define RVIZ_COMPATABILITY
 
+
 Point AStar::getPoint(double x, double y)
 {
   // ROS should really add constructors...
@@ -22,6 +23,7 @@ Point AStar::getPoint(double x, double y)
   return p;
 }
 
+
 double AStar::distance(int ind1, int ind2, int width)
 {
   // Return Euclidean Distance.
@@ -29,6 +31,7 @@ double AStar::distance(int ind1, int ind2, int width)
   auto pt2 = std::make_pair<int, int>(ind2 % width, (int)floor(ind2 / width));
   return sqrt((pt1.first - pt2.first) * (pt1.first - pt2.first) + (pt1.second - pt2.second) * (pt1.second - pt2.second));
 }
+
 
 std::array<int, 8> AStar::getNeighborsIndiciesArray(int pt, int widthOfGrid, int sizeOfGrid)
 {
@@ -47,6 +50,7 @@ std::array<int, 8> AStar::getNeighborsIndiciesArray(int pt, int widthOfGrid, int
   return neighbors;
 }
 
+
 inline bool AStar::collinear(int pt1, int pt2, int pt3, int width)
 {
   // Checks if three points lie on the same line.
@@ -62,6 +66,7 @@ inline bool AStar::collinear(int pt1, int pt2, int pt3, int width)
   // Compare slopes of the points and check if they are equal
   return (pt2y - pt1y) * (pt3x - pt2x) == (pt3y - pt2y) * (pt2x - pt1x);
 }
+
 
 PoseStamped AStar::poseStampedFromIndex(int ind, nav_msgs::OccupancyGrid &oGrid)
 {
@@ -108,7 +113,8 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
   return p;
 }
 
-Path AStar::findPathOccGrid(nav_msgs::OccupancyGrid oGrid, Point target, Point start)
+
+Path AStar::findPathOccGrid(nav_msgs::OccupancyGrid &oGrid, Point target, Point start)
 {
   // A Star Implementation based off https://en.wikipedia.org/wiki/A*_search_algorithm
 
