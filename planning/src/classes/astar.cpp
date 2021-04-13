@@ -13,7 +13,6 @@ geometry_msgs::Point point;
 
 #define RVIZ_COMPATABILITY
 
-
 Point AStar::getPoint(double x, double y)
 {
   // ROS should really add constructors...
@@ -78,7 +77,7 @@ PoseStamped AStar::poseStampedFromIndex(int ind, nav_msgs::OccupancyGrid &oGrid)
 
   ps.pose.position.x = indx * oGrid.info.resolution;
   ps.pose.position.y = indy * oGrid.info.resolution;
-
+ 
   printf("%f, %f\n", indx / 20, indy / 20);
 
   ps.header = oGrid.header;
