@@ -20,5 +20,6 @@ int main(int argc, char* argv[])
 
     sm->startStateMachine();
 
-    printf("Scout state machine died!\n");
+    ROS_INFO("Scout state machine died!\n");
+    return 0;
 }
