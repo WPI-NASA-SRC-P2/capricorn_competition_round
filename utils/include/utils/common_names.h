@@ -56,6 +56,7 @@ namespace COMMON_NAMES
 
   /****** RTABMAP ******/
   const std::string RESET_POSE_CLIENT = "/camera/reset_odom_to_pose";
+  const std::string TRUE_POSE_SRV = "/get_true_pose";
 
   /****** ROS NODE NAMES ******/
   const std::string NAVIGATION_VISION_SERVER_NODE_NAME = "_navigation_vision_server";
@@ -94,6 +95,7 @@ namespace COMMON_NAMES
   const std::string SET_SHOULDER_PITCH_POSITION = "/arm/shoulder_pitch/command/position";
   const std::string SET_SHOULDER_YAW_POSITION = "/arm/shoulder_yaw/command/position";
   const std::string SET_WRIST_PITCH_POSITION = "/arm/wrist_pitch/command/position";
+  const std::string SCOOP_INFO = "/scoop_info";
 
   const std::string WHEEL_PID = "/wheel_pid";
   const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";
@@ -103,6 +105,7 @@ namespace COMMON_NAMES
   // Used to communicate between excavators and scouts when the excavator is ready to move in to pick up a volatile
   // TODO: Choose a real message type for this topic, instead of std_msgs::Empty
   const std::string EXCAVATOR_ARRIVED_TOPIC = "/excavator_arrived";
+
 
   /****** OBJECT DETECTION CLASS NAMES ******/
   const std::string OBJECT_DETECTION_PROCESSING_PLANT_CLASS = "processingPlant";
@@ -135,3 +138,9 @@ namespace COMMON_NAMES
   };
 
 } // namespace CAPRICORN_COMMON_NAMES
+
+/****** EXCAVATOR TASK ENUM ******/
+  enum Tasks{
+    START_DIGGING = 1, 
+    START_UNLOADING = 2, 
+  };
