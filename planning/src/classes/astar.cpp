@@ -159,7 +159,7 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
  * @param start 
  * @return Path 
  */
-Path AStar::findPathOccGrid(nav_msgs::OccupancyGrid oGrid, Point target, Point start)
+Path AStar::findPathOccGrid(nav_msgs::OccupancyGrid &oGrid, Point target, Point start)
 {
   // A Star Implementation based off https://en.wikipedia.org/wiki/A*_search_algorithm
 
