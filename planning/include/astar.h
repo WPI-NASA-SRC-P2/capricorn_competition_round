@@ -32,5 +32,5 @@ public:
      * @return A ROS Path message containing the points in the shortest path.
     **/
 
-  static nav_msgs::Path findPathOccGrid(nav_msgs::OccupancyGrid oGrid, geometry_msgs::Point target, geometry_msgs::Point start);
+  static nav_msgs::Path findPathOccGrid(nav_msgs::OccupancyGrid &oGrid, geometry_msgs::Point target, geometry_msgs::Point start);
 };

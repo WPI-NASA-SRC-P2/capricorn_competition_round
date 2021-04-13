@@ -10,8 +10,12 @@ visualization_msgs::Marker marker;
 double lastTime;
 
 using geometry_msgs::Point;
-
-void callback(nav_msgs::Path path)
+/**
+ * @brief 
+ * 
+ * @param path 
+ */
+void callback(nav_msgs::Path path) // note: pass by refrence here breaks the build
 {
   marker.header.stamp = ros::Time();
 
