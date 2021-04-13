@@ -43,29 +43,28 @@ private:
   static std::array<int, 8> getNeighborsIndiciesArray(int pt, int width, int size);
   
   /**
-   * @brief 
+   * @brief Checks if the three points are collinear
    * 
    * @param pt1 
    * @param pt2 
    * @param pt3 
    * @param width 
-   * @return true 
-   * @return false 
+   * @return true if the points are collinear
+   * @return false if the points are not collinear
    */
   static bool collinear(int pt1, int pt2, int pt3, int width);
 
   /**
-   * @brief 
+   * @brief Converts an index into poseStamped
    * 
-   * @param ind 
+   * @param indt
    * @param oGrid 
    * @return geometry_msgs::PoseStamped 
    */
   static geometry_msgs::PoseStamped poseStampedFromIndex(int ind, nav_msgs::OccupancyGrid &oGrid);
 
   /**
-   * @brief 
-   * 
+   * @brief Reconstructs the path from map of least costly nodes
    * @param current 
    * @param last 
    * @param reverse_list 
