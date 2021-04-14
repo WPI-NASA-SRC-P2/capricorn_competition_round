@@ -149,6 +149,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
   src/excavator_state_machine.cpp
+  src/hauler_state_machine.cpp
   src/scout_state_machine.cpp
   src/navigation_server.cpp
 )
@@ -261,6 +262,12 @@ add_executable(hauler_actionlib_client src/hauler_client.cpp)
 add_dependencies(hauler_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(hauler_actionlib_client ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+)
+
+add_executable(start_hauler_sm src/start_hauler_sm.cpp)
+add_dependencies(start_hauler_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(start_hauler_sm ${PROJECT_NAME}
+${catkin_LIBRARIES}
 )
 
 ###################

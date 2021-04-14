@@ -105,6 +105,7 @@ namespace COMMON_NAMES
   // Used to communicate between excavators and scouts when the excavator is ready to move in to pick up a volatile
   // TODO: Choose a real message type for this topic, instead of std_msgs::Empty
   const std::string EXCAVATOR_ARRIVED_TOPIC = "/excavator_arrived";
+  const std::string HAULER_ARRIVED_TOPIC = "/hauler_arrived";
 
 
   /****** OBJECT DETECTION CLASS NAMES ******/
