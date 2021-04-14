@@ -21,7 +21,7 @@ float SLEEP_DURATION = 5.0; // The sleep duration
  */
 void initHaulerBinPublisher(ros::NodeHandle &nh, const std::string &robot_name)
 {
-  hauler_bin_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_BIN_POSITION, 1000);  
+  hauler_bin_publisher_ = nh.advertise<std_msgs::Float64>("/"+robot_name + SET_BIN_POSITION, 1000);  
 }
 
 /**

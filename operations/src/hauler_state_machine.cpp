@@ -10,6 +10,7 @@ HaulerStateMachine::HaulerStateMachine(ros::NodeHandle nh, const std::string& ro
     park_robot_client_ = new ParkRobotClient(robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true);
 
     dig_site_location_ = nh_.subscribe("/"+CAPRICORN_TOPIC + "/" + robot_name_ + VOLATILE_LOCATION_TOPIC, 1000, &HaulerStateMachine::digSiteLocCB, this);
+    src_score_sub_ = nh_.subscribe("/"+CAPRICORN_TOPIC + "/" + robot_name_ + "/hauler_filled", 1000, &HaulerStateMachine::haulerFilledCB, this);
     hauler_parked_pub_ = nh.advertise<std_msgs::Empty>("/"+CAPRICORN_TOPIC + HAULER_ARRIVED_TOPIC, 1000);
 }
 
@@ -25,6 +26,13 @@ void HaulerStateMachine::digSiteLocCB(const geometry_msgs::PoseStamped &msg)
     ROS_WARN("here");
     dig_site_pose_ = msg;
     volatile_found_ = true;
+}
+
+void HaulerStateMachine::haulerFilledCB(const std_msgs::Empty &msg)
+{
+    // TODO: lock guard
+    ROS_WARN("here");
+    hauler_filled = true;
 }
 
 void HaulerStateMachine::startStateMachine()
@@ -52,22 +60,23 @@ void HaulerStateMachine::startStateMachine()
             followExcavator();
             break;
         case HAULER_STATES::PARK_AT_EXCAVATOR:
-            parkHauler();
+            parkAtExcavator();
             break;
         case HAULER_STATES::ACCEPT_VOLATILE:
-            // digVolatile();
+            waitTillFilled();
             break;
         case HAULER_STATES::GO_TO_PROC_PLANT:
-            // dumpVolatile();
+            goToProcPlant();
             break;
         case HAULER_STATES::PARK_AT_HOPPER:
+            parkAtHopper();
             // robot_state_ = INIT; 
             // this is temporary, ideally it should publish to schedular
             // that it is available, and schedular should send the next
             // Goal to follow. 
             break;
         case HAULER_STATES::DUMP_VOLATILE:
-            // dumpVolatile();
+            dumpVolatile();
             break;
 
         default:
@@ -143,7 +152,7 @@ void HaulerStateMachine::followExcavator()
 }
 
 
-void HaulerStateMachine::parkHauler()
+void HaulerStateMachine::parkAtExcavator()
 {
     if(nav_server_idle_)
     {
@@ -159,6 +168,55 @@ void HaulerStateMachine::parkHauler()
     {
         ROS_WARN("Parked");
         robot_state_ = ACCEPT_VOLATILE;
+        nav_server_idle_ = true;
+    }
+}
+
+void HaulerStateMachine::waitTillFilled()
+{
+    if(hauler_filled)
+    {
+        ROS_WARN("Parking Hauler");
+        robot_state_ = GO_TO_PROC_PLANT;
+        hauler_filled = false;
+    }
+}
+
+void HaulerStateMachine::goToProcPlant()
+{
+    if(nav_vis_server_idle_)
+    {
+        ROS_WARN("Going To Proc Plant");
+
+        // desired target object, any object detection class
+        navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS; 
+        navigation_vision_client_->sendGoal(navigation_vision_goal_);
+        nav_vis_server_idle_ = false;
+    }
+    else if(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
+    {
+        ROS_WARN("Followed to the death");
+        robot_state_ = PARK_AT_HOPPER;
+        nav_vis_server_idle_ = true;
+    }
+}
+
+void HaulerStateMachine::parkAtHopper()
+{
+    if(nav_server_idle_)
+    {
+        ROS_WARN("Parking Hauler");
+        // Again, hack for the demo. It should register the location of scout, and 
+        // go to the location where it thought the scout was.
+        park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_HOPPER_CLASS;
+
+        park_robot_client_->sendGoal(park_robot_goal_);
+        nav_server_idle_ = false;
+    }
+    else if(park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
+    {
+        ROS_WARN("Parked");
+        robot_state_ = DUMP_VOLATILE;
         nav_server_idle_ = true;
     }
 }
@@ -194,31 +252,20 @@ void HaulerStateMachine::parkHauler()
 //     }
 // }
 
-// void HaulerStateMachine::dumpVolatile()
-// {
-//     if(hauler_server_idle_)
-//     {
-//         operations::HaulerGoal goal;
-//         goal.task = START_UNLOADING; 
-        
-//         // Should be tested with Endurance's parking code and 
-//         // These values should be tuned accordingly
-//         goal.target.x = 0.7; 
-//         goal.target.y = -2;
-//         goal.target.z = 0;
-
-//         hauler_client_->sendGoal(goal);
-//         hauler_server_idle_ = false;
-//     }
-//     else
-//     {
-//         if (hauler_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-//         {    
-//             hauler_server_idle_ = true;
-//             //  if(volatile completely dug)
-//             //      next_state
-//             //  else
-//             robot_state_ = DIG_VOLATILE;
-//         }
-//     }
-// }
+void HaulerStateMachine::dumpVolatile()
+{
+    ROS_INFO("Trying to dump");
+    if(hauler_server_idle_)
+    {
+        ROS_INFO("Dumping");
+        hauler_goal_.desired_state = true;
+        hauler_client_->sendGoal(hauler_goal_);
+        hauler_server_idle_ = false;
+    }
+    else if (hauler_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    {    
+        ROS_INFO("Done dona done");
+        hauler_server_idle_ = true;
+        robot_state_ = INIT;
+    }
+}

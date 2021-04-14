@@ -50,7 +50,8 @@ private:
   bool volatile_found_ = false;
   bool nav_server_idle_ = true;
   bool nav_vis_server_idle_ = true;
-  // bool excavator_server_idle_ = true;
+  bool hauler_filled = false;
+  bool hauler_server_idle_ = true;
   
   typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
   NavigationClient* navigation_client_;
@@ -78,6 +79,15 @@ private:
    */
   void digSiteLocCB(const geometry_msgs::PoseStamped &msg);
 
+
+  /**
+   * @brief Callback for the location of found digging site
+   * 
+   * @param msg 
+   */
+  void haulerFilledCB(const std_msgs::Empty &msg);
+
+
   /**
    * @brief Waits for the scout to find the volatile
    *        Basically does nothing
@@ -98,7 +108,7 @@ private:
    * @brief Goes to the actual location where the volatile was predicted. 
    * 
    */
-  void parkHauler();
+  void parkAtExcavator();
 
   /**
    * @brief This is required to make sure the hauler is close enough to the excavator
@@ -106,17 +116,29 @@ private:
    */
   void followExcavator();
 
-  // /**
-  //  * @brief Dig the volatile location
-  //  * 
-  //  */
-  // void digVolatile();
+  /**
+   * @brief This is required to make sure the hauler is close enough to the excavator
+   * 
+   */
+  void waitTillFilled();
 
-  // /**
-  //  * @brief Dump the volatile at Hauler Location
-  //  * 
-  //  */
-  // void dumpVolatile();
+  /**
+   * @brief This is required to make sure the hauler is close enough to the excavator
+   * 
+   */
+  void goToProcPlant();
+
+  /**
+   * @brief This is required to make sure the hauler is close enough to the excavator
+   * 
+   */
+  void parkAtHopper();
+
+  /**
+   * @brief Dump the volatile at Hauler Location
+   * 
+   */
+  void dumpVolatile();
 
 public:
   HaulerStateMachine(ros::NodeHandle nh, const std::string& robot_name);
