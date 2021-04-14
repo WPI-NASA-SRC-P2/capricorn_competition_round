@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
     std::string robot_name(argv[1]);
 
     ros::init(argc, argv, robot_name + "_sm");
-    ros::NodeHandle nh("~");
+    ros::NodeHandle nh;
 
     HaulerStateMachine* sm = new HaulerStateMachine(nh, robot_name);
 

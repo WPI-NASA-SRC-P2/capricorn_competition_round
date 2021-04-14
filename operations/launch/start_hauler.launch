@@ -1,0 +1,23 @@
+<launch>
+    <arg name="robot_name" default="small_hauler_1" />
+
+    <include file="$(find operations)/launch/navigation.launch">
+        <arg name="robot_name" value="$(arg robot_name)" />
+    </include>
+
+    <group ns="/capricorn/$(arg robot_name)">
+        <!-- <include file="$(find perception)/launch/object_detection.launch">
+            <arg name="robot_name" value="$(arg robot_name)" />
+        </include> -->
+        
+        <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
+        <node name="park_hauler_server" pkg="operations" type="park_hauler_server" args="$(arg robot_name)" output="screen"/>
+
+        <!-- <node name="park_hauler_client" pkg="operations" type="park_hauler_client" args="$(arg robot_name) excavator" output="screen"/> -->
+        
+        <node pkg="operations" type="hauler_actionlib_server" name="hauler_actionlib_server" args="$(arg robot_name)" output="screen" />
+        <node pkg="operations" type="start_hauler_sm" name="hauler_1_sm" args="$(arg robot_name)" output="screen" />
+        <!-- <node pkg="operations" type="hauler_actionlib_server" name="hauler_actionlib_server" args="$(arg robot_name)" output="screen" /> -->
+    </group>
+
+</launch>

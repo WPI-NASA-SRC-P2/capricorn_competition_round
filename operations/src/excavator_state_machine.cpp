@@ -96,7 +96,7 @@ void ExcavatorStateMachine::goToVolatile()
         // terminate when it is close enough. We don't have a functionality for 'close enough' 
         // Hence this hack
         geometry_msgs::PoseStamped temp_location = vol_pose_;
-        temp_location.pose.position.y -= 5;
+        temp_location.pose.position.x -= 5;
 
         navigation_action_goal_.pose = temp_location;
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
@@ -110,6 +110,10 @@ void ExcavatorStateMachine::goToVolatile()
         robot_state_ = PARK_AND_PUB;
         nav_server_idle_ = true;
         std_msgs::Empty empty_message;
+        // find scout
+        // save the location of scout (wrt camera frame)
+        // transform from camera frame to map frame
+        // Save this location
         excavator_ready_pub_.publish(empty_message);
     }
 }
@@ -122,7 +126,7 @@ void ExcavatorStateMachine::parkExcavator()
         ROS_INFO("Goal action requested");
         // Again, hack for the demo. It should register the location of scout, and 
         // go to the location where it thought the scout was.
-        navigation_action_goal_.pose = vol_pose_;
+        navigation_action_goal_.pose = vol_pose_; //change vol_pose_ with the new location
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
         navigation_client_->sendGoal(navigation_action_goal_);
@@ -132,6 +136,7 @@ void ExcavatorStateMachine::parkExcavator()
     {
         ROS_INFO("GOAL FINISHED");
         robot_state_ = DIG_VOLATILE;
+        // publish to park the hauler
         nav_server_idle_ = true;
     }
 }

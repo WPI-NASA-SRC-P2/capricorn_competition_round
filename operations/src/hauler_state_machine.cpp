@@ -6,8 +6,10 @@ HaulerStateMachine::HaulerStateMachine(ros::NodeHandle nh, const std::string& ro
     
     navigation_client_ = new NavigationClient(NAVIGATION_ACTIONLIB, true);
     hauler_client_ = new HaulerClient(HAULER_ACTIONLIB, true);
+    navigation_vision_client_ = new NavigationVisionClient(robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
+    park_robot_client_ = new ParkRobotClient(robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true);
 
-    // dig_site_location_ = nh_.subscribe("/"+CAPRICORN_TOPIC + SCOUT_1 + VOLATILE_LOCATION_TOPIC, 1000, &HaulerStateMachine::scoutVolLocCB, this);
+    dig_site_location_ = nh_.subscribe("/"+CAPRICORN_TOPIC + "/" + robot_name_ + VOLATILE_LOCATION_TOPIC, 1000, &HaulerStateMachine::digSiteLocCB, this);
     hauler_parked_pub_ = nh.advertise<std_msgs::Empty>("/"+CAPRICORN_TOPIC + HAULER_ARRIVED_TOPIC, 1000);
 }
 
@@ -17,34 +19,40 @@ HaulerStateMachine::~HaulerStateMachine()
     delete hauler_client_;
 }
 
-// void HaulerStateMachine::scoutVolLocCB(const geometry_msgs::PoseStamped &msg)
-// {
-//     // Lock-guards are not desired here. This message is published once per volatile
-//     // So, there may not be a case in which we need to 'keep hold' on the old message
-//     // Schedular should take care of sending tasks only when the hauler is free to 
-//     // Take up the task
-//     vol_pose_ = msg;
-//     volatile_found_ = true;
-// }
+void HaulerStateMachine::digSiteLocCB(const geometry_msgs::PoseStamped &msg)
+{
+    // TODO: lock guard
+    ROS_WARN("here");
+    dig_site_pose_ = msg;
+    volatile_found_ = true;
+}
 
 void HaulerStateMachine::startStateMachine()
 {
     // Waiting for the servers to start
     navigation_client_->waitForServer();
     hauler_client_->waitForServer();
-
+    ROS_WARN("Ready");
+    navigation_vision_client_->waitForServer();
+    ROS_WARN("Navigation Client Ready");
+    park_robot_client_->waitForServer();
+    ROS_WARN("Parker Client Ready");
+    
     while (ros::ok() && state_machine_continue_)
     {   
         switch (robot_state_)
         {
         case HAULER_STATES::INIT:
-            // initState();
+            initState();
             break;
         case HAULER_STATES::GO_TO_DIG_SITE:
-            // goToVolatile();
+            goToDigSite();
+            break;
+        case HAULER_STATES::FOLLOW_EXCAVATOR:
+            followExcavator();
             break;
         case HAULER_STATES::PARK_AT_EXCAVATOR:
-            // parkHauler();
+            parkHauler();
             break;
         case HAULER_STATES::ACCEPT_VOLATILE:
             // digVolatile();
@@ -77,67 +85,83 @@ void HaulerStateMachine::startStateMachine()
     }
 }
 
-// void HaulerStateMachine::initState()
-// {
-//     if(volatile_found_)
-//     {
-//         robot_state_ = GO_TO_VOLATILE;
-//         volatile_found_ = false;
-//         ROS_INFO("Going to location");
-//     }
-//     return;
-// }
+void HaulerStateMachine::initState()
+{
+    if(volatile_found_)
+    {
+        robot_state_ = GO_TO_DIG_SITE;
+        volatile_found_ = false;
+        ROS_WARN("Going to location");
+    }
+    return;
+}
 
-// void HaulerStateMachine::goToVolatile()
-// {
-//     ROS_INFO("Goal Received");
-//     if(nav_server_idle_)
-//     {
-//         ROS_INFO("Goal action requested");
+void HaulerStateMachine::goToDigSite()
+{
+    if(nav_server_idle_)
+    {
+        ROS_WARN("Goal action requested");
         
-//         // This is big hack for the demo. Ideally, it should still try to get to the location, and 
-//         // terminate when it is close enough. We don't have a functionality for 'close enough' 
-//         // Hence this hack
-//         geometry_msgs::PoseStamped temp_location = vol_pose_;
-//         temp_location.pose.position.y -= 5;
+        // This is big hack for the demo. Ideally, it should still try to get to the location, and 
+        // terminate when it is close enough. We don't have a functionality for 'close enough' 
+        // Hence this hack
+        geometry_msgs::PoseStamped temp_location = dig_site_pose_;
+        temp_location.pose.position.x -= 5;
+        temp_location.pose.position.y -= 5;
 
-//         navigation_action_goal_.pose = temp_location;
-//         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+        navigation_action_goal_.pose = temp_location;
+        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
-//         navigation_client_->sendGoal(navigation_action_goal_);
-//         nav_server_idle_ = false;
-//     }
-//     else if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) // ( || scout_found || close_enough)
-//     {
-//         ROS_INFO("GOAL FINISHED");
-//         robot_state_ = PARK_AND_PUB;
-//         nav_server_idle_ = true;
-//         std_msgs::Empty empty_message;
-//         hauler_ready_pub_.publish(empty_message);
-//     }
-// }
+        navigation_client_->sendGoal(navigation_action_goal_);
+        nav_server_idle_ = false;
+    }
+    else if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) // ( || scout_found || close_enough)
+    {
+        ROS_WARN("GOAL FINISHED");
+        robot_state_ = FOLLOW_EXCAVATOR;
+        nav_server_idle_ = true;
+    }
+}
 
-// void HaulerStateMachine::parkHauler()
-// {
-//     ROS_INFO("Actual Goal Received");
-//     if(nav_server_idle_)
-//     {
-//         ROS_INFO("Goal action requested");
-//         // Again, hack for the demo. It should register the location of scout, and 
-//         // go to the location where it thought the scout was.
-//         navigation_action_goal_.pose = vol_pose_;
-//         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+void HaulerStateMachine::followExcavator()
+{
+    if(nav_vis_server_idle_)
+    {
+        ROS_WARN("Following Excavator");
 
-//         navigation_client_->sendGoal(navigation_action_goal_);
-//         nav_server_idle_ = false;
-//     }
-//     else if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
-//     {
-//         ROS_INFO("GOAL FINISHED");
-//         robot_state_ = DIG_VOLATILE;
-//         nav_server_idle_ = true;
-//     }
-// }
+        // desired target object, any object detection class
+        navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS; 
+        navigation_vision_client_->sendGoal(navigation_vision_goal_);
+        nav_vis_server_idle_ = false;
+    }
+    else if(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
+    {
+        ROS_WARN("Followed to the death");
+        robot_state_ = PARK_AT_EXCAVATOR;
+        nav_vis_server_idle_ = true;
+    }
+}
+
+
+void HaulerStateMachine::parkHauler()
+{
+    if(nav_server_idle_)
+    {
+        ROS_WARN("Parking Hauler");
+        // Again, hack for the demo. It should register the location of scout, and 
+        // go to the location where it thought the scout was.
+        park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_EXCAVATOR_CLASS;
+
+        park_robot_client_->sendGoal(park_robot_goal_);
+        nav_server_idle_ = false;
+    }
+    else if(park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
+    {
+        ROS_WARN("Parked");
+        robot_state_ = ACCEPT_VOLATILE;
+        nav_server_idle_ = true;
+    }
+}
 
 // void HaulerStateMachine::digVolatile()
 // {
