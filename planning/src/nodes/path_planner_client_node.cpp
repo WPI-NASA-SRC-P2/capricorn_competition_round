@@ -17,6 +17,8 @@ int main(int argc, char **argv)
 
   ros::ServiceClient client = n.serviceClient<planning::trajectory>("trajectoryGenerator");
 
+  client.waitForExistence();
+
   planning::trajectory srv;
 
   //probably needs to not use argument
