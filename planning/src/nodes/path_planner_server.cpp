@@ -5,25 +5,25 @@
 #include "planning/TrajectoryWithVelocities.h"
 #include <geometry_msgs/Point.h>
 
-const std::string oGrid_topic = "";
-const std::string location_topic = "";
-
 //Setting the node's update rate
 #define UPDATE_HZ 10
 
 bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
-  std::unique_lock<std::mutex> oGridLock(oGrid_mutex);  
-  auto paddedGrid = CSpace::getCSpace(global_oGrid, 50, 3); // Maybe want to make a copy and unlock mutex, then calculate? Performance improvement is probably neglible.
+  std::unique_lock<std::mutex> oGridLock(oGrid_mutex_);
+  auto global_location_CPY = global_location_;
   oGridLock.unlock();
 
-  std::unique_lock<std::mutex> locationLock(location_mutex);
-  auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, global_location.pose.position);
+  std::unique_lock<std::mutex> locationLock(location_mutex_);
+  auto global_oGrid_CPY = global_oGrid_;
   locationLock.unlock();
+
+  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 3);
+  auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, global_location_CPY.pose.position);
 
   planning::TrajectoryWithVelocities trajectory;
 
-  trajectory.poses = path.poses;
+  trajectory.waypoints = path.poses;
   // trajectory.velocities = std::vector<std_msgs::Float64>(trajectory.poses.size(), (std_msgs::Float64)2.0);
 
   res.trajectory = trajectory;
@@ -31,14 +31,16 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   return true;
 }
 
-void PathServer::oGridCallback(nav_msgs::OccupancyGrid oGrid) {
-  std::lock_guard<std::mutex> lock(oGrid_mutex);
-  global_oGrid = oGrid;
+void PathServer::oGridCallback(nav_msgs::OccupancyGrid oGrid)
+{
+  std::lock_guard<std::mutex> lock(oGrid_mutex_);
+  global_oGrid_ = oGrid;
 }
 
-void PathServer::locationCallback(geometry_msgs::PoseStamped location) {
-  std::lock_guard<std::mutex> lock(location_mutex);
-  global_location = location;
+void PathServer::locationCallback(geometry_msgs::PoseStamped location)
+{
+  std::lock_guard<std::mutex> lock(location_mutex_);
+  global_location_ = location;
 }
 
 int main(int argc, char *argv[])
@@ -51,14 +53,13 @@ int main(int argc, char *argv[])
 
   PathServer server;
 
-  server.oGrid_subscriber = nh.subscribe(oGrid_topic, 1000, &PathServer::oGridCallback, &server);
-  server.location_subscriber = nh.subscribe(location_topic, 1000, &PathServer::locationCallback, &server);
+  server.oGrid_subscriber = nh.subscribe(server.oGrid_topic_, 1000, &PathServer::oGridCallback, &server);
+  server.location_subscriber = nh.subscribe(server.location_topic_, 1000, &PathServer::locationCallback, &server);
 
   //Instantiating ROS server for generating trajectory
   ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &PathServer::trajectoryGeneration, &server);
 
   ros::spin();
-  ros::Duration(10).sleep();
 
   return 0;
 }

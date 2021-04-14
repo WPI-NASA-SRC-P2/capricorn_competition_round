@@ -13,7 +13,7 @@ private:
 	 * @param sizeOfGrid total number of elements in the map
 	 * @return std::vector<int> the indexes of the neighbors of pt
 	 */
-	static std::vector<int> getNeighborsIndicies(int pt, int widthOfGrid, int sizeOfGrid);
+	static std::array<int, 8> getNeighborsIndiciesArray(int pt, int widthOfGrid, int sizeOfGrid);
 
 	/**
 	 * @brief recursivly searches for obstacles and edits its neighbors to also be obstacles
@@ -24,7 +24,7 @@ private:
 	 * @param editGrid the edited searchGrid
 	 * @param searchGrid the original grid passed to the funciton
 	 */
-	static void recursiveSearchNeighbors(int pt, int radius, int threshold, nav_msgs::OccupancyGrid *editGrid, const nav_msgs::OccupancyGrid *searchGrid);
+	static void recursiveSearchNeighbors(int pt, int radius, int threshold, nav_msgs::OccupancyGrid &editGrid, nav_msgs::OccupancyGrid &searchGrid);
 
 public:
 	/**
@@ -35,5 +35,5 @@ public:
 	 * @param radius the radius in cell units of the CSpace
 	 * @return OccupancyGrid The Occupancy Grid with the CSpace included
 	 */
-	static nav_msgs::OccupancyGrid getCSpace(const nav_msgs::OccupancyGrid &grid, int threshold, int paddingRadius);
+	static nav_msgs::OccupancyGrid getCSpace(nav_msgs::OccupancyGrid &grid, int threshold, int paddingRadius);
 };

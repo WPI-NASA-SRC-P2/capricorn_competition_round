@@ -5,65 +5,37 @@
 using geometry_msgs::Point;
 using nav_msgs::OccupancyGrid;
 
+std::array<int, 8> CSpace::getNeighborsIndiciesArray(int pt, int widthOfGrid, int sizeOfGrid)
+{
+  // Get the neighbors around any given index (ternary operators to ensure the points remain within bounds)
+  std::array<int, 8> neighbors;
 
+  neighbors[0] = ((pt + 1) < 0)               || ((pt + 1) > sizeOfGrid) 								? -1 : pt + 1;
+  neighbors[1] = ((pt - 1) < 0)               || ((pt - 1) > sizeOfGrid) 								? -1 : pt - 1;
+  neighbors[2] = ((pt + widthOfGrid    ) < 0) || ((pt + widthOfGrid) > sizeOfGrid) 			? -1 : pt + widthOfGrid;
+  neighbors[3] = ((pt + widthOfGrid + 1) < 0) || !((pt + widthOfGrid + 1) > sizeOfGrid) ? -1 : pt + widthOfGrid + 1;
+  neighbors[4] = ((pt + widthOfGrid - 1) < 0) || !((pt + widthOfGrid - 1) > sizeOfGrid) ? -1 : pt + widthOfGrid - 1;
+  neighbors[5] = ((pt - widthOfGrid) < 0)     || !((pt - widthOfGrid) > sizeOfGrid) 		? -1 : pt - widthOfGrid;
+  neighbors[6] = ((pt - widthOfGrid + 1) < 0) || !((pt - widthOfGrid + 1) > sizeOfGrid) ? -1 : pt - widthOfGrid + 1;
+  neighbors[7] = ((pt - widthOfGrid - 1) < 0) || !((pt - widthOfGrid - 1) > sizeOfGrid) ? -1 : pt - widthOfGrid - 1;
 
-std::vector<int> CSpace::getNeighborsIndicies(int pt, int widthOfGrid, int sizeOfGrid)
-{ 
-
-	std::vector<int> neighbors;
-
-	if (!((pt + 1) < 0) && !((pt + 1) > sizeOfGrid))
-	{
-		neighbors.push_back(pt + 1);
-	}
-	if (!((pt - 1) < 0) && !((pt - 1) > sizeOfGrid))
-	{
-		neighbors.push_back(pt - 1);
-	}
-	if (!((pt + widthOfGrid) < 0) && !((pt + widthOfGrid) > sizeOfGrid))
-	{
-		neighbors.push_back(pt + widthOfGrid);
-	}
-	if (!((pt + widthOfGrid + 1) < 0) && !((pt + widthOfGrid + 1) > sizeOfGrid))
-	{
-		neighbors.push_back(pt + widthOfGrid + 1);
-	}
-	if (!((pt + widthOfGrid - 1) < 0) && !((pt + widthOfGrid - 1) > sizeOfGrid))
-	{
-		neighbors.push_back(pt + widthOfGrid - 1);
-	}
-	if (!((pt - widthOfGrid) < 0) && !((pt - widthOfGrid) > sizeOfGrid))
-	{
-		neighbors.push_back(pt - widthOfGrid);
-	}
-	if (!((pt - widthOfGrid + 1) < 0) && !((pt - widthOfGrid + 1) > sizeOfGrid))
-	{
-		neighbors.push_back(pt - widthOfGrid + 1);
-	}
-	if (!((pt - widthOfGrid - 1) < 0) && !((pt - widthOfGrid - 1) > sizeOfGrid))
-	{
-		neighbors.push_back(pt - widthOfGrid - 1);
-	}
-
-	return neighbors;
+  return neighbors;
 }
 
-
-void CSpace::recursiveSearchNeighbors(int pt, int radius, int threshold, OccupancyGrid *editGrid, const OccupancyGrid *searchGrid)
+void CSpace::recursiveSearchNeighbors(const int pt, const int radius, const int threshold, OccupancyGrid &editGrid, OccupancyGrid &searchGrid)
 {
 	if (radius > 0)
 	{
-		auto neighbors = getNeighborsIndicies(pt, editGrid->info.width, editGrid->data.size());
+		auto neighbors = getNeighborsIndiciesArray(pt, editGrid.info.width, editGrid.data.size());
 		for (int i = 0; i < neighbors.size(); ++i)
 		{
-			editGrid->data[neighbors[i]] = 100;
+			editGrid.data[neighbors[i]] = 100;
 			recursiveSearchNeighbors(neighbors[i], radius - 1, threshold, editGrid, searchGrid);
 		}
 	}
 }
 
-
-OccupancyGrid CSpace::getCSpace(const nav_msgs::OccupancyGrid &oGrid, int threshold, int radius)
+OccupancyGrid CSpace::getCSpace(nav_msgs::OccupancyGrid &oGrid, const int threshold, const int radius)
 {
 
 	OccupancyGrid paddedGrid = oGrid;
@@ -72,7 +44,7 @@ OccupancyGrid CSpace::getCSpace(const nav_msgs::OccupancyGrid &oGrid, int thresh
 	{
 		if (oGrid.data[i] > threshold)
 		{
-			recursiveSearchNeighbors(i, radius, threshold, &paddedGrid, &oGrid);
+			recursiveSearchNeighbors(i, radius, threshold, paddedGrid, oGrid);
 		}
 	}
 
