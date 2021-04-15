@@ -16,17 +16,15 @@ using namespace COMMON_NAMES;
 
 enum HAULER_STATES
 {
-  INIT = 0,         // Wait for Instructions
-                        // or it may get close to scout
-  GO_TO_DIG_SITE,   // Get close to the volatile when it is detected
-  FOLLOW_EXCAVATOR, // Navigation method to 'follow' excavator
-  PARK_AT_EXCAVATOR,     // Park the hauler when it is good to do so
-                        // Needs a 'park' publisher by excavator
-  ACCEPT_VOLATILE,    // Dig and see if any volatile is detected. 
-                        // If no volatile found, change the orientation slightly
-                        // Else change state
-  GO_TO_PROC_PLANT,     // Go to processing plant (visual navigation)
-  PARK_AT_HOPPER,       // Park hopper to dump the volatiles
+  INIT = 0,           // Wait for Instructions
+  GO_TO_DIG_SITE,     // Get close to the digging site when it is detected
+  FOLLOW_EXCAVATOR,   // Currently sets hauler up to park. 
+                      // Is necessary for parking method)
+  PARK_AT_EXCAVATOR,  // Park the hauler when it is good to do so
+                      // TODO: Needs a 'park' publisher by excavator
+  ACCEPT_VOLATILE,    // Just wait till volatile is completely dug
+  GO_TO_PROC_PLANT,   // Go to processing plant (visual navigation)
+  PARK_AT_HOPPER,     // Park hopper to dump the volatiles
   DUMP_VOLATILE       // Dump volatile into the hopper
 };
 
@@ -38,21 +36,28 @@ private:
   ros::NodeHandle nh_;
 
   ros::Subscriber dig_site_location_;   // Redundant name? site and location?
-  ros::Subscriber src_score_sub_;
-  ros::Publisher hauler_parked_pub_;
+  ros::Subscriber hauler_filled_sub_;   // Subscriber to wait till hauler is filled
 
   HAULER_STATES robot_state_ = HAULER_STATES::INIT;
   std::string robot_name_;
 
   const double SLEEP_TIME = 0.5;
   
+  // To start and stop the state machine
   bool state_machine_continue_ = true;
-  bool volatile_found_ = false;
+
+  // Status of actionlib servers
   bool nav_server_idle_ = true;
   bool nav_vis_server_idle_ = true;
-  bool hauler_filled = false;
   bool hauler_server_idle_ = true;
-  
+  bool park_server_idle_ = true;
+    
+  // Variables to be set by subscriber callback
+  bool volatile_found_ = false;
+  bool hauler_filled_ = false;
+  geometry_msgs::PoseStamped dig_site_pose_;
+
+  // Actionlib servers' defining
   typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
   NavigationClient* navigation_client_;
   operations::NavigationGoal navigation_action_goal_;
@@ -69,8 +74,6 @@ private:
   ParkRobotClient* park_robot_client_;
   operations::ParkRobotGoal park_robot_goal_;
 
-  geometry_msgs::PoseStamped dig_site_pose_;
-
 
   /**
    * @brief Callback for the location of found digging site
@@ -81,7 +84,7 @@ private:
 
 
   /**
-   * @brief Callback for the location of found digging site
+   * @brief Callback, as the signal for hauler to go back to hopper for dumping volatiles
    * 
    * @param msg 
    */
@@ -97,45 +100,51 @@ private:
    */
   void initState();
 
+
   /**
-   * @brief Once the goal is received, go close to the predicted volatile location. 
-   *          Publish that the excavator has reached close enough for scout to move out
+   * @brief Currently, there are specific requirements for the parking to be successful. 
+   *          These conditions are taken care of in this function.
+   *          Condition: The Hauler should be in the lower 3rd quadrant (bottom right) of the excavator
    * 
    */
   void goToDigSite();
 
-  /**
-   * @brief Goes to the actual location where the volatile was predicted. 
-   * 
-   */
-  void parkAtExcavator();
 
   /**
-   * @brief This is required to make sure the hauler is close enough to the excavator
+   * @brief Visual Navigation: Currently, takes hauler close to the excavator for parking 
    * 
    */
   void followExcavator();
 
+
   /**
-   * @brief This is required to make sure the hauler is close enough to the excavator
+   * @brief Parks the excavator for dumping
+   * 
+   */
+  void parkAtExcavator();
+
+
+  /**
+   * @brief Hang on until excavator publishes a message denoting digging complete
    * 
    */
   void waitTillFilled();
 
+
   /**
-   * @brief This is required to make sure the hauler is close enough to the excavator
+   * @brief Visual navigation: Will take the hauler to processing plant
    * 
    */
   void goToProcPlant();
 
   /**
-   * @brief This is required to make sure the hauler is close enough to the excavator
+   * @brief Parks the hauler at the hopper for dumping the volatiles
    * 
    */
   void parkAtHopper();
 
   /**
-   * @brief Dump the volatile at Hauler Location
+   * @brief Dump the volatile in hopper
    * 
    */
   void dumpVolatile();

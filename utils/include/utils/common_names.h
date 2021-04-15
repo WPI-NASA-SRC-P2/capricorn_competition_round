@@ -86,6 +86,7 @@ namespace COMMON_NAMES
   const std::string SET_SENSOR_PITCH_TOPIC = "/sensor/pitch/command/position";
   const std::string VOLATILE_LOCATION_TOPIC = "/volatile_location";
   const std::string SCHEDULER_TOPIC = "/scheduler";
+  const std::string HAULER_FILLED = "/hauler_filled";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
