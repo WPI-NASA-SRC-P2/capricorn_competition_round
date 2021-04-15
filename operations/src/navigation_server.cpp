@@ -618,7 +618,7 @@ void NavigationServer::revolveRobot(geometry_msgs::PointStamped &revolve_about, 
 
 void NavigationServer::revolveDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
-	// printf("Revolve drive\n");
+	printf("Revolve drive\n");
 
 	brakeRobot(false);
 
@@ -719,7 +719,7 @@ void NavigationServer::followDriving(const operations::NavigationGoalConstPtr &g
 
 void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 {
-    // printf("Received NavigationGoal, dispatching\n");
+    printf("Received NavigationGoal, dispatching\n");
 
 	switch(goal->drive_mode)
 	{
