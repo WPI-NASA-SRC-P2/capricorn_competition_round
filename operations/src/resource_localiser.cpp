@@ -147,7 +147,7 @@ geometry_msgs::Pose getBestPose()
       }
 
       // If the distance is increasing
-      else if ((last_volatile_distance - volatile_distance_)<-VOLATILE_DISTANCE_THRESHOLD
+      else if ((last_volatile_distance - volatile_distance_) < -VOLATILE_DISTANCE_THRESHOLD
                 || !near_volatile_)
       {
         if(flip_rotation_count < FLIP_ROTATION_COUNT_MAX)
@@ -254,7 +254,12 @@ int main(int argc, char** argv)
     ResourceLocaliserServer resource_localiser_server(nh, RESOURCE_LOCALISER_ACTIONLIB, boost::bind(&localiseResource, _1, &resource_localiser_server), false);
     resource_localiser_server.start();
 
-    navigation_client_ = new NavigationClient_(NAVIGATION_ACTIONLIB, true);
+    ROS_INFO("Connecting to nav server...");
+
+    navigation_client_ = new NavigationClient_(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
+    navigation_client_->waitForServer();
+
+    ROS_INFO("Connected. Waiting for a localization request.");
     
     ros::spin();
     
