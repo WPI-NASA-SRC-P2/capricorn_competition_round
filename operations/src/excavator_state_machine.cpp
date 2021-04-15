@@ -122,7 +122,7 @@ void ExcavatorStateMachine::parkExcavator()
         ROS_INFO("Goal action requested");
         // Again, hack for the demo. It should register the location of scout, and 
         // go to the location where it thought the scout was.
-        navigation_action_goal_.pose = vol_pose_;
+        navigation_action_goal_.pose = vol_pose_; 
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
         navigation_client_->sendGoal(navigation_action_goal_);
