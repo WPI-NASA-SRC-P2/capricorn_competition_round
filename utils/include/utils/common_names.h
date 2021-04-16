@@ -98,12 +98,6 @@ namespace COMMON_NAMES
   // TODO: Choose a real message type for this topic, instead of std_msgs::Empty
   const std::string EXCAVATOR_ARRIVED_TOPIC = "/excavator_arrived";
 
-  /****** EXCAVATOR TASK ENUM ******/
-  enum Tasks{
-    START_DIGGING = 1, 
-    START_UNLOADING = 2, 
-  };
-
 
   /****** OBJECT DETECTION CLASS NAMES ******/
   const std::string OBJECT_DETECTION_PROCESSING_PLANT_CLASS = "processingPlant";
@@ -127,3 +121,9 @@ namespace COMMON_NAMES
   };
 
 } // namespace CAPRICORN_COMMON_NAMES
+
+/****** EXCAVATOR TASK ENUM ******/
+  enum Tasks{
+    START_DIGGING = 1, 
+    START_UNLOADING = 2, 
+  };
