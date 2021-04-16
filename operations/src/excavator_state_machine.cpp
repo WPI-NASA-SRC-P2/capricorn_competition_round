@@ -7,7 +7,7 @@ ExcavatorStateMachine::ExcavatorStateMachine(ros::NodeHandle nh, const std::stri
     navigation_client_ = new NavigationClient(NAVIGATION_ACTIONLIB, true);
     excavator_arm_client_ = new ExcavatorClient(EXCAVATOR_ACTIONLIB, true);
 
-    sub_scout_vol_location_ = nh_.subscribe("/"+CAPRICORN_TOPIC + SCOUT_1 + VOLATILE_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::scoutVolLocCB, this);
+    sub_scout_vol_location_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + VOLATILE_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::scoutVolLocCB, this);
     excavator_ready_pub_ = nh.advertise<std_msgs::Empty>("/"+CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000);
 }
 

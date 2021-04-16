@@ -75,7 +75,7 @@ void ScoutStateMachine::startStateMachine()
                 unexplored.header.frame_id = MAP;
 
                 unexplored.pose.position.x = 40;
-                unexplored.pose.position.y = 0;
+                unexplored.pose.position.y = 5;
                 unexplored.pose.position.z = 0;
 
                 unexplored.pose.orientation.w = 1;
@@ -227,10 +227,10 @@ void ScoutStateMachine::startStateMachine()
                 // Go 3 meters to the left of the current pose
                 geometry_msgs::PoseStamped go_left;
 
-                go_left.header.frame_id = robot_name_ + ROBOT_CHASSIS;
+                go_left.header.frame_id = MAP;
 
-                go_left.pose.position.x = 0;
-                go_left.pose.position.y = 3;
+                go_left.pose.position.x = -15;
+                go_left.pose.position.y = 0;
                 go_left.pose.position.z = 0;
 
                 go_left.pose.orientation.w = 1;

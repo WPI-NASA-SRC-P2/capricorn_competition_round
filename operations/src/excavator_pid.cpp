@@ -87,7 +87,7 @@ int main(int argc, char** argv)
     float wrist_pitch_ki = 5;
     float wrist_pitch_kd = 5;
 
-    client = nh.serviceClient<srcp2_msgs::PidTuningSrv>(robot_name + "/pid_tuning"); // robot_name might require a preceding / to work correctly
+    client = nh.serviceClient<srcp2_msgs::PidTuningSrv>("/" + robot_name + "/pid_tuning"); // robot_name might require a preceding / to work correctly
 
     setPid(shoulder_yaw_joint, shoulder_yaw_kp, shoulder_yaw_ki, shoulder_yaw_kd);
     setPid(shoulder_pitch_joint, shoulder_pitch_kp, shoulder_pitch_ki, shoulder_pitch_kd);

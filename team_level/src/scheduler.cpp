@@ -15,6 +15,7 @@ void volLocationCB(const geometry_msgs::PoseStamped::ConstPtr& vol_loc)
 {
     ROS_INFO("Received volatile location at [%f, %f]. Sending to hauler and excavator.\n", vol_loc->pose.position.x, vol_loc->pose.position.y);
     vol_location_excavator_pub.publish(vol_loc);
+    ros::Duration(10).sleep();
     vol_location_hauler_pub.publish(vol_loc);
 }
 
