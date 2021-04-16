@@ -3,12 +3,18 @@
 
 #include <ros/ros.h>
 #include <iostream>
+#include <operations/navigation_algorithm.h>
 #include <operations/NavigationAction.h> 
 #include <operations/ResourceLocaliserAction.h> 
 #include <actionlib/client/simple_action_client.h>
 #include <utils/common_names.h>
 #include <operations/ExcavatorAction.h>
 #include <std_msgs/Empty.h>
+#include <geometry_msgs/Point.h>
+#include <perception/ObjectArray.h>
+#include <geometry_msgs/PointStamped.h>
+#include <tf2_ros/Buffer.h>
+
 
 using namespace COMMON_NAMES;
 
@@ -38,6 +44,8 @@ private:
 
   ros::Subscriber sub_scout_vol_location_;
   ros::Publisher excavator_ready_pub_;
+  ros::Subscriber objects_sub_;
+  ros::Publisher scout_loc_pub_;
 
   EXCAVATOR_STATES robot_state_ = EXCAVATOR_STATES::INIT;
   std::string robot_name_;
@@ -59,6 +67,9 @@ private:
 
   geometry_msgs::PoseStamped vol_pose_;
 
+  perception::ObjectArray g_objects;
+
+  tf2_ros::Buffer buffer_;
 
   /**
    * @brief Callback for the location of found volatile
@@ -67,6 +78,12 @@ private:
    */
   void scoutVolLocCB(const geometry_msgs::PoseStamped &msg);
 
+  /**
+   * @brief Callback function which subscriber to Objects message published from object detection
+   * 
+   * @param objs 
+   */
+  void objectsCallback(const perception::ObjectArray& objs);
 
   /**
    * @brief Waits for the scout to find the volatile

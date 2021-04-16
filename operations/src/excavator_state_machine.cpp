@@ -6,7 +6,9 @@ ExcavatorStateMachine::ExcavatorStateMachine(ros::NodeHandle nh, const std::stri
     
     navigation_client_ = new NavigationClient(NAVIGATION_ACTIONLIB, true);
     excavator_arm_client_ = new ExcavatorClient(EXCAVATOR_ACTIONLIB, true);
-
+    
+    scout_loc_pub_ = nh.advertise<geometry_msgs::PointStamped>("/" + CAPRICORN_TOPIC + SCOUT_LOC_TOPIC, 1000);
+    objects_sub_ = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
     sub_scout_vol_location_ = nh_.subscribe("/"+CAPRICORN_TOPIC + SCOUT_1 + VOLATILE_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::scoutVolLocCB, this);
     excavator_ready_pub_ = nh.advertise<std_msgs::Empty>("/"+CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000);
 }
@@ -25,6 +27,18 @@ void ExcavatorStateMachine::scoutVolLocCB(const geometry_msgs::PoseStamped &msg)
     // Take up the task
     vol_pose_ = msg;
     volatile_found_ = true;
+}
+
+
+/**
+ * @brief Callback function which subscriber to Objects message published from object detection
+ * 
+ * @param objs 
+ */
+void ExcavatorStateMachine::objectsCallback(const perception::ObjectArray& objs) 
+{
+    const std::lock_guard<std::mutex> lock(g_objects_mutex); 
+    g_objects = objs;
 }
 
 void ExcavatorStateMachine::startStateMachine()
@@ -96,7 +110,7 @@ void ExcavatorStateMachine::goToVolatile()
         // terminate when it is close enough. We don't have a functionality for 'close enough' 
         // Hence this hack
         geometry_msgs::PoseStamped temp_location = vol_pose_;
-        temp_location.pose.position.y -= 5;
+        temp_location.pose.position.x -= 5;
 
         navigation_action_goal_.pose = temp_location;
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
@@ -109,6 +123,29 @@ void ExcavatorStateMachine::goToVolatile()
         ROS_INFO("GOAL FINISHED");
         robot_state_ = PARK_AND_PUB;
         nav_server_idle_ = true;
+
+        perception::ObjectArray objects = g_objects;
+        perception::Object object;
+        geometry_msgs::Point scout_loc;
+        for(int i = 0; i < objects.number_of_objects; i++)
+        {   
+            object = objects.obj.at(i);
+            if(object.label == OBJECT_DETECTION_SCOUT_CLASS)
+            {
+                // Store the object's location
+                scout_loc = object.point;
+                break;
+            }
+        }
+
+        geometry_msgs::PointStamped point;
+        NavigationAlgo transform_object;
+        point.header.frame_id = MAP;
+        point.header.sid = 0;
+        point.header.time_stamp = ros::Time(0);
+        point.point = scout_loc;
+        transform_object.transformPoint(point, MAP, buffer_, 0.1);
+        excavator_ready_pub_.publish(point);
         std_msgs::Empty empty_message;
         excavator_ready_pub_.publish(empty_message);
     }
