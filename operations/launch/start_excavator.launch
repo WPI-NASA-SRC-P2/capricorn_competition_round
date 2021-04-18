@@ -6,8 +6,14 @@
     </include>
 
     <group ns="/capricorn/$(arg robot_name)">
+        <include file="$(find perception)/launch/object_detection.launch">
+            <arg name="robot_name" value="$(arg robot_name)" />
+        </include>
+        
+        <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
+
         <node pkg="operations" type="start_excavator_sm" name="scout_1_sm" args="$(arg robot_name)" output="screen" />
         <node pkg="operations" type="excavator_actionlib_server" name="excavator_actionlib_server" args="$(arg robot_name)" output="screen" />
-        <node pkg="operations" type="excavator_pid" name="excavator_pid" args="$(arg robot_name)" output="screen" />
+        <node pkg="operations" type="excavator_pid_node" name="excavator_pid_node" args="$(arg robot_name)" output="screen" />
     </group>
 </launch>

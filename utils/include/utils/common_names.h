@@ -87,6 +87,8 @@ namespace COMMON_NAMES
   const std::string VOLATILE_LOCATION_TOPIC = "/volatile_location";
   const std::string SCHEDULER_TOPIC = "/scheduler";
   const std::string HAULER_FILLED = "/hauler_filled";
+  const std::string LOOKOUT_LOCATION_TOPIC = "/lookout_location";
+  const std::string PARK_HAULER = "/park_hauler";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
