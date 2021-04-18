@@ -48,13 +48,20 @@ int main(int argc, char *argv[])
   //initialize node
   ros::init(argc, argv, "path_planner_server");
 
+
+  std::string robot_name(argv[1]);
+
+  //ROS Topic names
+  std::string oGrid_topic_ = robot_name + "/camera/grid_map";
+  std::string location_topic_ = robot_name + "/camera/odom";
+
   //create a nodehandle
   ros::NodeHandle nh;
 
   PathServer server;
 
-  server.oGrid_subscriber = nh.subscribe(server.oGrid_topic_, 1000, &PathServer::oGridCallback, &server);
-  server.location_subscriber = nh.subscribe(server.location_topic_, 1000, &PathServer::locationCallback, &server);
+  server.oGrid_subscriber = nh.subscribe(oGrid_topic_, 1000, &PathServer::oGridCallback, &server);
+  server.location_subscriber = nh.subscribe(location_topic_, 1000, &PathServer::locationCallback, &server);
 
   //Instantiating ROS server for generating trajectory
   ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &PathServer::trajectoryGeneration, &server);

@@ -18,8 +18,8 @@ public:
   ros::Subscriber oGrid_subscriber;
   ros::Subscriber location_subscriber;
 
-  const std::string oGrid_topic_ = "/small_excavator_1/camera/grid_map";
-  const std::string location_topic_ = "/small_excavator_1/camera/odom";
+  // const std::string oGrid_topic_ = robot_name + "/camera/grid_map";
+  // const std::string location_topic_ = robot_name + "/camera/odom";
 
   void oGridCallback(nav_msgs::OccupancyGrid oGrid);
   void locationCallback(geometry_msgs::PoseStamped location);
