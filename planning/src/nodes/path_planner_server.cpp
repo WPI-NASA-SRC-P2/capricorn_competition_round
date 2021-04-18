@@ -19,28 +19,42 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   locationLock.unlock();
 
   auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 3);
+
   auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, global_location_CPY.pose.position);
 
-  planning::TrajectoryWithVelocities trajectory;
+  if(path.poses.size() > 0) {
+    ROS_WARN("Setting Resp.");
+    planning::TrajectoryWithVelocities trajectory;
 
-  trajectory.waypoints = path.poses;
-  // trajectory.velocities = std::vector<std_msgs::Float64>(trajectory.poses.size(), (std_msgs::Float64)2.0);
+    trajectory.waypoints = path.poses;
+    // trajectory.velocities = std::vector<std_msgs::Float64>(trajectory.poses.size(), (std_msgs::Float64)2.0);
 
-  res.trajectory = trajectory;
+    res.trajectory = trajectory;
+  } else {
+    ROS_WARN("No Poses Set.");
+  }
 
   return true;
 }
 
 void PathServer::oGridCallback(nav_msgs::OccupancyGrid oGrid)
 {
+  ROS_WARN("GOT OGRID.");
   std::lock_guard<std::mutex> lock(oGrid_mutex_);
   global_oGrid_ = oGrid;
 }
 
-void PathServer::locationCallback(geometry_msgs::PoseStamped location)
+void PathServer::locationCallback(nav_msgs::Odometry location)
 {
+  ROS_WARN("GOT LOCATION: %f, %f", location.pose.pose.position.x, location.pose.pose.position.y);
   std::lock_guard<std::mutex> lock(location_mutex_);
-  global_location_ = location;
+  
+  geometry_msgs::PoseStamped ps;
+
+  ps.header = location.header;
+  ps.pose = location.pose.pose;
+
+  global_location_ = ps;
 }
 
 int main(int argc, char *argv[])
@@ -52,7 +66,7 @@ int main(int argc, char *argv[])
   std::string robot_name(argv[1]);
 
   //ROS Topic names
-  std::string oGrid_topic_ =  "/" + robot_name +  "/camera/grid_map";
+  std::string oGrid_topic_ = "/" + robot_name + "/camera/grid_map";
   std::string location_topic_ = "/" + robot_name + "/camera/odom";
 
   //create a nodehandle

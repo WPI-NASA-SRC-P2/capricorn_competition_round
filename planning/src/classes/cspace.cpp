@@ -46,6 +46,8 @@ OccupancyGrid CSpace::getCSpace(nav_msgs::OccupancyGrid &oGrid, const int thresh
 		{
 			recursiveSearchNeighbors(i, radius, threshold, paddedGrid, oGrid);
 		}
+		if (oGrid.data[i] == -1)
+			paddedGrid.data[i] = 0;
 	}
 
 	return paddedGrid;
