@@ -13,9 +13,11 @@ int main(int argc, char **argv)
     return 1;
   }*/
 
+  std::string robot_name(argv[1]);
+
   ros::NodeHandle n;
 
-  ros::ServiceClient client = n.serviceClient<planning::trajectory>("trajectoryGenerator");
+  ros::ServiceClient client = n.serviceClient<planning::trajectory>("/capricorn/" + robot_name + "/trajectoryGenerator");
 
   client.waitForExistence();
 
