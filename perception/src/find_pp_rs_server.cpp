@@ -145,7 +145,7 @@ int main(int argc, char** argv)
     yaw_sensor_pub = nh.advertise<std_msgs::Float64>("/" + robot_name + COMMON_NAMES::SET_SENSOR_YAW_TOPIC, 10);
     yaw_msg.data = 0;
 
-    Server server(nh, robot_name + COMMON_NAMES::FIND_PP_RS_ACTIONLIB_NAME, boost::bind(&execute, _1, &server), false);
+    Server server(nh, robot_name + COMMON_NAMES::FIND_PP_RS_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.start();
     std::cout<<"Started Server\n";
     ros::spin();

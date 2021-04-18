@@ -4,7 +4,7 @@
 #include <std_msgs/Float64.h>
 
 //How fast the main loop of the node will run.
-#define UPDATE_HZ 1000
+#define UPDATE_HZ 100
 
 using namespace COMMON_NAMES;
 

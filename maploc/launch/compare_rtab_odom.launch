@@ -13,10 +13,11 @@
 
     <include file="$(find maploc)/launch/rtabmap.launch" >
       <arg name="robot_name" value="$(arg robot_name)"/>
+      <arg name="use_rtabmap" value="true"/>
     </include>
     
-    <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" output="screen" args="$(arg robot_name)" />
-    <node name="odom_error" pkg="maploc" type="odom_error" output="screen" args="$(arg robot_name)  /$(arg robot_name)/camera/odom" />
+    <!--<node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" output="screen" args="$(arg robot_name)" />
+    <node name="odom_error" pkg="maploc" type="odom_error" output="screen" args="$(arg robot_name)  /$(arg robot_name)/camera/odom" />-->
 
     <!-- The node "initialize_rtabmap" is launhed with a delay of $node_start_delay, as it takes some time for the client to become available, without delay the execution sometimes get stuck at "Rtabmap client loaded" -->
     <node name="initialize_rtabmap" pkg="maploc" type="initialize_rtabmap" output="screen" args="$(arg robot_name)" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "/>

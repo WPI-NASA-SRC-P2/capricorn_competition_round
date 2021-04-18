@@ -1,7 +1,7 @@
 /*
 Copied and modified from qualification phase: https://github.com/WPI-NASA-SRC-P2/TeamCapricorn/blob/master/capricorn_odom/src/capricorn_odom_initialize.cpp
-MODIFIED BY: Mahimana Bhatt
-Email: mbhatt@wpi.edu
+MODIFIED BY: Albert Enyedy
+Email: ajenyedy@wpi.edu
 
 TEAM CAPRICORN
 NASA SPACE ROBOTICS CHALLENGE
@@ -11,12 +11,18 @@ NASA SPACE ROBOTICS CHALLENGE
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Pose.h>
 #include <gazebo_msgs/GetModelState.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
+#include <string>
+#include <sstream>
+
 #include <rtabmap_ros/ResetPose.h>
 #include <utils/common_names.h>
+
+#include <srcp2_msgs/LocalizationSrv.h>
 
 /**
  * @brief This script resets the pose of RTabMap to the current ground truth pose fetched from gazebo model state.
@@ -37,39 +43,37 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, robot_name + COMMON_NAMES::INITALIZE_ODOM_NODE_NAME);
     ros::NodeHandle nh;
 
-    // Variable for getting ground truth pose from gazebo
-    geometry_msgs::PoseWithCovarianceStamped true_pose;
-
-    ros::ServiceClient gazebo_client;
     ros::ServiceClient nasa_client;
-    
+
     ROS_INFO("Initializing odom with gazebo");
 
-    gazebo_client = nh.serviceClient<gazebo_msgs::GetModelState>(COMMON_NAMES::MODEL_STATE_QUERY);
+    // service client for calling the LocalizationSrv service for each rover
+    ros::ServiceClient get_true_pose_client;
 
-    gazebo_msgs::GetModelState state;
+    // initialize the LocalizationSrv client on proper rosservice call name: /robot_name/get_true_pose
+    get_true_pose_client = nh.serviceClient<srcp2_msgs::LocalizationSrv>("/" + robot_name + COMMON_NAMES::TRUE_POSE_SRV);
 
-    // It is assumed that the model name same as the robot name or whatever argument is supplied 
-    state.request.model_name = robot_name;
+    // set up the request/response message for LocalizationSrv
+    srcp2_msgs::LocalizationSrv loc_pose;
+    loc_pose.request.call = true; // I have no idea what to do here 
+    
+    // variable for storing the service pose
+    geometry_msgs::Pose pose_wrt_heightmap;
 
-    // HEIGHTMAP is considered as origin of the simulation (as per the observation it is)
-    state.request.relative_entity_name = COMMON_NAMES::HEIGHTMAP;
-
-    if(gazebo_client.call(state))
+    if(get_true_pose_client.call(loc_pose))
     {
-        true_pose.pose.pose = state.response.pose;
-        true_pose.header    = state.response.header;
-    }
-    else
-    {
-        ROS_ERROR("Gazebo client call on odom initialization failed.");
-        return -1;
+        pose_wrt_heightmap = loc_pose.response.pose;
+        ROS_INFO("True Pose Obtained");
     }
 
+    // end get_true_pose
+
+    // remainder of the node is just copied from the original initialize_rtabmap (which is now cheat_initialize_rtabmap.cpp)
+    // -> as the input is of the same type, but w.r.t. the desired unified heightmap coordinate frame as opposed to w.r.t. the robot's local baseframe
     geometry_msgs::TransformStamped transformStamped;
 
     geometry_msgs::PoseStamped stampedPose;
-    stampedPose.pose = true_pose.pose.pose;
+    stampedPose.pose = pose_wrt_heightmap;
 
     tf2::Quaternion q(stampedPose.pose.orientation.x,
                         stampedPose.pose.orientation.y,
