@@ -52,8 +52,8 @@ int main(int argc, char *argv[])
   std::string robot_name(argv[1]);
 
   //ROS Topic names
-  std::string oGrid_topic_ = robot_name + "/camera/grid_map";
-  std::string location_topic_ = robot_name + "/camera/odom";
+  std::string oGrid_topic_ = robot_name + "/" + robot_name +  "/camera/grid_map";
+  std::string location_topic_ = robot_name + "/" + robot_name + "/camera/odom";
 
   //create a nodehandle
   ros::NodeHandle nh;
