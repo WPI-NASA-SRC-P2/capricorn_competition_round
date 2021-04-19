@@ -13,7 +13,7 @@ ExcavatorStateMachine::ExcavatorStateMachine(ros::NodeHandle nh, const std::stri
     sub_scout_vol_location_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + VOLATILE_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::scoutVolLocCB, this);
     hauler_parked_sub_ = nh.subscribe("/" + CAPRICORN_TOPIC + SCHEDULER_TOPIC + "/hauler_parked", 1, &ExcavatorStateMachine::haulerParkedCB, this);
     
-    hauler_go_back_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + "/hauler_go_back", 1000);
+    hauler_go_back_ = nh.advertise<std_msgs::Empty>(CAPRICORN_TOPIC  + HAULER_FILLED, 1000);
     park_hauler_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + PARK_HAULER, 1000);
     excavator_ready_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000);
 }
@@ -173,7 +173,8 @@ void ExcavatorStateMachine::goToScout()
         ROS_INFO("Going going");
         geometry_msgs::PoseStamped temp_msg;
         temp_msg = next_nav_goal_;
-        temp_msg.pose.position.y += 5;
+        temp_msg.pose.position.x -= 5;
+        temp_msg.pose.orientation.w = 1;
 
         navigation_action_goal_.pose = temp_msg;
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
@@ -203,11 +204,14 @@ void ExcavatorStateMachine::parkExcavator()
         // go to the location where it thought the scout was.
 
         geometry_msgs::PoseStamped scout_stamped;
-        scout_stamped.header = scout_loc_stamp_.header;
-        scout_stamped.pose.position = scout_loc_stamp_.point;
-        scout_stamped.pose.orientation.w = 1;
+        scout_stamped.header = next_nav_goal_.header;
+        // ##########################################################
+        // ###########  H A C K  ################ //
+        scout_stamped.pose.position.x = 40;
+        scout_stamped.pose.position.y = 8;
+        scout_stamped.pose.orientation.z = -1;
         // ROS_INFO_STREAM(scout_stamped);
-        navigation_action_goal_.pose = next_nav_goal_;      // Position estimation is not perfect
+        navigation_action_goal_.pose = scout_stamped;      // Position estimation is not perfect
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
         navigation_client_->sendGoal(navigation_action_goal_);
@@ -266,7 +270,7 @@ void ExcavatorStateMachine::dumpVolatile()
         
         // Should be tested with Endurance's parking code and 
         // These values should be tuned accordingly
-        goal.target.x = 0.7; 
+        goal.target.x = 0.85; 
         goal.target.y = -2;
         goal.target.z = 0;
 
@@ -300,7 +304,7 @@ void ExcavatorStateMachine::findScout()
 {
     if(nav_server_idle_)
     {
-        navigation_action_goal_.angular_velocity = ROTATION_SPEED; //
+        navigation_action_goal_.angular_velocity = -0.25; //
         navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
 
         navigation_client_->sendGoal(navigation_action_goal_);

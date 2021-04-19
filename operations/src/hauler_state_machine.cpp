@@ -12,7 +12,11 @@ HaulerStateMachine::HaulerStateMachine(ros::NodeHandle nh, const std::string& ro
 
     // Subscriber initializations
     dig_site_location_ = nh_.subscribe(CAPRICORN_TOPIC + "/" + robot_name_ + VOLATILE_LOCATION_TOPIC, 1000, &HaulerStateMachine::digSiteLocCB, this);
-    hauler_filled_sub_ = nh_.subscribe(CAPRICORN_TOPIC + "/" + robot_name_ + HAULER_FILLED, 1000, &HaulerStateMachine::haulerFilledCB, this);
+    hauler_filled_sub_ = nh_.subscribe(CAPRICORN_TOPIC + HAULER_FILLED, 1000, &HaulerStateMachine::haulerFilledCB, this);
+    excav_ready_sub_ = nh_.subscribe("/" + CAPRICORN_TOPIC + PARK_HAULER, 1000, &HaulerStateMachine::excavReadyCB, this);
+    lookout_loc_sub_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + LOOKOUT_LOCATION_TOPIC, 1000, &HaulerStateMachine::lookoutLocCB, this);
+
+    hauler_ready_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + SCHEDULER_TOPIC + "/hauler_parked", 1000);
 }
 
 HaulerStateMachine::~HaulerStateMachine()
@@ -28,6 +32,18 @@ void HaulerStateMachine::digSiteLocCB(const geometry_msgs::PoseStamped &msg)
     // TODO: lock guard
     dig_site_pose_ = msg;
     volatile_found_ = true;
+}
+
+void HaulerStateMachine::lookoutLocCB(const geometry_msgs::PoseStamped &msg)
+{
+    lookout_received_ = true;
+    lookout_pose_ = msg;
+}
+
+void HaulerStateMachine::excavReadyCB(const std_msgs::Empty &msg)
+{
+    // TODO: lock guard
+    park_excavator_ = true;
 }
 
 void HaulerStateMachine::haulerFilledCB(const std_msgs::Empty &msg)
@@ -51,6 +67,9 @@ void HaulerStateMachine::startStateMachine()
         {
         case HAULER_STATES::INIT:
             initState();
+            break;
+        case HAULER_STATES::GO_TO_LOOKOUT:
+            goToLookout();
             break;
         case HAULER_STATES::GO_TO_DIG_SITE:
             goToDigSite();
@@ -85,10 +104,40 @@ void HaulerStateMachine::startStateMachine()
 
 void HaulerStateMachine::initState()
 {
-    if(volatile_found_)
+    if(lookout_received_)
     {
-        robot_state_ = GO_TO_DIG_SITE;
-        volatile_found_ = false;
+        robot_state_ = GO_TO_LOOKOUT;
+        // lookout_received_ = false;
+    }
+}
+
+void HaulerStateMachine::goToLookout()
+{
+    if(nav_server_idle_ && lookout_received_)
+    {
+        ROS_INFO("Goal action requested");
+        
+        // This is big hack for the demo. Ideally, hauler should follow the excavator
+        // But we do not have follow functionality. It can only 'reach' at a given location
+        // Currently, for parking, the Hauler should be in the lower 3rd quadrant (bottom right) of the excavator
+        // Hence this hack
+        geometry_msgs::PoseStamped temp_location = lookout_pose_;
+        // temp_location.pose.position.x += 10;
+        // temp_location.pose.position.y += 10;
+
+        navigation_action_goal_.pose = temp_location;
+        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+
+        navigation_client_->sendGoal(navigation_action_goal_);
+        nav_server_idle_ = false;
+    }
+    else if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
+    {
+        ROS_INFO("GOAL FINISHED");
+        lookout_received_ = false;
+        nav_server_idle_ = true;
+        if(volatile_found_)
+            robot_state_ = GO_TO_DIG_SITE;
     }
 }
 
@@ -97,14 +146,14 @@ void HaulerStateMachine::goToDigSite()
     if(nav_server_idle_)
     {
         ROS_INFO("Goal action requested");
-        
+
         // This is big hack for the demo. Ideally, hauler should follow the excavator
         // But we do not have follow functionality. It can only 'reach' at a given location
         // Currently, for parking, the Hauler should be in the lower 3rd quadrant (bottom right) of the excavator
         // Hence this hack
         geometry_msgs::PoseStamped temp_location = dig_site_pose_;
-        temp_location.pose.position.x += 10;
-        temp_location.pose.position.y += 10;
+        temp_location.pose.position.x += 2;
+        temp_location.pose.position.y += 7;
 
         navigation_action_goal_.pose = temp_location;
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
@@ -122,7 +171,7 @@ void HaulerStateMachine::goToDigSite()
 
 void HaulerStateMachine::followExcavator()
 {
-    if(nav_vis_server_idle_)
+    if(nav_vis_server_idle_ && park_excavator_)
     {
         ROS_INFO("Following Excavator");
         navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS; 
@@ -139,7 +188,7 @@ void HaulerStateMachine::followExcavator()
 
 void HaulerStateMachine::parkAtExcavator()
 {
-    if(park_server_idle_)
+    if(park_server_idle_ )
     {
         ROS_INFO("Parking Hauler");
         park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_EXCAVATOR_CLASS;
@@ -150,6 +199,8 @@ void HaulerStateMachine::parkAtExcavator()
     {
         ROS_INFO("Parked");
         robot_state_ = ACCEPT_VOLATILE;
+        std_msgs::Empty empty_msg;
+        hauler_ready_pub_.publish(empty_msg);
         park_server_idle_ = true;
     }
 }

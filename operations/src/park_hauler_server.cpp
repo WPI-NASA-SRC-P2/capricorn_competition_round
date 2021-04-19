@@ -41,7 +41,7 @@ const float FORWARD_VELOCITY = 0.4;
 std::mutex g_objects_mutex;
 
 // global variables for park excavator
-const int MIN_DIFF_THRESH = 150, DIFF_CHANGE_THRESH = 20, ROBOT_ANTENNA_DIST_THRESH = 3;
+const int MIN_DIFF_THRESH = 150, DIFF_CHANGE_THRESH = 20, ROBOT_ANTENNA_DIST_THRESH = 2.85;
 const float DEFAULT_RADIUS = 3.5;
 bool g_parked = false, g_found_orientation = false;
 float g_max_diff = -1;

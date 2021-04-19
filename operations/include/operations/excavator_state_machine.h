@@ -51,13 +51,13 @@ private:
   ros::Publisher park_hauler_pub_;
   ros::Publisher hauler_go_back_;   // WTF is this name??
 
-  EXCAVATOR_STATES robot_state_ = EXCAVATOR_STATES::DIG_VOLATILE;
+  EXCAVATOR_STATES robot_state_ = EXCAVATOR_STATES::INIT;
   std::string robot_name_;
 
   const double SLEEP_TIME = 0.5;
   const double ROTATION_SPEED = 0.5;
   
-  const int digging_tries_ = 5; // BIG HACK FOR DEMO
+  const int digging_tries_ = 2; // BIG HACK FOR DEMO
   int digging_attempt_ = 0;
 
   bool state_machine_continue_ = true;

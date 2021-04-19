@@ -75,7 +75,7 @@ void ScoutStateMachine::startStateMachine()
                 unexplored.header.frame_id = MAP;
 
                 unexplored.pose.position.x = 40;
-                unexplored.pose.position.y = 5;
+                unexplored.pose.position.y = 2;
                 unexplored.pose.position.z = 0;
 
                 unexplored.pose.orientation.w = 1;
@@ -229,8 +229,8 @@ void ScoutStateMachine::startStateMachine()
 
                 go_left.header.frame_id = MAP;
 
-                go_left.pose.position.x = -15;
-                go_left.pose.position.y = 0;
+                go_left.pose.position.x = 40;
+                go_left.pose.position.y = -20;
                 go_left.pose.position.z = 0;
 
                 go_left.pose.orientation.w = 1;
@@ -247,7 +247,7 @@ void ScoutStateMachine::startStateMachine()
 
             if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
             {
-                printf("Done moving out of the way. DEMO: Staying in place, not returning to spiral.\n");
+                // printf("Done moving out of the way. DEMO: Staying in place, not returning to spiral.\n");
             }
             break;
         }

@@ -17,6 +17,7 @@ using namespace COMMON_NAMES;
 enum HAULER_STATES
 {
   INIT = 0,           // Wait for Instructions
+  GO_TO_LOOKOUT,
   GO_TO_DIG_SITE,     // Get close to the digging site when it is detected
   FOLLOW_EXCAVATOR,   // Currently sets hauler up to park. 
                       // Is necessary for parking method)
@@ -37,6 +38,10 @@ private:
 
   ros::Subscriber dig_site_location_;   // Redundant name? site and location?
   ros::Subscriber hauler_filled_sub_;   // Subscriber to wait till hauler is filled
+  ros::Subscriber excav_ready_sub_;   // Subscriber to wait till hauler is filled
+  ros::Subscriber lookout_loc_sub_;   // Subscriber to wait till hauler is filled
+
+  ros::Publisher hauler_ready_pub_;
 
   HAULER_STATES robot_state_ = HAULER_STATES::INIT;
   std::string robot_name_;
@@ -51,11 +56,14 @@ private:
   bool nav_vis_server_idle_ = true;
   bool hauler_server_idle_ = true;
   bool park_server_idle_ = true;
+  bool park_excavator_ = false;
+  bool lookout_received_ = false;
     
   // Variables to be set by subscriber callback
   bool volatile_found_ = false;
   bool hauler_filled_ = false;
   geometry_msgs::PoseStamped dig_site_pose_;
+  geometry_msgs::PoseStamped lookout_pose_;
 
   // Actionlib servers' defining
   typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
@@ -90,6 +98,10 @@ private:
    */
   void haulerFilledCB(const std_msgs::Empty &msg);
 
+
+  void excavReadyCB(const std_msgs::Empty &msg);
+
+  void lookoutLocCB(const geometry_msgs::PoseStamped &msg);
 
   /**
    * @brief Waits for the scout to find the volatile
@@ -148,6 +160,8 @@ private:
    * 
    */
   void dumpVolatile();
+
+  void goToLookout();
 
 public:
   HaulerStateMachine(ros::NodeHandle nh, const std::string& robot_name);

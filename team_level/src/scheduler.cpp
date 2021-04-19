@@ -32,7 +32,22 @@ int main(int argc, char* argv[])
     vol_location_excavator_pub = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + "/" + EXCAVATOR_1 + VOLATILE_LOCATION_TOPIC, 1000);
     vol_location_hauler_pub = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + "/" + HAULER_1 + VOLATILE_LOCATION_TOPIC, 1000);
 
+    ros::Publisher hauler_lookout_pub = nh.advertise<geometry_msgs::PoseStamped>("/" + CAPRICORN_TOPIC + "/" + HAULER_1 + LOOKOUT_LOCATION_TOPIC, 1000);
+    ros::Publisher excavtor_lookout_pub = nh.advertise<geometry_msgs::PoseStamped>("/" + CAPRICORN_TOPIC + "/" + EXCAVATOR_1 + LOOKOUT_LOCATION_TOPIC, 1000);
+
     ROS_INFO("Scheduler started, listening for volatiles.\n");
+
+    ros::Duration(5).sleep();
+    geometry_msgs::PoseStamped pose;
+    pose.header.frame_id = "map";
+    pose.pose.position.x = 25;
+    pose.pose.position.y = 2;
+    excavtor_lookout_pub.publish(pose);
+
+    ros::Duration(10).sleep();
+    pose.pose.position.x = 20;
+    pose.pose.position.y = 5;
+    hauler_lookout_pub.publish(pose);
 
     ros::spin();
 

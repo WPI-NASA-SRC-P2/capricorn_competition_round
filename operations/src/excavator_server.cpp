@@ -146,15 +146,22 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     }
     else // Else raise the arms where volatiles were found and proceed to dumping
     {
+      static bool once = true;
       publishAngles(yaw_angle, 1, 1, -2.6);
       ros::Duration(SLEEP_DURATION).sleep();
       publishAngles(yaw_angle, -0.5, 1, -1.1);
       ros::Duration(SLEEP_DURATION).sleep();
-      publishAngles(yaw_angle, -2, 1, 0.4); // This set of values moves the scoop over the surface
+      if(once)
+      {
+        publishAngles(-1, -1, 1.5792, -0.7786); // This set of values moves the scoop over the surface
+        once = false;
+      }
     }
   }
   else if(task == START_UNLOADING) // dumping angles
   {
+    publishAngles(0, -1, 1.5792, -0.7786);
+    ros::Duration(SLEEP_DURATION).sleep();
     publishAngles(theta, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
     publishAngles(theta, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
