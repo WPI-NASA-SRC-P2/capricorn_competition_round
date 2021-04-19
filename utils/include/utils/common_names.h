@@ -122,6 +122,21 @@ namespace COMMON_NAMES
   const std::string OBJECT_DETECTION_PP_SMALL_THRUSTER_CLASS = "ppSmallThruster";
   const std::string OBJECT_DETECTION_ROCK_CLASS = "rock";
 
+  /****** NAVIGATION VISION ENUMS ******/
+  enum NAV_VISION_TYPE
+  {
+    V_FOLLOW, // Follow an object 
+    V_REACH,  // Reach the goal and stop
+  };
+  
+  enum NAV_VISION_RESULT
+  {
+    V_FAILED,
+    V_SUCCESS,
+    V_INTERRUPTED,
+    V_INVALID_CLASS, // If an invalid object detection is given
+  };
+
   /****** NAVIGATION ENUMS ******/
   enum NAV_TYPE
   {

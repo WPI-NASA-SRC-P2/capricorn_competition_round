@@ -1,7 +1,26 @@
 #!/usr/bin/env python3
+"""
+Author: Mahimana Bhatt
+Email: mbhatt@wpi.edu
+TEAM CAPRICORN
+NASA SPACE ROBOTICS CHALLENGE
+
+This ros node takes three command line arguments:
+robot_name = small_excavator_2, etc.
+absolute_path_to_model
+absolute_path_to_labelmaptxt
+
+It subscribes to two topics:
+1. Left camera's image_raw
+2. Disparity image (published by stereo_image_proc)
+
+Using the image, the objects are detected, preprocessed to compute a list of objects indices, which are of interest
+and then published in perception/Objects message
+"""
 import rospy
 import sys
 import message_filters
+import threading
 import math
 
 from cv_bridge import CvBridge
@@ -26,39 +45,178 @@ physical_devices = tf.config.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
 # tf.config.experimental.set_virtual_device_configuration(physical_devices[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=800)])
 
-bridge = CvBridge()
 K = [381.36246688113556, 0.0, 320.5, 0.0, 381.36246688113556, 240.5, 0.0, 0.0, 1.0]
-fx = K[0]
-fy = K[4]
-cx = K[2]
-cy = K[5]
-
-height = 480
-width = 640
-
-processing_lock = False
-global_image = None
-global_disparity = None
-
+Fx = K[0]
+Fy = K[4]
+Cx = K[2]
+Cy = K[5]
+STEREO_BASELINE = Cx / (2 * Fx)
+HEIGHT = 480
+WIDTH = 640
 UPDATE_HZ = 20.0
+CAMERA_FRAME_LINK = "_left_camera_optical"
+CLASS_SCORE_THRESHOLD = 0.6
 
-def detection_algorithm():
+g_bridge = CvBridge()
+g_seq = 0
+g_lock = threading.Lock()
+g_image = None
+g_disparity = None
+
+g_class_individual_thresh = {"processingPlant" : 0.8, "repairStation" : 0.8, "hopper" : 0.6}
+g_class_not_to_be_duplicated = {"processingPlant", "repairStation", "hopper", "furnace", "excavatorArm", "robotAntenna"}
+
+def preProcessObjectDetection(scores, classes, num_detections, final_list) -> None:
+    """
+    Preprocesses the detected object i.e. it outputs the list of indices of only those objects which have a confidence of higher than a default threshold
+    Also, if there is a custom threshold defined for the class in g_class_individual_thresh, that threshold is also check, if the confidence is higher than
+    both the threshold, then we check if there is already an object of same label detected (done to remove certain duplicate object because some objects will occur only 
+    once in an image as there is no copy such as processingPlant, so if there are two copies of processingPlant, then the copy with higher confidence will be published), 
+    if the class does not belong to g_class_not_to_be_duplicated, it is simply added to the output list 
+    """
+
+    # maintains class labels which are added to the result
+    current_class = set()
+    for i in range (num_detections):
+        if(scores[i] > CLASS_SCORE_THRESHOLD):
+            # score greater than a default threshold
+            class_label = (g_category_index.get(classes[i])).get('name')
+
+            if(class_label in g_class_individual_thresh and scores[i] < g_class_individual_thresh[class_label]):
+                # if individual threshold is defined and the current confidence is not greater than individual threshold
+                continue            
+
+            if(class_label in g_class_not_to_be_duplicated and class_label in current_class):
+                # if there is already an element added to the output of a specific class which should not be duplicated
+                # input scores are sorted high to low, so if there is already a label added to output, there should not another label added
+                continue
+            else:
+                # add index to the output and buffer list maintained to keep track of added labels to output
+                current_class.add(class_label)
+                final_list.append(i)
+        else:
+            break
+
+def estimate3dLocation(i, box, cl, score, disp_img):
+    """
+    Estimates the 3D attributes of a detected object using the disparity image and bounding box
+    """
+    # calculating higher and lower limits of bounding box in pixels
+    l_y = box[0] * HEIGHT
+    l_x = box[1] * WIDTH
+    h_y = box[2] * HEIGHT
+    h_x = box[3] * WIDTH
+
+    # center of bounding box in pixels
+    center_x = int(l_x + (h_x - l_x)/2)
+    center_y = int(l_y + (h_y - l_y)/2)
+
+    low_x = int(l_x)
+    high_x = int(h_x)
+
+    # disparity of center pixel
+    min_disp = disp_img[center_y, center_x]
+
+    # calculating the disparity of the pixel which is farthest to the robot in a window of 10 pixels in height and width of full bounding box
+    if(center_y - 10 > 10):
+        low_y =  int(center_y - 10)
+    else:
+        low_y = int(center_y)
+    
+    if(center_y + 10 < (HEIGHT - 1)):
+        high_y = int(center_y + 10)
+    else:
+        high_y = int(center_y)
+        
+    for w in range (low_x, high_x):
+        for v in range (low_y, high_y):
+            if(disp_img[v, w] > min_disp):
+                min_disp = disp_img[v, w]
+
+    # calculating 3d location from the estimated disparity and camera's intrinsic parameters
+    center_disparity = min_disp
+    depth = STEREO_BASELINE * Fx / center_disparity
+    x = (center_x - Cx) * depth / Fx
+    y = (center_y - Cy) * depth / Fy
+    z = depth
+
+    # calculating the width of the output object
+    w_x_1 = (l_x - Cx) * depth / Fx
+    w_y_1 = (center_y - Cy) * depth / Fy
+    w_z_1 = depth
+
+    w_x_2 = (h_x - Cx) * depth / Fx
+    w_y_2 = (center_y - Cy) * depth / Fy
+    w_z_2 = depth
+
+    # width of the output object
+    w = math.sqrt((w_x_1 - w_x_2)**2+(w_y_1 - w_y_2)**2+(w_z_1 - w_z_2)**2)
+
+    result = {
+        "score" : score, 
+        "class" : cl,
+        "x" : x, 
+        "y" : y,
+        "z" : z,
+        "w" : w,
+        "s_x" : (h_x - l_x),
+        "s_y" : (h_y - l_y),
+        "c_x" : center_x,
+        "c_y" : center_y,
+    }
+    return result
+
+def constructObjectMsg(result):
+    """
+    Construct the geometry_msgs/PoseStamped message for single object
+    """
+    object_msg = Object()
+    object_msg.score = result["score"]
+    object_msg.label = (g_category_index.get(result["class"])).get('name')
+    object_msg.point.header.seq = g_seq   
+    object_msg.point.header.frame_id = g_robot_name + CAMERA_FRAME_LINK
+    object_msg.point.pose.position.x = result["x"]
+    object_msg.point.pose.position.y = result["y"]
+    object_msg.point.pose.position.z = result["z"]
+    object_msg.width = result["w"]
+    object_msg.center.x = result["c_x"]
+    object_msg.center.y = result["c_y"]
+    object_msg.size_x = result["s_x"]
+    object_msg.size_y = result["s_y"]
+    return object_msg
+
+def overlayInfoImage(result, image_np):
+    """
+    Overlay the 3D location of the object on the image, the white colored text having x, y, z values
+    """
+    WHITE = (255,255,255)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_size = 0.28
+    font_color = WHITE
+    font_thickness = 0
+    text = "x: {:.3f}, y: {:.3f}, z: {:.3f}" .format(result["x"], result["y"], result["z"])
+    cv2.putText(image_np, text, (result["c_x"], result["c_y"]), font, font_size, font_color, font_thickness, cv2.LINE_AA)
+
+def detectionAlgorithm():
     rospy.loginfo_once("Object Detection Algorithm Working")
 
-    global processing_lock
-    processing_lock = True
+    global g_image
+    global g_disparity
 
-    global global_image
-    image = global_image
-    disparity = global_disparity
+    g_lock.acquire
+    # getting buffered global image and disparity from callback
+    image_np = g_image.copy()
+    disp_img = g_disparity.copy()
+    g_lock.release
 
-    image_np = bridge.imgmsg_to_cv2(image, "bgr8")
-    disp_img = bridge.imgmsg_to_cv2(disparity.image, "32FC1")    
-
+    # convert images to tensor
     input_tensor = tf.convert_to_tensor(image_np)
     input_tensor = input_tensor[tf.newaxis,...]
-    output_dict = model_fn(input_tensor)
 
+    # run object detection on input image
+    output_dict = g_model_fn(input_tensor)
+
+    # processing object detected data
     num_detections = int(output_dict.pop('num_detections'))
     output_dict = {key:value[0, :num_detections].numpy() 
                     for key,value in output_dict.items()}
@@ -66,169 +224,101 @@ def detection_algorithm():
 
     output_dict['detection_classes'] = output_dict['detection_classes'].astype(np.int64)
 
+    # adding visualization of boxes and score on the existing image, published to view on rviz
     vis_util.visualize_boxes_and_labels_on_image_array(
       image_np,
       output_dict['detection_boxes'],
       output_dict['detection_classes'],
       output_dict['detection_scores'],
-      category_index,
+      g_category_index,
       use_normalized_coordinates=True,
-      line_thickness=8)      
+      line_thickness=2,
+      min_score_thresh = CLASS_SCORE_THRESHOLD)      
 
     boxes = output_dict['detection_boxes']
     scores = output_dict['detection_scores']
     classes = output_dict['detection_classes']
     num_detections = output_dict['num_detections']
-    box = boxes.copy()
 
+    # preprocess the objects
+    final_list = []
+    preProcessObjectDetection(scores, classes, num_detections, final_list)
+
+    # create output perception/Objects message
     objects_msg = ObjectArray()
 
-    objects_msg.header.seq = image.header.seq
-    objects_msg.header.stamp = image.header.stamp
-    objects_msg.header.frame_id = robot_name + "_left_camera_optical"
+    global g_seq
+    objects_msg.header.seq = g_seq   
+    g_seq += 1
+    objects_msg.header.frame_id = g_robot_name + CAMERA_FRAME_LINK
 
-    for i in range (0, num_detections):
-        if(scores[i] > 0.5): 
-            box[i,0] = boxes[i,0] * height
-            box[i,1] = boxes[i,1] * width
-            box[i,2] = boxes[i,2] * height
-            box[i,3] = boxes[i,3] * width
-            centerX = int(box[i,1] + (box[i,3] - box[i,1])/2)
-            centerY = int(box[i,0] + (box[i,2] - box[i,0])/2)
+    for i in final_list:
+        # estimate 3D location of object
+        result = estimate3dLocation(i, boxes[i], classes[i], scores[i], disp_img)
+        overlayInfoImage(result, image_np)
+        # add to output message
+        objects_msg.obj.append(constructObjectMsg(result))
 
-            low_x = int(box[i,1])
-            high_x = int(box[i,3])
-            min_disp = disp_img[centerY, centerX]
-
-            if(centerY - 10 > 10):
-                low_y =  int(centerY - 10)
-            else:
-                low_y = int(centerY)
-            
-            if(centerY + 10 < 479):
-                high_y = int(centerY + 10)
-            else:
-                high_y = int(centerY)
-                
-            for w in range (low_x, high_x):
-                for v in range (low_y, high_y):
-                    if(disp_img[v, w] > min_disp):
-                        min_disp = disp_img[v, w]
-
-            center_disparity = min_disp
-            depth = 0.41245282 * fx / center_disparity
-            x = (centerX - cx) * depth / fx
-            y = (centerY - cy) * depth / fy
-            z = depth
-
-            w_x_1 = (box[i,1] - cx) * depth / fx
-            w_y_1 = (centerY - cy) * depth / fy
-            w_z_1 = depth
-
-            w_x_2 = (box[i,3] - cx) * depth / fx
-            w_y_2 = (centerY - cy) * depth / fy
-            w_z_2 = depth
-
-            w = math.sqrt((w_x_1 - w_x_2)**2+(w_y_1 - w_y_2)**2+(w_z_1 - w_z_2)**2)
-
-            WHITE = (255,255,255)
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            font_size = 0.28
-            font_color = WHITE
-            font_thickness = 0
-            text = "x: {:.3f}, y: {:.3f}, z: {:.3f}" .format(x, y, z)
-            img_text = cv2.putText(image_np, text, (centerX, centerY), font, font_size, font_color, font_thickness, cv2.LINE_AA)
-
-            object_msg = Object()
-
-            object_msg.point.x = x
-            object_msg.point.y = y
-            object_msg.point.z = z
-
-            object_msg.score = scores[i]
-            object_msg.width = w
-            
-            if (classes[i] == 1):
-                object_msg.label = "processingPlant"
-            elif (classes[i] == 2):
-                object_msg.label = "repairStation"
-            elif (classes[i] == 3):
-                object_msg.label = "hopper"
-            elif (classes[i] == 4):
-                object_msg.label = "rock"
-            elif (classes[i] == 5):
-                object_msg.label = "scout"
-            elif (classes[i] == 6):
-                object_msg.label = "excavator"
-            elif (classes[i] == 7):
-                object_msg.label = "hauler"
-            elif (classes[i] == 8):
-                object_msg.label = "robotAntenna"
-            elif (classes[i] == 9):
-                object_msg.label = "excavatorArm"
-            elif (classes[i] == 10):
-                object_msg.label = "furnace"
-            elif (classes[i] == 11):
-                object_msg.label = "ppSmallThruster"
-
-            object_msg.center.x = centerX
-            object_msg.center.y = centerY
-            object_msg.size_x = (box[i,3] - box[i,1])
-            object_msg.size_y = (box[i,2] - box[i,0])
-
-            objects_msg.obj.append(object_msg)
-
-    objects_msg.number_of_objects = len(objects_msg.obj)                        
-        
-    msg = bridge.cv2_to_imgmsg(image_np)
+    objects_msg.number_of_objects = len(objects_msg.obj)   
+    msg = g_bridge.cv2_to_imgmsg(image_np)
     img_pub.publish(msg)
     objects_pub.publish(objects_msg)
-    
-    processing_lock = False
 
-def detection_callback(image, disparity):    
+def detectionCallback(image, disparity):  
+    """
+    Camera image and disparity combined callback
+    """  
     rospy.loginfo_once("Callback Working")
 
-    global global_image
-    global global_disparity
-    global_image = image
-    global_disparity = disparity
+    global g_image
+    global g_disparity
 
-def init_object_detection(path_to_model, path_to_label_map):
+    g_lock.acquire()
+    # set global image and disparity
+    g_image = g_bridge.imgmsg_to_cv2(image, "bgr8")
+    g_disparity = g_bridge.imgmsg_to_cv2(disparity.image, "32FC1")
+    g_lock.release()
+
+def initObjectDetection(path_to_model, path_to_label_map):
+    """
+    Initialize the publishers, subscribers, and reads the tensorflow model
+    """
     update_rate = rospy.Rate(UPDATE_HZ)
 
-    image_sub_left = message_filters.Subscriber('/' + robot_name + '/camera/left/image_raw', Image)
-    disp_sub = message_filters.Subscriber('/' + robot_name + '/camera/disparity', DisparityImage)
+    # Initialize subscriber
+    image_sub_left = message_filters.Subscriber('/' + g_robot_name + '/camera/left/image_raw', Image)
+    disp_sub = message_filters.Subscriber('/' + g_robot_name + '/camera/disparity', DisparityImage)
     ts = message_filters.ApproximateTimeSynchronizer([image_sub_left, disp_sub], 1, 1, allow_headerless=True) 
 
-    ts.registerCallback(detection_callback)
+    ts.registerCallback(detectionCallback)
 
     global img_pub
     global objects_pub
 
-    img_pub = rospy.Publisher('/capricorn/'+robot_name+'/object_detection/image', Image, queue_size=10)
-    objects_pub = rospy.Publisher('/capricorn/'+robot_name+'/object_detection/objects', ObjectArray, queue_size=10)
+    # initialize publisher
+    img_pub = rospy.Publisher('/capricorn/'+g_robot_name+'/object_detection/image', Image, queue_size=10)
+    objects_pub = rospy.Publisher('/capricorn/'+g_robot_name+'/object_detection/objects', ObjectArray, queue_size=10)
 
-    global model_fn
+    # read object detection model
+    global g_model_fn
     tf.keras.backend.clear_session()
     model = tf.saved_model.load(str.format(path_to_model))
-    model_fn = model.signatures['serving_default']
+    g_model_fn = model.signatures['serving_default']
 
-    global category_index
-    category_index = label_map_util.create_category_index_from_labelmap(str.format(path_to_label_map), use_display_name=True)
-    rospy.loginfo("Registering loop callback for {}".format(robot_name))       
+    # initialize category index to convert integer indices to class labels
+    global g_category_index
+    g_category_index = label_map_util.create_category_index_from_labelmap(str.format(path_to_label_map), use_display_name=True)
+    rospy.loginfo("Registering loop callback for {}".format(g_robot_name))       
 
     while not rospy.is_shutdown():
-        if(not processing_lock and global_disparity is not None and global_image is not None):
-            detection_algorithm()
+        if(g_disparity is not None and g_image is not None):
+            detectionAlgorithm()
         update_rate.sleep()
 
 if __name__ == '__main__':   
-    global robot_name
-    robot_name = sys.argv[1]
+    global g_robot_name
+    g_robot_name = sys.argv[1]
     path_to_model = sys.argv[2]
     path_to_label_map = sys.argv[3]
-
-    rospy.init_node(robot_name + '_object_detection', anonymous = True)
-    
-    init_object_detection(path_to_model, path_to_label_map)
+    rospy.init_node(g_robot_name + '_object_detection', anonymous = True)    
+    initObjectDetection(path_to_model, path_to_label_map)
