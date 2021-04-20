@@ -22,6 +22,10 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
 
   auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, global_location_CPY.pose.position);
 
+  for(auto i : path.poses) {
+    ROS_WARN("%f, %f\n", i.pose.position.x, i.pose.position.y);
+  }
+
   if(path.poses.size() > 0) {
     ROS_WARN("Setting Resp.");
     planning::TrajectoryWithVelocities trajectory;
@@ -39,14 +43,12 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
 
 void PathServer::oGridCallback(nav_msgs::OccupancyGrid oGrid)
 {
-  ROS_WARN("GOT OGRID.");
   std::lock_guard<std::mutex> lock(oGrid_mutex_);
   global_oGrid_ = oGrid;
 }
 
 void PathServer::locationCallback(nav_msgs::Odometry location)
 {
-  ROS_WARN("GOT LOCATION: %f, %f", location.pose.pose.position.x, location.pose.pose.position.y);
   std::lock_guard<std::mutex> lock(location_mutex_);
   
   geometry_msgs::PoseStamped ps;

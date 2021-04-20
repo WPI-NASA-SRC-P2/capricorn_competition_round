@@ -25,8 +25,8 @@ int main(int argc, char **argv)
 
   //probably needs to not use argument
   geometry_msgs::PoseStamped pose;
-  pose.pose.position.x = 0;
-  pose.pose.position.y = 0;
+  pose.pose.position.x = 10;
+  pose.pose.position.y = 10;
   pose.pose.position.z = 0;
   pose.pose.orientation.x = 0;
   pose.pose.orientation.y = 0;
@@ -40,7 +40,9 @@ int main(int argc, char **argv)
   if (client.call(srv))
   {
     ROS_INFO("client call succeeded");
-    ROS_INFO("%s", srv.response.trajectory);
+    for(auto i : srv.response.trajectory.waypoints) {
+      ROS_INFO("%f, %f\n", i.pose.position.x, i.pose.position.y);
+    }
   }
   else
   {
