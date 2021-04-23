@@ -53,6 +53,76 @@ src_start_comp_docker
 Click on Docker extension, right click on the running container from previous step and click Attach Visual Studio Code
 ![](https://github.com/WPI-NASA-SRC-P2/capricorn_docker/blob/main/vsc_setup.gif)
 
->For executing any command within the development container, use the VScode terminal. This terminal will be running within the development container. You can open this terminal by pressing: `ctrl +`\` (ctrl + tilde key)
+>For executing any command within the development container, use the VScode terminal. This terminal will be running within the development container. You can open this terminal by pressing: `ctrl +`\` (ctrl + t
+>ilde key)
 
 For getting the command line access to the docker, execute `src_comp_terminal`
+
+
+## System Setup
+
+### System Setup Instruction
+
+1. Update your srcp2-final-public and capricorn-competition-round repository
+1.A. To update "srcp2-final-public" repository and run commands:
+```bash
+cd srcp2-final-public
+git pull
+```
+1.B. Similar for the capricorn-competition-round repository and run commands:
+```bash
+cd ~/catkin_ws/src/capricorn-competiton-round
+git pull
+```
+2. To start the simulation, open the terminal and run the command:
+```bash
+src_start_simulation
+```
+2.A. If you get an error, "command not found" or "container not found", there is an issue with sourcing the alias. To fix it, you can run the command:
+```bash
+echo "source ~/srcp2-final-public/aliases.bash" >> ~/.bashrc
+```
+2.B. Restart the terminal
+3. To develop the code you have to start the comp_docker. To do this open a new terminal, run comand:
+```bash
+src_start_comp_docker
+```
+### RUN ALL THE COMMANDS AFTER THIS POINT IN THE comp_docker TERMINAL
+
+4. Remove all other packages from ~/catkin_ws/src and only keep "capricorn-competition-round"
+5. To build the capricorn-competition-round repository, run commands:
+```bash
+cd ~/catkin_ws
+catkin build
+```
+
+5.A. if this doesn't work, delete devel and build folder in catkin_ws and run commands:
+```bash
+catkin init
+catkin clean
+catkin build
+```
+6. You would need to source all the packages and to do this run command:
+```bash
+source ~/catkin_ws/devel/setup.bash
+```
+7. To test if you can run code, execute the command:
+```bash
+roslaunch maploc rtabmap.launch
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
