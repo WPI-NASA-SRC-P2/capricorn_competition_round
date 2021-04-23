@@ -64,7 +64,7 @@ g_image = None
 g_disparity = None
 
 g_class_individual_thresh = {"processingPlant" : 0.8, "repairStation" : 0.8, "hopper" : 0.6}
-g_class_not_to_be_duplicated = {"processingPlant", "repairStation", "hopper", "furnace", "excavatorArm", "robotAntenna"}
+g_class_not_to_be_duplicated = {"processingPlant", "repairStation", "hopper", "furnace", "excavatorArm"}
 
 def preProcessObjectDetection(scores, classes, num_detections, final_list) -> None:
     """
