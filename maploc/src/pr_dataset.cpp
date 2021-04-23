@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     ros::AsyncSpinner spin(1);
     
     client = nh.serviceClient<gazebo_msgs::GetLinkState>(COMMON_NAMES::LINK_STATE_QUERY);
-    Client action_client(robot_name + COMMON_NAMES::FIND_PP_RS_ACTIONLIB_NAME, true); 
+    Client action_client(robot_name + COMMON_NAMES::FIND_PP_RS_ACTIONLIB, true); 
     action_client.waitForServer();
 
     ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &bb_and_objects_callback);

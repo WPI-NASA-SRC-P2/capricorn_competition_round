@@ -1,0 +1,8 @@
+# Define the goal
+string hopper_or_excavator  
+---
+# Define the result
+bool object_reached
+---
+# Define a feedback message
+bool process

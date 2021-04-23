@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 
     if(get_true_pose_client.call(loc_pose))
     {
-        pose_wrt_heightmap = loc_pose.response.pose
+        pose_wrt_heightmap = loc_pose.response.pose;
         ROS_INFO("True Pose Obtained");
     }
 

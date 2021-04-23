@@ -1,0 +1,12 @@
+<launch>
+    <arg name="robot_name" default="small_excavator_1" />
+
+    <include file="$(find operations)/launch/navigation.launch">
+        <arg name="robot_name" value="$(arg robot_name)" />
+    </include>
+
+    <group ns="/capricorn/$(arg robot_name)">
+        <node pkg="operations" type="start_excavator_sm" name="scout_1_sm" args="$(arg robot_name)" output="screen" />
+        <node pkg="operations" type="excavator_actionlib_server" name="excavator_actionlib_server" args="$(arg robot_name)" output="screen" />
+    </group>
+</launch>

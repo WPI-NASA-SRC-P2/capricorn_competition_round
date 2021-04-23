@@ -149,8 +149,6 @@ void NavigationServer::steerRobot(const std::vector<double>& angles)
 	publishMessage(front_right_steer_pub_, angles.at(1));
 	publishMessage(back_right_steer_pub_, angles.at(2));
 	publishMessage(back_left_steer_pub_, angles.at(3));
-
-	ros::Duration(0.5).sleep();
 }
 
 /**
@@ -609,7 +607,7 @@ void NavigationServer::angularDriving(const operations::NavigationGoalConstPtr &
 
 void NavigationServer::revolveRobot(geometry_msgs::PointStamped &revolve_about, double forward_velocity)
 {
-	NavigationAlgo::transformPoint(revolve_about, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
+	// NavigationAlgo::transformPoint(revolve_about, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
 
 	std::vector<double> angles = NavigationAlgo::getSteeringAnglesRadialTurn(revolve_about.point);
 	std::vector<double> speeds = NavigationAlgo::getDrivingVelocitiesRadialTurn(revolve_about.point, forward_velocity);
@@ -722,6 +720,9 @@ void NavigationServer::followDriving(const operations::NavigationGoalConstPtr &g
 void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 {
     printf("Received NavigationGoal, dispatching\n");
+
+	// Zero out the total distance traveled when we receive a new goal
+	total_distance_traveled_ = 0;
 
 	switch(goal->drive_mode)
 	{
