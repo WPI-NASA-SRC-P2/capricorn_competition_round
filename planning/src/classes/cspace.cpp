@@ -29,6 +29,9 @@ void CSpace::recursiveSearchNeighbors(const int pt, const int radius, const int 
 		auto neighbors = getNeighborsIndiciesArray(pt, editGrid.info.width, editGrid.data.size());
 		for (int i = 0; i < neighbors.size(); ++i)
 		{
+			if(neighbors[i] == -1)
+				continue;
+
 			editGrid.data[neighbors[i]] = 100;
 			recursiveSearchNeighbors(neighbors[i], radius - 1, threshold, editGrid, searchGrid);
 		}
@@ -46,6 +49,8 @@ OccupancyGrid CSpace::getCSpace(nav_msgs::OccupancyGrid &oGrid, const int thresh
 		{
 			recursiveSearchNeighbors(i, radius, threshold, paddedGrid, oGrid);
 		}
+		if (oGrid.data[i] == -1)
+			paddedGrid.data[i] = 0;
 	}
 
 	return paddedGrid;

@@ -110,6 +110,10 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
 
 Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point target, const Point start, int threshold)
 {
+  if(oGrid.data.size() == 0) {
+    ROS_WARN("Occupancy Grid is Empty.");
+    return Path();
+  }
   // A Star Implementation based off https://en.wikipedia.org/wiki/A*_search_algorithm
 
   // Set up the open and closed sets and heuristic scores
