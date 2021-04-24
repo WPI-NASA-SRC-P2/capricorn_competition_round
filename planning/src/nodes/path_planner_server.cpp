@@ -18,7 +18,11 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   auto global_oGrid_CPY = global_oGrid_;
   locationLock.unlock();
 
+  ROS_INFO("Before cspace");
+
   auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 3);
+
+  ROS_INFO("Before findPathOccGrid");
 
   auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, global_location_CPY.pose.position);
 

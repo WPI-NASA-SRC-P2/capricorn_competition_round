@@ -18,11 +18,11 @@ find_package(catkin REQUIRED COMPONENTS
   utils
   geometry_msgs
   perception
+  planning
   gazebo_msgs
   srcp2_msgs
   tf2
   tf2_ros
-  perception
 )
 
 ## System dependencies are found with CMake's conventions
@@ -61,7 +61,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  TrajectoryWithVelocities.msg
+  #TrajectoryWithVelocities.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -130,7 +130,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs perception
+ CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs perception planning
  #  DEPENDS system_lib
 )
 

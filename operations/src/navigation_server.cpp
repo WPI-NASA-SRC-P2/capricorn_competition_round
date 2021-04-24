@@ -111,6 +111,14 @@ void NavigationServer::initSubscribers(ros::NodeHandle& nh, std::string& robot_n
 	// TODO: Swap this topic from CHEAT_ODOM_TOPIC to the real odom topic. Or, add a flag in the launch file and switch between the two
 	update_current_robot_pose_ = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
 	brake_client_ = nh.serviceClient<srcp2_msgs::BrakeRoverSrv>("/" + robot_name + BRAKE_ROVER);
+
+	brake_client_.waitForExistence();
+	
+	// Integrating in the planner through a service call
+	trajectory_client_ = nh.serviceClient<planning::trajectory>("/capricorn/" + robot_name + "/trajectoryGenerator");
+	
+	// Make sure things get launched in the right order
+	trajectory_client_.waitForExistence();
 }
 
 /*********************************************************************/
@@ -210,29 +218,40 @@ void NavigationServer::moveRobotWheels(const double velocity)
 /****************** P U B L I S H E R   L O G I C ******************/
 /*******************************************************************/
 
-operations::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geometry_msgs::PoseStamped& goal)
+planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geometry_msgs::PoseStamped& goal)
 {
 	// Declare a trajectory message
-	operations::TrajectoryWithVelocities traj;
+	planning::TrajectoryWithVelocities traj;
 
-	// Temporary, replace with service call once the planner is complete
-	std_msgs::Float64 speed;
-	speed.data = BASE_DRIVE_SPEED;
+	// Use the service call to get a trajectory
+	planning::trajectory srv;
+	srv.request.targetPose = goal;
 
-	traj.waypoints.push_back(goal);
-	traj.velocities.push_back(speed);
+	if (trajectory_client_.call(srv))
+	{
+		ROS_INFO("Trajectory client call succeeded");
+		traj = srv.response.trajectory;
+	}
+	else
+	{
+		ROS_ERROR("Failed to call service trajectory generator");
+	}
 
 	// Make sure that all trajectory waypoints are in the map frame before returning it
 	return getTrajInMapFrame(traj);
 }
 
-operations::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const operations::TrajectoryWithVelocities& traj)
+planning::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const planning::TrajectoryWithVelocities& traj)
 {
-	operations::TrajectoryWithVelocities in_map_frame;
+	planning::TrajectoryWithVelocities in_map_frame;
+
+	ROS_INFO("Getting traj in map frame");
+	ROS_INFO("Traj length: %d\n", traj.waypoints.size());
 
 	// For each waypoint in the trajectories message
 	for(int pt = 0; pt < traj.waypoints.size(); pt++)
 	{
+		ROS_INFO("Transforming %d\n", pt);
 		geometry_msgs::PoseStamped map_pose = traj.waypoints[pt];
 
 		// Transform that waypoint into the map frame
@@ -423,7 +442,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 	while(get_new_trajectory_)
 	{
 		// Forward goal to local planner, and save the returned trajectory
-		operations::TrajectoryWithVelocities trajectory = sendGoalToPlanner(goal->pose);
+		planning::TrajectoryWithVelocities trajectory = sendGoalToPlanner(goal->pose);
 
 		// We got the new trajectory, so we should reset the new trajectory flag.
 		get_new_trajectory_ = false;
