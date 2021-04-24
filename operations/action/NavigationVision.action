@@ -1,0 +1,8 @@
+# Define the goal
+string desired_object_label  
+---
+# Define the result
+bool object_reached
+---
+# Define a feedback message
+bool centered

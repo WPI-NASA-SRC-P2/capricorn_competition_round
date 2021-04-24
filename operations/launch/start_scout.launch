@@ -5,6 +5,8 @@
         <arg name="robot_name" value="$(arg robot_name)" />
     </include>
 
-    <node pkg="operations" type="start_scout_sm" name="scout_1_sm" args="$(arg robot_name)" output="screen" />
-    <node pkg="operations" type="resource_localiser" name="scout_1_localiser" args="$(arg robot_name)" output="screen" />
+    <group ns="/capricorn/$(arg robot_name)">
+        <node pkg="operations" type="start_scout_sm" name="scout_1_sm" args="$(arg robot_name)" output="screen" />
+        <node pkg="operations" type="resource_localiser" name="scout_1_localiser" args="$(arg robot_name)" output="screen" />
+    </group>
 </launch>

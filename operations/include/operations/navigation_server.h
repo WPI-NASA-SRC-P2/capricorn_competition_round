@@ -39,6 +39,7 @@ private:
     // Tolerances for linear and angular moves
     const float DIST_EPSILON = 0.05;
     const float ANGLE_EPSILON = 0.01;
+    const float SPIRAL_SPEED = 0.5;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
     const double TRAJECTORY_RESET_DIST = 5;
@@ -74,6 +75,9 @@ private:
     // Whether we are currently manually driving, or automatically following a trajectory
     bool manual_driving_ = false;
 
+    // Continue tracing spiral until this variable is true
+    bool spiral_motion_continue_ = true;
+    
     // How much distance the robot has traveled since the last planner call. Compared against TRAJECTORY_RESET_DIST.
     double total_distance_traveled_ = 0;
 
@@ -250,6 +254,15 @@ private:
     void revolveDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server);
 
     /**
+     * @brief Revolve the robot around a geometry_msgs::Point.
+     *        Actual rotation logic
+     * 
+     * @param revolve_about      Point of rotation of the robot
+     * @param forward_velocity   Velocity with which the center of the robot should travel
+     */
+    void revolveRobot(geometry_msgs::PointStamped &revolve_about, double forward_velocity);
+    
+    /**
      * @brief Spirals the robot. Used to locate volatiles. NAV_TYPE::SPIRAL. NOT YET IMPLEMENTED
      * 
      * @param goal The goal of the action.
@@ -277,5 +290,24 @@ private:
      * 
      */
     void cancelGoal();
+
+
+    /**
+    * @brief Get the Travel Theta object
+    * 	 			 The spiral motion generator requires the 'theta' covered by
+    * 	 			 the robot in terms of radian. 
+    * 	 			 This theta is incremental, [0, inf]
+    * 	 			 If the robot traverses one complete rotation, output will
+    * 	 			 be 2PI, and on completition of two rotations, the output
+    * 	 			 should be 4PI. This function returns this traveling theta
+    * 	 			 Please suggest if you can find a more intuitive name
+    *				
+    * 
+    * @param yaw 	 Current Yaw of the robot with respect to the initial position.
+    * @param rotation_counter 		Number of rotations already completed prior to 
+    *								this on-going rotation
+    * @return double 				Theta travelled
+    */
+    double getCumulativeTheta(double yaw, int &rotation_counter);
     
 };
