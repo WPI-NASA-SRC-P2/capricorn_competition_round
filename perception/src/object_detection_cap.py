@@ -215,6 +215,7 @@ def detectionAlgorithm():
 
     # run object detection on input image
     output_dict = g_model_fn(input_tensor)
+    rospy.loginfo_once("Started Object Detection Finally")
 
     # processing object detected data
     num_detections = int(output_dict.pop('num_detections'))
