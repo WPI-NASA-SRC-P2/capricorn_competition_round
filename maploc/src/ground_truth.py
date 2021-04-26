@@ -116,6 +116,3 @@ while not rospy.is_shutdown():
     occGridPub.publish(occGrid)
 
 
-
-
-
