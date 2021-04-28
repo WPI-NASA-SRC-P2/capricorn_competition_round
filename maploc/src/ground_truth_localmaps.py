@@ -54,14 +54,16 @@ class Object_Plotter:
     # subscriber callback to object detection, updates detected obstacle list
     def object_cb(self, objlist):
         self.obj_list = objlist.obj
+        self.update_map()
+        
 
     # initialize/refresh the blank 20x20 map centered on the robot 
     def init_occ_grid(self):
         metadata = MapMetaData()
         # define dimensions of blank occupancy grid
         metadata.resolution = 0.05 # (m/pixel) 0.05 matches rtabmap resolution
-        metadata.width = 20/metadata.resolution # sets the map to be 20m x 20m regardless of resolution
-        metadata.height = 20/metadata.resolution 
+        metadata.width = int(20/metadata.resolution) # sets the map to be 20m x 20m regardless of resolution
+        metadata.height = int(20/metadata.resolution)
 
         # define origin of blank occupancy grid (should correspond to robot pose)
         base_frame = self.robot_pose.pose
@@ -72,7 +74,7 @@ class Object_Plotter:
         self.occ_grid.info = metadata
 
         # initialize map data as all zeros
-        self.occ_grid.data = [0] * (self.occ_grid.metadata.width*self.occ_grid.metadata.height)
+        self.occ_grid.data = [0] * self.occ_grid.info.width*self.occ_grid.info.height
 
     # transform the object list from camera frame to base frame
     # TODO: TEST THIS TO MAKE SURE IT WORKS PROPERLY
@@ -93,8 +95,8 @@ class Object_Plotter:
     # 100 = obstacle, -1 = unexplored, 0 = free
     def add_obstacle(self, obx, oby, radius):
         # plot everything w.r.t. center of the grid (robot is at center)
-        obx = obx + int(self.occ_grid.metadata.width/2) #- initial_origin_x
-        oby = oby + int(self.occ_grid.metadata.height/2) #- initial_origin_y
+        obx = obx + int(self.occ_grid.info.width/2) #- initial_origin_x
+        oby = oby + int(self.occ_grid.info.height/2) #- initial_origin_y
 
         
         # plot a circle around the center point of the object
@@ -135,6 +137,7 @@ class Object_Plotter:
     def update_map(self):
         self.init_occ_grid()
         self.add_all_obstacles()
+        self.add_obstacle(self.robot_pose.pose.position.x, self.robot_pose.pose.position.y, 5)
         self.gridPublisher()
 
 #____________________________________________________________________________
@@ -145,7 +148,6 @@ class Object_Plotter:
 if __name__=="__main__":
     # can run the ground_truth_localmaps.py with 2 input args
     # in format ground_truth_localmaps.py baseFrameEntityName maporigin
-    ObstacleMap = Object_Plotter()
     
     # TODO: modify this code snippet for input arg-based robot selection
     # if len(sys.argv) < 3:
@@ -162,15 +164,17 @@ if __name__=="__main__":
     # initialize the node 
     rospy.init_node("Ground_Truth_Localmaps")
     print("ground_truth_localmaps node, online")
+    ObstacleMap = Object_Plotter()
 
     # set up occupancy grid publisher
     
     
     # loop to keep updating the map
-    while not rospy.is_shutdown():
-        #rospy.sleep()
-        rospy.wait_for_message("/capricorn/small_scout_1/camera/odom", Odometry)
-        rospy.wait_for_message("/capricorn/small_scout_1/object_detection/objects", ObjectArray)
-        ObstacleMap.update_map()
+    # while not rospy.is_shutdown():
+    #     #rospy.sleep()
+    #     rospy.wait_for_message("/capricorn/small_scout_1/camera/odom", Odometry)
+    #     rospy.wait_for_message("/capricorn/small_scout_1/object_detection/objects", ObjectArray)
+    #     ObstacleMap.update_map()
+    rospy.spin()
 
         
