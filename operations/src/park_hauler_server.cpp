@@ -93,7 +93,7 @@ void parkWrtHopper()
         {
             //If hopper is detected store g_hopper_x and g_hopper_z 
             g_hopper_x = object.center.x; // in pixels
-            g_hopper_z = object.point.z;
+            g_hopper_z = object.point.pose.position.z;
             g_hopper_height = object.size_y;
             ROS_INFO_STREAM("Detected Hopper");
         }
@@ -101,7 +101,7 @@ void parkWrtHopper()
         if(object.label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
         {
             //If processingPlant is detected store g_processing_plant_z 
-            g_processing_plant_z = object.point.z; // in meters
+            g_processing_plant_z = object.point.pose.position.z; // in meters
         }
         if(object.label == COMMON_NAMES::OBJECT_DETECTION_FURNACE_CLASS)
         {
@@ -206,7 +206,7 @@ void parkWrtExcavator()
                 // if the robot antenna is already found, false detection, abort further calculation
                 return;
             }            
-            z_ra = object.point.z;
+            z_ra = object.point.pose.position.z;;
             computeProperties(object, found_ra, size_x_ra, size_y_ra, area_ra, center_x_ra);
         }
         else if(object.label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_ARM_CLASS) 
