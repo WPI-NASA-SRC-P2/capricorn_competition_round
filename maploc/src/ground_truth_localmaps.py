@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
-
-"""
-This script runs the rosnode that generates local maps for the rovers to use 
-"""
-
 import math
 import rospy
 import actionlib
-
-import numpy as np 
+import numpy as np
+#from gazebo_msgs.msg import ModelState   
 from gazebo_msgs.srv import GetModelState
 from nav_msgs.msg import OccupancyGrid
 from nav_msgs.msg import MapMetaData
@@ -17,180 +12,159 @@ from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseWithCovariance
 from math import pi
 import sys
-import tf_conversions
-import tf2_ros
-
-# object detection dependencies
 from perception.msg import Object
 from perception.msg import ObjectArray
-
-"""
-ObjectPlotter class organizes the local map operations. 
-- Has subscriber for robot pose as well as for object list provided by object detection node. 
-- Stores the local map and updates it during each callback of the object list. 
-- Publishes the rover's local map during each callback to ensure map is up-to-date
-"""
-class ObjectPlotter:
-    # constants corresponding to occupied or unoccupied cell values in occupancy grid
-    OCCUPIED = 100
-    UNOCCUPIED = 0
-
+# from tf import TransformListener
+# tf2 reqs
+import tf_conversions
+import tf2_ros
+# TODO: 
+# - take object detection instead of gazebo
+# - no rtabmap, just make local map
+# - make sure that the file works for not just small scout 1 (change namespace)
+# Object Plotter Class will store the object list received from subscriber
+#  and will update it within itself 
+class Object_Plotter:
     def __init__(self):
-        """
-        Initialize the ObjectPlotter using the rover specified in the launch file
-        - includes rover stereo odometry callback to keep track of rover's global position
-        - includes object detection callback to store object list
-        - includes map publisher to publish the local obstacle map
-        """
-        # specify the desired rover from input args from launch file
+        # blank 20x20 occupancy grid fields
+        # pose subscriber updates robot pose as it moves
         robotname = str(sys.argv[1])
-        rospy.loginfo(robotname)
-
-        # set up odometry subscriber for global pose tracking
-        self.robot_pos_sub = rospy.Subscriber("/" + robotname +"/camera/odom", Odometry, self.robotCb)
-        self.robot_pose = PoseWithCovariance()
-        
+        print(robotname)
+        #robotname+'_base_footprint', robotname+"_left_camera_optical"
+        self.robot_pos_sub = rospy.Subscriber("/" + robotname +"/camera/odom", Odometry, self.robot_cb)
+        self.robot_pose = PoseWithCovariance()# value indicates the robot base frame pose
+        self.occ_grid = OccupancyGrid()
         # object detection data and subscriber
         self.obj_list = []
-        self.object_sub = rospy.Subscriber("/capricorn/" + robotname + "/object_detection/objects", ObjectArray, self.objectCb)
-        
-        # occupancy grid data and publisher
-        self.occ_grid = OccupancyGrid()
+        self.object_sub = rospy.Subscriber("/capricorn/" + robotname + "/object_detection/objects", ObjectArray, self.object_cb)
+        # occupancy grid publisher
         self.occGridPub = rospy.Publisher("/capricorn/" + robotname + "object_detection_map", OccupancyGrid, queue_size=1)
-    
-    def robotCb(self, odom):
-        """
-        Subscriber callback to robot pose, updates robot pose in memory as it moves
-        """
+    # NECESSARY FUNCTIONS
+    # subscriber callback to robot pose, updates robot pose as it moves
+    def robot_cb(self, odom):
         self.robot_pose = odom.pose
-
-    def objectCb(self, objlist):
-        """
-        Subscriber callback to object detection, updates detected obstacle list and then 
-        updates the map (refreshes map, populates with obstacles, then publishes map)
-        """
+        # print(f'Robot Pose Received: {self.robot_pose}')
+    # subscriber callback to object detection, updates detected obstacle list
+    def object_cb(self, objlist):
         self.obj_list = objlist.obj
         self.update_map()
-
-    def initOccGrid(self):
-        """
-        Initialize/refresh the blank 20m x 20m map, centered on the robot 
-        """
-        # define dimensions of blank occupancy grid
+        print(f'Map has updated: First object at {self.obj_list[0].center}, No. of objects: {len(self.obj_list)}')
+    # initialize/refresh the blank 20x20 map centered on the robot 
+    def init_occ_grid(self):
         metadata = MapMetaData()
-        # resolution units in (m/pixel), 0.05m/pixel matches rtabmap resolution
-        metadata.resolution = 0.05 
-        # sets the map to be 20m x 20m regardless of resolution
-        metadata.width = int(20/metadata.resolution) 
+        # define dimensions of blank occupancy grid
+        metadata.resolution = 0.05 # (m/pixel) 0.05 matches rtabmap resolution
+        metadata.width = int(20/metadata.resolution) # sets the map to be 20m x 20m regardless of resolution
         metadata.height = int(20/metadata.resolution)
-
+        # # define origin of blank occupancy grid (should correspond to robot pose)
+        # base_frame = Pose()
+        # # offset the map such that the bottom left of the map is -10m x -10m to the bottom left of the robot
+        # # thus making the robot pose be the center of the map
+        # base_frame.position.x = self.robot_pose.pose.position.x - 10
+        # base_frame.position.y = self.robot_pose.pose.position.y - 10
+        # base_frame.position.z = self.robot_pose.pose.position.z
+        # base_frame.orientation = self.robot_pose.pose.orientation
+        # print("base frame x: ", base_frame.position.x)
+        # print("base frame y: ", base_frame.position.y)
+        # metadata.origin = base_frame 
         # define origin of blank occupancy grid (should correspond to robot pose)
         base_frame = Pose()
         # offset the map such that the bottom left of the map is -10m x -10m to the bottom left of the robot
-        # thus making the robot pose w.r.t. the robot base frame (0,0) be the center of the map
+        # thus making the robot pose be the center of the map
         base_frame.position.x = -10
         base_frame.position.y = -10
-        # set the origin of the occupancy grid
+        #base_frame.position.z = self.robot_pose.pose.position.z
+        #base_frame.orientation = self.robot_pose.pose.orientation
+        print("base frame x: ", base_frame.position.x)
+        print("base frame y: ", base_frame.position.y)
         metadata.origin = base_frame 
-        
-        # define the dimensions and origin of the occupancy grid
+        # set up the 2D OccupancyGrid with robot base frame as origin
+        # - the origin is at bottom left. The origin will be translated to the center of the map in plotting function and publishing
         self.occ_grid.info = metadata
-        # initialize map data as all unoccupied spaces
-        self.occ_grid.data = [UNOCCUPIED] * self.occ_grid.info.width*self.occ_grid.info.height
-
+        # initialize map data as all zeros
+        self.occ_grid.data = [0] * self.occ_grid.info.width*self.occ_grid.info.height
+    # transform the object list from camera frame to base frame
+    # TODO: TEST THIS TO MAKE SURE IT WORKS PROPERLY
     def transform(self, old_x, old_y, robotname):
-        """
-        Transform the object list from camera frame to base frame
-        (currently not used, using simplified transform in addAllObstacles instead)
-        """
         rate = rospy.Rate(10)
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
         new_x = old_x
         new_y = old_y
-
         try:
             trans = tfBuffer.lookup_transform(robotname+'_base_footprint', robotname+"_left_camera_optical", rospy.Time())
             new_x = trans.transform.translation.x + old_x 
             new_y = trans.transform.translation.y + old_y
-            rospy.loginfo('Transform works')
-            
-
+            print('Transform works')
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rate.sleep()
-
         return new_x, new_y
-    
-    def addObstacle(self, obx, oby, radius):
-        """
-        Plot single object on the occupancy grid w.r.t. the rover
-        - center of the grid represents the rover's location
-        """
-        # plot everything w.r.t. center of the grid (since the origin of the map is transformed by (-10,-10) to bottom left)
+    # plot single object on the occupancy grid
+    # 100 = obstacle, -1 = unexplored, 0 = free
+    def add_obstacle(self, obx, oby, radius):
+        # plot everything w.r.t. center of the grid (robot is at center)
         obx = obx + 10
         oby = oby + 10
-
         # plot a circle around the center point of the object
         for theta in range(0,360,2):
             theta = theta*pi/180
-
             # convert meters to pixels
             obx_p = obx/self.occ_grid.info.resolution
             oby_p = oby/self.occ_grid.info.resolution
             radius_p = radius/self.occ_grid.info.resolution
-
-            # calculate the point on the circumference of the circle corresponding to the theta value
             circX = int((obx_p + radius_p*np.cos(theta)))  
             circY = int((oby_p + radius_p*np.sin(theta))) 
-            
             # only add obstacle to grid if its index value is valid (else, not in view of robot anyways)
             if int(circY*self.occ_grid.info.width + circX) >= 0 and int(circY*self.occ_grid.info.width + circX) < self.occ_grid.info.width*self.occ_grid.info.height: 
-                self.occ_grid.data[int(circY*self.occ_grid.info.width + circX)] = OCCUPIED
-                
-    def addAllObstacles(self):
-        """
-        Plot all objects in object detection object list
-        - basically plot single object many times (across length of object list)
-        """        
+                self.occ_grid.data[int(circY*self.occ_grid.info.width + circX)] = 100
+    # plot all objects in object list
+    # - basically plot single object many times (across length of object list)
+    def add_all_obstacles(self):
+        # add all of the obstacles from the obstacle list to the map (follow the dostuff function from the cpp file)
         for obj in self.obj_list:
-            # transform the points from the camera frame to the base frame
-            obx = obj.point.x
-            oby = obj.point.z
-
-            # placeholder for using the transform method if determined that the tf transform is required
+            # TODO: TRANSFORM THE POINTS BEFORE RUNNING ADD_OBSTACLE
+            obx = obj.point.z
+            oby = -obj.point.x
             #obx, oby = self.transform(obx, oby, "small_scout_1")
-            
-            # radius of the object for plotting
             radius = (obj.width)/2
-
-            # add the obstacle to the map
-            self.addObstacle(obx, oby, radius)      
-
+            self.add_obstacle(obx, oby, radius)      
+    # publish the updated occupancy grid
+    # - publish self.occ_grid after finished
     def gridPublisher(self):
-        """
-        Publish the populated occupancy grid
-        """
         self.occGridPub.publish(self.occ_grid)
-
-    def updateMap(self):
-        """
-        Overall map producing function to populate and refresh the map
-        """
-        # initialize the occupancy grid (also refreshes the grid to remove old positions)
-        self.initOccGrid()
-        # add all of the detected objects to the occupancy grid
-        self.addAllObstacles()
-        # publish the populated occupancy grid
+    # overall map editing function:
+    def update_map(self):
+        self.init_occ_grid()
+        self.add_all_obstacles()
+        # self.add_obstacle(self.robot_pose.pose.position.x, self.robot_pose.pose.position.y, 5)
+        # self.add_obstacle(0, 0, 5)
+        #print("robot pose: x: ", self.robot_pose.pose.position.x, " y: ", self.robot_pose.pose.position.y)
         self.gridPublisher()
-
+#____________________________________________________________________________
+# OLD CODE SNIPPETS BELOW: TODO: modify them to integrate with new class
 if __name__=="__main__":
-    
+    # can run the ground_truth_localmaps.py with 2 input args
+    # in format ground_truth_localmaps.py baseFrameEntityName maporigin
+    # TODO: modify this code snippet for input arg-based robot selection
+    # if len(sys.argv) < 3:
+    #     occGrid = setupLocalMap()  # DEFAULT CONDITION OF small_scout_1 AS BASE FRAME with ORIGIN AT BOTTOM LEFT
+    #     baseFrameEntityName = 'small_scout_1'
+    # elif len(sys.argv) == 2:
+    #     occGrid = setupLocalMap(baseFrameEntityName=sys.argv[1], maporigin=sys.argv[2])
+    #     baseFrameEntityName = sys.argv[1]
+    #     maporigin = sys.argv[2]
+    # else: 
+    #     print("please enter the function with the args <baseFrameEntityName> and 'bottom_left'")
+    #     exit
     # initialize the node 
     rospy.init_node("Ground_Truth_Localmaps")
     print("ground_truth_localmaps node, online")
-    # Construct the map plotter object (uses the input argument of robot_name from the launch file)
-    ObstacleMap = ObjectPlotter()
-    # Spin to receive callback information. Code plots map based on each object list callback
+    ObstacleMap = Object_Plotter()
+    # set up occupancy grid publisher
+    # loop to keep updating the map
+    # while not rospy.is_shutdown():
+    #     #rospy.sleep()
+    #     rospy.wait_for_message("/capricorn/small_scout_1/camera/odom", Odometry)
+    #     rospy.wait_for_message("/capricorn/small_scout_1/object_detection/objects", ObjectArray)
+    #     ObstacleMap.update_map()
     rospy.spin()
-
-        
