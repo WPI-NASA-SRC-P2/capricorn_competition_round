@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import math
 import rospy
 import actionlib
@@ -34,27 +35,34 @@ class Object_Plotter:
     def __init__(self):
         # blank 20x20 occupancy grid fields
         # pose subscriber updates robot pose as it moves
-        self.robot_pos_sub = self.object_sub = rospy.Subscriber("/capricorn/small_scout_1/camera/odom", Odometry, self.robot_cb)
+        robotname = str(sys.argv[1])
+        print(robotname)
+        #robotname+'_base_footprint', robotname+"_left_camera_optical"
+        self.robot_pos_sub = rospy.Subscriber("/" + robotname +"/camera/odom", Odometry, self.robot_cb)
         self.robot_pose = PoseWithCovariance()# value indicates the robot base frame pose
         self.occ_grid = OccupancyGrid()
         
         # object detection data and subscriber
         self.obj_list = []
-        self.object_sub = rospy.Subscriber("/capricorn/small_scout_1/object_detection/objects", ObjectArray, self.object_cb)
+        self.object_sub = rospy.Subscriber("/capricorn/" + robotname + "/object_detection/objects", ObjectArray, self.object_cb)
         
         # occupancy grid publisher
-        self.occGridPub = rospy.Publisher("/capricorn/object_detection_map", OccupancyGrid, queue_size=1)
+        self.occGridPub = rospy.Publisher("/capricorn/" + robotname + "object_detection_map", OccupancyGrid, queue_size=1)
     
     # NECESSARY FUNCTIONS
 
     # subscriber callback to robot pose, updates robot pose as it moves
     def robot_cb(self, odom):
         self.robot_pose = odom.pose
+        
+        # print(f'Robot Pose Received: {self.robot_pose}')
 
     # subscriber callback to object detection, updates detected obstacle list
     def object_cb(self, objlist):
         self.obj_list = objlist.obj
         self.update_map()
+        
+        print(f'Map has updated: First object at {self.obj_list[0].center}, No. of objects: {len(self.obj_list)}')
         
 
     # initialize/refresh the blank 20x20 map centered on the robot 
@@ -65,9 +73,30 @@ class Object_Plotter:
         metadata.width = int(20/metadata.resolution) # sets the map to be 20m x 20m regardless of resolution
         metadata.height = int(20/metadata.resolution)
 
+        # # define origin of blank occupancy grid (should correspond to robot pose)
+        # base_frame = Pose()
+        # # offset the map such that the bottom left of the map is -10m x -10m to the bottom left of the robot
+        # # thus making the robot pose be the center of the map
+        # base_frame.position.x = self.robot_pose.pose.position.x - 10
+        # base_frame.position.y = self.robot_pose.pose.position.y - 10
+        # base_frame.position.z = self.robot_pose.pose.position.z
+        # base_frame.orientation = self.robot_pose.pose.orientation
+        # print("base frame x: ", base_frame.position.x)
+        # print("base frame y: ", base_frame.position.y)
+        # metadata.origin = base_frame 
+
         # define origin of blank occupancy grid (should correspond to robot pose)
-        base_frame = self.robot_pose.pose
-        metadata.origin = base_frame
+        base_frame = Pose()
+        # offset the map such that the bottom left of the map is -10m x -10m to the bottom left of the robot
+        # thus making the robot pose be the center of the map
+        base_frame.position.x = -10
+        base_frame.position.y = -10
+        #base_frame.position.z = self.robot_pose.pose.position.z
+        #base_frame.orientation = self.robot_pose.pose.orientation
+        print("base frame x: ", base_frame.position.x)
+        print("base frame y: ", base_frame.position.y)
+        metadata.origin = base_frame 
+
 
         # set up the 2D OccupancyGrid with robot base frame as origin
         # - the origin is at bottom left. The origin will be translated to the center of the map in plotting function and publishing
@@ -79,26 +108,33 @@ class Object_Plotter:
     # transform the object list from camera frame to base frame
     # TODO: TEST THIS TO MAKE SURE IT WORKS PROPERLY
     def transform(self, old_x, old_y, robotname):
+        rate = rospy.Rate(10)
         tfBuffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tfBuffer)
+        new_x = old_x
+        new_y = old_y
 
         try:
-            trans = tfBuffer.lookup_transform(robotname+"_left_camera_optical", robotname+'_base_footprint', rospy.Time())
+            trans = tfBuffer.lookup_transform(robotname+'_base_footprint', robotname+"_left_camera_optical", rospy.Time())
+            new_x = trans.transform.translation.x + old_x 
+            new_y = trans.transform.translation.y + old_y
+            print('Transform works')
+            
+
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rate.sleep()
-  
 
-        new_x = trans.transform.translation.x + old_x 
-        new_y = trans.transform.translation.y + old_y
+        return new_x, new_y
     
     # plot single object on the occupancy grid
     # 100 = obstacle, -1 = unexplored, 0 = free
     def add_obstacle(self, obx, oby, radius):
         # plot everything w.r.t. center of the grid (robot is at center)
-        obx = obx + int(self.occ_grid.info.width/2) #- initial_origin_x
-        oby = oby + int(self.occ_grid.info.height/2) #- initial_origin_y
-
+       
         
+        obx = obx + 10
+        oby = oby + 10
+
         # plot a circle around the center point of the object
         for theta in range(0,360,2):
             theta = theta*pi/180
@@ -106,6 +142,7 @@ class Object_Plotter:
             # convert meters to pixels
             obx_p = obx/self.occ_grid.info.resolution
             oby_p = oby/self.occ_grid.info.resolution
+        
             radius_p = radius/self.occ_grid.info.resolution
 
             circX = int((obx_p + radius_p*np.cos(theta)))  
@@ -114,7 +151,7 @@ class Object_Plotter:
             # only add obstacle to grid if its index value is valid (else, not in view of robot anyways)
             if int(circY*self.occ_grid.info.width + circX) >= 0 and int(circY*self.occ_grid.info.width + circX) < self.occ_grid.info.width*self.occ_grid.info.height: 
                 self.occ_grid.data[int(circY*self.occ_grid.info.width + circX)] = 100
-
+                
 
     # plot all objects in object list
     # - basically plot single object many times (across length of object list)
@@ -124,7 +161,8 @@ class Object_Plotter:
         for obj in self.obj_list:
             # TODO: TRANSFORM THE POINTS BEFORE RUNNING ADD_OBSTACLE
             obx = obj.point.x
-            oby = obj.point.y
+            oby = obj.point.z
+            #obx, oby = self.transform(obx, oby, "small_scout_1")
             radius = (obj.width)/2
             self.add_obstacle(obx, oby, radius)      
 
@@ -137,7 +175,9 @@ class Object_Plotter:
     def update_map(self):
         self.init_occ_grid()
         self.add_all_obstacles()
-        self.add_obstacle(self.robot_pose.pose.position.x, self.robot_pose.pose.position.y, 5)
+        # self.add_obstacle(self.robot_pose.pose.position.x, self.robot_pose.pose.position.y, 5)
+        self.add_obstacle(0, 0, 5)
+        #print("robot pose: x: ", self.robot_pose.pose.position.x, " y: ", self.robot_pose.pose.position.y)
         self.gridPublisher()
 
 #____________________________________________________________________________
