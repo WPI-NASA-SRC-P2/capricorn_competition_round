@@ -10,14 +10,11 @@ This is an actionlib server for parking hauler with hopper or excavator
 Command Line Arguments Required:
 1. robot_name: eg. small_scout_1, small_excavator_2
 */
-#include <mutex>
 #include <operations/NavigationAction.h> // Note: "Action" is appended
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/server/simple_action_server.h>
-#include <utils/common_names.h>
-#include <perception/ObjectArray.h>
-#include <perception/Object.h>
 #include <operations/NavigationVisionAction.h>
+#include <operations/obstacle_avoidance.h>
 
 #define UPDATE_HZ 10
 
@@ -29,8 +26,8 @@ Client* g_client;
 operations::NavigationGoal g_nav_goal;
 perception::ObjectArray g_objects;
 
-const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 30, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
-const float WIDTH_IMAGE = 640.0, PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 1.1;
+const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
+const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8;
 std::mutex g_objects_mutex, g_cancel_goal_mutex;
 std::string g_desired_label;
 bool g_centered = false, g_execute_called = false, g_cancel_called = false;
@@ -74,13 +71,14 @@ void objectsCallback(const perception::ObjectArray& objs)
     g_objects = objs;
 }
 
-
 /**
  * @brief Function for navigating a robot near to an object detection based class
  * 
  * Steps:
  * 1. Rotate robot util the desired object detection class has its bounding box in the center of the frame
  * 2. Drive forward until you reach the desired class bounding box's minimum height
+ * 3. Avoid obstacle using object detection, if the obstacle is in right half of the image, it means that the obstacle will be in robot's path, so robot crab drives until
+ *    there is no obstacle in right half of the image, an object will be considered an obstacle iff it is not target label and is greater than a height threshold (currently rocks are only considered as obstacles)
  * If the object is lost while the above process, the process will be started again * 
  * Two thresholds are used for centering the object in the image, narrow threshold for initial centering and wide threshold if the object was centered
  * but looses the center afterwards
@@ -98,6 +96,10 @@ void visionNavigation()
     static float prev_angular_velocity;
     static bool prev_centered;
 
+    std::vector<perception::Object> obstacles;
+    float err_obstacle = 0;
+    bool obstacle_detected = false;
+
     // Find the desired object
     for(int i = 0; i < objects.number_of_objects; i++) 
     {   
@@ -107,10 +109,22 @@ void visionNavigation()
             // Store the object's center and height
             center_obj = object.center.x;
             height_obj = object.size_y;
-            break;
+            // break;
+        }
+        else if(object.label == COMMON_NAMES::OBJECT_DETECTION_ROCK_CLASS && object.size_y > 40) 
+        {
+            obstacle_detected = true;
+
+            if(!checkObstacle(object))
+            {
+                continue;
+            }
+
+            float hard_coded_direction = 0.74;
+            g_nav_goal.direction = (object.center.x > WIDTH_IMAGE * 3 / 4) ? hard_coded_direction : -hard_coded_direction;
         }
     }
-    
+
     if(center_obj < -1)
     {
         // object not detected, rotate on robot's axis to find the object
@@ -125,10 +139,21 @@ void visionNavigation()
     }
     else
     {
+        if(obstacle_detected)
+        {
+            g_nav_goal.forward_velocity = 0.8;
+            g_nav_goal.angular_velocity = 0;
+            ROS_INFO("Avoid Obstacle Mode");
+            return;
+        }
+
+        g_nav_goal.direction = 0;
+
         g_lost_detection_times = 0;
         g_true_detection_times++;
         // object found, compute the error in angle i.e. the error between the center of image and center of bounding box
-        error_angle = (WIDTH_IMAGE / 2.0) - center_obj;
+        float center_img = (WIDTH_IMAGE / 2.0) + err_obstacle;
+        error_angle = center_img - center_obj;
         // compute error in height, desired height minus current height of bounding box
         error_height = g_height_threshold - height_obj;
 
