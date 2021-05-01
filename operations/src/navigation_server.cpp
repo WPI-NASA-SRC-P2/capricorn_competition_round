@@ -1,3 +1,4 @@
+#include <operations/navigation_algorithm.h>
 #include <operations/navigation_server.h>
 
 NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
@@ -663,7 +664,7 @@ void NavigationServer::spiralDriving(const operations::NavigationGoalConstPtr &g
 	robot_start_pose.header.stamp = ros::Time(0);
 
 	// Counts the number of rotations complited in a spiral
-	int rotation_counter = 0;
+	int rotation_counter = 15;
 
 	double current_yaw;
 

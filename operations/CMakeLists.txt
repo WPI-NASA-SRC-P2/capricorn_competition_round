@@ -222,6 +222,12 @@ target_link_libraries(navigation_vision_client
   ${catkin_LIBRARIES}
 )
 
+add_executable(spiral_points_publisher src/spiral_points_publisher.cpp)
+add_dependencies(spiral_points_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(spiral_points_publisher ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
 ###################
 #### EXCAVATOR ####
 ###################
