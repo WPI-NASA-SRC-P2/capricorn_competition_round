@@ -172,7 +172,7 @@ void ExcavatorStateMachine::dumpVolatile()
     if(excavator_server_idle_)
     {
         operations::ExcavatorGoal goal;
-        goal.task = START_UNLOADING; 
+        goal.task = START_UNLOADING;
         
         // Should be tested with Endurance's parking code and 
         // These values should be tuned accordingly

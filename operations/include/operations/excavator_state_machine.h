@@ -73,7 +73,6 @@ private:
    *        Basically does nothing
    *        Ideally, should be used to stay close to scout
    *          for minimising the time when the volatile is found
-   * 
    */
   void initState();
 
