@@ -11,9 +11,9 @@ ExcavatorStateMachine::ExcavatorStateMachine(ros::NodeHandle nh, const std::stri
     objects_sub_ = nh.subscribe("/" + CAPRICORN_TOPIC + robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorStateMachine::objectsCallback, this);
     lookout_pos_sub_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + LOOKOUT_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::lookoutLocCB, this);
     sub_scout_vol_location_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + VOLATILE_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::scoutVolLocCB, this);
-    hauler_parked_sub_ = nh.subscribe("/" + CAPRICORN_TOPIC + SCHEDULER_TOPIC + "/hauler_parked", 1, &ExcavatorStateMachine::haulerParkedCB, this);
+    hauler_parked_sub_ = nh.subscribe("/" + CAPRICORN_TOPIC + SCHEDULER_TOPIC + HAULER_PARKED_TOPIC, 1, &ExcavatorStateMachine::haulerParkedCB, this);
     
-    hauler_go_back_ = nh.advertise<std_msgs::Empty>(CAPRICORN_TOPIC  + HAULER_FILLED, 1000);
+    return_hauler_pub_ = nh.advertise<std_msgs::Empty>(CAPRICORN_TOPIC  + HAULER_FILLED, 1000);
     park_hauler_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + PARK_HAULER, 1000);
     excavator_ready_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000);
 }
@@ -26,13 +26,14 @@ ExcavatorStateMachine::~ExcavatorStateMachine()
 
 void ExcavatorStateMachine::haulerParkedCB(std_msgs::Empty msg)
 {
-    ROS_WARN("Callback Received");
+    const std::lock_guard<std::mutex> lock(hauler_parked_mutex); 
+    ROS_INFO_STREAM("Callback Received");
     hauler_parked_ = true;
 }
 
 void ExcavatorStateMachine::lookoutLocCB(const geometry_msgs::PoseStamped &msg)
 {
-    ROS_WARN("CB");
+    ROS_INFO_STREAM("CB");
     const std::lock_guard<std::mutex> lock(navigation_mutex); 
     next_nav_goal_ = msg;
     lookout_loc_received_ = true;
@@ -205,12 +206,7 @@ void ExcavatorStateMachine::parkExcavator()
 
         geometry_msgs::PoseStamped scout_stamped;
         scout_stamped.header = next_nav_goal_.header;
-        // ##########################################################
-        // ###########  H A C K  ################ //
-        scout_stamped.pose.position.x = 40;
-        scout_stamped.pose.position.y = 8;
-        scout_stamped.pose.orientation.z = -1;
-        // ROS_INFO_STREAM(scout_stamped);
+        scout_stamped.pose = next_nav_goal_.pose;
         navigation_action_goal_.pose = scout_stamped;      // Position estimation is not perfect
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
@@ -263,6 +259,7 @@ void ExcavatorStateMachine::digVolatile()
 
 void ExcavatorStateMachine::dumpVolatile()
 {
+    const std::lock_guard<std::mutex> lock(hauler_parked_mutex); 
     if(excavator_server_idle_ && hauler_parked_)
     {
         operations::ExcavatorGoal goal;
@@ -288,11 +285,11 @@ void ExcavatorStateMachine::dumpVolatile()
             //  else
             robot_state_ = DIG_VOLATILE;
             
-            if(digging_attempt_ > digging_tries_)
+            if(digging_attempt_ > DIGGING_TRIES_)
             {
                 ROS_INFO_STREAM("Done"<<digging_attempt_);
                 std_msgs::Empty empty_msg;
-                hauler_go_back_.publish(empty_msg);
+                return_hauler_pub_.publish(empty_msg);
                 digging_attempt_ = 0;
                 robot_state_ = INIT;
             }
@@ -304,7 +301,7 @@ void ExcavatorStateMachine::findScout()
 {
     if(nav_server_idle_)
     {
-        navigation_action_goal_.angular_velocity = -0.25; //
+        navigation_action_goal_.angular_velocity = -0.25;
         navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
 
         navigation_client_->sendGoal(navigation_action_goal_);
@@ -314,8 +311,9 @@ void ExcavatorStateMachine::findScout()
     {
         bool scout_found = updateScoutLocation();
         if (scout_found)
-        {
-            navigation_action_goal_.angular_velocity = 0.0; //
+        {   
+            // Stops excavator from spinning. 
+            navigation_action_goal_.angular_velocity = 0.0; 
             navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
             navigation_client_->sendGoal(navigation_action_goal_);
 

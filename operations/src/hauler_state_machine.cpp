@@ -16,7 +16,7 @@ HaulerStateMachine::HaulerStateMachine(ros::NodeHandle nh, const std::string& ro
     excav_ready_sub_ = nh_.subscribe("/" + CAPRICORN_TOPIC + PARK_HAULER, 1000, &HaulerStateMachine::excavReadyCB, this);
     lookout_loc_sub_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + LOOKOUT_LOCATION_TOPIC, 1000, &HaulerStateMachine::lookoutLocCB, this);
 
-    hauler_ready_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + SCHEDULER_TOPIC + "/hauler_parked", 1000);
+    hauler_ready_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + SCHEDULER_TOPIC + HAULER_PARKED_TOPIC, 1000);
 }
 
 HaulerStateMachine::~HaulerStateMachine()
@@ -29,26 +29,27 @@ HaulerStateMachine::~HaulerStateMachine()
 
 void HaulerStateMachine::digSiteLocCB(const geometry_msgs::PoseStamped &msg)
 {
-    // TODO: lock guard
+    const std::lock_guard<std::mutex> lock(dig_site_mutex); 
     dig_site_pose_ = msg;
     volatile_found_ = true;
 }
 
+void HaulerStateMachine::excavReadyCB(const std_msgs::Empty &msg)
+{
+    const std::lock_guard<std::mutex> lock(excavator_ready_mutex); 
+    park_excavator_ = true;
+}
+
 void HaulerStateMachine::lookoutLocCB(const geometry_msgs::PoseStamped &msg)
 {
+    const std::lock_guard<std::mutex> lock(lookout_received_mutex); 
     lookout_received_ = true;
     lookout_pose_ = msg;
 }
 
-void HaulerStateMachine::excavReadyCB(const std_msgs::Empty &msg)
-{
-    // TODO: lock guard
-    park_excavator_ = true;
-}
-
 void HaulerStateMachine::haulerFilledCB(const std_msgs::Empty &msg)
 {
-    // TODO: lock guard
+    const std::lock_guard<std::mutex> lock(hauler_filled_mutex); 
     hauler_filled_ = true;
 }
 
@@ -104,6 +105,7 @@ void HaulerStateMachine::startStateMachine()
 
 void HaulerStateMachine::initState()
 {
+    const std::lock_guard<std::mutex> lock(lookout_received_mutex); 
     if(lookout_received_)
     {
         robot_state_ = GO_TO_LOOKOUT;
@@ -113,6 +115,7 @@ void HaulerStateMachine::initState()
 
 void HaulerStateMachine::goToLookout()
 {
+    const std::lock_guard<std::mutex> lock(lookout_received_mutex); 
     if(nav_server_idle_ && lookout_received_)
     {
         ROS_INFO("Goal action requested");
@@ -136,6 +139,7 @@ void HaulerStateMachine::goToLookout()
         ROS_INFO("GOAL FINISHED");
         lookout_received_ = false;
         nav_server_idle_ = true;
+        const std::lock_guard<std::mutex> lock(dig_site_mutex); 
         if(volatile_found_)
             robot_state_ = GO_TO_DIG_SITE;
     }
@@ -145,6 +149,7 @@ void HaulerStateMachine::goToDigSite()
 {
     if(nav_server_idle_)
     {
+        const std::lock_guard<std::mutex> lock(dig_site_mutex); 
         ROS_INFO("Goal action requested");
 
         // This is big hack for the demo. Ideally, hauler should follow the excavator
@@ -171,6 +176,7 @@ void HaulerStateMachine::goToDigSite()
 
 void HaulerStateMachine::followExcavator()
 {
+    const std::lock_guard<std::mutex> lock(excavator_ready_mutex); 
     if(nav_vis_server_idle_ && park_excavator_)
     {
         ROS_INFO("Following Excavator");
@@ -207,6 +213,7 @@ void HaulerStateMachine::parkAtExcavator()
 
 void HaulerStateMachine::waitTillFilled()
 {
+    const std::lock_guard<std::mutex> lock(hauler_filled_mutex); 
     if(hauler_filled_)
     {
         ROS_INFO("Parking Hauler");

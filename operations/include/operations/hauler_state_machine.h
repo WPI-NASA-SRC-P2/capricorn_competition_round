@@ -82,6 +82,11 @@ private:
   ParkRobotClient* park_robot_client_;
   operations::ParkRobotGoal park_robot_goal_;
 
+  std::mutex dig_site_mutex;
+  std::mutex excavator_ready_mutex;
+  std::mutex lookout_received_mutex;
+  std::mutex hauler_filled_mutex;
+
 
   /**
    * @brief Callback for the location of found digging site
@@ -99,15 +104,26 @@ private:
   void haulerFilledCB(const std_msgs::Empty &msg);
 
 
+  /**
+   * @brief Callback for notifying state machine that excavator has completed parking.
+   * 
+   * @param msg 
+   */
   void excavReadyCB(const std_msgs::Empty &msg);
 
+  /**
+   * @brief Callback for notifying state machine that lookout location has been received.
+   *        Also saves the lookout location received.
+   * 
+   * @param msg 
+   */
   void lookoutLocCB(const geometry_msgs::PoseStamped &msg);
 
   /**
    * @brief Waits for the scout to find the volatile
    *        Basically does nothing
    *        Ideally, should be used to stay close to Excavator
-   *          for minimising the time when the volatile is found
+   *        for minimising the time when the volatile is found
    * 
    */
   void initState();

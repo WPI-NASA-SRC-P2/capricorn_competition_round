@@ -49,7 +49,7 @@ private:
 
   ros::Publisher excavator_ready_pub_;
   ros::Publisher park_hauler_pub_;
-  ros::Publisher hauler_go_back_;   // WTF is this name??
+  ros::Publisher return_hauler_pub_;   // WTF is this name??
 
   EXCAVATOR_STATES robot_state_ = EXCAVATOR_STATES::INIT;
   std::string robot_name_;
@@ -57,7 +57,7 @@ private:
   const double SLEEP_TIME = 0.5;
   const double ROTATION_SPEED = 0.5;
   
-  const int digging_tries_ = 2; // BIG HACK FOR DEMO
+  const int DIGGING_TRIES_ = 2; // BIG HACK FOR DEMO
   int digging_attempt_ = 0;
 
   bool state_machine_continue_ = true;
@@ -91,6 +91,7 @@ private:
   
   std::mutex g_objects_mutex;
   std::mutex navigation_mutex;
+  std::mutex hauler_parked_mutex;
 
   
   /**
@@ -157,8 +158,19 @@ private:
    */
   void dumpVolatile();
 
+  /**
+   * @brief Subscribes to detected object topic and find scout's location.
+   *        Updates the global stamped scout location.
+   * 
+   * @return true if scout was found
+   * @return false if scout wasn't found
+   */
   bool updateScoutLocation();
 
+  /**
+   * @brief Excavator starts rotating about the center, stops when scout is found.
+   * 
+   */
   void findScout();
 
 public:
