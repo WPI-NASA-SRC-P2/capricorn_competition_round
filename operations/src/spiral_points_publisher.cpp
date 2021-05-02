@@ -49,8 +49,8 @@ int main(int argc, char **argv)
   marker_circle.pose.orientation.z = 0.0;
   marker_circle.pose.orientation.w = 1.0;
   marker_circle.color.a = 0.5; // Don't forget to set the alpha!
-  marker_circle.color.r = 0.0;
-  marker_circle.color.g = 1.0;
+  marker_circle.color.r = 1.0;
+  marker_circle.color.g = 0.0;
   marker_circle.color.b = 0.0;
 
   ros::Duration(0.1).sleep();
@@ -64,9 +64,9 @@ int main(int argc, char **argv)
   marker_circle.pose.position.x = center.x;
   marker_circle.pose.position.y = center.y;
   marker_circle.pose.position.z = 0;
-  marker_circle.scale.x = radius;
-  marker_circle.scale.y = radius;
-  marker_circle.scale.z = 2;
+  marker_circle.scale.x = 2*radius;
+  marker_circle.scale.y = 2*radius;
+  marker_circle.scale.z = 0.5;
 
   marker.points.resize(spiral_points.size());
 
