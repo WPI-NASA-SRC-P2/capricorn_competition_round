@@ -30,9 +30,43 @@ int main(int argc, char **argv)
   marker.color.g = 1.0;
   marker.color.b = 0.0;
 
+
+
+  visualization_msgs::Marker marker_circle;
+  ros::Publisher vis_circ_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker_circle", 0);
+
+  marker_circle.header.frame_id = "map";
+  marker_circle.header.stamp = ros::Time();
+  //_circle marker.ns = "my_namespace";
+  marker_circle.id = 0;
+  marker_circle.type = visualization_msgs::Marker::CYLINDER;
+  marker_circle.action = visualization_msgs::Marker::ADD;
+  //_circle marker.scale.x = 2;
+  //_circle marker.scale.y = 2;
+  //_circle marker.scale.z = 2;
+  marker_circle.pose.orientation.x = 0.0;
+  marker_circle.pose.orientation.y = 0.0;
+  marker_circle.pose.orientation.z = 0.0;
+  marker_circle.pose.orientation.w = 1.0;
+  marker_circle.color.a = 0.5; // Don't forget to set the alpha!
+  marker_circle.color.r = 0.0;
+  marker_circle.color.g = 1.0;
+  marker_circle.color.b = 0.0;
+
   ros::Duration(0.1).sleep();
   geometry_msgs::Point zero_point;
-  std::vector<geometry_msgs::Point> spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 10000, 195);
+  std::vector<geometry_msgs::Point> spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 3, 195);
+
+  geometry_msgs::Point center = NavigationAlgo::getCenterOfThreePointsCircle(spiral_points);
+  double radius = NavigationAlgo::getRadiusOfThreePointsCircle(spiral_points);
+  ROS_INFO_STREAM(center);
+  ROS_INFO_STREAM(radius);
+  marker_circle.pose.position.x = center.x;
+  marker_circle.pose.position.y = center.y;
+  marker_circle.pose.position.z = 0;
+  marker_circle.scale.x = radius;
+  marker_circle.scale.y = radius;
+  marker_circle.scale.z = 2;
 
   marker.points.resize(spiral_points.size());
 
@@ -43,6 +77,7 @@ int main(int argc, char **argv)
   {
     vis_pub.publish(marker);
     ros::Duration(1).sleep();
+    vis_circ_pub.publish(marker_circle);
     /* code */
   }
 

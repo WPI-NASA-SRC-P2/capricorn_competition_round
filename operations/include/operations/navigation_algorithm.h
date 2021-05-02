@@ -215,9 +215,11 @@ public:
    */
   static bool transformPoint(geometry_msgs::PointStamped& point, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries = 1);
 
-  static double getRadiusOfThreePoints(const std::vector<geometry_msgs::Point>& points);
+  static double getRadiusOfThreePointsCircle(const std::vector<geometry_msgs::Point>& points);
 
-  std::vector<double> getABCDofThreePoints(const std::vector<geometry_msgs::Point>& points);
+  static std::vector<double> getABCDofThreePointsCircle(const std::vector<geometry_msgs::Point>& points);
+
+  static geometry_msgs::Point getCenterOfThreePointsCircle(const std::vector<geometry_msgs::Point>& points);
 };
 
 #endif

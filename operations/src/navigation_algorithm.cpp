@@ -278,3 +278,91 @@ bool NavigationAlgo::transformPoint(geometry_msgs::PointStamped& point, const st
 
   return ret;
 }
+
+/**
+ * @brief 
+ *          http://www.ambrsoft.com/TrigoCalc/Circle3D.htm
+ * 
+ * @param points 
+ * @return double 
+ */
+double NavigationAlgo::getRadiusOfThreePointsCircle(const std::vector<geometry_msgs::Point>& points)
+{
+  if(points.size()!=3)
+  {
+    ROS_ERROR("Must get 3 points to get Radius, supplied %i points", points.size());
+
+    return -1.0;
+  }
+
+ROS_INFO_STREAM(points.at(0));
+ROS_INFO_STREAM(points.at(1));
+ROS_INFO_STREAM(points.at(2));
+
+  std::vector<double> abcd = getABCDofThreePointsCircle(points);
+  ROS_INFO_STREAM("A" << abcd.at(0));
+  ROS_INFO_STREAM("B" << abcd.at(1));
+  ROS_INFO_STREAM("C" << abcd.at(2));
+  ROS_INFO_STREAM("D" << abcd.at(3));
+  double A, B, C, D;
+  A = abcd.at(0);
+  B = abcd.at(1);
+  C = abcd.at(2);
+  D = abcd.at(3);
+
+  return std::sqrt((B*B + C*C - 4*A*D)/(4*A*A));
+}
+
+geometry_msgs::Point NavigationAlgo::getCenterOfThreePointsCircle(const std::vector<geometry_msgs::Point>& points)
+{
+  if(points.size()!=3)
+  {
+    ROS_ERROR("Must get 3 points to get Center Location, supplied %i points", points.size());
+
+    geometry_msgs::Point err;
+    return err;
+  }
+
+  std::vector<double> abcd = getABCDofThreePointsCircle(points);
+  double A, B, C, D;
+  A = abcd.at(0);
+  B = abcd.at(1);
+  C = abcd.at(2);
+  D = abcd.at(3);
+
+  geometry_msgs::Point center;
+  center.x = -B/(2*A);
+  center.y = -C/(2*A);
+  return center; 
+}
+
+std::vector<double> NavigationAlgo::getABCDofThreePointsCircle(const std::vector<geometry_msgs::Point>& points)
+{
+  if(points.size()!=3)
+  {
+    ROS_ERROR("Must get 3 points to calculate the A B C and D constants, supplied %i points", points.size());
+    
+    // Not sure if this is right, but needs to return something. 
+    std::vector<double> err;
+    return err;
+  }
+  double x1,x2,x3,y1,y2,y3;
+  x1 = points.at(0).x;
+  y1 = points.at(0).y;
+
+  x2 = points.at(1).x;
+  y2 = points.at(1).y;
+  
+  x3 = points.at(2).x;
+  y3 = points.at(2).y;
+  
+  std::vector<double> abcd_points;
+  abcd_points.resize(4);
+  ROS_INFO_STREAM(x1<< " " << y1<< " " << x2<< " " << y2<< " " << x3<< " " << y3);
+  abcd_points.at(0) = x1*(y2-y3) - y1*(x2-x3) + x2*y3 - x3*y2; // A
+  abcd_points.at(1) = (x1*x1 + y1*y1)*(y3-y2) + (x2*x2 + y2*y2)*(y1-y3) + (x3*x3 + y3*y3)*(y2-y1); // B
+  abcd_points.at(2) = (x1*x1 + y1*y1)*(x2-x3) + (x2*x2 + y2*y2)*(x3-x1) + (x3*x3 + y3*y3)*(x1-x2); // C
+  abcd_points.at(3) = (x1*x1 + y1*y1)*(x3*y2-x2*y3) + (x2*x2 + y2*y2)*(x1*y3-x3*y1) + (x3*x3 + y3*y3)*(x2*y1-x1*y2); // D
+
+  return abcd_points;
+}
