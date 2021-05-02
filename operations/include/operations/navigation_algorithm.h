@@ -128,7 +128,7 @@ public:
    * @param init_theta      Pick up where left off
    * @return std::vector<geometry_msgs::Point> 
    */
-  static std::vector<geometry_msgs::Point> getNArchimedeasSpiralPoints(const geometry_msgs::Point &init_location, const int N, int init_theta = 0);
+  static std::vector<geometry_msgs::PointStamped> getNArchimedeasSpiralPoints(const geometry_msgs::PointStamped &init_location, const int N, int init_theta = 0);
 
   /**
    * @brief Get the Kinetic Energy object
@@ -180,6 +180,15 @@ public:
   static double changeInPosition(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& target_robot_pose);
 
   /**
+   * @brief Calculates the distance between two poses in XY.
+   * 
+   * @param current_robot_pose The current robot pose (map frame)
+   * @param target_robot_pose  The next pose (map frame)
+   * @return double            Distance formula between the x and y components of each pose.
+   */
+  static double changeInPosition(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PointStamped& target_robot_pose);
+
+  /**
    * @brief Calculates the yaw of the desired_pose relative to the robot.
    * 
    * @param desired_pose The pose that we want the yaw of.
@@ -215,11 +224,11 @@ public:
    */
   static bool transformPoint(geometry_msgs::PointStamped& point, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries = 1);
 
-  static double getRadiusOfThreePointsCircle(const std::vector<geometry_msgs::Point>& points);
+  static double getRadiusOfThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points);
 
-  static std::vector<double> getABCDofThreePointsCircle(const std::vector<geometry_msgs::Point>& points);
+  static std::vector<double> getABCDofThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points);
 
-  static geometry_msgs::Point getCenterOfThreePointsCircle(const std::vector<geometry_msgs::Point>& points);
+  static geometry_msgs::PointStamped getCenterOfThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points);
 };
 
 #endif

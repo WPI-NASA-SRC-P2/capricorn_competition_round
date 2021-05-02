@@ -34,7 +34,7 @@ class ScoutStateMachine
 private:
   ros::NodeHandle nh_;
 
-  LOCATOR_STATES robot_state_ = LOCATOR_STATES::INIT;
+  LOCATOR_STATES robot_state_ = LOCATOR_STATES::SEARCH;
   std::string robot_name_;
   bool state_machine_continue_ = true;
 

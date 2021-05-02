@@ -658,41 +658,23 @@ void NavigationServer::spiralDriving(const operations::NavigationGoalConstPtr &g
 	ROS_INFO("Starting spiral motion");
 	brakeRobot(false);
 	
-	geometry_msgs::PoseStamped robot_start_pose = *getRobotPose();
+  geometry_msgs::PointStamped zero_point;
+  zero_point.header.frame_id = MAP;
+  static std::vector<geometry_msgs::PointStamped> spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 100, 195);
 
-	// Stamp must be set to 0 for the latest transform
-	robot_start_pose.header.stamp = ros::Time(0);
-
-	// Counts the number of rotations complited in a spiral
-	int rotation_counter = 15;
-
-	double current_yaw;
-
-	geometry_msgs::PointStamped rotation_point;
-	rotation_point.header = getRobotPose()->header;
-	
-	/**
-	 * @brief Continue loop until interrupted externally (through cancel goal)
-	 * 				This depends on the concept of osculating circles for a spiral
-	 * 				Depending on how much the robot has already travelled, get and 
-	 * 					execute the instantaneous radial turn to produce spiral motion
-	 * 					motion as a whole
-	 *				Source: https://en.wikipedia.org/wiki/Osculating_circle
-	 */
-	while (spiral_motion_continue_)
-	{		
-		current_yaw = NavigationAlgo::changeInOrientation(robot_start_pose, robot_name_, buffer_);
-
-		double spiral_t = getCumulativeTheta(current_yaw, rotation_counter);
-		double inst_radius = NavigationAlgo::getRadiusInArchimedeanSpiral(spiral_t);
-
-		rotation_point.point.x = 0;
-		rotation_point.point.y = inst_radius;
-		rotation_point.point.z = 0;
-
-		revolveRobot(rotation_point, SPIRAL_SPEED);
-		ros::Duration(0.1).sleep();
-	}
+  while(spiral_points.size()>=3)
+  {
+    double dist = NavigationAlgo::changeInPosition(*getRobotPose(), spiral_points.at(1));
+    
+    std::vector<geometry_msgs::PointStamped> temp_points;
+    temp_points.push_back(spiral_points.at(0));
+    temp_points.push_back(spiral_points.at(1));
+    temp_points.push_back(spiral_points.at(2));
+    
+    double radius = NavigationAlgo::getRadiusOfThreePointsCircle(temp_points);
+    ROS_INFO_STREAM(radius<< "\t" << dist);
+    spiral_points.erase(spiral_points.begin());
+  }
 
 	ROS_INFO_STREAM("Spiraling Complete");
 	steerRobot(0);

@@ -53,16 +53,19 @@ int main(int argc, char **argv)
   marker_circle.color.g = 0.0;
   marker_circle.color.b = 0.0;
 
-  ros::Duration(0.1).sleep();
-  geometry_msgs::Point zero_point;
-  std::vector<geometry_msgs::Point> spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 3, 195);
 
-  geometry_msgs::Point center = NavigationAlgo::getCenterOfThreePointsCircle(spiral_points);
+
+  ros::Duration(0.1).sleep();
+  geometry_msgs::PointStamped zero_point;
+  zero_point.header.frame_id = "map";
+  std::vector<geometry_msgs::PointStamped> spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 3, 195);
+
+  geometry_msgs::PointStamped center = NavigationAlgo::getCenterOfThreePointsCircle(spiral_points);
   double radius = NavigationAlgo::getRadiusOfThreePointsCircle(spiral_points);
   ROS_INFO_STREAM(center);
   ROS_INFO_STREAM(radius);
-  marker_circle.pose.position.x = center.x;
-  marker_circle.pose.position.y = center.y;
+  marker_circle.pose.position.x = center.point.x;
+  marker_circle.pose.position.y = center.point.y;
   marker_circle.pose.position.z = 0;
   marker_circle.scale.x = 2*radius;
   marker_circle.scale.y = 2*radius;
@@ -71,7 +74,7 @@ int main(int argc, char **argv)
   marker.points.resize(spiral_points.size());
 
   for (int i = 0; i < spiral_points.size(); i++)
-    marker.points.at(i) = spiral_points.at(i);
+    marker.points.at(i) = spiral_points.at(i).point;
 
   while (ros::ok())
   {
