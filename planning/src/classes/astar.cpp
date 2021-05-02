@@ -26,8 +26,8 @@ Point AStar::getPoint(double x, double y)
 double AStar::distance(int ind1, int ind2, int width)
 {
   // Return Euclidean Distance.
-  auto pt1 = std::make_pair<int, int>(ind1 % width, (int) floor(ind1 / width));
-  auto pt2 = std::make_pair<int, int>(ind2 % width, (int) floor(ind2 / width));
+  auto pt1 = std::make_pair<int, int>(ind1 % width, (int)floor(ind1 / width));
+  auto pt2 = std::make_pair<int, int>(ind2 % width, (int)floor(ind2 / width));
   return sqrt((pt1.first - pt2.first) * (pt1.first - pt2.first) + (pt1.second - pt2.second) * (pt1.second - pt2.second));
 }
 
@@ -36,14 +36,14 @@ std::array<int, 8> AStar::getNeighborsIndiciesArray(int pt, int widthOfGrid, int
   // Get the neighbors around any given index (ternary operators to ensure the points remain within bounds)
   std::array<int, 8> neighbors;
 
-  neighbors[0] = ((pt + 1) < 0)               || ((pt + 1) > sizeOfGrid)                ? -1 : pt + 1;
-  neighbors[1] = ((pt - 1) < 0)               || ((pt - 1) > sizeOfGrid)                ? -1 : pt - 1;
-  neighbors[2] = ((pt + widthOfGrid) < 0)     || ((pt + widthOfGrid) > sizeOfGrid)      ? -1 : pt + widthOfGrid;
-  neighbors[3] = ((pt + widthOfGrid + 1) < 0) || !((pt + widthOfGrid + 1) > sizeOfGrid) ? -1 : pt + widthOfGrid + 1;
-  neighbors[4] = ((pt + widthOfGrid - 1) < 0) || !((pt + widthOfGrid - 1) > sizeOfGrid) ? -1 : pt + widthOfGrid - 1;
-  neighbors[5] = ((pt - widthOfGrid) < 0)     || !((pt - widthOfGrid) > sizeOfGrid)     ? -1 : pt - widthOfGrid;
-  neighbors[6] = ((pt - widthOfGrid + 1) < 0) || !((pt - widthOfGrid + 1) > sizeOfGrid) ? -1 : pt - widthOfGrid + 1;
-  neighbors[7] = ((pt - widthOfGrid - 1) < 0) || !((pt - widthOfGrid - 1) > sizeOfGrid) ? -1 : pt - widthOfGrid - 1;
+  neighbors[0] = ((pt + 1) < 0) || ((pt + 1) > sizeOfGrid) ? -1 : pt + 1;
+  neighbors[1] = ((pt - 1) < 0) || ((pt - 1) > sizeOfGrid) ? -1 : pt - 1;
+  neighbors[2] = ((pt + widthOfGrid) < 0) || ((pt + widthOfGrid) > sizeOfGrid) ? -1 : pt + widthOfGrid;
+  neighbors[3] = ((pt + widthOfGrid + 1) < 0) || ((pt + widthOfGrid + 1) > sizeOfGrid) ? -1 : pt + widthOfGrid + 1;
+  neighbors[4] = ((pt + widthOfGrid - 1) < 0) || ((pt + widthOfGrid - 1) > sizeOfGrid) ? -1 : pt + widthOfGrid - 1;
+  neighbors[5] = ((pt - widthOfGrid) < 0) || ((pt - widthOfGrid) > sizeOfGrid) ? -1 : pt - widthOfGrid;
+  neighbors[6] = ((pt - widthOfGrid + 1) < 0) || ((pt - widthOfGrid + 1) > sizeOfGrid) ? -1 : pt - widthOfGrid + 1;
+  neighbors[7] = ((pt - widthOfGrid - 1) < 0) || ((pt - widthOfGrid - 1) > sizeOfGrid) ? -1 : pt - widthOfGrid - 1;
 
   return neighbors;
 }
@@ -52,13 +52,13 @@ inline bool AStar::collinear(int pt1, int pt2, int pt3, int width)
 {
   // Checks if three points lie on the same line.
   int pt1x = pt1 % width;
-  int pt1y = (int) floor(pt1 / width);
+  int pt1y = (int)floor(pt1 / width);
 
   int pt2x = pt2 % width;
-  int pt2y = (int) floor(pt2 / width);
+  int pt2y = (int)floor(pt2 / width);
 
   int pt3x = pt3 % width;
-  int pt3y = (int) floor(pt3 / width);
+  int pt3y = (int)floor(pt3 / width);
 
   // Compare slopes of the points and check if they are equal
   return (pt2y - pt1y) * (pt3x - pt2x) == (pt3y - pt2y) * (pt2x - pt1x);
@@ -72,10 +72,11 @@ PoseStamped AStar::poseStampedFromIndex(int ind, const nav_msgs::OccupancyGrid &
 
   PoseStamped ps;
 
-  ps.pose.position.x = indx * oGrid.info.resolution;
-  ps.pose.position.y = indy * oGrid.info.resolution;
+  ps.pose.position.x = (indx - oGrid.info.width / 2) * oGrid.info.resolution;
+  ps.pose.position.y = (indy - oGrid.info.height / 2) * oGrid.info.resolution;
 
   ps.header = oGrid.header;
+  ps.header.frame_id = "odom";
   return ps;
 }
 
@@ -93,6 +94,7 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
   current = reverse_list[current];
 
   p.header = oGrid.header;
+  p.header.frame_id = "odom";
 
   // Loop through the list of node associations backwards. If a node is not collinear with the nodes before and after it, add it to the path.
   while (current != -1)
@@ -108,9 +110,38 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
   return p;
 }
 
-Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point target, const Point start, int threshold)
+// void AStar::fillIndex(int i, nav_msgs::OccupancyGrid &oGrid, int size) {
+//   ROS_WARN("FILLING INDEX: %d", i);
+//   oGrid.data[i] = 100;
+
+//   for(int n : getNeighborsIndiciesArray(i, oGrid.info.width, size)) {
+//     if(n == -1 || oGrid.data[n] > 50) continue;
+
+//     ROS_WARN("Calling next...");
+//     fillIndex(n, oGrid, size);
+//   }
+// }
+
+nav_msgs::OccupancyGrid AStar::findUnoccupiedSpace(int startIndex, nav_msgs::OccupancyGrid oGrid)
 {
-  if(oGrid.data.size() == 0) {
+  fillIndex(startIndex, oGrid, oGrid.data.size());
+
+  return oGrid;
+}
+
+float AStar::distGridToPoint(int index, Point p1, int width, int height)
+{
+  Point p2;
+  p2.x = (index % width) - width / 2;
+  p2.y = floor(index / width) - height / 2;
+
+  return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+}
+
+Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point target, int threshold)
+{
+  if (oGrid.data.size() == 0)
+  {
     ROS_WARN("Occupancy Grid is Empty.");
     return Path();
   }
@@ -119,18 +150,67 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point ta
   // Set up the open and closed sets and heuristic scores
   std::vector<double> gScores(oGrid.data.size(), INFINITY);
 
-  int endIndex = target.y * oGrid.info.width + target.x;
-  int startIndex = start.y * oGrid.info.width + start.x;
+  int endIndex = 0;
+  int centerIndex = (oGrid.info.height / 2) * oGrid.info.width + oGrid.info.width / 2;
 
-  auto origin = std::make_pair<double, int>(0, std::move(startIndex));
+  auto origin = std::make_pair<double, int>(0, std::move(centerIndex));
+
+  if ((int)target.x > (int)oGrid.info.width / 2 || (int)target.x < (int)-(oGrid.info.width / 2) || (int)target.y > (int)oGrid.info.height / 2 || (int)target.y < (int)-(oGrid.info.height / 2))
+  {
+    ROS_WARN("Finding New index...");
+    // auto freeGrid = findUnoccupiedSpace(centerIndex, oGrid);
+    float minDist = INFINITY;
+    int bestIndex = centerIndex;
+    for (int i = 0; i < oGrid.info.width; ++i)
+    {
+
+      if ((distGridToPoint(i, target, oGrid.info.width, oGrid.info.height) < minDist) /*&& freeGrid.data[i] < 100*/)
+      {
+        minDist = distGridToPoint(i, target, oGrid.info.width, oGrid.info.height);
+        bestIndex = i;
+      }
+
+      if ((distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height) < minDist) /*&& freeGrid.data[oGrid.info.width * i] < 100*/)
+      {
+        minDist = distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height);
+        bestIndex = oGrid.info.width * i;
+      }
+
+      if ((distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height) < minDist) /*&& freeGrid.data[(oGrid.info.width * (i+1))-1] < 100*/)
+      {
+        minDist = distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height);
+        bestIndex = (oGrid.info.width * (i + 1)) - 1;
+      }
+
+      if ((distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height) < minDist) /*&& freeGrid.data[oGrid.data.size() - 1 - i] < 100*/)
+      {
+        minDist = distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height);
+        bestIndex = oGrid.data.size() - 1 - i;
+      }
+    }
+
+    ROS_WARN("Found index: %d", bestIndex);
+    endIndex = bestIndex;
+  }
+  else
+  {
+    endIndex = (target.y + (oGrid.info.height / 2)) * oGrid.info.width + (target.x + (oGrid.info.width / 2));
+    ROS_WARN("Calculated Index: %d", endIndex);
+  }
+
+  if (oGrid.data[endIndex] > threshold)
+  {
+    ROS_WARN("TARGET IN OCCUPIED SPACE, UNREACHABLE");
+    return Path();
+  }
 
   std::set<std::pair<double, int>> open_set;
   open_set.insert(origin);
 
   std::unordered_map<int, int> came_from;
-  came_from[startIndex] = -1;
+  came_from[centerIndex] = -1;
 
-  gScores[start.y * oGrid.info.width + start.x] = 0;
+  gScores[centerIndex] = 0;
 
   // Loop through the open set
   while (!open_set.empty())
@@ -142,7 +222,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point ta
     // Check if we hit the target
     if (current.second == endIndex)
     {
-      return reconstructPath(current.second, startIndex, came_from, oGrid);
+      return reconstructPath(current.second, centerIndex, came_from, oGrid);
     }
 
     // If the node is occupied, we can't travel through it so skip it
