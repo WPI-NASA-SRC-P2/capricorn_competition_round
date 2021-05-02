@@ -661,19 +661,34 @@ void NavigationServer::spiralDriving(const operations::NavigationGoalConstPtr &g
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = MAP;
   static std::vector<geometry_msgs::PointStamped> spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 100, 195);
-
+  double last_dist = 0.0;
   while(spiral_points.size()>=3)
   {
     double dist = NavigationAlgo::changeInPosition(*getRobotPose(), spiral_points.at(1));
-    
-    std::vector<geometry_msgs::PointStamped> temp_points;
-    temp_points.push_back(spiral_points.at(0));
-    temp_points.push_back(spiral_points.at(1));
-    temp_points.push_back(spiral_points.at(2));
-    
-    double radius = NavigationAlgo::getRadiusOfThreePointsCircle(temp_points);
-    ROS_INFO_STREAM(radius<< "\t" << dist);
-    spiral_points.erase(spiral_points.begin());
+    const double CHECKPOINT_THRESHOLD = 1.0;
+    if (dist < CHECKPOINT_THRESHOLD)
+    {    
+      std::vector<geometry_msgs::PointStamped> temp_points;
+      temp_points.push_back(spiral_points.at(0));
+      temp_points.push_back(spiral_points.at(1));
+      temp_points.push_back(spiral_points.at(2));
+      
+      double radius = NavigationAlgo::getRadiusOfThreePointsCircle(temp_points);
+      ROS_INFO_STREAM(radius<< "\t" << dist);
+      spiral_points.erase(spiral_points.begin());
+      geometry_msgs::PointStamped center_of_rot;
+      center_of_rot.point.y = radius;
+      revolveRobot(center_of_rot, SPIRAL_SPEED);      
+    }
+    else if (dist > last_dist)
+    {
+      // AUTOMATIC DRIVE to spiral_points.at(1)
+    }
+    else
+    {
+      last_dist = dist;
+      update_rate_->sleep();
+    }
   }
 
 	ROS_INFO_STREAM("Spiraling Complete");
