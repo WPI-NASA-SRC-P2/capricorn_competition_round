@@ -26,7 +26,7 @@ Client* g_client;
 operations::NavigationGoal g_nav_goal;
 perception::ObjectArray g_objects;
 
-const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
+const int ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8;
 std::mutex g_objects_mutex, g_cancel_goal_mutex;
 std::string g_desired_label;
@@ -98,7 +98,6 @@ void visionNavigation()
 
     std::vector<perception::Object> obstacles;
     float err_obstacle = 0;
-    bool obstacle_detected = false;
 
     // Find the desired object
     for(int i = 0; i < objects.number_of_objects; i++) 
@@ -109,20 +108,9 @@ void visionNavigation()
             // Store the object's center and height
             center_obj = object.center.x;
             height_obj = object.size_y;
-            // break;
         }
-        else if(object.label == COMMON_NAMES::OBJECT_DETECTION_ROCK_CLASS && object.size_y > 40) 
-        {
-            obstacle_detected = true;
-
-            if(!checkObstacle(object))
-            {
-                continue;
-            }
-
-            float hard_coded_direction = 0.74;
-            g_nav_goal.direction = (object.center.x > WIDTH_IMAGE * 3 / 4) ? hard_coded_direction : -hard_coded_direction;
-        }
+        else
+            obstacles.push_back(object);
     }
 
     if(center_obj < -1)
@@ -139,9 +127,14 @@ void visionNavigation()
     }
     else
     {
-        if(obstacle_detected)
+        // get the direction of crab walk needed to avoid obstacle
+        float direction = checkObstacle(obstacles);
+
+        if(abs(direction) > 0.0)
         {
-            g_nav_goal.forward_velocity = 0.8;
+            // if there is an obstacle to avoid, crab walk
+            g_nav_goal.forward_velocity = FORWARD_VELOCITY;
+            g_nav_goal.direction = direction;
             g_nav_goal.angular_velocity = 0;
             ROS_INFO("Avoid Obstacle Mode");
             return;
@@ -218,13 +211,6 @@ void visionNavigation()
     // maintaing previous values
     prev_angular_velocity = g_nav_goal.angular_velocity;
     prev_centered = g_centered;
-
-    // ROS_INFO_STREAM("-----------------------------------------------------------");
-    // ROS_INFO_STREAM("Height: "<<height_obj);
-    // ROS_INFO_STREAM("ERROR Height: "<<error_height<<", Angle: "<<error_angle);
-    // ROS_INFO_STREAM("Angular velocity: "<<g_nav_goal.angular_velocity);
-    // ROS_INFO_STREAM("Forward velocity: "<<g_nav_goal.forward_velocity);
-    // ROS_INFO_STREAM("Centered? "<<g_centered);
 }
 
 /**

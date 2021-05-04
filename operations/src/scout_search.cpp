@@ -45,35 +45,26 @@ void objectsCallback(const perception::ObjectArray& objs)
 void spiralSearch()
 {
     const std::lock_guard<std::mutex> lock(g_objects_mutex); 
-
     perception::ObjectArray objects = g_objects;
-    float direction = 0;
-    bool obstacle_detected = false;
+
+    std::vector<perception::Object> obstacles;
 
     for(int i = 0; i < objects.number_of_objects; i++) 
-    {           
-        perception::Object object = objects.obj.at(i);
-        if(object.label == COMMON_NAMES::OBJECT_DETECTION_ROCK_CLASS && object.size_y > 40) 
-        {
-            if(!checkObstacle(object))
-            {
-                continue;
-            }
-            obstacle_detected = true;
-            float hard_coded_direction = 0.74;
-            direction = (object.center.x > WIDTH_IMAGE * 3 / 4) ? hard_coded_direction : -hard_coded_direction;
-        }
-    }
+        obstacles.push_back(objects.obj.at(i));
 
-    if(obstacle_detected)
+    float direction = checkObstacle(obstacles);
+
+    if(abs(direction) > 0.0)
     {
-        ROS_INFO("Avoiding Obstacle");
-        g_nav_goal.forward_velocity = 0.8;  
+        g_nav_goal.forward_velocity = FORWARD_VELOCITY;
         g_nav_goal.direction = direction;
+        g_nav_goal.angular_velocity = 0;
+        ROS_INFO("Avoiding Obstacle");
+        return;
     }
     else
     {
-        g_nav_goal.forward_velocity = 0.8;
+        g_nav_goal.forward_velocity = FORWARD_VELOCITY;
         g_nav_goal.direction = 0;
         ROS_INFO("Driving Straight");
     }
