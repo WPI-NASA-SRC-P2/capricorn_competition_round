@@ -27,7 +27,7 @@ operations::NavigationGoal g_nav_goal;
 perception::ObjectArray g_objects;
 
 const int ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
-const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8;
+const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05;
 std::mutex g_objects_mutex, g_cancel_goal_mutex;
 std::string g_desired_label;
 bool g_centered = false, g_execute_called = false, g_cancel_called = false;
@@ -38,6 +38,13 @@ enum HEIGHT_THRESHOLD
     HOPPER = 250,
     EXCAVATOR = 240,
     OTHER = 400,
+    MINIMUM_THRESH = -1,
+};
+
+enum REVOLVE_DIRECTION
+{
+    CLOCK = -1,
+    COUNTER_CLOCK = 1,
 };
 
 /**
@@ -113,7 +120,7 @@ void visionNavigation()
             obstacles.push_back(object);
     }
 
-    if(center_obj < -1)
+    if(center_obj < HEIGHT_THRESHOLD::MINIMUM_THRESH)
     {
         // object not detected, rotate on robot's axis to find the object
         g_lost_detection_times++;
@@ -152,11 +159,11 @@ void visionNavigation()
 
         if(error_angle < 0)
         {
-            g_revolve_direction = -1;
+            g_revolve_direction = REVOLVE_DIRECTION::CLOCK;
         }
         else
         {
-            g_revolve_direction = 1;
+            g_revolve_direction = REVOLVE_DIRECTION::COUNTER_CLOCK;
         }
     
         if (abs(error_angle) > ANGLE_THRESHOLD_WIDE)
@@ -191,13 +198,13 @@ void visionNavigation()
             g_nav_goal.angular_velocity = error_angle * PROPORTIONAL_ANGLE;
             g_nav_goal.forward_velocity = 0;
 
-            if(g_nav_goal.angular_velocity < prev_angular_velocity - 0.05)
+            if(g_nav_goal.angular_velocity < prev_angular_velocity - g_angular_vel_step_size)
             {
-                g_nav_goal.angular_velocity = prev_angular_velocity - 0.05;
+                g_nav_goal.angular_velocity = prev_angular_velocity - g_angular_vel_step_size;
             }
-            if(g_nav_goal.angular_velocity > prev_angular_velocity + 0.05)
+            if(g_nav_goal.angular_velocity > prev_angular_velocity + g_angular_vel_step_size)
             {
-                g_nav_goal.angular_velocity = prev_angular_velocity + 0.05;
+                g_nav_goal.angular_velocity = prev_angular_velocity + g_angular_vel_step_size;
             }
         }
     }
