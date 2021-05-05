@@ -72,22 +72,6 @@ private:
   static nav_msgs::Path reconstructPath(int current, int last, std::unordered_map<int, int> &reverse_list, const nav_msgs::OccupancyGrid &oGrid);
 
   /**
-   * @brief Supposed to return grid with free space highlighted. Currently not working.
-   * @param startIndex the index to start the search from
-   * @param oGrid the grid to fill
-   * @returns a grid with free space = 100
-   */
-  static nav_msgs::OccupancyGrid findUnoccupiedSpace(int startIndex, nav_msgs::OccupancyGrid oGrid);
-
-  /**
-   * @brief Supposed to search grid for free space. Currently not working.
-   * @param i index to fill
-   * @param oGrid grid to fill on
-   * @param size size of grid
-   */
-  static void fillIndex(int i, nav_msgs::OccupancyGrid &oGrid, int size);
-
-  /**
    * @brief Gets distance between an index and a point
    * @param index the index to start at
    * @param p1 the point to go to
@@ -95,7 +79,7 @@ private:
    * @param height the height of the grid
    * @return the distance between index and p1
    */
-  float AStar::distGridToPoint(int index, Point p1, int width, int height)
+  static float distGridToPoint(int index, geometry_msgs::Point p1, int width, int height);
 
 public:
   /**

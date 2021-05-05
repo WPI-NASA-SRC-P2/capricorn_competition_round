@@ -112,13 +112,6 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
   return p;
 }
 
-nav_msgs::OccupancyGrid AStar::findUnoccupiedSpace(int startIndex, nav_msgs::OccupancyGrid oGrid)
-{
-  fillIndex(startIndex, oGrid, oGrid.data.size());
-
-  return oGrid;
-}
-
 float AStar::distGridToPoint(int index, Point p1, int width, int height)
 {
   Point p2;
