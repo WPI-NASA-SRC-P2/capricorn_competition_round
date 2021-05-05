@@ -36,12 +36,12 @@ std::array<int, 8> AStar::getNeighborsIndiciesArray(int pt, int widthOfGrid, int
   // Get the neighbors around any given index (ternary operators to ensure the points remain within bounds)
   std::array<int, 8> neighbors;
 
-  neighbors[0] = ((pt + 1) < 0) || ((pt + 1) > sizeOfGrid) ? -1 : pt + 1;
-  neighbors[1] = ((pt - 1) < 0) || ((pt - 1) > sizeOfGrid) ? -1 : pt - 1;
-  neighbors[2] = ((pt + widthOfGrid) < 0) || ((pt + widthOfGrid) > sizeOfGrid) ? -1 : pt + widthOfGrid;
+  neighbors[0] = ((pt + 1) < 0)               || ((pt + 1) > sizeOfGrid) ? -1               : pt + 1;
+  neighbors[1] = ((pt - 1) < 0)               || ((pt - 1) > sizeOfGrid) ? -1               : pt - 1;
+  neighbors[2] = ((pt + widthOfGrid) < 0)     || ((pt + widthOfGrid) > sizeOfGrid) ? -1     : pt + widthOfGrid;
   neighbors[3] = ((pt + widthOfGrid + 1) < 0) || ((pt + widthOfGrid + 1) > sizeOfGrid) ? -1 : pt + widthOfGrid + 1;
   neighbors[4] = ((pt + widthOfGrid - 1) < 0) || ((pt + widthOfGrid - 1) > sizeOfGrid) ? -1 : pt + widthOfGrid - 1;
-  neighbors[5] = ((pt - widthOfGrid) < 0) || ((pt - widthOfGrid) > sizeOfGrid) ? -1 : pt - widthOfGrid;
+  neighbors[5] = ((pt - widthOfGrid) < 0)     || ((pt - widthOfGrid) > sizeOfGrid) ? -1     : pt - widthOfGrid;
   neighbors[6] = ((pt - widthOfGrid + 1) < 0) || ((pt - widthOfGrid + 1) > sizeOfGrid) ? -1 : pt - widthOfGrid + 1;
   neighbors[7] = ((pt - widthOfGrid - 1) < 0) || ((pt - widthOfGrid - 1) > sizeOfGrid) ? -1 : pt - widthOfGrid - 1;
 
@@ -76,6 +76,7 @@ PoseStamped AStar::poseStampedFromIndex(int ind, const nav_msgs::OccupancyGrid &
   ps.pose.position.y = (indy - oGrid.info.height / 2) * oGrid.info.resolution;
 
   ps.header = oGrid.header;
+  // TODO: Tell albert to properly set the frame id in map generation.
   ps.header.frame_id = "odom";
   return ps;
 }
@@ -94,6 +95,7 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
   current = reverse_list[current];
 
   p.header = oGrid.header;
+  // TODO: Tell albert to properly set the frame id in map generation.
   p.header.frame_id = "odom";
 
   // Loop through the list of node associations backwards. If a node is not collinear with the nodes before and after it, add it to the path.
@@ -109,18 +111,6 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
   p.poses.push_back(lastPs);
   return p;
 }
-
-// void AStar::fillIndex(int i, nav_msgs::OccupancyGrid &oGrid, int size) {
-//   ROS_WARN("FILLING INDEX: %d", i);
-//   oGrid.data[i] = 100;
-
-//   for(int n : getNeighborsIndiciesArray(i, oGrid.info.width, size)) {
-//     if(n == -1 || oGrid.data[n] > 50) continue;
-
-//     ROS_WARN("Calling next...");
-//     fillIndex(n, oGrid, size);
-//   }
-// }
 
 nav_msgs::OccupancyGrid AStar::findUnoccupiedSpace(int startIndex, nav_msgs::OccupancyGrid oGrid)
 {
@@ -155,49 +145,55 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point ta
 
   auto origin = std::make_pair<double, int>(0, std::move(centerIndex));
 
+  // Check if the target is outside of the current occupancy grid
+  // If it is, we need to find the closest point on the edge of the occupancy grid to the target.
   if ((int)target.x > (int)oGrid.info.width / 2 || (int)target.x < (int)-(oGrid.info.width / 2) || (int)target.y > (int)oGrid.info.height / 2 || (int)target.y < (int)-(oGrid.info.height / 2))
   {
     ROS_WARN("Finding New index...");
-    // auto freeGrid = findUnoccupiedSpace(centerIndex, oGrid);
     float minDist = INFINITY;
     int bestIndex = centerIndex;
     for (int i = 0; i < oGrid.info.width; ++i)
     {
-
-      if ((distGridToPoint(i, target, oGrid.info.width, oGrid.info.height) < minDist) /*&& freeGrid.data[i] < 100*/)
+      // Loop through the bottom edge
+      if ((distGridToPoint(i, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
         minDist = distGridToPoint(i, target, oGrid.info.width, oGrid.info.height);
         bestIndex = i;
       }
 
-      if ((distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height) < minDist) /*&& freeGrid.data[oGrid.info.width * i] < 100*/)
+      // Loop through the right edge
+      if ((distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
         minDist = distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height);
         bestIndex = oGrid.info.width * i;
       }
 
-      if ((distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height) < minDist) /*&& freeGrid.data[(oGrid.info.width * (i+1))-1] < 100*/)
+      // Loop through the left edge
+      if ((distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
         minDist = distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height);
         bestIndex = (oGrid.info.width * (i + 1)) - 1;
       }
 
-      if ((distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height) < minDist) /*&& freeGrid.data[oGrid.data.size() - 1 - i] < 100*/)
+      // Loop through the top
+      if ((distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
         minDist = distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height);
         bestIndex = oGrid.data.size() - 1 - i;
       }
     }
 
-    ROS_WARN("Found index: %d", bestIndex);
+    // Set end to the new closest point
     endIndex = bestIndex;
   }
   else
   {
+    // If the target point was on the grid, just calculate the index of the point (with the center being 0,0)
     endIndex = (target.y + (oGrid.info.height / 2)) * oGrid.info.width + (target.x + (oGrid.info.width / 2));
     ROS_WARN("Calculated Index: %d", endIndex);
   }
 
+  // Check if the final destination is occupied.
   if (oGrid.data[endIndex] > threshold)
   {
     ROS_WARN("TARGET IN OCCUPIED SPACE, UNREACHABLE");
