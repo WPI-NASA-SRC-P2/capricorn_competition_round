@@ -71,6 +71,16 @@ private:
    */
   static nav_msgs::Path reconstructPath(int current, int last, std::unordered_map<int, int> &reverse_list, const nav_msgs::OccupancyGrid &oGrid);
 
+  /**
+   * @brief Gets distance between an index and a point
+   * @param index the index to start at
+   * @param p1 the point to go to
+   * @param width the width of the grid
+   * @param height the height of the grid
+   * @return the distance between index and p1
+   */
+  static float distGridToPoint(int index, geometry_msgs::Point p1, int width, int height);
+
 public:
   /**
      * @brief Calculated the shortest path using an occupancy grid based approach.
@@ -83,5 +93,5 @@ public:
      * @return A ROS Path message containing the points in the shortest path, including the robot's current location.
     **/
 
-  static nav_msgs::Path findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, geometry_msgs::Point target, geometry_msgs::Point start, int threshold = 50);
+  static nav_msgs::Path findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, geometry_msgs::Point target, int threshold = 50);
 };
