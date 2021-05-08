@@ -111,26 +111,28 @@ class ObjectPlotter:
     # plot all objects in object list
     # - basically plot single object many times (across length of object list)
     def addAllObstacles(self):
-        # add all of the obstacles from the obstacle list to the map (follow the dostuff function from the cpp file)
-        for obj in self.obj_list.obj:
-            # TODO: TRANSFORM THE POINTS BEFORE RUNNING addObstacle
-            # head = self.obj_list.header
-            # obj = self.transform(obj, head)
-            
-            # acquire the x and y position of the obstacle w.r.t the robot base by making a simple rotation transform from the camera frame
-            # TODO: in progress is using an actual transform, but this method is sufficient for roughly accurate plotting as long as camera yaw is unchanged
-            # - this is also assuming that the Object message uses a PoseStamped as opposed to a Point, (matching the latest commit)
-            obx = obj.point.pose.position.z
-            oby = -obj.point.pose.position.x
-            
-            # placeholder for transform method again
-            #obx, oby = self.transform(obx, oby, self.robot_name)
-            
-            # set radius of object to be plotted based on the width of the bounding box observed
-            radius = (obj.width)/2
-            # plot the obstacle onto the occupancy grid
-            self.addObstacle(obx, oby, radius)      
-    
+        # check if there are any observed objects
+        if len(self.obj_list.obj) > 0:
+            # loop through all objects in the object list and plot them
+            for obj in self.obj_list.obj:
+                # TODO: TRANSFORM THE POINTS BEFORE RUNNING addObstacle
+                # head = self.obj_list.header
+                # obj = self.transform(obj, head)
+                
+                # acquire the x and y position of the obstacle w.r.t the robot base by making a simple rotation transform from the camera frame
+                # TODO: in progress is using an actual transform, but this method is sufficient for roughly accurate plotting as long as camera yaw is unchanged
+                # - this is also assuming that the Object message uses a PoseStamped as opposed to a Point, (matching the latest commit)
+                obx = obj.point.pose.position.z
+                oby = -obj.point.pose.position.x
+                
+                # placeholder for transform method again
+                #obx, oby = self.transform(obx, oby, self.robot_name)
+                
+                # set radius of object to be plotted based on the width of the bounding box observed
+                radius = (obj.width)/2
+                # plot the obstacle onto the occupancy grid
+                self.addObstacle(obx, oby, radius)      
+        
     # publish the updated occupancy grid
     # - publish self.occ_grid after finished
     def gridPublisher(self):
