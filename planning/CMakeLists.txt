@@ -138,7 +138,7 @@ include_directories(
 #   src/${PROJECT_NAME}/planning.cpp
 # )
 add_library(${PROJECT_NAME} 
-  src/nodes/path_planner_server.cpp
+  # src/nodes/path_planner_server.cpp
   src/classes/astar.cpp src/classes/cspace.cpp
 )
 
