@@ -190,6 +190,11 @@ target_link_libraries(pr_dataset
   ${catkin_LIBRARIES}
 )
 
+install(PROGRAMS
+src/ground_truth_localmaps.py
+DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 #############
 ## Install ##
 #############
