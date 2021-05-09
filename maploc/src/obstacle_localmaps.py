@@ -31,7 +31,7 @@ class ObjectPlotter:
         self.obj_list = ObjectArray()
         self.object_sub = rospy.Subscriber("/capricorn/" + self.robot_name + "/object_detection/objects", ObjectArray, self.objectCb)
         # occupancy grid publisher
-        self.occGridPub = rospy.Publisher("/capricorn/" + self.robot_name + "object_detection_map", OccupancyGrid, queue_size=1)
+        self.occGridPub = rospy.Publisher("/capricorn/" + self.robot_name + "/object_detection_map", OccupancyGrid, queue_size=1)
     
     # subscriber callback to robot pose, updates robot pose as it moves
     def robotCb(self, odom):
@@ -42,7 +42,8 @@ class ObjectPlotter:
     def objectCb(self, objlist):
         self.obj_list = objlist
         self.updateMap()
-        print(f'Map has updated: First object at {self.obj_list.obj[0].center}, No. of objects: {len(self.obj_list.obj)}')
+        # useful for debugging any issues with object detection
+        #rospy.loginfo(f'Map has updated: First object at {self.obj_list.obj[0].center}, No. of objects: {len(self.obj_list.obj)}')
     
     # initialize/refresh the blank 20x20 map centered on the robot 
     def resetOccGrid(self):
