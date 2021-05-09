@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3 
 import math
 import rospy
 import actionlib
@@ -37,7 +37,10 @@ class ObjectPlotter:
     def robotCb(self, odom):
         self.robot_pose = odom.pose
         # print(f'Robot Pose Received: {self.robot_pose}')
-    
+        # TODO: FOR TESTING PURPOSES ONLY:
+        # rospy.loginfo("Robot Pose Received")
+        # self.updateMap()
+
     # subscriber callback to object detection, updates detected obstacle list
     def objectCb(self, objlist):
         self.obj_list = objlist
@@ -93,27 +96,64 @@ class ObjectPlotter:
         obx = obx + 10
         oby = oby + 10
         # plot a circle around the center point of the object
-        for theta in range(0,360,2):
+        previous_node_x = 0
+        previous_node_y = 0
+        current_node_x = 0
+        current_node_y = 0
+        for theta in range(0,360,1):
             theta = theta*pi/180
             # convert meters to pixels
             obx_p = obx/self.occ_grid.info.resolution
             oby_p = oby/self.occ_grid.info.resolution
             radius_p = radius/self.occ_grid.info.resolution
-            circX = int((obx_p + radius_p*np.cos(theta)))  
+            # for cos, range is 0-2PI
+            circX = int((obx_p + radius_p*np.cos(theta)))
+            # for sin, range is -PI - PI  
             circY = int((oby_p + radius_p*np.sin(theta)))
             # define bounds of if index value is valid 
             voxel_not_negative = int(circY*self.occ_grid.info.width + circX) >= 0
             voxel_not_outside = int(circY*self.occ_grid.info.width + circX) < self.occ_grid.info.width*self.occ_grid.info.height
+            
+            # obstacle wrapping check (don't plot stuff behind when object has disappeared)
+            # first, check if the x value is within boundary 0 to self.occ_grid.info.width
+            voxel_not_wrapping = circX in range(0, self.occ_grid.info.width) and circY in range(0, self.occ_grid.info.height)
+            # next, check if the circY is also within boundary 0 to self.occ_grid.info.height
+            # voxel_not_wrapping = circY in range(0, self.occ_grid.info.height)
             # only add obstacle to grid if its index value is valid (else, not in view of robot anyways)
-            if voxel_not_negative and voxel_not_outside: 
+            if voxel_not_negative and voxel_not_outside and voxel_not_wrapping: 
+                #rospy.loginfo("Obstacle Plotted")
                 OCCUPIED = 100
                 self.occ_grid.data[int(circY*self.occ_grid.info.width + circX)] = OCCUPIED
+                rospy.loginfo('voxel_not_negative = ' + str(int(circY*self.occ_grid.info.width + circX)))
+                if theta == 0:
+                    previous_node_x = circX
+                    previous_node_y = circY
+                else:
+                    # current_node = (circY*self.occ_grid.info.width + circX)
+                    current_node_x = circX
+                    current_node_y = circY
+                    # x1, y1 = previous_node
+                    x1 = previous_node_x
+                    y1 = previous_node_y
+                    # x2, y2 = current_node
+                    x2 = current_node_x
+                    y2 = current_node_y
+                    for j in range(0, 5):
+                        u = j / 5
+                        x = int(x2 * u + x1 * (1 - u))
+                        y = int(y2 * u + y1 * (1 - u))
+                        self.occ_grid.data[int(y*self.occ_grid.info.width + x)] = OCCUPIED
+                    previous_node_x = current_node_x
+                    previous_node_y = current_node_y
+
     
     # plot all objects in object list
     # - basically plot single object many times (across length of object list)
     def addAllObstacles(self):
         # check if there are any observed objects
+        #rospy.loginfo("Adding Obstacles from Obj list")
         if len(self.obj_list.obj) > 0:
+            rospy.loginfo("Adding Obstacles from Obj list")
             # loop through all objects in the object list and plot them
             for obj in self.obj_list.obj:
                 # TODO: TRANSFORM THE POINTS BEFORE RUNNING addObstacle
@@ -145,7 +185,10 @@ class ObjectPlotter:
         self.resetOccGrid()
         # populate the map with the observed obstacles
         self.addAllObstacles()
-        # publish the map 
+        # add default obstacle for testing purposes
+        #self.addObstacle(5, 5, 7)
+        #rospy.loginfo("Obstacle Added")
+        # publish the mroap  
         self.gridPublisher()
 
 # set up the node and then spin to operate on callbacks
