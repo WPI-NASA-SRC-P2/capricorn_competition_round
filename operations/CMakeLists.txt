@@ -228,6 +228,12 @@ target_link_libraries(spiral_points_publisher ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
+add_executable(spiral_server src/spiral_server.cpp)
+add_dependencies(spiral_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(spiral_server ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
 ###################
 #### EXCAVATOR ####
 ###################
