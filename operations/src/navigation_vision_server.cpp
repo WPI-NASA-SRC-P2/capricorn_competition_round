@@ -35,9 +35,12 @@ int g_height_threshold = 400, g_lost_detection_times = 0, g_true_detection_times
 
 enum HEIGHT_THRESHOLD
 {
-    HOPPER = 250,
     EXCAVATOR = 240,
-    OTHER = 400,
+    SCOUT = 200,
+    HAULER = 200,
+    PROCESSING_PLANT = 400,
+    REPAIR_STATION = 400,
+    OTHER = 50,
     MINIMUM_THRESH = -1,
 };
 
@@ -53,13 +56,25 @@ enum REVOLVE_DIRECTION
  */
 void setDesiredLabelHeightThreshold()
 {
-    if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_HOPPER_CLASS)
-    {
-        g_height_threshold = HEIGHT_THRESHOLD::HOPPER;
-    }
     if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS)
     {
         g_height_threshold = HEIGHT_THRESHOLD::EXCAVATOR;
+    }
+    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS)
+    {
+        g_height_threshold = HEIGHT_THRESHOLD::SCOUT;
+    }
+    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS)
+    {
+        g_height_threshold = HEIGHT_THRESHOLD::HAULER;
+    }
+    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+    {
+        g_height_threshold = HEIGHT_THRESHOLD::PROCESSING_PLANT;
+    }
+    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_REPAIR_STATION_CLASS)
+    {
+        g_height_threshold = HEIGHT_THRESHOLD::REPAIR_STATION;
     }
     else
     {
@@ -116,6 +131,10 @@ void visionNavigation()
             center_obj = object.center.x;
             height_obj = object.size_y;
         }
+        else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS && object.label == COMMON_NAMES::OBJECT_DETECTION_FURNACE_CLASS)
+            continue;
+        else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS && object.label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_ARM_CLASS)
+            continue;
         else
             obstacles.push_back(object);
     }
@@ -231,14 +250,8 @@ bool check_class()
     if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS ||
        g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_REPAIR_STATION_CLASS ||
        g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_ARM_CLASS ||
        g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_FURNACE_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_HOPPER_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_ROBOT_ANTENNA_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_PP_SMALL_THRUSTER_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_ROCK_CLASS)
+       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS)
         return true;
     return false;
 }
@@ -261,8 +274,8 @@ void execute(const operations::NavigationVisionGoalConstPtr& goal, Server* as)
     {
         // the class is not valid, send the appropriate result
         result.result = COMMON_NAMES::NAV_VISION_RESULT::V_INVALID_CLASS;
-        as->setAborted(result, "Wrong Object Detection Class Name");
-        ROS_INFO("Invalid Class");
+        as->setAborted(result, "Invalid Object Detection Class or Cannot go to the class");
+        ROS_INFO("Invalid Object Detection Class or Cannot go to the class");
         return;
     }
 
