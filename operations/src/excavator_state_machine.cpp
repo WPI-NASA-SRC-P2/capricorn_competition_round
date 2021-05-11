@@ -8,12 +8,15 @@ ExcavatorStateMachine::ExcavatorStateMachine(ros::NodeHandle nh, const std::stri
     excavator_arm_client_ = new ExcavatorClient(EXCAVATOR_ACTIONLIB, true);
     navigation_vision_client_ = new NavigationVisionClient(robot_name + NAVIGATION_VISION_ACTIONLIB, true);
     
+    // SHOULD BE TAKEN CARE OF BY NAMESPACE
+    // ALL THE PREFIXES SHOULD BE REMOVED 
+    // (/capricorn/robot_name_1) should be set via namespace, not from here
     objects_sub_ = nh.subscribe("/" + CAPRICORN_TOPIC + robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorStateMachine::objectsCallback, this);
     lookout_pos_sub_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + LOOKOUT_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::lookoutLocCB, this);
     sub_scout_vol_location_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + VOLATILE_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::scoutVolLocCB, this);
     hauler_parked_sub_ = nh.subscribe("/" + CAPRICORN_TOPIC + SCHEDULER_TOPIC + HAULER_PARKED_TOPIC, 1, &ExcavatorStateMachine::haulerParkedCB, this);
     
-    return_hauler_pub_ = nh.advertise<std_msgs::Empty>(CAPRICORN_TOPIC  + HAULER_FILLED, 1000);
+    return_hauler_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC  + HAULER_FILLED, 1000);
     park_hauler_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + PARK_HAULER, 1000);
     excavator_ready_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000);
 }
@@ -22,12 +25,12 @@ ExcavatorStateMachine::~ExcavatorStateMachine()
 {
     delete navigation_client_;
     delete excavator_arm_client_;
+    delete navigation_vision_client_;
 }
 
 void ExcavatorStateMachine::haulerParkedCB(std_msgs::Empty msg)
 {
     const std::lock_guard<std::mutex> lock(hauler_parked_mutex); 
-    ROS_INFO_STREAM("Callback Received");
     hauler_parked_ = true;
 }
 

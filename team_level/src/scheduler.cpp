@@ -25,12 +25,12 @@ int main(int argc, char* argv[])
     ros::NodeHandle nh;
 
     // Listens to any messages published about detecting new volatiles.
-    ros::Subscriber volatile_location_sub = nh.subscribe(CAPRICORN_TOPIC + SCHEDULER_TOPIC + VOLATILE_LOCATION_TOPIC, 1000, volLocationCB);
+    ros::Subscriber volatile_location_sub = nh.subscribe("/" + CAPRICORN_TOPIC + SCHEDULER_TOPIC + VOLATILE_LOCATION_TOPIC, 1000, volLocationCB);
 
     // Publishers to redistribute any messages on the volatile location topic to the hauler and excavator.
     // In the future, we will select which hauler and excavator to send off (or wait for one to be ready), but for now we just send the volatile off to the first of each.
-    vol_location_excavator_pub = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + "/" + EXCAVATOR_1 + VOLATILE_LOCATION_TOPIC, 1000);
-    vol_location_hauler_pub = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + "/" + HAULER_1 + VOLATILE_LOCATION_TOPIC, 1000);
+    vol_location_excavator_pub = nh.advertise<geometry_msgs::PoseStamped>("/" + CAPRICORN_TOPIC + "/" + EXCAVATOR_1 + VOLATILE_LOCATION_TOPIC, 1000);
+    vol_location_hauler_pub = nh.advertise<geometry_msgs::PoseStamped>("/" + CAPRICORN_TOPIC + "/" + HAULER_1 + VOLATILE_LOCATION_TOPIC, 1000);
 
     ros::Publisher hauler_lookout_pub = nh.advertise<geometry_msgs::PoseStamped>("/" + CAPRICORN_TOPIC + "/" + HAULER_1 + LOOKOUT_LOCATION_TOPIC, 1000);
     ros::Publisher excavtor_lookout_pub = nh.advertise<geometry_msgs::PoseStamped>("/" + CAPRICORN_TOPIC + "/" + EXCAVATOR_1 + LOOKOUT_LOCATION_TOPIC, 1000);

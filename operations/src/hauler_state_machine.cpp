@@ -10,9 +10,11 @@ HaulerStateMachine::HaulerStateMachine(ros::NodeHandle nh, const std::string& ro
     navigation_vision_client_ = new NavigationVisionClient(robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
     park_robot_client_ = new ParkRobotClient(robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true);
 
-    // Subscriber initializations
-    dig_site_location_ = nh_.subscribe(CAPRICORN_TOPIC + "/" + robot_name_ + VOLATILE_LOCATION_TOPIC, 1000, &HaulerStateMachine::digSiteLocCB, this);
-    hauler_filled_sub_ = nh_.subscribe(CAPRICORN_TOPIC + HAULER_FILLED, 1000, &HaulerStateMachine::haulerFilledCB, this);
+    // SHOULD BE TAKEN CARE OF BY NAMESPACE
+    // ALL THE PREFIXES SHOULD BE REMOVED 
+    // (/capricorn/robot_name_1) should be set via namespace, not from here
+    dig_site_location_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + VOLATILE_LOCATION_TOPIC, 1000, &HaulerStateMachine::digSiteLocCB, this);
+    hauler_filled_sub_ = nh_.subscribe("/" + CAPRICORN_TOPIC + HAULER_FILLED, 1000, &HaulerStateMachine::haulerFilledCB, this);
     excav_ready_sub_ = nh_.subscribe("/" + CAPRICORN_TOPIC + PARK_HAULER, 1000, &HaulerStateMachine::excavReadyCB, this);
     lookout_loc_sub_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + LOOKOUT_LOCATION_TOPIC, 1000, &HaulerStateMachine::lookoutLocCB, this);
 
