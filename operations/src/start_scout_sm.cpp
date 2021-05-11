@@ -16,7 +16,11 @@ int main(int argc, char* argv[])
     ros::init(argc, argv, robot_name + "_sm");
     ros::NodeHandle nh;
 
+    ROS_INFO("Constructing scout sm...\n");
+
     ScoutStateMachine* sm = new ScoutStateMachine(nh, robot_name);
+
+    ROS_INFO("Constructed. Starting loop...\n");
 
     sm->startStateMachine();
 

@@ -7,7 +7,7 @@
 
 <launch>
     <arg name="robot_name" default="small_scout_1" />
-    <arg name="rviz" default="true" />
+    <arg name="rviz" default="false" />
     <arg name="launch_stereo_proc" default="true" />
     <arg name="path_to_model" default='$(find perception)/model' /> 
     <arg name="path_to_labelmap" default='$(find perception)/model/saved_model.pbtxt' /> 
@@ -15,8 +15,7 @@
     <arg name="namespace" value="/$(arg robot_name)/camera" />
 
     <node if="$(arg launch_stereo_proc)" pkg="stereo_image_proc" ns="$(arg namespace)" type="stereo_image_proc" name="stereo_image_proc" />	
-    <node name="object_detection" pkg="perception" type="object_detection_cap.py" output="screen" args="$(arg robot_name) $(arg path_to_model) $(arg path_to_labelmap)" />
-
+    <node name="$(arg robot_name)_object_detection" pkg="perception" type="object_detection_cap.py" output="screen" args="$(arg robot_name) $(arg path_to_model) $(arg path_to_labelmap)" />
 
     <!-- <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find utils)/rviz/object_detection.rviz"/> -->
 </launch>

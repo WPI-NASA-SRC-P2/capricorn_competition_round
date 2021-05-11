@@ -4,7 +4,7 @@
 ScoutStateMachine::ScoutStateMachine(ros::NodeHandle nh, const std::string& robot_name):nh_(nh)
 {
     robot_name_ = robot_name;
-    navigation_client_ = new NavigationClient_(NAVIGATION_ACTIONLIB, true);
+    navigation_client_ = new NavigationClient_(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
     resource_localiser_client_ = new ResourceLocaliserClient_(RESOURCE_LOCALISER_ACTIONLIB, true);
 
     volatile_sub_ = nh.subscribe("/" + robot_name + VOLATILE_SENSOR_TOPIC, 1000, &ScoutStateMachine::processVolatileMessage, this);
@@ -54,7 +54,11 @@ geometry_msgs::PoseStamped ScoutStateMachine::getRobotPose()
 
 void ScoutStateMachine::startStateMachine()
 {
+    ROS_INFO("Waiting for nav server...\n");
+
     navigation_client_->waitForServer();
+
+    ROS_INFO("Nav server connection established. Looping.\n");
 
     while (ros::ok() && state_machine_continue_)
     {

@@ -52,6 +52,7 @@
   <depend>rospy</depend>
   <depend>sensor_msgs</depend>
   <depend>operations</depend>
+  <depend>planning</depend>
   
   <buildtool_depend>catkin</buildtool_depend>
 

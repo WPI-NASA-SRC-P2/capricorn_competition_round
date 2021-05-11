@@ -721,6 +721,9 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 {
     printf("Received NavigationGoal, dispatching\n");
 
+	// Zero out the total distance traveled when we receive a new goal
+	total_distance_traveled_ = 0;
+
 	switch(goal->drive_mode)
 	{
 		case NAV_TYPE::MANUAL:
