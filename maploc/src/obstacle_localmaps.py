@@ -14,7 +14,7 @@ from math import pi
 import sys
 from perception.msg import Object
 from perception.msg import ObjectArray
-# tf2 reqs
+# tf2 req
 import tf_conversions
 import tf2_ros
  
