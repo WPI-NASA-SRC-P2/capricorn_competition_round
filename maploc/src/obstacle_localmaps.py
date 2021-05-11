@@ -124,7 +124,7 @@ class ObjectPlotter:
                 #rospy.loginfo("Obstacle Plotted")
                 OCCUPIED = 100
                 self.occ_grid.data[int(circY*self.occ_grid.info.width + circX)] = OCCUPIED
-                rospy.loginfo('voxel_not_negative = ' + str(int(circY*self.occ_grid.info.width + circX)))
+                # rospy.loginfo('voxel_not_negative = ' + str(int(circY*self.occ_grid.info.width + circX)))
                 if theta == 0:
                     previous_node_x = circX
                     previous_node_y = circY
@@ -153,7 +153,7 @@ class ObjectPlotter:
         # check if there are any observed objects
         #rospy.loginfo("Adding Obstacles from Obj list")
         if len(self.obj_list.obj) > 0:
-            rospy.loginfo("Adding Obstacles from Obj list")
+            # rospy.loginfo("Adding Obstacles from Obj list")
             # loop through all objects in the object list and plot them
             for obj in self.obj_list.obj:
                 # TODO: TRANSFORM THE POINTS BEFORE RUNNING addObstacle
