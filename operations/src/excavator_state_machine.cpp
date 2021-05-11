@@ -210,7 +210,7 @@ void ExcavatorStateMachine::parkExcavator()
         geometry_msgs::PoseStamped scout_stamped;
         scout_stamped.header = next_nav_goal_.header;
         scout_stamped.pose = next_nav_goal_.pose;
-        navigation_action_goal_.pose = scout_stamped;      // Position estimation is not perfect
+        navigation_action_goal_.point = scout_loc_stamp_;      // Position estimation is not perfect
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
         navigation_client_->sendGoal(navigation_action_goal_);
@@ -334,7 +334,7 @@ bool ExcavatorStateMachine::updateScoutLocation()
 
     perception::ObjectArray objects = g_objects_;
     perception::Object object;
-    geometry_msgs::Point scout_loc;
+    geometry_msgs::PoseStamped scout_loc;
     bool object_found = false;
 
     for(int i = 0; i < objects.number_of_objects; i++)
@@ -345,6 +345,7 @@ bool ExcavatorStateMachine::updateScoutLocation()
         {
             // Store the object's location
             scout_loc = object.point;
+            scout_loc.pose.position.z -= 2;
             // ROS_INFO_STREAM(object.point);
             object_found = true;
             break;
@@ -356,6 +357,6 @@ bool ExcavatorStateMachine::updateScoutLocation()
 
     scout_loc_stamp_.header.frame_id = robot_name_ + SENSOR_BAR_GAZEBO; // Needs to be confirmed
     scout_loc_stamp_.header.stamp = ros::Time(0);
-    scout_loc_stamp_.point = scout_loc;
+    scout_loc_stamp_.point = scout_loc.pose.position;
     return true;
 }
