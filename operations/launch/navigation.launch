@@ -10,5 +10,6 @@
         <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" args="$(arg robot_name)" />
         <node name="start_nav_server" pkg="operations" type="start_nav_server" args="$(arg robot_name)" output="$(arg output)"/>
         <node name="wheel_speed_processing" pkg="operations" type="wheel_speed_processing" args="$(arg robot_name)" />
+        <node name="spiral_motion" pkg="operations" type="spiral_server" args="$(arg robot_name)" />
     </group>
 </launch>

@@ -18,10 +18,9 @@ using namespace COMMON_NAMES;
 class NavigationAlgo
 {
 private:
-  static constexpr float arc_spiral_a = 0;   // Inner radius (starting radius of the spiral)
-  static constexpr float arc_spiral_b = 2.7; // Incerement per rev
-  static constexpr float arc_spiral_multi = 2;
-  static constexpr float arc_spiral_incr = 3.9;
+  static constexpr float arc_spiral_a = 15;    // Inner radius (starting radius of the spiral)
+  static constexpr float arc_spiral_b = 50;   // Incerement per rev
+  static constexpr float arc_spiral_incr = 5; // Distance between two points
 
 public:
   NavigationAlgo(/* args */);

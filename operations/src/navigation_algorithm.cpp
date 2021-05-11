@@ -155,7 +155,7 @@ std::vector<geometry_msgs::PointStamped> NavigationAlgo::getNArchimedeasSpiralPo
   points.resize(N);
   for (int i = init_theta; i < init_theta + N; i++)
   {
-    float th = std::pow(i * arc_spiral_incr, 0.5) * arc_spiral_multi;
+    float th = std::pow(i * arc_spiral_incr, 0.5);
     float pre = (arc_spiral_a + (arc_spiral_b * th) / (2 * M_PI));
     points.at(i-init_theta).header = init_location.header;
     points.at(i-init_theta).point.x = pre * cos(th) + init_location.point.x;
