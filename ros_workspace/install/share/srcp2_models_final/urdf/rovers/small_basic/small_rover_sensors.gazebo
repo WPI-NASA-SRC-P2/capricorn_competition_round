@@ -25,12 +25,15 @@
     <xacro:property name="imu_noise_sigma" value="0.05" /> 
   </xacro:if>
 
+  <xacro:property name="camera_hz" value="5.0" />
+  <xacro:property name="lidar_hz"  value="5.0" /> 
+
    <!-- Hokuyo Lidar Laser -->
   <gazebo reference="$(arg rover_name)_lidar_link">
     <sensor name="head_hokuyo_sensor" type="gpu_ray">
       <pose>0 0 0.0 0 0 ${pi/2}</pose>
       <visualize>false</visualize>
-      <update_rate>10</update_rate>
+      <update_rate>${lidar_hz}</update_rate>
       <ray>
         <scan>
           <horizontal>
@@ -64,7 +67,7 @@
   <!-- Stereo Camera Optical Left  -->
   <gazebo reference="$(arg rover_name)_left_camera_optical">
     <sensor type="camera" name="stereo_camera_left">
-      <update_rate>10.0</update_rate>
+      <update_rate>${camera_hz}</update_rate>
       <camera name="camera/left">
         <pose>0 0 0 1.57 -1.57 0</pose>
         <horizontal_fov>1.3962634</horizontal_fov> 
@@ -97,7 +100,7 @@
    <!-- Stereo Camera Optical Right  -->
   <gazebo reference="$(arg rover_name)_right_camera_optical">
     <sensor type="camera" name="stereo_camera_right">
-      <update_rate>10.0</update_rate>
+      <update_rate>${camera_hz}</update_rate>
       <camera name="camera/right">
         <pose>0 0 0 1.57 -1.57 0</pose>
         <horizontal_fov>1.3962634</horizontal_fov>

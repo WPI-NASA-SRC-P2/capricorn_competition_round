@@ -21,8 +21,8 @@ cmp_container_name="competitor-final"
 
 # container constraints
 use_local="false"
-cpus=4
-mem="5g"
+cpus=6
+mem="12g"
 
 cmp_volumes=""
 
@@ -210,6 +210,7 @@ docker run --rm  \
     --volume=/dev/log:/dev/log:rw \
     --device=/dev/dri:/dev/dri \
     --network $srcp2net_name \
+    --gpus=all \
     --network-alias $cmpalias_name \
     --env=ROS_MASTER_URI="http://${simalias_name}:11311" \
     --cpus=$cpus \

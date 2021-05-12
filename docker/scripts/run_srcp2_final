@@ -36,8 +36,8 @@ host_ros_path=$(cd ~; pwd)/.ros
 
 # container constraints
 use_local="false"
-cpus=3
-mem="4g"
+cpus=6
+mem="12g"
 
 # XServer
 xsock="/tmp/.X11-unix"
