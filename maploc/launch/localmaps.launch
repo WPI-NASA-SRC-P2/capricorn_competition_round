@@ -1,0 +1,6 @@
+
+<launch>
+
+    <arg name="robot_name" default="small_scout_1" />  
+    <node name="localmap" pkg="maploc" type="ground_truth_localmaps.py" output="screen" args="$(arg robot_name)" />
+</launch>

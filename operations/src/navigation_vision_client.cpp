@@ -49,7 +49,7 @@ int main(int argc, char** argv)
         operations::NavigationVisionResultConstPtr result = client.getResult();
         if(result->result == COMMON_NAMES::NAV_VISION_RESULT::V_INVALID_CLASS)
         {
-            ROS_INFO("Invalid Object Detection Class");
+            ROS_INFO("Invalid Object Detection Class or Cannot go to the class");
         }
         ROS_INFO("Action finished: %s",state.toString().c_str());
         return 0;

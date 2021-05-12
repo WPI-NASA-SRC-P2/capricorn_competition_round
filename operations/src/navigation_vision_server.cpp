@@ -35,9 +35,12 @@ int g_height_threshold = 400, g_lost_detection_times = 0, g_true_detection_times
 
 enum HEIGHT_THRESHOLD
 {
-    HOPPER = 250,
     EXCAVATOR = 240,
-    OTHER = 400,
+    SCOUT = 200,
+    HAULER = 200,
+    PROCESSING_PLANT = 400,
+    REPAIR_STATION = 400,
+    OTHER = 50,
     MINIMUM_THRESH = -1,
 };
 
@@ -53,13 +56,25 @@ enum REVOLVE_DIRECTION
  */
 void setDesiredLabelHeightThreshold()
 {
-    if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_HOPPER_CLASS)
-    {
-        g_height_threshold = HEIGHT_THRESHOLD::HOPPER;
-    }
     if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS)
     {
         g_height_threshold = HEIGHT_THRESHOLD::EXCAVATOR;
+    }
+    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS)
+    {
+        g_height_threshold = HEIGHT_THRESHOLD::SCOUT;
+    }
+    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS)
+    {
+        g_height_threshold = HEIGHT_THRESHOLD::HAULER;
+    }
+    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+    {
+        g_height_threshold = HEIGHT_THRESHOLD::PROCESSING_PLANT;
+    }
+    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_REPAIR_STATION_CLASS)
+    {
+        g_height_threshold = HEIGHT_THRESHOLD::REPAIR_STATION;
     }
     else
     {
@@ -84,8 +99,8 @@ void objectsCallback(const perception::ObjectArray& objs)
  * Steps:
  * 1. Rotate robot util the desired object detection class has its bounding box in the center of the frame
  * 2. Drive forward until you reach the desired class bounding box's minimum height
- * 3. Avoid obstacle using object detection, if the obstacle is in right half of the image, it means that the obstacle will be in robot's path, so robot crab drives until
- *    there is no obstacle in right half of the image, an object will be considered an obstacle iff it is not target label and is greater than a height threshold (currently rocks are only considered as obstacles)
+ * 3. Avoid obstacle using object detection, if the obstacle is in projected path, it means that the obstacle will be in robot's path, so robot crab drives until
+ *    there is no obstacle in projected path, an object will be considered an obstacle iff it is not target label and is greater than a height threshold (currently rocks are only considered as obstacles)
  * If the object is lost while the above process, the process will be started again * 
  * Two thresholds are used for centering the object in the image, narrow threshold for initial centering and wide threshold if the object was centered
  * but looses the center afterwards
@@ -106,15 +121,30 @@ void visionNavigation()
     std::vector<perception::Object> obstacles;
     float err_obstacle = 0;
 
+    bool target_processing_plant = (g_desired_label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
+    bool target_excavator = (g_desired_label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS);
+
     // Find the desired object
     for(int i = 0; i < objects.number_of_objects; i++) 
     {   
         perception::Object object = objects.obj.at(i);
+        bool object_is_furnace = (object.label == COMMON_NAMES::OBJECT_DETECTION_FURNACE_CLASS);
+        bool object_is_excavator_arm = (object.label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_ARM_CLASS);
         if(object.label == g_desired_label) 
         {
             // Store the object's center and height
             center_obj = object.center.x;
             height_obj = object.size_y;
+        }
+        else if(target_processing_plant && object_is_furnace)
+        {
+            // do not consider furnace as an obstacle when going to processing plant
+            continue;
+        }
+        else if(target_excavator && object_is_excavator_arm)
+        {
+            // do not consider excavator arm as an obstacle when going to excavator
+            continue;
         }
         else
             obstacles.push_back(object);
@@ -231,14 +261,8 @@ bool check_class()
     if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS ||
        g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_REPAIR_STATION_CLASS ||
        g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_ARM_CLASS ||
        g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_FURNACE_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_HOPPER_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_ROBOT_ANTENNA_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_PP_SMALL_THRUSTER_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_ROCK_CLASS)
+       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS)
         return true;
     return false;
 }
@@ -261,8 +285,8 @@ void execute(const operations::NavigationVisionGoalConstPtr& goal, Server* as)
     {
         // the class is not valid, send the appropriate result
         result.result = COMMON_NAMES::NAV_VISION_RESULT::V_INVALID_CLASS;
-        as->setAborted(result, "Wrong Object Detection Class Name");
-        ROS_INFO("Invalid Class");
+        as->setAborted(result, "Invalid Object Detection Class or Cannot go to the class");
+        ROS_INFO("Invalid Object Detection Class or Cannot go to the class");
         return;
     }
 

@@ -33,16 +33,17 @@ struct point {
     }
 };
 
-const float WIDTH_IMAGE = 640.0, HARDCODED_DIRECTION = 0.74f;
+// hardcoded width of the image and crab walk direction (currently the obstacle avoidance has a hardcoded orientation of crab walk (+45 deg. or -45 deg.))
+const float WIDTH_IMAGE = 640.0, HARDCODED_CRAB_WALK_DIRECTION = 0.74f;
 
 // Height thresholds for corresponding object to be considered as obstacles
 const std::map<std::string, int> OBSTACLE_HEIGHT_THRESHOLD = {
     {COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS, 400,},
     {COMMON_NAMES::OBJECT_DETECTION_REPAIR_STATION_CLASS, 400,},
-    {COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS, 100,},
-    {COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_ARM_CLASS, 80,},
-    {COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS, 100,},
-    {COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS, 100,},
+    {COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS, 60,},
+    {COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_ARM_CLASS, 40,},
+    {COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS, 60,},
+    {COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS, 60,},
     {COMMON_NAMES::OBJECT_DETECTION_ROCK_CLASS, 60,}
 };
 
@@ -105,7 +106,7 @@ float checkObstacle(const std::vector<perception::Object>& obstacles)
                 // check if the lower left corner of the bb is on the right side of the line
                 if(directionOfPoint(A, B, P))
                 {
-                    result = HARDCODED_DIRECTION;
+                    result = HARDCODED_CRAB_WALK_DIRECTION;
                 }
             }
             

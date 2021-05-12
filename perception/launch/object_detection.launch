@@ -7,7 +7,7 @@
 
 <launch>
     <arg name="robot_name" default="small_scout_1" />
-    <arg name="rviz" default="true" />
+    <arg name="rviz" default="false" />
     <arg name="launch_stereo_proc" default="true" />
     <arg name="path_to_model" default='$(find perception)/model' /> 
     <arg name="path_to_labelmap" default='$(find perception)/model/saved_model.pbtxt' /> 
