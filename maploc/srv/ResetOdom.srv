@@ -1,4 +1,5 @@
-string robot_name
-geometry_msgs/PoseStamped pose
+geometry_msgs/PoseStamped ref_pose
+string target_robot_name
+bool not_gt
 ---
 bool success
