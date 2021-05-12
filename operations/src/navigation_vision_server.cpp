@@ -207,9 +207,9 @@ void visionNavigation()
             // if the bounding box is in the center of image following the narrow angle
             g_centered = true;
             g_nav_goal.angular_velocity = 0;
-            if(error_height <= 0 && g_true_detection_times > FOUND_FRAME_THRESHOLD)
+            if(error_height < 0 && g_true_detection_times > FOUND_FRAME_THRESHOLD)
             {
-                // If the object is big enough, stop the robot
+                // If the object is having desired height, stop the robot
                 g_nav_goal.forward_velocity = 0;
                 g_execute_called = false;
                 g_centered = false;
@@ -218,7 +218,7 @@ void visionNavigation()
             }
             else
             {
-                // Keep driving forward
+                // Keep driving forward or backward according to height of the object
                 g_nav_goal.forward_velocity = FORWARD_VELOCITY;
             }
         }
