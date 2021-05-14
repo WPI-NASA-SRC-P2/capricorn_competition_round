@@ -60,7 +60,7 @@ namespace COMMON_NAMES
 
   /****** ROS NODE NAMES ******/
   const std::string NAVIGATION_VISION_SERVER_NODE_NAME = "_navigation_vision_server";
-  const std::string NAVIGATION_VISION_CLIENT_NODE_NAME = "_navigation_vision_server";
+  const std::string NAVIGATION_VISION_CLIENT_NODE_NAME = "_navigation_vision_client";
   const std::string PR_DATASET_NODE_NAME = "_pr_dataset";
   const std::string GROUND_TRUTH_PR_NODE_NAME = "_ground_truth_pr";
   const std::string PR_LOCALIZATION_NODE_NAME = "_pr_localization";
@@ -70,8 +70,9 @@ namespace COMMON_NAMES
   const std::string NOISY_IMAGE_NODE_NAME = "_noisy_image_eliminate";
   const std::string HORIZON_TRACKING_NODE_NAME = "_horzion_tracking";
   const std::string FIND_PP_RS_SERVER_NODE_NAME = "_find_pp_rs_server";
-  const std::string PARK_HAULER_HOPPER_SERVER_NODE_NAME = "_park_hauler_server_hopper";
-  const std::string PARK_HAULER_HOPPER_CLIENT_NODE_NAME = "_park_hauler_vision_hopper";
+  const std::string PARK_HAULER_HOPPER_SERVER_NODE_NAME = "_park_hauler_server";
+  const std::string PARK_HAULER_HOPPER_CLIENT_NODE_NAME = "_park_hauler_client";
+  const std::string SCOUT_SEARCH_NODE_NAME = "_scout_search";
 
   /****** TOPIC NAMES ******/
   const std::string CAPRICORN_TOPIC = "/capricorn/";

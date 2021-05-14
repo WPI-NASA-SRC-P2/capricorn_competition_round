@@ -3,7 +3,7 @@
 
     <include file="$(find operations)/launch/navigation.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
-        <arg name="output" value="screen" />
+        <arg name="output" value="log" />
     </include>
 
     <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
