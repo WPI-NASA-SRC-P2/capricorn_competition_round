@@ -10,9 +10,9 @@ ScoutStateMachine::ScoutStateMachine(ros::NodeHandle nh, const std::string& robo
     volatile_sub_ = nh.subscribe("/" + robot_name + VOLATILE_SENSOR_TOPIC, 1000, &ScoutStateMachine::processVolatileMessage, this);
 
     // TODO TODO TODO: Replace (or switch based on debug flat) with real odometry topic
-    robot_odom_sub_ = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, &ScoutStateMachine::processOdomMessage, this);
+    robot_odom_sub_ = nh.subscribe("/" + CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, &ScoutStateMachine::processOdomMessage, this);
 
-    excavator_ready_sub_ = nh.subscribe(CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000, &ScoutStateMachine::processExcavatorMessage, this);
+    excavator_ready_sub_ = nh.subscribe("/" + CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000, &ScoutStateMachine::processExcavatorMessage, this);
 
     volatile_pub_ = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + SCHEDULER_TOPIC + VOLATILE_LOCATION_TOPIC, 1000);
 }
@@ -79,7 +79,7 @@ void ScoutStateMachine::startStateMachine()
                 unexplored.header.frame_id = MAP;
 
                 unexplored.pose.position.x = 40;
-                unexplored.pose.position.y = 0;
+                unexplored.pose.position.y = 2;
                 unexplored.pose.position.z = 0;
 
                 unexplored.pose.orientation.w = 1;
@@ -231,10 +231,10 @@ void ScoutStateMachine::startStateMachine()
                 // Go 3 meters to the left of the current pose
                 geometry_msgs::PoseStamped go_left;
 
-                go_left.header.frame_id = robot_name_ + ROBOT_CHASSIS;
+                go_left.header.frame_id = MAP;
 
-                go_left.pose.position.x = 0;
-                go_left.pose.position.y = 3;
+                go_left.pose.position.x = 60;
+                go_left.pose.position.y = 10;
                 go_left.pose.position.z = 0;
 
                 go_left.pose.orientation.w = 1;
@@ -251,7 +251,7 @@ void ScoutStateMachine::startStateMachine()
 
             if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
             {
-                printf("Done moving out of the way. DEMO: Staying in place, not returning to spiral.\n");
+                // printf("Done moving out of the way. DEMO: Staying in place, not returning to spiral.\n");
             }
             break;
         }
