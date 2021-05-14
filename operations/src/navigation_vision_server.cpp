@@ -26,7 +26,7 @@ Client* g_client;
 operations::NavigationGoal g_nav_goal;
 perception::ObjectArray g_objects;
 
-const int ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
+const int ANGLE_THRESHOLD_NARROW = 5, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05;
 std::mutex g_objects_mutex, g_cancel_goal_mutex;
 std::string g_desired_label;

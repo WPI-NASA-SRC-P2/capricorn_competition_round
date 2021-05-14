@@ -233,7 +233,7 @@ void parkWrtExcavator()
 
     getObjects(hauler_objects, exc_objects);
 
-    float center_exc = INIT_VALUE, height_exc = INIT_VALUE, z_exc = INIT_VALUE;
+    float center_exc = INIT_VALUE, height_exc = INIT_VALUE, z_exc = INIT_VALUE, height_hauler_ra = INIT_VALUE;
 
     static bool prev_centered = false;
         
@@ -259,21 +259,37 @@ void parkWrtExcavator()
             float center_img = (WIDTH_IMAGE / 2.0);
             float error_angle = center_img - object.center.x;   
 
-            if(abs(error_angle) < 20)
+            if(abs(error_angle) < 10)
             {
                 ROS_INFO("HAULER's ORIENTATION CORRECT");
+                if(!g_found_orientation)
+                    findExcavator();
                 g_found_orientation = true;
             }         
+        }
+
+        bool is_robot_antenna = (object.label == COMMON_NAMES::OBJECT_DETECTION_ROBOT_ANTENNA_CLASS);
+        if(is_robot_antenna)
+        {
+            height_hauler_ra = object.size_y;
         }
     }
 
     if(g_found_orientation)
     {
-        // Stopping and exiting once correct orientation wrt excavator is found and robot antenna's distance is less than threshold
+        if(height_hauler_ra > 120)
+        {
+            g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = 0;
+            g_nav_goal.angular_velocity = 0;
+            g_parked = true;
+            return;
+        }
+
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-        g_nav_goal.forward_velocity = 0;
+        g_nav_goal.forward_velocity = FORWARD_VELOCITY;
         g_nav_goal.angular_velocity = 0;
-        g_parked = true;
+        // Stopping and exiting once correct orientation wrt excavator is found and robot antenna's distance is less than threshold
         return;
     }
 
