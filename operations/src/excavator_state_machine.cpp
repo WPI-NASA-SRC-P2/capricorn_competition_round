@@ -81,7 +81,7 @@ void ExcavatorStateMachine::startStateMachine()
     // Waiting for the servers to start
     navigation_client_->waitForServer();
     excavator_arm_client_->waitForServer();
-    // navigation_vision_client_->waitForServer(); //Not being used currently
+    navigation_vision_client_->waitForServer(); //Not being used currently
     ROS_WARN("Servers started");
 
     while (ros::ok() && state_machine_continue_)
@@ -172,21 +172,22 @@ void ExcavatorStateMachine::goToLookout()
 
 void ExcavatorStateMachine::goToScout()
 {
+  ////////////////////////////////////
+  //////// MAHI CHANGE HERE //////////
+  ////////////////////////////////////
     if(nav_server_idle_)
     {
         ROS_INFO("Going going");
         geometry_msgs::PoseStamped temp_msg;
-        temp_msg = next_nav_goal_;
-        temp_msg.pose.position.x -= 5;
-        temp_msg.pose.orientation.w = 1;
-
-        navigation_action_goal_.pose = temp_msg;
-        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-
-        navigation_client_->sendGoal(navigation_action_goal_);
+        navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_SCOUT_CLASS;
+        navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_REACH;
+        ROS_WARN_STREAM("Vision Server status: "<<bool(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED));
+        navigation_vision_client_->sendGoal(navigation_vision_goal_);
+        ros::Duration(1).sleep();
+        ROS_WARN_STREAM("Vision Server status: "<<bool(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED));
         nav_server_idle_ = false;
     }
-    else if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
+    else if(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
     {
         ROS_INFO("Reached to the scout");
         robot_state_ = FIND_SCOUT;
@@ -203,15 +204,15 @@ void ExcavatorStateMachine::parkExcavator()
         excavator_ready_pub_.publish(empty_message);
      
         ROS_INFO("Goal action requested");
-
-        // Again, hack for the demo. It should register the location of scout, and 
-        // go to the location where it thought the scout was.
-
-        geometry_msgs::PoseStamped scout_stamped;
-        scout_stamped.header = next_nav_goal_.header;
-        scout_stamped.pose = next_nav_goal_.pose;
-        navigation_action_goal_.pose = scout_stamped;      // Position estimation is not perfect
-        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+        /////////////////////////////////////////////
+        // Hardcoded straigh walk for x meters
+        ///////////////////////////////////////////////
+        
+        // geometry_msgs::PoseStamped scout_stamped;
+        // scout_stamped.header = next_nav_goal_.header;
+        // scout_stamped.pose = next_nav_goal_.pose;
+        // navigation_action_goal_.pose = scout_stamped;      // Position estimation is not perfect
+        // navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
         navigation_client_->sendGoal(navigation_action_goal_);
         nav_server_idle_ = false;
@@ -334,7 +335,7 @@ bool ExcavatorStateMachine::updateScoutLocation()
 
     perception::ObjectArray objects = g_objects_;
     perception::Object object;
-    geometry_msgs::Point scout_loc;
+    geometry_msgs::PoseStamped scout_loc;
     bool object_found = false;
 
     for(int i = 0; i < objects.number_of_objects; i++)
@@ -356,6 +357,6 @@ bool ExcavatorStateMachine::updateScoutLocation()
 
     scout_loc_stamp_.header.frame_id = robot_name_ + SENSOR_BAR_GAZEBO; // Needs to be confirmed
     scout_loc_stamp_.header.stamp = ros::Time(0);
-    scout_loc_stamp_.point = scout_loc;
+    scout_loc_stamp_.point = scout_loc.pose.position;
     return true;
 }
