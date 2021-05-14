@@ -71,7 +71,7 @@ int main(int argc, char **argv)
           tf::quaternionMsgToTF(req.response.pose.orientation, quat);
           transform.setRotation(quat);
           transform.frame_id_ = COMMON_NAMES::MAP;
-          transform.child_frame_id_ = model_name + "_" + COMMON_NAMES::ROBOT_BASE;
+          transform.child_frame_id_ = model_name + COMMON_NAMES::ROBOT_BASE;
           transform.stamp_ = req.response.header.stamp;
 
           br.sendTransform(transform);

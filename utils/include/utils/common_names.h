@@ -16,7 +16,7 @@ namespace COMMON_NAMES
   /****** ROBOT FRAMES ******/
   const std::string MAP = "map";
   const std::string ODOM = "odom";
-  const std::string ROBOT_BASE = "base_footprint";
+  const std::string ROBOT_BASE = "_base_footprint";
   const std::string ROBOT_CHASSIS = "_small_chassis";
 
   /****** WHEELS ******/

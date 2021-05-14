@@ -181,16 +181,13 @@ void ExcavatorStateMachine::goToScout()
         geometry_msgs::PoseStamped temp_msg;
         navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_SCOUT_CLASS;
         navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_REACH;
-        ROS_WARN_STREAM("Vision Server status: "<<bool(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED));
         navigation_vision_client_->sendGoal(navigation_vision_goal_);
-        ros::Duration(1).sleep();
-        ROS_WARN_STREAM("Vision Server status: "<<bool(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED));
         nav_server_idle_ = false;
     }
     else if(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
     {
         ROS_INFO("Reached to the scout");
-        robot_state_ = FIND_SCOUT;
+        robot_state_ = EXCAVATOR_STATES::PARK_AND_PUB;
         nav_server_idle_ = true;
     }
 }
@@ -205,14 +202,14 @@ void ExcavatorStateMachine::parkExcavator()
      
         ROS_INFO("Goal action requested");
         /////////////////////////////////////////////
-        //// Hardcoded straigh walk for x meters ////
+        //// Hardcoded straigh walk for 1.5 meters ////
         /////////////////////////////////////////////
         
-        // geometry_msgs::PoseStamped scout_stamped;
-        // scout_stamped.header = next_nav_goal_.header;
-        // scout_stamped.pose = next_nav_goal_.pose;
-        // navigation_action_goal_.pose = scout_stamped;      // Position estimation is not perfect
-        // navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+        geometry_msgs::PoseStamped hard_coded_pose;
+        hard_coded_pose.header.frame_id = robot_name_ + ROBOT_BASE;
+        hard_coded_pose.pose.position.x = 1.5;
+        navigation_action_goal_.pose = hard_coded_pose;      // Position estimation is not perfect
+        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
         navigation_client_->sendGoal(navigation_action_goal_);
         nav_server_idle_ = false;
