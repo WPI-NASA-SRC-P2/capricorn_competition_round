@@ -233,8 +233,8 @@ void ScoutStateMachine::startStateMachine()
 
                 go_left.header.frame_id = MAP;
 
-                go_left.pose.position.x = 40;
-                go_left.pose.position.y = -20;
+                go_left.pose.position.x = 60;
+                go_left.pose.position.y = 10;
                 go_left.pose.position.z = 0;
 
                 go_left.pose.orientation.w = 1;

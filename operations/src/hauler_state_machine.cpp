@@ -159,8 +159,8 @@ void HaulerStateMachine::goToDigSite()
         // Currently, for parking, the Hauler should be in the lower 3rd quadrant (bottom right) of the excavator
         // Hence this hack
         geometry_msgs::PoseStamped temp_location = dig_site_pose_;
-        temp_location.pose.position.x += 2;
-        temp_location.pose.position.y += 7;
+        temp_location.pose.position.x -= 2;
+        temp_location.pose.position.y -= 7;
 
         navigation_action_goal_.pose = temp_location;
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
