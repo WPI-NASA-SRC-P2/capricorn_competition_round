@@ -12,6 +12,8 @@
     
     <arg name="robot_name" default="small_scout_1" />
     <arg name="node_start_delay" default="5.0" /> 
+    <!-- specify initialize_rtabmap for ground_truth start, or cheat_initialize_rtabmap for using cheat odom -->
+    <arg name="get_true_pose" default="true"/>
 
     <!-- Launch the unified coordinates rtabmap (copied from compare_rtab_odom.launch)-->
     <include file="$(find maploc)/launch/rtabmap.launch" >
@@ -22,7 +24,7 @@
     </include>
     
     <!-- The node "initialize_rtabmap" is launhed with a delay of $node_start_delay, as it takes some time for the client to become available, without delay the execution sometimes get stuck at "Rtabmap client loaded" -->
-    <node name="$(arg robot_name)_initialize_rtabmap" pkg="maploc" type="cheat_initialize_rtabmap" output="screen" args="$(arg robot_name)" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "/>
+    <node name="$(arg robot_name)_initialize_rtabmap" pkg="maploc" type="initialize_rtabmap" output="screen" args="$(arg robot_name) $(arg get_true_pose)" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "/>
 
     <!-- Launch the 20x20 object detection map-->
     <node name="$(arg robot_name)_localmap" pkg="maploc" type="obstacle_localmaps.py" output="screen" args="$(arg robot_name)" />

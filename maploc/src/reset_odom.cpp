@@ -82,7 +82,6 @@ geometry_msgs::PoseStamped getTruePose(std::string robot_name){
         ROS_INFO("True Pose Not Obtained, we'll get em next time");
         // return an empty pose (TODO: proper exception thrown)
     }        
-    
     // convert true pose into a PoseStamped
     geometry_msgs::PoseStamped stamped_pose;
     stamped_pose.pose = pose_wrt_heightmap;
@@ -93,6 +92,8 @@ geometry_msgs::PoseStamped getTruePose(std::string robot_name){
 // irst robot 
 // resets the rtabmap odometry based on the input PoseStampedgeometry_msgs::PoseStamped
 bool resetOdomPose(std::string robot_name, geometry_msgs::PoseStamped stamped_pose) {
+    ROS_INFO("stamped pose = ");
+    ROS_INFO_STREAM(stamped_pose);
     ros::NodeHandle nh;
     tf2::Quaternion q(stamped_pose.pose.orientation.x,
                         stamped_pose.pose.orientation.y,
@@ -120,6 +121,9 @@ bool resetOdomPose(std::string robot_name, geometry_msgs::PoseStamped stamped_po
 
     ROS_INFO("Rtabmap client loaded");
 
+    ROS_INFO("POSE = ");
+    ROS_INFO_STREAM(pose.request);
+
     // reset the odometry w.r.t. the input pose
     if(rtabmap_client.call(pose)){
         ROS_INFO("Pose initialized for rtabmap");
@@ -138,6 +142,8 @@ bool resetOdomPose(std::string robot_name, geometry_msgs::PoseStamped stamped_po
 //bool resetOdom(geometry_msgs::PoseStamped &ref_pose, std::string &target_robot_name, bool& not_gt) {
 //bool resetOdom()
 bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res) {
+    ROS_INFO("req = ");
+    ROS_INFO_STREAM(req);
     /*
     geometry_msgs/PoseStamped ref_pose
     string target_robot_name
