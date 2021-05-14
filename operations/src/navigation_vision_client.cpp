@@ -38,12 +38,23 @@ int main(int argc, char** argv)
 
     // desired target object, any object detection class
     goal.desired_object_label = std::string(argv[2]); 
+    goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_REACH;
+    client.sendGoal(goal);    
+    bool finished_before_timeout = client.waitForResult(ros::Duration(1.0));
+    // client.cancelGoal();
 
-    client.sendGoal(goal);
-    
-    if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-        ROS_INFO("Reached goal");
-        
+    if (finished_before_timeout)
+    {
+        actionlib::SimpleClientGoalState state = client.getState();
+        operations::NavigationVisionResultConstPtr result = client.getResult();
+        if(result->result == COMMON_NAMES::NAV_VISION_RESULT::V_INVALID_CLASS)
+        {
+            ROS_INFO("Invalid Object Detection Class or Cannot go to the class");
+        }
+        ROS_INFO("Action finished: %s",state.toString().c_str());
+        return 0;
+    }
+
     ROS_INFO("Current State: %s\n", client.getState().toString().c_str());
     return 0;
 }
