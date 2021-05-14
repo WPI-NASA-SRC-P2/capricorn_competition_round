@@ -32,6 +32,7 @@ int REPEAT_COUNT_MAX = 2;
 bool near_volatile_ = false;
 bool new_message_received = false;
 double volatile_distance_;
+std::string robot_name_;
 
 
 
@@ -90,6 +91,20 @@ void stopRobot()
 
 	navigation_client_->sendGoal(goal);
 	// ros::Duration(0.5).sleep();
+}
+
+void getOnTopOfVolatile()
+{
+
+  geometry_msgs::PoseStamped hard_coded_pose;
+  hard_coded_pose.header.frame_id = robot_name_ + ROBOT_BASE;
+  hard_coded_pose.pose.position.x = 0.650;    // Hardcoded distance of volatile sensor to the base footprint
+  
+  operations::NavigationGoal goal;
+  goal.pose = hard_coded_pose;      // Position estimation is not perfect
+  goal.drive_mode = NAV_TYPE::GOAL;
+
+	navigation_client_->sendGoal(goal);
 }
 
 /**
@@ -225,7 +240,8 @@ void localiseResource(const operations::ResourceLocaliserGoalConstPtr& localiser
 	{
     getBestPose();
 		
-    ROS_INFO("Setting to best");
+    ROS_INFO("Driving on top of volatile");
+    getOnTopOfVolatile();
 	  server->setSucceeded();
 	}
   else
@@ -270,19 +286,19 @@ int main(int argc, char** argv)
   else
   {
     // Robot Name from argument
-    std::string robot_name(argv[1]);
-    std::string node_name = robot_name + "_resource_localiser_action_server";
+    robot_name_ = std::string(argv[1]);
+    std::string node_name = robot_name_ + "_resource_localiser_action_server";
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
     
-    ros::Subscriber subscriber = nh.subscribe("/" + robot_name + VOLATILE_SENSOR_TOPIC, 1000, updateSensorData);
+    ros::Subscriber subscriber = nh.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, updateSensorData);
     
     ResourceLocaliserServer resource_localiser_server(nh, RESOURCE_LOCALISER_ACTIONLIB, boost::bind(&localiseResource, _1, &resource_localiser_server), false);
     resource_localiser_server.start();
 
     ROS_INFO("Connecting to nav server...");
 
-    navigation_client_ = new NavigationClient_(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
+    navigation_client_ = new NavigationClient_(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB, true);
     navigation_client_->waitForServer();
 
     ROS_INFO("Connected. Waiting for a localization request.");
