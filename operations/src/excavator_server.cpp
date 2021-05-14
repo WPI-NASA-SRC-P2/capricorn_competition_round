@@ -101,8 +101,7 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
  */
 bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
 {
-  // float theta = findShoulderAngle(target, shoulder);
-  float theta = -1.57;
+  float theta = findShoulderAngle(target, shoulder);
   std::string scoop_value;
   if(task == START_DIGGING) // digging angles
   {
@@ -114,34 +113,34 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
     ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
 
-    // while (!volatile_found && yaw_angle > -1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
-    // {
-    //   // move the shoulder yaw joint from left to right under the surface
-    //   publishAngles(yaw_angle, 1, 1, -0.6);
-    //   ros::Duration(1).sleep();
-    //   yaw_angle -= 0.2;
-    //   ROS_INFO_STREAM(std::to_string(yaw_angle));
-    //   scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
-    //   ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
-    // }
+    while (!volatile_found && yaw_angle > -1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
+    {
+      // move the shoulder yaw joint from left to right under the surface
+      publishAngles(yaw_angle, 1, 1, -0.6);
+      ros::Duration(1).sleep();
+      yaw_angle -= 0.2;
+      ROS_INFO_STREAM(std::to_string(yaw_angle));
+      scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
+      ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
+    }
 
     if(yaw_angle<-1) // If digging happens towards the right of excavator
     {
-      publishAngles(theta, 1, 1, -0.6);
+      publishAngles(0, 1, 1, -0.6);
       ros::Duration(SLEEP_DURATION).sleep();
-      if(true) // If volatiles found towards the right, move to the center and then raise the arm
+      if(volatile_found) // If volatiles found towards the right, move to the center and then raise the arm
       {
-        publishAngles(theta, 1, 1, -2.6); // Set of values inside the surface
+        publishAngles(0, 1, 1, -2.6); // Set of values inside the surface
         ros::Duration(SLEEP_DURATION).sleep();
-        publishAngles(theta, -0.5, 1, -1.1); // Intermediate set of values for smooth motion
+        publishAngles(0, -0.5, 1, -1.1); // Intermediate set of values for smooth motion
         ros::Duration(SLEEP_DURATION).sleep();
-        publishAngles(theta, -2, 1, 0.4); // This set of values moves the scoop over the surface
+        publishAngles(0, -2, 1, 0.4); // This set of values moves the scoop over the surface
       }
       else // Else raise the arm and dump the regolith in the center
       {
-        publishAngles(theta, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
+        publishAngles(0, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
         ros::Duration(SLEEP_DURATION).sleep();
-        publishAngles(theta, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
+        publishAngles(0, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
         return false;
       }
     }
@@ -156,14 +155,12 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
   }
   else if(task == START_UNLOADING) // dumping angles
   {
-    publishAngles(0.25, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
+    publishAngles(theta, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(0.25, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    publishAngles(theta, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(-1, -2, 1, -0.7786); // This set of values moves the scoop to the front center
-    ros::Duration(1).sleep();
-    publishAngles(-1, -1, 2, -0.7786); // This set of values moves the scoop to the front center
-    ros::Duration(3).sleep();
+    publishAngles(0, -2, 1, -1); // This set of values moves the scoop to the front center
+    ros::Duration(SLEEP_DURATION).sleep();
   }
   else
   {
@@ -220,7 +217,6 @@ int main(int argc, char** argv)
     ros::Subscriber sub = nh.subscribe("/"+robot_name + SCOOP_INFO, 1000, scoopCallback); // scoop info subscriber
     Server server(nh, EXCAVATOR_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.start();
-    ROS_INFO("STARTED EXCAVATOR SERVER");
     ros::spin();
 
     return 0;
