@@ -262,8 +262,7 @@ void parkWrtExcavator()
             if(abs(error_angle) < 10)
             {
                 ROS_INFO("HAULER's ORIENTATION CORRECT");
-                if(!g_found_orientation)
-                    findExcavator();
+                findExcavator();
                 g_found_orientation = true;
             }         
         }
