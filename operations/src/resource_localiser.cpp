@@ -28,6 +28,7 @@ double DRIVING_VELOCITY = 0.2;
 double MAX_DETECT_DIST = 2.0;
 double VOLATILE_DISTANCE_THRESHOLD = 0.005;
 int FLIP_ROTATION_COUNT_MAX = 2;
+int REPEAT_COUNT_MAX = 2;
 bool near_volatile_ = false;
 bool new_message_received = false;
 double volatile_distance_;
@@ -125,6 +126,7 @@ void getBestPose()
   DrivingMode driving_mode = ROTATE_ROBOT;
   bool rotate_robot = true;
   int flip_rotation_count = 0;
+  int repeat_count = 0;
 
   double last_volatile_distance = MAX_DETECT_DIST + 1;	// To make sure any detected 
                                                         // distance is less than this
@@ -168,14 +170,24 @@ void getBestPose()
         else
         {
           ROS_INFO("Flipped Enough");
-          if(driving_mode == ROTATE_ROBOT)
+          if (repeat_count < REPEAT_COUNT_MAX)
           {
-            ROS_INFO("Now linear optimisation");
-            driving_mode = DRIVE_ROBOT_STRAIGHT;
             flip_rotation_count = 0;
             best_volatile_distance =  MAX_DETECT_DIST + 1;	
             driving_direction = POSITIVE;
-            driveRobotStraight(driving_direction, 1);
+            if(driving_mode == ROTATE_ROBOT)
+            {
+              ROS_INFO("Now linear optimisation");
+              driving_mode = DRIVE_ROBOT_STRAIGHT;
+              driveRobotStraight(driving_direction, 1);
+              repeat_count ++;
+            }
+            else
+            {
+              ROS_INFO("Now Rotational optimisation");
+              driving_mode = ROTATE_ROBOT;
+              rotateRobot(driving_direction, 1);
+            }
           }
           else
           {
