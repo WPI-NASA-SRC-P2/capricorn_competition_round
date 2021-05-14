@@ -218,7 +218,7 @@ void visionNavigation()
             }
             else
             {
-                // Keep driving forward or backward according to height of the object
+                // Keep driving forward according to height of the object
                 g_nav_goal.forward_velocity = FORWARD_VELOCITY;
             }
         }

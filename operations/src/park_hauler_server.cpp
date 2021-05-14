@@ -39,14 +39,14 @@ enum OBJECT_PARKER
 
 Client* g_client;
 operations::NavigationGoal g_nav_goal;
-const float FORWARD_VELOCITY = 0.4;
+const float HOPPER_FORWARD_VELOCITY = 0.4, EXC_FORWARD_VELOCITY = 0.2;
 std::mutex g_hauler_objects_mutex, g_excavator_objects_mutex;
 
 // global variables for park excavator
-const int MIN_DIFF_THRESH = 150, DIFF_CHANGE_THRESH = 20, ROBOT_ANTENNA_HEIGHT_THRESH = 150, ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80;
+const int  ROBOT_ANTENNA_HEIGHT_THRESH = 120, HAULER_HEIGHT_THRESH = 180, ANGLE_THRESHOLD_NARROW = 5, ANGLE_THRESH_WIDE = 100, EXCAVATOR_TIMES_DETECT_TIMES = 10, EXCAVATOR_HEIGHT_THRESH = 300;
 const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0;
-bool g_parked = false, g_found_orientation = false;
-float g_max_diff = -1;
+bool g_parked = false, g_found_orientation = false, g_revolve_direction_set = false;
+float g_max_diff = -1, g_revolve_direction = EXC_FORWARD_VELOCITY;
 int g_times_excavator = 0;
 
 // global variables for park hopper
@@ -142,7 +142,7 @@ void parkWrtHopper()
         {
             ROS_INFO_STREAM("Driving To Hopper");
             g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-            g_nav_goal.forward_velocity = FORWARD_VELOCITY;
+            g_nav_goal.forward_velocity = HOPPER_FORWARD_VELOCITY;
             g_nav_goal.angular_velocity = 0;
         }
     }
@@ -157,11 +157,11 @@ void parkWrtHopper()
         
         if (g_hopper_x > HOPPER_ORBIT_THRESH) // if the hopper is on the right side of the screen, orbit right 
         {
-            g_nav_goal.forward_velocity = FORWARD_VELOCITY;
+            g_nav_goal.forward_velocity = HOPPER_FORWARD_VELOCITY;
         }
         else //otherwise orbit left 
         {
-            g_nav_goal.forward_velocity = -FORWARD_VELOCITY;
+            g_nav_goal.forward_velocity = -HOPPER_FORWARD_VELOCITY;
         }   
     }
 }
@@ -216,6 +216,34 @@ void getObjects(perception::ObjectArray& hauler_objects, perception::ObjectArray
     exc_objects = g_excavator_objects;
 }
 
+
+/**
+ * @brief Sets the revolve direction for parking of excavator to greedily reach the required orientation quickly
+ * 
+ * @param hauler_center : hauler bounding box's center (in pixels)
+ * @param exc_center : excavator bounding box's center (in pixels)
+ * @param exc_arm_center : excavator arm bounding box's center (in pixels)
+ */
+void setRevolveDirection(float hauler_center, float exc_center, float exc_arm_center)
+{
+    if(hauler_center > -1)
+    {
+        // if hauler is detection, use the hauler location only to decide the revolve direction
+        float center_img = (WIDTH_IMAGE / 2.0);
+        g_revolve_direction = (hauler_center > center_img) ? EXC_FORWARD_VELOCITY : -EXC_FORWARD_VELOCITY;
+        g_revolve_direction_set = true;
+    }
+    if(!g_revolve_direction_set)
+    {
+        // this would only run once when the hauler reaches the excavator, not to change the revolve direction when excavator arm's direction changes wrt to excavator
+        if(exc_center > -1 && exc_arm_center > -1)
+        {
+            g_revolve_direction = (exc_arm_center > exc_center) ? EXC_FORWARD_VELOCITY : -EXC_FORWARD_VELOCITY;
+            g_revolve_direction_set = true;
+        }
+    }
+}
+
 /**
  * @brief Function to park robot wrt excavator
  * 
@@ -227,17 +255,16 @@ void getObjects(perception::ObjectArray& hauler_objects, perception::ObjectArray
  */
 void parkWrtExcavator()
 {
-
     perception::ObjectArray hauler_objects;
     perception::ObjectArray exc_objects;
 
     getObjects(hauler_objects, exc_objects);
 
-    float center_exc = INIT_VALUE, height_exc = INIT_VALUE, z_exc = INIT_VALUE, height_hauler_ra = INIT_VALUE;
+    float center_exc = INIT_VALUE, height_exc = INIT_VALUE, z_exc = INIT_VALUE, height_hauler_ra = INIT_VALUE, center_exc_arm = INIT_VALUE, center_hauler = INIT_VALUE;
 
     static bool prev_centered = false;
         
-    //parsing the objects message to extract the necessary information of required object
+    //parsing the objects message to extract the necessary information of required hauler's objects
     for(int i = 0; i < hauler_objects.number_of_objects; i++) 
     {   
         perception::Object object = hauler_objects.obj.at(i);
@@ -247,22 +274,26 @@ void parkWrtExcavator()
             height_exc = object.size_y;
             z_exc = object.point.pose.position.z;
         }
+        else if(object.label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_ARM_CLASS)
+        {
+            center_exc_arm = object.center.x;
+        }
     }
 
-    //parsing the objects message to extract the necessary information of required object
+    //parsing the objects message to extract the necessary information of required excavator's objects
     for(int i = 0; i < exc_objects.number_of_objects; i++) 
     {   
         perception::Object object = exc_objects.obj.at(i);
-        bool is_hauler = (object.label == COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS), is_scout = (object.label == COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS), is_big_enough = (object.size_y > 180);
-        if((is_hauler || is_scout) && is_big_enough) 
+        bool is_hauler = (object.label == COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS), is_scout = (object.label == COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS), is_hauler_big_enough = (object.size_y > HAULER_HEIGHT_THRESH);
+        if((is_hauler || is_scout) && is_hauler_big_enough) 
         {
+            center_hauler = object.center.x;
             float center_img = (WIDTH_IMAGE / 2.0);
-            float error_angle = center_img - object.center.x;   
+            float error_angle = center_img - center_hauler;   
 
-            if(abs(error_angle) < 10)
+            if(abs(error_angle) < ANGLE_THRESHOLD_NARROW)
             {
                 ROS_INFO("HAULER's ORIENTATION CORRECT");
-                findExcavator();
                 g_found_orientation = true;
             }         
         }
@@ -276,7 +307,8 @@ void parkWrtExcavator()
 
     if(g_found_orientation)
     {
-        if(height_hauler_ra > 120)
+        // if the required orientation is found, drive forward till hauler's robot antenna's height (in pixels) exceeds a minimum threshold
+        if(height_hauler_ra > ROBOT_ANTENNA_HEIGHT_THRESH)
         {
             g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = 0;
@@ -285,8 +317,9 @@ void parkWrtExcavator()
             return;
         }
 
+        findExcavator();
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-        g_nav_goal.forward_velocity = FORWARD_VELOCITY;
+        g_nav_goal.forward_velocity = EXC_FORWARD_VELOCITY;
         g_nav_goal.angular_velocity = 0;
         // Stopping and exiting once correct orientation wrt excavator is found and robot antenna's distance is less than threshold
         return;
@@ -296,26 +329,29 @@ void parkWrtExcavator()
     float center_img = (WIDTH_IMAGE / 2.0);
     float error_angle = center_img - center_exc;
 
-    if(!g_found_orientation && height_exc > 0 && height_exc > 300)
+    if(!g_found_orientation && height_exc > 0 && height_exc > EXCAVATOR_HEIGHT_THRESH)
     {
+        // if the excavator is bigger than required (when revolving), means hauler is very close to excavator, drive backward
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-        g_nav_goal.forward_velocity = -0.2;
+        g_nav_goal.forward_velocity = -EXC_FORWARD_VELOCITY;
         g_nav_goal.angular_velocity = 0;
         return;
     }
     
-    if((!g_found_orientation && center_exc != INIT_VALUE && abs(error_angle) > 100) || g_times_excavator > 10)
+    if((!g_found_orientation && center_exc != INIT_VALUE && abs(error_angle) > ANGLE_THRESH_WIDE) || g_times_excavator > EXCAVATOR_TIMES_DETECT_TIMES)
     {
+        // if excavator is lost or excavator is not in the center of the image, call the navigation vision server to center or find the excavator
         findExcavator();
     }
 
+    setRevolveDirection(center_hauler, center_exc, center_exc_arm);
     // rotate robot around excavator
     geometry_msgs::PointStamped pt;
     pt.point.x = (center_exc > 0) ? ROBOT_RADIUS + z_exc : DEFAULT_RADIUS;
     pt.header.frame_id = robot_name + COMMON_NAMES::ROBOT_CHASSIS;
     g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::REVOLVE;
     g_nav_goal.point = pt;
-    g_nav_goal.forward_velocity = 0.3;
+    g_nav_goal.forward_velocity = g_revolve_direction;
 }
 
 /**
@@ -357,22 +393,26 @@ void execute(const operations::ParkRobotGoalConstPtr& goal, Server* as)
     else
     {
         // park with excavator
-        // assumes robot has reached near excavator
         ROS_INFO("Parking To Excavator");      
         std::string excavator_name = COMMON_NAMES::EXCAVATOR_1;
+
         if(goal->hopper_or_excavator == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS)
         {
+            // uses "small_excavator_1" by default
             ROS_INFO_STREAM("USING AS "<<COMMON_NAMES::EXCAVATOR_1<<" EXCAVATOR DEFAULT");
         }
         else
         {
+            // use given excavator name in the actionlib goal, this excavator name is used for subscribing to it's object detection topic
             excavator_name = goal->hopper_or_excavator;
         }
 
         excavator_objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + excavator_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &excavatorObjectsCallback);
+
         // initialize all the necessary variables
         g_times_excavator = 0;
         g_found_orientation = false;
+        g_revolve_direction_set = false;
         g_max_diff = -1;
     }
 
