@@ -31,7 +31,6 @@ bool near_volatile_ = false;
 bool new_message_received = false;
 double volatile_distance_;
 
-geometry_msgs::PoseStamped robot_pose_;
 
 
 /**
@@ -112,7 +111,7 @@ void navigateRobot(const geometry_msgs::Pose target_pose)
  * 
  * @return geometry_msgs::Pose  Pose which minimises the volatile distance
  */
-geometry_msgs::Pose getBestPose()
+void getBestPose()
 {
   RotationDirection rotate_direction = CLOCKWISE;
   bool rotate_robot = true;
@@ -122,8 +121,6 @@ geometry_msgs::Pose getBestPose()
                                                         // distance is less than this
   double best_volatile_distance = last_volatile_distance;
   
-  geometry_msgs::Pose current_robot_pose = robot_pose_.pose;
-  geometry_msgs::Pose best_robot_pose = current_robot_pose;
 
   // Start rotating the robot to minimise distance
   rotateRobot(rotate_direction, 1.0);
@@ -133,7 +130,6 @@ geometry_msgs::Pose getBestPose()
     if(new_message_received)
     {
       new_message_received = false;
-      current_robot_pose = (robot_pose_.pose);
 
       // If the distance is decreasing
       if ((last_volatile_distance - volatile_distance_)>VOLATILE_DISTANCE_THRESHOLD)
@@ -142,7 +138,6 @@ geometry_msgs::Pose getBestPose()
         {
           best_volatile_distance = volatile_distance_;
           ROS_INFO("Best distance updated");
-          best_robot_pose = current_robot_pose;
         }
       }
 
@@ -175,7 +170,7 @@ geometry_msgs::Pose getBestPose()
       // as volatile sensor stops working in battery low mode
     }
   }
-  return best_robot_pose;
+  return;
 }
 
 /**
@@ -189,10 +184,9 @@ void localiseResource(const operations::ResourceLocaliserGoalConstPtr& localiser
 	ROS_INFO("Starting locating volatile sequence");
 	if (near_volatile_)
 	{
-    geometry_msgs::Pose best_robot_pose = getBestPose();
+    getBestPose();
 		
     ROS_INFO("Setting to best");
-		// navigateRobot(best_robot_pose);		
 	  server->setSucceeded();
 	}
   else
@@ -225,18 +219,6 @@ void updateSensorData(const srcp2_msgs::VolSensorMsg::ConstPtr& msg)
 	}
 }
 
-/**
- * @brief Subscribes to an odometry topic, and updates the global robot_pose_
- * 
- * @param msg The odometry message to process
- */
-void updateRobotPose(const nav_msgs::Odometry::ConstPtr &msg)
-{
-  // guard is bad?
-	robot_pose_.header = msg->header;
-	robot_pose_.pose = msg->pose.pose;
-}
-
 int main(int argc, char** argv)
 {
   // Ensure the robot name is passed in
@@ -255,8 +237,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     
     ros::Subscriber subscriber = nh.subscribe("/" + robot_name + VOLATILE_SENSOR_TOPIC, 1000, updateSensorData);
-    ros::Subscriber update_current_robot_pose_ = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
-
+    
     ResourceLocaliserServer resource_localiser_server(nh, RESOURCE_LOCALISER_ACTIONLIB, boost::bind(&localiseResource, _1, &resource_localiser_server), false);
     resource_localiser_server.start();
 
