@@ -189,9 +189,13 @@ int main(int argc, char *argv[])
     ros::NodeHandle nh;
 
 
-    robot_first["gt_first_hauler_1"] = true;
-    robot_first["gt_first_excavator_1"] = true;
-    robot_first["gt_first_scout_1"] = true;
+    // robot_first["gt_first_hauler_1"] = true;
+    // robot_first["gt_first_excavator_1"] = true;
+    // robot_first["gt_first_scout_1"] = true;
+
+    robot_first["small_hauler_1"] = true;
+    robot_first["small_scout_1"] = true;
+    robot_first["small_excavator_1"] = true;
 
     // gt_first_hauler_1 = true;
     // gt_first_excavator_1 = true;
