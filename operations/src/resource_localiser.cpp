@@ -52,7 +52,7 @@ enum RotationDirection
  * 
  * @param rotate_direction   direction of rotation
  */
-void rotateRobot(const RotationDirection rotate_direction)
+void rotateRobot(const RotationDirection rotate_direction, const float rotational_velocity_multiplier)
 {
 	operations::NavigationGoal goal;
 	
@@ -60,7 +60,7 @@ void rotateRobot(const RotationDirection rotate_direction)
 	goal.drive_mode = NAV_TYPE::MANUAL;
 	
 	goal.forward_velocity = 0;
-	goal.angular_velocity = rotate_direction * ROTATION_VELOCITY;
+	goal.angular_velocity = rotate_direction * ROTATION_VELOCITY * rotational_velocity_multiplier;
   
 	navigation_client_->sendGoal(goal);
 	ros::Duration(0.5).sleep();
@@ -126,7 +126,7 @@ geometry_msgs::Pose getBestPose()
   geometry_msgs::Pose best_robot_pose = current_robot_pose;
 
   // Start rotating the robot to minimise distance
-  rotateRobot(rotate_direction);
+  rotateRobot(rotate_direction, 1.0);
 
   while (rotate_robot && ros::ok())
   {
@@ -154,7 +154,7 @@ geometry_msgs::Pose getBestPose()
         {
           ROS_INFO("Flipping Direction");
           rotate_direction = (rotate_direction == CLOCKWISE) ? COUNTERCLOCKWISE : CLOCKWISE;
-          rotateRobot(rotate_direction);
+          rotateRobot(rotate_direction, 1/(flip_rotation_count+1));
           flip_rotation_count++;
         }
         else
@@ -167,6 +167,12 @@ geometry_msgs::Pose getBestPose()
       }
       
       last_volatile_distance = volatile_distance_;
+    }
+    else
+    {
+      // TODO: What is new message is not received? 
+      // This case may not arise normally, but can arise during battery low situation
+      // as volatile sensor stops working in battery low mode
     }
   }
   return best_robot_pose;
@@ -186,7 +192,7 @@ void localiseResource(const operations::ResourceLocaliserGoalConstPtr& localiser
     geometry_msgs::Pose best_robot_pose = getBestPose();
 		
     ROS_INFO("Setting to best");
-		navigateRobot(best_robot_pose);		
+		// navigateRobot(best_robot_pose);		
 	  server->setSucceeded();
 	}
   else
