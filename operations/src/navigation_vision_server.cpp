@@ -35,7 +35,7 @@ int g_height_threshold = 400, g_lost_detection_times = 0, g_true_detection_times
 
 enum HEIGHT_THRESHOLD
 {
-    EXCAVATOR = 240,
+    EXCAVATOR = 220,
     SCOUT = 200,
     HAULER = 200,
     PROCESSING_PLANT = 400,
