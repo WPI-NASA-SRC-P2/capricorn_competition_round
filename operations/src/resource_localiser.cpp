@@ -24,8 +24,9 @@ using namespace COMMON_NAMES;
 
 
 double ROTATION_VELOCITY = 0.2;
+double DRIVING_VELOCITY = 0.2;
 double MAX_DETECT_DIST = 2.0;
-double VOLATILE_DISTANCE_THRESHOLD = 0.02;
+double VOLATILE_DISTANCE_THRESHOLD = 0.005;
 int FLIP_ROTATION_COUNT_MAX = 2;
 bool near_volatile_ = false;
 bool new_message_received = false;
@@ -39,19 +40,25 @@ double volatile_distance_;
           When Anticlockwise, flip the direction with -1
  * 
  */
-enum RotationDirection
+enum DrivingDirection
 {
-  CLOCKWISE = 1,
-  COUNTERCLOCKWISE = -1
+  POSITIVE = 1,
+  NEGATIVE = -1
 };
 
+
+enum DrivingMode
+{
+  ROTATE_ROBOT = 0,
+  DRIVE_ROBOT_STRAIGHT
+};
 
 /**
  * @brief Rotate the robot in the given direction
  * 
  * @param rotate_direction   direction of rotation
  */
-void rotateRobot(const RotationDirection rotate_direction, const float rotational_velocity_multiplier)
+void rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier)
 {
 	operations::NavigationGoal goal;
 	
@@ -90,18 +97,19 @@ void stopRobot()
  * @param orientation yaw of the robot 
  *										 ref frame is 'map'
  */
-void navigateRobot(const geometry_msgs::Pose target_pose)
+void driveRobotStraight(DrivingDirection rotate_direction, const float rotational_velocity_multiplier)
 {
 	operations::NavigationGoal goal;
 	
-	// Auto driving
-	goal.drive_mode = NAV_TYPE::GOAL;
+	// Manual driving
+	goal.drive_mode = NAV_TYPE::MANUAL;
 	
-	goal.pose.header.frame_id = MAP;
-	goal.pose.pose = target_pose;
+	goal.forward_velocity = rotate_direction * DRIVING_VELOCITY * rotational_velocity_multiplier;
+	goal.angular_velocity = 0;
+  ROS_INFO("Driving robot straight");
 
 	navigation_client_->sendGoal(goal);
-	// ros::Duration(0.1).sleep();
+  ros::Duration(0.1).sleep();
 }
 
 /**
@@ -113,7 +121,8 @@ void navigateRobot(const geometry_msgs::Pose target_pose)
  */
 void getBestPose()
 {
-  RotationDirection rotate_direction = CLOCKWISE;
+  DrivingDirection driving_direction = POSITIVE;
+  DrivingMode driving_mode = ROTATE_ROBOT;
   bool rotate_robot = true;
   int flip_rotation_count = 0;
 
@@ -123,43 +132,61 @@ void getBestPose()
   
 
   // Start rotating the robot to minimise distance
-  rotateRobot(rotate_direction, 1.0);
+  rotateRobot(driving_direction, 1.0);
 
   while (rotate_robot && ros::ok())
   {
     if(new_message_received)
     {
       new_message_received = false;
+      ROS_INFO("New message");
 
       // If the distance is decreasing
-      if ((last_volatile_distance - volatile_distance_)>VOLATILE_DISTANCE_THRESHOLD)
+      if ((volatile_distance_ - best_volatile_distance)<0)
       {
-        if (volatile_distance_ < best_volatile_distance)
-        {
+        // if (volatile_distance_ < best_volatile_distance)
+        // {
+          ROS_INFO_STREAM("Best distance updated from "<<best_volatile_distance<<" to "<<volatile_distance_);
           best_volatile_distance = volatile_distance_;
-          ROS_INFO("Best distance updated");
-        }
+        // }
       }
 
       // If the distance is increasing
-      else if ((last_volatile_distance - volatile_distance_) < -VOLATILE_DISTANCE_THRESHOLD
-                || !near_volatile_)
+      else if ((volatile_distance_ - best_volatile_distance)>VOLATILE_DISTANCE_THRESHOLD)
       {
+        ROS_INFO("Going far");
         if(flip_rotation_count < FLIP_ROTATION_COUNT_MAX)
         {
           ROS_INFO("Flipping Direction");
-          rotate_direction = (rotate_direction == CLOCKWISE) ? COUNTERCLOCKWISE : CLOCKWISE;
-          rotateRobot(rotate_direction, 1/(flip_rotation_count+1));
+          driving_direction = (driving_direction == POSITIVE) ? NEGATIVE : POSITIVE;
+          if(driving_mode == ROTATE_ROBOT)
+            rotateRobot(driving_direction, 1/(flip_rotation_count+1));
+          else
+            driveRobotStraight(driving_direction, 1/(flip_rotation_count+1));
           flip_rotation_count++;
         }
         else
         {
           ROS_INFO("Flipped Enough");
-          rotate_robot = false;
-          near_volatile_ = false;
-          break;
+          if(driving_mode == ROTATE_ROBOT)
+          {
+            ROS_INFO("Now linear optimisation");
+            driving_mode = DRIVE_ROBOT_STRAIGHT;
+            flip_rotation_count = 0;
+            best_volatile_distance =  MAX_DETECT_DIST + 1;	
+            driving_direction = POSITIVE;
+            driveRobotStraight(driving_direction, 1);
+          }
+          else
+          {
+            ROS_INFO("DONE EVERYTHING");
+            rotate_robot = false;
+            near_volatile_ = false;
+            break;
+          }
         }
       }
+      
       
       last_volatile_distance = volatile_distance_;
     }
