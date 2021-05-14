@@ -40,7 +40,7 @@ enum OBJECT_PARKER
 Client* g_client;
 operations::NavigationGoal g_nav_goal;
 const float FORWARD_VELOCITY = 0.4;
-std::mutex g_objects_mutex;
+std::mutex g_hauler_objects_mutex, g_excavator_objects_mutex;
 
 // global variables for park excavator
 const int MIN_DIFF_THRESH = 150, DIFF_CHANGE_THRESH = 20, ROBOT_ANTENNA_HEIGHT_THRESH = 150, ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80;
@@ -56,19 +56,29 @@ int g_hopper_x, g_processing_plant_z, g_furnace_x, g_hopper_height, g_times_reac
 double g_hopper_z;
 
 bool g_execute_called = false;
-perception::ObjectArray g_objects;
+perception::ObjectArray g_hauler_objects, g_excavator_objects;
 std::string robot_name;
 
-
 /**
- * @brief Callback function which subscriber to Objects message published from object detection
+ * @brief Callback function which subscriber to Objects message published from hauler's object detection
  * 
  * @param objs 
  */
-void objectsCallback(const perception::ObjectArray& objs) 
+void haulerObjectsCallback(const perception::ObjectArray& objs) 
 {
-    const std::lock_guard<std::mutex> lock(g_objects_mutex); 
-    g_objects = objs;
+    const std::lock_guard<std::mutex> lock(g_hauler_objects_mutex); 
+    g_hauler_objects = objs;
+}
+
+/**
+ * @brief Callback function which subscriber to Objects message published from excavator's object detection
+ * 
+ * @param objs 
+ */
+void excavatorObjectsCallback(const perception::ObjectArray& objs) 
+{
+    const std::lock_guard<std::mutex> lock(g_excavator_objects_mutex); 
+    g_excavator_objects = objs;
 }
 
 /**
@@ -82,10 +92,9 @@ void objectsCallback(const perception::ObjectArray& objs)
  */
 void parkWrtHopper()
 {
-
     //parsing the objects message to extract the necessary information of required object
-    const std::lock_guard<std::mutex> lock(g_objects_mutex);    
-    perception::ObjectArray objects = g_objects;
+    const std::lock_guard<std::mutex> lock(g_hauler_objects_mutex);     
+    perception::ObjectArray objects = g_hauler_objects;
 
     int n = objects.number_of_objects; 
 
@@ -175,6 +184,10 @@ void computeProperties(perception::Object& object, bool& found, float& size_x, f
     center_x = object.center.x;
 }
 
+/**
+ * @brief find the excavator using navigation vision
+ * 
+ */
 void findExcavator()
 {
     VisionClient client(robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
@@ -189,6 +202,21 @@ void findExcavator()
 }
 
 /**
+ * @brief Copies the global hauler's and excavator's object into local objects and frees the lock immediately
+ * 
+ * @param hauler_objects 
+ * @param exc_objects 
+ */
+void getObjects(perception::ObjectArray& hauler_objects, perception::ObjectArray& exc_objects)
+{
+    const std::lock_guard<std::mutex> lock_hauler(g_hauler_objects_mutex);
+    const std::lock_guard<std::mutex> lock_excavator(g_excavator_objects_mutex);   
+
+    hauler_objects = g_hauler_objects;
+    exc_objects = g_excavator_objects;
+}
+
+/**
  * @brief Function to park robot wrt excavator
  * 
  * Steps:
@@ -199,48 +227,54 @@ void findExcavator()
  */
 void parkWrtExcavator()
 {
-    const std::lock_guard<std::mutex> lock(g_objects_mutex);
-    perception::ObjectArray objects = g_objects;
 
-    // bool if excavator arm and robot antenna are found previously
-    bool found_ea = false, found_ra = false;
-    // float values for center_x (in pixels), size_x (width of bounding box in pixels), size_y (height of bounding box in pixels) of robot antenna and excavator arm
-    // distance from robot antenna (z_ra in m)
-    float center_x_ea = INIT_VALUE, center_x_ra = INIT_VALUE, size_x_ea = INIT_VALUE, size_y_ea = INIT_VALUE, size_x_ra = INIT_VALUE, size_y_ra= INIT_VALUE;
+    perception::ObjectArray hauler_objects;
+    perception::ObjectArray exc_objects;
+
+    getObjects(hauler_objects, exc_objects);
+
     float center_exc = INIT_VALUE, height_exc = INIT_VALUE, z_exc = INIT_VALUE;
 
     static bool prev_centered = false;
         
     //parsing the objects message to extract the necessary information of required object
-    for(int i = 0; i < objects.number_of_objects; i++) 
+    for(int i = 0; i < hauler_objects.number_of_objects; i++) 
     {   
-        perception::Object object = objects.obj.at(i);
+        perception::Object object = hauler_objects.obj.at(i);
         if(object.label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS) 
         {
             center_exc = object.center.x;
             height_exc = object.size_y;
             z_exc = object.point.pose.position.z;
         }
-        else if(object.label == COMMON_NAMES::OBJECT_DETECTION_ROBOT_ANTENNA_CLASS) 
+    }
+
+    //parsing the objects message to extract the necessary information of required object
+    for(int i = 0; i < exc_objects.number_of_objects; i++) 
+    {   
+        perception::Object object = exc_objects.obj.at(i);
+        bool is_hauler = (object.label == COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS), is_scout = (object.label == COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS), is_big_enough = (object.size_y > 180);
+        if((is_hauler || is_scout) && is_big_enough) 
         {
-            //found robot antenna object
-            if(found_ra)
+            float center_img = (WIDTH_IMAGE / 2.0);
+            float error_angle = center_img - object.center.x;   
+
+            if(abs(error_angle) < 20)
             {
-                // if the robot antenna is already found, false detection, abort further calculation
-                return;
-            }            
-            computeProperties(object, found_ra, size_x_ra, size_y_ra, center_x_ra);
+                ROS_INFO("HAULER's ORIENTATION CORRECT");
+                g_found_orientation = true;
+            }         
         }
-        else if(object.label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_ARM_CLASS) 
-        {
-            //found excavator arm object
-            if(found_ea)
-            {
-                // if the excavator arm is already found, false detection, abort further calculation
-                return;
-            }
-            computeProperties(object, found_ea, size_x_ea, size_y_ea, center_x_ea);
-        }
+    }
+
+    if(g_found_orientation)
+    {
+        // Stopping and exiting once correct orientation wrt excavator is found and robot antenna's distance is less than threshold
+        g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+        g_nav_goal.forward_velocity = 0;
+        g_nav_goal.angular_velocity = 0;
+        g_parked = true;
+        return;
     }
 
     g_times_excavator = (center_exc == INIT_VALUE) ? g_times_excavator + 1 : 0;
@@ -258,48 +292,6 @@ void parkWrtExcavator()
     if((!g_found_orientation && center_exc != INIT_VALUE && abs(error_angle) > 100) || g_times_excavator > 10)
     {
         findExcavator();
-    }
-
-    if(g_found_orientation)
-    {
-        if(found_ra && size_y_ra < ROBOT_ANTENNA_HEIGHT_THRESH)
-        {
-            g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-            g_nav_goal.forward_velocity = FORWARD_VELOCITY;
-            g_nav_goal.angular_velocity = 0;
-            return;
-        }
-        else
-        {
-            // Stopping and exiting once correct orientation wrt excavator is found and robot antenna's distance is less than threshold
-            g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-            g_nav_goal.forward_velocity = 0;
-            g_nav_goal.angular_velocity = 0;
-            g_parked = true;
-            return;
-        }
-    }
-
-    if(found_ea && found_ra)
-    {
-        // if both excavator and robot antenna are found
-        float ratio = size_x_ea / size_y_ea;
-        if(center_x_ea > center_x_ra)
-        {
-            // check if the excavator arm is in right of robot antenna
-            // calculating difference between the center of robot antenna and excavator arm
-            float diff = center_x_ea - center_x_ra;
-            // keeping track if the current difference value is the maximum difference value
-            // the maximum difference will be when the robot is looking exactly in center of robot antenna and excavator arm
-            g_max_diff = std::max(g_max_diff, diff);
-
-            if(diff > MIN_DIFF_THRESH && diff < g_max_diff - DIFF_CHANGE_THRESH)
-            {
-                // check if the current diff value start decreasing, this means we have reached necessary orientation
-                ROS_INFO("Stop Revolution");
-                g_found_orientation = true;
-            }
-        }
     }
 
     // rotate robot around excavator
@@ -325,6 +317,11 @@ void execute(const operations::ParkRobotGoalConstPtr& goal, Server* as)
     ros::Rate update_rate(UPDATE_HZ);
     bool park_mode = OBJECT_PARKER::EXCAVATOR;
     
+    ROS_INFO("Got the parking goal");
+
+    ros::NodeHandle nh;
+    ros::Subscriber excavator_objects_sub;
+
     if(goal->hopper_or_excavator == COMMON_NAMES::OBJECT_DETECTION_HOPPER_CLASS)
     {
         // check the mode, park with hopper
@@ -347,7 +344,17 @@ void execute(const operations::ParkRobotGoalConstPtr& goal, Server* as)
         // park with excavator
         // assumes robot has reached near excavator
         ROS_INFO("Parking To Excavator");      
+        std::string excavator_name = COMMON_NAMES::EXCAVATOR_1;
+        if(goal->hopper_or_excavator == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS)
+        {
+            ROS_INFO_STREAM("USING AS "<<COMMON_NAMES::EXCAVATOR_1<<" EXCAVATOR DEFAULT");
+        }
+        else
+        {
+            excavator_name = goal->hopper_or_excavator;
+        }
 
+        excavator_objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + excavator_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &excavatorObjectsCallback);
         // initialize all the necessary variables
         g_times_excavator = 0;
         g_found_orientation = false;
@@ -356,6 +363,7 @@ void execute(const operations::ParkRobotGoalConstPtr& goal, Server* as)
 
     while (ros::ok() && !g_parked)
     {    
+        ros::spinOnce();
         if(park_mode == OBJECT_PARKER::HOPPER)
             parkWrtHopper();
         else
@@ -369,6 +377,9 @@ void execute(const operations::ParkRobotGoalConstPtr& goal, Server* as)
     
     as->setSucceeded();
     g_execute_called = false;
+
+    g_hauler_objects = perception::ObjectArray();
+    g_excavator_objects = perception::ObjectArray();
 }
 
 int main(int argc, char *argv[])
@@ -380,14 +391,15 @@ int main(int argc, char *argv[])
     }
 
     //take in robot name as arg1, usually small_hauler_1
-     robot_name = argv[1];
+    robot_name = argv[1];
 
     //initialize node and node handler
     ros::init(argc, argv, robot_name + COMMON_NAMES::PARK_HAULER_HOPPER_SERVER_NODE_NAME);
     ros::NodeHandle nh;
-
+    
     //subscriber for object detection
-    ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
+    ros::Subscriber hauler_objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &haulerObjectsCallback);
+    
     g_client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
 
     Server server(nh, robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB, boost::bind(&execute, _1, &server), false);
