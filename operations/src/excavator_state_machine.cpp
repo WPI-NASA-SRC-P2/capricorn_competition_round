@@ -205,8 +205,8 @@ void ExcavatorStateMachine::parkExcavator()
      
         ROS_INFO("Goal action requested");
         /////////////////////////////////////////////
-        // Hardcoded straigh walk for x meters
-        ///////////////////////////////////////////////
+        //// Hardcoded straigh walk for x meters ////
+        /////////////////////////////////////////////
         
         // geometry_msgs::PoseStamped scout_stamped;
         // scout_stamped.header = next_nav_goal_.header;
@@ -346,6 +346,7 @@ bool ExcavatorStateMachine::updateScoutLocation()
         {
             // Store the object's location
             scout_loc = object.point;
+            scout_loc.pose.position.z -= 2;
             // ROS_INFO_STREAM(object.point);
             object_found = true;
             break;

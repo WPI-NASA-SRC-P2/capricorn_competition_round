@@ -183,6 +183,7 @@ void HaulerStateMachine::followExcavator()
     {
         ROS_INFO("Following Excavator");
         navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS; 
+        navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_REACH;
         navigation_vision_client_->sendGoal(navigation_vision_goal_);
         nav_vis_server_idle_ = false;
     }
