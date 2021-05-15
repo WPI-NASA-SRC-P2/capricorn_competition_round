@@ -58,7 +58,7 @@ int main(int argc, char **argv)
   ros::Duration(0.1).sleep();
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = "map";
-  std::vector<geometry_msgs::PointStamped> spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 300, 1);
+  std::vector<geometry_msgs::PointStamped> spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 400, 17);
 
   geometry_msgs::PointStamped center = NavigationAlgo::getCenterOfThreePointsCircle(spiral_points);
   double radius = NavigationAlgo::getRadiusOfThreePointsCircle(spiral_points);
