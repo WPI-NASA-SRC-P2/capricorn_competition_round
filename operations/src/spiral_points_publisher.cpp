@@ -18,9 +18,9 @@ int main(int argc, char **argv)
   marker.id = 0;
   marker.type = visualization_msgs::Marker::SPHERE_LIST;
   marker.action = visualization_msgs::Marker::ADD;
-  marker.scale.x = 2;
-  marker.scale.y = 2;
-  marker.scale.z = 2;
+  marker.scale.x = 4;
+  marker.scale.y = 4;
+  marker.scale.z = 4;
   marker.pose.orientation.x = 0.0;
   marker.pose.orientation.y = 0.0;
   marker.pose.orientation.z = 0.0;

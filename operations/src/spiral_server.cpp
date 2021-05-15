@@ -76,7 +76,7 @@ int main(int argc, char** argv)
   // ROS_WARN("Spiral Server Started");
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = MAP;
-  static std::vector<geometry_msgs::PointStamped> spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 100, 1);
+  static std::vector<geometry_msgs::PointStamped> spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 400, 17);
   double last_dist = 0.0;
   bool going_to_goal = false;
 
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
     if(going_to_goal && !done_driving)
     {
       last_dist = dist;
-      ros::Duration(1).sleep();
+      ros::Duration(0.1).sleep();
       continue;
     }
     else
@@ -103,9 +103,8 @@ int main(int argc, char** argv)
       goal.point = center_of_rot;
       goal.forward_velocity = 2.0;
       ROS_WARN_STREAM("Circular Motion radius: "<<center_of_rot.point.y<<"\tdist: "<<dist);
+      last_dist = 100; // Just to make it big for the next iteration
       client.sendGoal(goal);
-      last_dist = dist;
-      ros::Duration(1).sleep();
     }
     else if (dist > last_dist)
     {
@@ -115,22 +114,20 @@ int main(int argc, char** argv)
 
       ROS_WARN_STREAM("Going to goal dist:"<<dist);
       
-
       operations::NavigationGoal goal;
       goal.drive_mode = NAV_TYPE::GOAL;
       goal.pose.pose.position = spiral_points.at(1).point;
       goal.pose.pose.orientation = getOrientation(point_0, point_2);
       goal.pose.header.frame_id = MAP;
       client.sendGoal(goal);
-      ros::Duration(1).sleep();
       going_to_goal = true;
     }
     else
     {
       ROS_WARN_STREAM("Dist:"<<dist<<"\tLast Dist:"<<last_dist);
       last_dist = dist;
-      ros::Duration(1).sleep();
     }
+    ros::Duration(0.1).sleep();
     ros::spinOnce();
   }
 
