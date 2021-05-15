@@ -323,7 +323,7 @@ void parkWrtExcavator()
 
         if(center_exc > 0)
             findExcavator();
-            
+
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = EXC_FORWARD_VELOCITY;
         g_nav_goal.angular_velocity = 0;

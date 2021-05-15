@@ -6,32 +6,83 @@ ExcavatorStateMachine::ExcavatorStateMachine(ros::NodeHandle nh, const std::stri
     
     navigation_client_ = new NavigationClient(NAVIGATION_ACTIONLIB, true);
     excavator_arm_client_ = new ExcavatorClient(EXCAVATOR_ACTIONLIB, true);
-
-    sub_scout_vol_location_ = nh_.subscribe("/"+CAPRICORN_TOPIC + SCOUT_1 + VOLATILE_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::scoutVolLocCB, this);
-    excavator_ready_pub_ = nh.advertise<std_msgs::Empty>("/"+CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000);
+    navigation_vision_client_ = new NavigationVisionClient(robot_name + NAVIGATION_VISION_ACTIONLIB, true);
+    
+    // SHOULD BE TAKEN CARE OF BY NAMESPACE
+    // ALL THE PREFIXES SHOULD BE REMOVED 
+    // (/capricorn/robot_name_1) should be set via namespace, not from here
+    objects_sub_ = nh.subscribe("/" + CAPRICORN_TOPIC + robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorStateMachine::objectsCallback, this);
+    lookout_pos_sub_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + LOOKOUT_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::lookoutLocCB, this);
+    sub_scout_vol_location_ = nh_.subscribe("/" + CAPRICORN_TOPIC + "/" + robot_name_ + VOLATILE_LOCATION_TOPIC, 1000, &ExcavatorStateMachine::scoutVolLocCB, this);
+    hauler_parked_sub_ = nh.subscribe("/" + CAPRICORN_TOPIC + SCHEDULER_TOPIC + HAULER_PARKED_TOPIC, 1, &ExcavatorStateMachine::haulerParkedCB, this);
+    
+    return_hauler_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC  + HAULER_FILLED, 1000);
+    park_hauler_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + PARK_HAULER, 1000);
+    excavator_ready_pub_ = nh.advertise<std_msgs::Empty>("/" + CAPRICORN_TOPIC + EXCAVATOR_ARRIVED_TOPIC, 1000);
 }
 
 ExcavatorStateMachine::~ExcavatorStateMachine()
 {
     delete navigation_client_;
     delete excavator_arm_client_;
+    delete navigation_vision_client_;
 }
+
+void ExcavatorStateMachine::haulerParkedCB(std_msgs::Empty msg)
+{
+    const std::lock_guard<std::mutex> lock(hauler_parked_mutex); 
+    hauler_parked_ = true;
+}
+
+void ExcavatorStateMachine::lookoutLocCB(const geometry_msgs::PoseStamped &msg)
+{
+    ROS_INFO_STREAM("CB");
+    const std::lock_guard<std::mutex> lock(navigation_mutex); 
+    next_nav_goal_ = msg;
+    lookout_loc_received_ = true;
+}
+
 
 void ExcavatorStateMachine::scoutVolLocCB(const geometry_msgs::PoseStamped &msg)
 {
-    // Lock-guards are not desired here. This message is published once per volatile
-    // So, there may not be a case in which we need to 'keep hold' on the old message
-    // Schedular should take care of sending tasks only when the excavator is free to 
-    // Take up the task
-    vol_pose_ = msg;
+    const std::lock_guard<std::mutex> lock(navigation_mutex); 
+    next_nav_goal_ = msg;
     volatile_found_ = true;
 }
+
+
+/**
+ * @brief Callback function which subscriber to Objects message published from object detection
+ * 
+ * @param objs 
+ */
+void ExcavatorStateMachine::objectsCallback(const perception::ObjectArray& objs) 
+{
+    const std::lock_guard<std::mutex> lock(g_objects_mutex); 
+    g_objects_ = objs;
+}
+
+// ISSUES:
+    // What if scout finds volatile before reaching/receiving goal?
+    // Current state machine is VERY streamlined, and any condition
+    // requiring changing states out of order is not coded. 
+    // this is VERY ESSENTIAL, as messages will not be received in 
+    // any particulaar order
+
+    // For starting with the issue discussed above, should set a 
+    // 'desired_state' in subscriber, and current state should 
+    // terminate its current job, and execute a 'transition_state'
+
+    // Currently, only thing that is being checked is if 'navigation' 
+    // is on or not. That is not a very good way.
 
 void ExcavatorStateMachine::startStateMachine()
 {
     // Waiting for the servers to start
     navigation_client_->waitForServer();
     excavator_arm_client_->waitForServer();
+    navigation_vision_client_->waitForServer(); //Not being used currently
+    ROS_WARN("Servers started");
 
     while (ros::ok() && state_machine_continue_)
     {   
@@ -40,8 +91,14 @@ void ExcavatorStateMachine::startStateMachine()
         case EXCAVATOR_STATES::INIT:
             initState();
             break;
-        case EXCAVATOR_STATES::GO_TO_VOLATILE:
-            goToVolatile();
+        case EXCAVATOR_STATES::KEEP_LOOKOUT:
+            goToLookout();
+            break;
+        case EXCAVATOR_STATES::GO_TO_SCOUT:
+            goToScout();
+            break;
+        case EXCAVATOR_STATES::FIND_SCOUT:
+            findScout();
             break;
         case EXCAVATOR_STATES::PARK_AND_PUB:
             parkExcavator();
@@ -76,41 +133,62 @@ void ExcavatorStateMachine::startStateMachine()
 
 void ExcavatorStateMachine::initState()
 {
-    if(volatile_found_)
-    {
-        robot_state_ = GO_TO_VOLATILE;
-        volatile_found_ = false;
-        ROS_INFO("Going to location");
+    if(lookout_loc_received_)
+    {   
+        robot_state_ = KEEP_LOOKOUT;
+        lookout_loc_received_ = false;
+        lookout_reached_ = false;
+        ROS_INFO("Going to lookout location");
     }
     return;
 }
 
-void ExcavatorStateMachine::goToVolatile()
+void ExcavatorStateMachine::goToLookout()
 {
-    ROS_INFO("Goal Received");
-    if(nav_server_idle_)
+    if(nav_server_idle_ && !lookout_reached_)
     {
         ROS_INFO("Goal action requested");
         
-        // This is big hack for the demo. Ideally, it should still try to get to the location, and 
-        // terminate when it is close enough. We don't have a functionality for 'close enough' 
-        // Hence this hack
-        geometry_msgs::PoseStamped temp_location = vol_pose_;
-        temp_location.pose.position.y -= 5;
+        // This is a location excavator will get via scheduler. The excavator will
+        // get to a location close enough to the scout's scouting area, so that
+        // when it finds volatile, excavator won't take long to get there.
 
-        navigation_action_goal_.pose = temp_location;
+        navigation_action_goal_.pose = next_nav_goal_;
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
         navigation_client_->sendGoal(navigation_action_goal_);
         nav_server_idle_ = false;
     }
-    else if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) // ( || scout_found || close_enough)
+    else if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
     {
         ROS_INFO("GOAL FINISHED");
-        robot_state_ = PARK_AND_PUB;
         nav_server_idle_ = true;
-        std_msgs::Empty empty_message;
-        excavator_ready_pub_.publish(empty_message);
+        lookout_reached_ = true;
+
+        if(volatile_found_)
+            robot_state_ = GO_TO_SCOUT;
+    }
+}
+
+void ExcavatorStateMachine::goToScout()
+{
+  ////////////////////////////////////
+  //////// MAHI CHANGE HERE //////////
+  ////////////////////////////////////
+    if(nav_server_idle_)
+    {
+        ROS_INFO("Going going");
+        geometry_msgs::PoseStamped temp_msg;
+        navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_SCOUT_CLASS;
+        navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_REACH;
+        navigation_vision_client_->sendGoal(navigation_vision_goal_);
+        nav_server_idle_ = false;
+    }
+    else if(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
+    {
+        ROS_INFO("Reached to the scout");
+        robot_state_ = EXCAVATOR_STATES::PARK_AND_PUB;
+        nav_server_idle_ = true;
     }
 }
 
@@ -119,10 +197,18 @@ void ExcavatorStateMachine::parkExcavator()
     ROS_INFO("Actual Goal Received");
     if(nav_server_idle_)
     {
+        std_msgs::Empty empty_message;
+        excavator_ready_pub_.publish(empty_message);
+     
         ROS_INFO("Goal action requested");
-        // Again, hack for the demo. It should register the location of scout, and 
-        // go to the location where it thought the scout was.
-        navigation_action_goal_.pose = vol_pose_; 
+        /////////////////////////////////////////////
+        //// Hardcoded straigh walk for 1.5 meters ////
+        /////////////////////////////////////////////
+        
+        geometry_msgs::PoseStamped hard_coded_pose;
+        hard_coded_pose.header.frame_id = robot_name_ + ROBOT_BASE;
+        hard_coded_pose.pose.position.x = 1.5;
+        navigation_action_goal_.pose = hard_coded_pose;      // Position estimation is not perfect
         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
         navigation_client_->sendGoal(navigation_action_goal_);
@@ -133,13 +219,16 @@ void ExcavatorStateMachine::parkExcavator()
         ROS_INFO("GOAL FINISHED");
         robot_state_ = DIG_VOLATILE;
         nav_server_idle_ = true;
+        
     }
 }
 
 void ExcavatorStateMachine::digVolatile()
 {
-    if(excavator_server_idle_)
+    if(excavator_server_idle_ && !clods_in_scoop_)
     {
+        std_msgs::Empty empty_message;
+        park_hauler_pub_.publish(empty_message);
         operations::ExcavatorGoal goal;
         goal.task = START_DIGGING; 
         
@@ -153,6 +242,7 @@ void ExcavatorStateMachine::digVolatile()
 
         excavator_arm_client_->sendGoal(goal);
         excavator_server_idle_ = false;
+        digging_attempt_++;
     }
     else
     {
@@ -163,25 +253,28 @@ void ExcavatorStateMachine::digVolatile()
         {    
             excavator_server_idle_ = true;
             robot_state_ = DUMP_VOLATILE;
+            clods_in_scoop_ = true;
         }
     }
 }
 
 void ExcavatorStateMachine::dumpVolatile()
 {
-    if(excavator_server_idle_)
+    const std::lock_guard<std::mutex> lock(hauler_parked_mutex); 
+    if(excavator_server_idle_ && hauler_parked_)
     {
         operations::ExcavatorGoal goal;
         goal.task = START_UNLOADING; 
         
         // Should be tested with Endurance's parking code and 
         // These values should be tuned accordingly
-        goal.target.x = 0.7; 
+        goal.target.x = 0.85; 
         goal.target.y = -2;
         goal.target.z = 0;
 
         excavator_arm_client_->sendGoal(goal);
         excavator_server_idle_ = false;
+        clods_in_scoop_ = false;
     }
     else
     {
@@ -192,6 +285,76 @@ void ExcavatorStateMachine::dumpVolatile()
             //      next_state
             //  else
             robot_state_ = DIG_VOLATILE;
+            
+            if(digging_attempt_ > DIGGING_TRIES_)
+            {
+                ROS_INFO_STREAM("Done"<<digging_attempt_);
+                std_msgs::Empty empty_msg;
+                return_hauler_pub_.publish(empty_msg);
+                digging_attempt_ = 0;
+                robot_state_ = INIT;
+            }
         }
     }
+}
+
+void ExcavatorStateMachine::findScout()
+{
+    if(nav_server_idle_)
+    {
+        navigation_action_goal_.angular_velocity = -0.25;
+        navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+
+        navigation_client_->sendGoal(navigation_action_goal_);
+        nav_server_idle_ = false;
+    }
+    else if(!nav_server_idle_)  // Very bad
+    {
+        bool scout_found = updateScoutLocation();
+        if (scout_found)
+        {   
+            // Stops excavator from spinning. 
+            navigation_action_goal_.angular_velocity = 0.0; 
+            navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+            navigation_client_->sendGoal(navigation_action_goal_);
+
+            updateScoutLocation();
+            nav_server_idle_ = true;
+            robot_state_ = PARK_AND_PUB;
+        }
+    }
+}
+
+bool ExcavatorStateMachine::updateScoutLocation()
+{
+    // ROBOT SHOULD BE ROTATING TO FIND SCOUT, IN CASE CAMERA WAS NOT ALIGNED
+    const std::lock_guard<std::mutex> lock(g_objects_mutex); 
+
+    perception::ObjectArray objects = g_objects_;
+    perception::Object object;
+    geometry_msgs::PoseStamped scout_loc;
+    bool object_found = false;
+
+    for(int i = 0; i < objects.number_of_objects; i++)
+    {   
+        // ROS_INFO_STREAM(object.label);
+        object = objects.obj.at(i);
+        if(object.label == OBJECT_DETECTION_SCOUT_CLASS && object.score>0.7)
+        {
+            // Store the object's location
+            scout_loc = object.point;
+            scout_loc.pose.position.z -= 2;
+            // ROS_INFO_STREAM(object.point);
+            object_found = true;
+            break;
+        }
+    }
+
+    if(!object_found)
+        return false;
+
+    scout_loc_stamp_.header.frame_id = robot_name_ + SENSOR_BAR_GAZEBO; // Needs to be confirmed
+    scout_loc_stamp_.header.stamp = ros::Time(0);
+    scout_loc_stamp_.point = scout_loc.pose.position;
+    return true;
 }
