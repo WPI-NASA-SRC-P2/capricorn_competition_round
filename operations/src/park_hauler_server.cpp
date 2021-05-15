@@ -42,6 +42,8 @@ operations::NavigationGoal g_nav_goal;
 const float HOPPER_FORWARD_VELOCITY = 0.4, EXC_FORWARD_VELOCITY = 0.2;
 std::mutex g_hauler_objects_mutex, g_excavator_objects_mutex;
 
+bool g_hauler_message_received = false, g_excavator_message_received = false;
+
 // global variables for park excavator
 const int  ROBOT_ANTENNA_HEIGHT_THRESH = 120, HAULER_HEIGHT_THRESH = 180, ANGLE_THRESHOLD_NARROW = 5, ANGLE_THRESH_WIDE = 100, EXCAVATOR_TIMES_DETECT_TIMES = 10, EXCAVATOR_HEIGHT_THRESH = 300;
 const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0;
@@ -67,6 +69,7 @@ std::string robot_name;
 void haulerObjectsCallback(const perception::ObjectArray& objs) 
 {
     const std::lock_guard<std::mutex> lock(g_hauler_objects_mutex); 
+    g_hauler_message_received = true;
     g_hauler_objects = objs;
 }
 
@@ -78,6 +81,7 @@ void haulerObjectsCallback(const perception::ObjectArray& objs)
 void excavatorObjectsCallback(const perception::ObjectArray& objs) 
 {
     const std::lock_guard<std::mutex> lock(g_excavator_objects_mutex); 
+    g_excavator_message_received = true;
     g_excavator_objects = objs;
 }
 
@@ -317,7 +321,9 @@ void parkWrtExcavator()
             return;
         }
 
-        findExcavator();
+        if(center_exc > 0)
+            findExcavator();
+            
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = EXC_FORWARD_VELOCITY;
         g_nav_goal.angular_velocity = 0;
@@ -419,9 +425,9 @@ void execute(const operations::ParkRobotGoalConstPtr& goal, Server* as)
     while (ros::ok() && !g_parked)
     {    
         ros::spinOnce();
-        if(park_mode == OBJECT_PARKER::HOPPER)
+        if(park_mode == OBJECT_PARKER::HOPPER && g_hauler_message_received)
             parkWrtHopper();
-        else
+        else if(g_hauler_message_received && g_excavator_message_received)
             parkWrtExcavator();
 
         g_client->sendGoal(g_nav_goal);    
