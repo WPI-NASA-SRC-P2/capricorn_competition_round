@@ -16,7 +16,7 @@ namespace COMMON_NAMES
   /****** ROBOT FRAMES ******/
   const std::string MAP = "map";
   const std::string ODOM = "odom";
-  const std::string ROBOT_BASE = "base_footprint";
+  const std::string ROBOT_BASE = "_base_footprint";
   const std::string ROBOT_CHASSIS = "_small_chassis";
 
   /****** WHEELS ******/
@@ -57,10 +57,11 @@ namespace COMMON_NAMES
   /****** RTABMAP ******/
   const std::string RESET_POSE_CLIENT = "/camera/reset_odom_to_pose";
   const std::string TRUE_POSE_SRV = "/get_true_pose";
+  const std::string RTAB_ODOM_TOPIC = "/camera/odom";
 
   /****** ROS NODE NAMES ******/
   const std::string NAVIGATION_VISION_SERVER_NODE_NAME = "_navigation_vision_server";
-  const std::string NAVIGATION_VISION_CLIENT_NODE_NAME = "_navigation_vision_server";
+  const std::string NAVIGATION_VISION_CLIENT_NODE_NAME = "_navigation_vision_client";
   const std::string PR_DATASET_NODE_NAME = "_pr_dataset";
   const std::string GROUND_TRUTH_PR_NODE_NAME = "_ground_truth_pr";
   const std::string PR_LOCALIZATION_NODE_NAME = "_pr_localization";
@@ -70,8 +71,9 @@ namespace COMMON_NAMES
   const std::string NOISY_IMAGE_NODE_NAME = "_noisy_image_eliminate";
   const std::string HORIZON_TRACKING_NODE_NAME = "_horzion_tracking";
   const std::string FIND_PP_RS_SERVER_NODE_NAME = "_find_pp_rs_server";
-  const std::string PARK_HAULER_HOPPER_SERVER_NODE_NAME = "_park_hauler_server_hopper";
-  const std::string PARK_HAULER_HOPPER_CLIENT_NODE_NAME = "_park_hauler_vision_hopper";
+  const std::string PARK_HAULER_HOPPER_SERVER_NODE_NAME = "_park_hauler_server";
+  const std::string PARK_HAULER_HOPPER_CLIENT_NODE_NAME = "_park_hauler_client";
+  const std::string SCOUT_SEARCH_NODE_NAME = "_scout_search";
 
   /****** TOPIC NAMES ******/
   const std::string CAPRICORN_TOPIC = "/capricorn/";
@@ -87,6 +89,9 @@ namespace COMMON_NAMES
   const std::string VOLATILE_LOCATION_TOPIC = "/volatile_location";
   const std::string SCHEDULER_TOPIC = "/scheduler";
   const std::string HAULER_FILLED = "/hauler_filled";
+  const std::string LOOKOUT_LOCATION_TOPIC = "/lookout_location";
+  const std::string PARK_HAULER = "/park_hauler";
+  const std::string HAULER_PARKED_TOPIC = "/hauler_parked";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
@@ -121,6 +126,21 @@ namespace COMMON_NAMES
   const std::string OBJECT_DETECTION_ROBOT_ANTENNA_CLASS = "robotAntenna";
   const std::string OBJECT_DETECTION_PP_SMALL_THRUSTER_CLASS = "ppSmallThruster";
   const std::string OBJECT_DETECTION_ROCK_CLASS = "rock";
+
+  /****** NAVIGATION VISION ENUMS ******/
+  enum NAV_VISION_TYPE
+  {
+    V_FOLLOW, // Follow an object 
+    V_REACH,  // Reach the goal and stop
+  };
+  
+  enum NAV_VISION_RESULT
+  {
+    V_FAILED,
+    V_SUCCESS,
+    V_INTERRUPTED,
+    V_INVALID_CLASS, // If an invalid object detection is given
+  };
 
   /****** NAVIGATION ENUMS ******/
   enum NAV_TYPE

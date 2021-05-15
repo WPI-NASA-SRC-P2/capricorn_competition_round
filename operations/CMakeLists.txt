@@ -59,10 +59,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  #TrajectoryWithVelocities.msg
-)
+# add_message_files(
+#   FILES
+#   #TrajectoryWithVelocities.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -302,6 +302,12 @@ ${catkin_LIBRARIES}
 add_executable(park_hauler_client src/park_hauler_client.cpp)
 add_dependencies(park_hauler_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(park_hauler_client ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+add_executable(scout_search src/scout_search.cpp)
+add_dependencies(scout_search ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(scout_search ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
