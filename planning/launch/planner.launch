@@ -1,0 +1,10 @@
+<launch>
+  <arg name="robot_name" default="small_excavator_1" />
+  <arg name="output" default="screen" />
+
+
+  <group ns="/capricorn/$(arg robot_name)">
+        <node name="path_planner_server" pkg="planning" type="planning_node" args="$(arg robot_name)" />
+  </group>
+
+</launch>   

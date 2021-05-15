@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   rostest
   operations
+  planning
 )
 
 
@@ -108,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES templates
- CATKIN_DEPENDS roscpp rospy sensor_msgs operations
+ CATKIN_DEPENDS roscpp rospy sensor_msgs operations planning
  # DEPENDS system_lib
 )
 
@@ -156,14 +157,14 @@ include_directories(
 #######################################################################################################
 
 # Drives both robots forwards in task 2. Example node
-add_executable(template_node src/template_node.cpp)
+add_executable(template_node src/templates_nodes/template_node.cpp)
 add_dependencies(template_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(template_node
   ${catkin_LIBRARIES}
 )
 
 # example class and its node to test the class functions
-add_executable(template_class src/template_class.cpp)
+add_executable(template_class src/templates_class/template_class.cpp)
 add_dependencies(template_class ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(template_class
   ${catkin_LIBRARIES} 

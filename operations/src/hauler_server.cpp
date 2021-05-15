@@ -21,7 +21,7 @@ float SLEEP_DURATION = 5.0; // The sleep duration
  */
 void initHaulerBinPublisher(ros::NodeHandle &nh, const std::string &robot_name)
 {
-  hauler_bin_publisher_ = nh.advertise<std_msgs::Float64>(robot_name + SET_BIN_POSITION, 1000);  
+  hauler_bin_publisher_ = nh.advertise<std_msgs::Float64>("/" + robot_name + SET_BIN_POSITION, 1000);  
 }
 
 /**
@@ -65,10 +65,10 @@ int main(int argc, char** argv)
 {
   ROS_INFO_STREAM(std::to_string(argc) + "\n");
   // Check if the node is being run through roslauch, and have one parameter of RobotName_Number
-  if (argc != 2)
+  if(argc != 2 && argc != 4)
   {
       // Displaying an error message for correct usage of the script, and returning error.
-      ROS_ERROR_STREAM("This Node must be launched via 'roslaunch' and needs an argument as <RobotName_Number>");
+      ROS_ERROR_STREAM("This Node needs an argument as <RobotName_Number>");
       return -1;
   }
   else
