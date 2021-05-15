@@ -19,7 +19,7 @@ class NavigationAlgo
 {
 private:
   static constexpr float arc_spiral_a = 15;    // Inner radius (starting radius of the spiral)
-  static constexpr float arc_spiral_b = 50;   // Incerement per rev
+  static constexpr float arc_spiral_b = 10;   // Incerement per rev
   static constexpr float arc_spiral_incr = 5; // Distance between two points
 
 public:
