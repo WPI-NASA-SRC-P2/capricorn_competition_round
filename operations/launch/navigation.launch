@@ -1,13 +1,17 @@
 <launch>
     <arg name="robot_name" default="small_scout_1" />
     <arg name="output" default="screen" />
+    <arg name="use_cheat_odom" default="false" />
+
 
     <!-- <include file="$(find operations)/launch/wheel_controller.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
     </include> -->
 
     <group ns="/capricorn/$(arg robot_name)">
-        <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" args="$(arg robot_name)" />
+        <param name="cheat_odom" value="$(arg use_cheat_odom)"/>
+        <!--TODO: only run publish_cheat_odom if use_cheat_odom is true-->
+        <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" args="$(arg robot_name)" if="$(arg use_cheat_odom)"/>
         <node name="start_nav_server" pkg="operations" type="start_nav_server" args="$(arg robot_name)" output="$(arg output)"/>
         <node name="wheel_speed_processing" pkg="operations" type="wheel_speed_processing" args="$(arg robot_name)" />
     </group>
