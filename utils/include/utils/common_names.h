@@ -152,6 +152,7 @@ namespace COMMON_NAMES
     FOLLOW,  // Follow an object in frame
   };
   
+  /****** COMMON RESULTS ENUMS (This is used by every actionlibrary)******/
   enum COMMON_RESULT
   {
     FAILED,
