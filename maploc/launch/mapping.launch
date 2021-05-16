@@ -13,10 +13,12 @@
     <arg name="robot_name" default="small_scout_1" />
     <arg name="node_start_delay" default="5.0" /> 
     <!-- specify initialize_rtabmap for ground_truth start, or cheat_initialize_rtabmap for using cheat odom -->
-    <arg name="get_true_pose" default="true"/>
+    <!-- For the Hauler, please specify false as the hauler should get its true pose using the reset_odom service instead after it reaches the hopper-->
+    <!--Use true arg wisely, as you will need to restart the simulation if you have used the true pose-->
+    <arg name="get_true_pose" default="false"/>
 
     <!-- Launch the unified coordinates rtabmap (copied from compare_rtab_odom.launch)-->
-    <include file="$(find maploc)/launch/rtabmap.launch" >
+    <include file="$(find maploc)/launch/rtabmap.launch">
       <arg name="robot_name" value="$(arg robot_name)"/>
       <!-- Will be setting the default of use_rtabmap to false once confirmed that object detection map is sufficient for navigation-->
       <!-- default false will produce only odometry and not the full map to conserve resources and improve accuracy-->

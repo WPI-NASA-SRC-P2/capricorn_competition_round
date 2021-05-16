@@ -29,17 +29,34 @@ NASA SPACE ROBOTICS CHALLENGE
  * DISCLAIMER: This script sets the inital pose of RTabMap in "robot_base_footprint" frame, make sure the output frame id
  * parameter in launch file for RTabMap is "robot_base_footprint"
  * 
- * DISCLAIMER: "SHOULD NOT BE USED IN SUBMISSION, just for testing and debugging"
- * 
- * @param argv : REQUIRED paramter is the robot name eg. small_scout_1
+ * @param argv : REQUIRED parameter is the robot name eg. small_scout_1
+ *             : REQUIRED parameter is the boolean of whether to reset with true pose or not
+ *             : DEFAULT parameters: argv[1]: robot_name = small_scout_1; argv[2]: get_true_pose = true;
  * @return int 
  */
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-    //Setup robot_name from passed in arguments
-    std::string robot_name(argv[1]);
-    bool get_true_pose(argv[2]);
+    //Ensure that launch file properly passed in the input arguments (or if none provided, the default input args)
+    // std::string robot_name;
+    // bool get_true_pose;
+    if(argc != 3 && argc != 5){
+        ROS_ERROR("This node must be launched with the robot name and boolean for using true pose as command line arguments!");
 
+        return -1;
+    }
+    //Setup robot_name from passed in arguments
+    
+    std::string robot_name(argv[1]);
+    std::string true_pose(argv[2]);
+    bool get_true_pose;
+    //The get_true_pose always defaults to 1, even when the default arg-name in launch file is set to "false", apparently because it is read as a string. 
+    //To fix this it has been manually cast into a boolean.      
+    if(true_pose == "true") {get_true_pose = true;}
+    else {get_true_pose = false; }
+
+    ROS_INFO("GET TRUE POSE = ");
+    ROS_INFO_STREAM(get_true_pose);
+    
     //Startup ROS
     ros::init(argc, argv, robot_name + COMMON_NAMES::INITALIZE_ODOM_NODE_NAME);
     ros::NodeHandle nh;

@@ -62,7 +62,7 @@ geometry_msgs::PoseStamped getTruePose(std::string robot_name){
         ROS_INFO("True Pose Obtained");
     }
     else {
-        ROS_INFO("True Pose Not Obtained, we'll get em next time");
+        ROS_ERROR("True Pose Not Obtained, we'll get em next time");
         // return an empty pose (TODO: proper exception thrown)
     }        
 
@@ -115,7 +115,7 @@ bool resetOdomPose(std::string robot_name, geometry_msgs::PoseStamped stamped_po
         return true;
     }
     else{
-        ROS_INFO("RTabMap initialize pose failed.");
+        ROS_ERROR("RTabMap initialize pose failed.");
         return false;
     }
     
@@ -139,7 +139,7 @@ bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res
         // if the robot called does not exist, throw an exception
         // TODO: make sure this throws an exception 
         if (it == robot_first.end()) {
-            ROS_INFO("No robot was found with input target robot name!");
+            ROS_ERROR("No robot was found with input target robot name!");
             // response for service returns false
             res.success = false;
             return false;
@@ -176,12 +176,12 @@ int main(int argc, char *argv[])
     ros::NodeHandle nh;
 
     // ensure that the memory of which rovers already used their ground truth call is reset to true upon starting the node
-    robot_first["small_hauler_1"] = true;
-    robot_first["small_scout_1"] = true;
-    robot_first["small_excavator_1"] = true;
+    robot_first[COMMON_NAMES::HAULER_1] = true;
+    robot_first[COMMON_NAMES::SCOUT_1] = true;
+    robot_first[COMMON_NAMES::EXCAVATOR_1] = true;
 
     // set up service for reseting the odometry of the rover 
-    ros::ServiceServer service = nh.advertiseService("/capricorn/reset_rover_odom_srv", resetOdom);
+    ros::ServiceServer service = nh.advertiseService(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY, resetOdom);
 
     // indicate that reset is complete
     ROS_INFO("reset rover odometry service, online");
