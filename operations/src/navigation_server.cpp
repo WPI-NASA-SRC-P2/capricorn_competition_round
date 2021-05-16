@@ -656,7 +656,7 @@ void NavigationServer::spiralDriving(const operations::NavigationGoalConstPtr &g
 {
 	ROS_INFO("Starting spiral motion");
 	brakeRobot(false);
-	
+  
 	geometry_msgs::PoseStamped robot_start_pose = *getRobotPose();
 
 	// Stamp must be set to 0 for the latest transform
@@ -669,7 +669,7 @@ void NavigationServer::spiralDriving(const operations::NavigationGoalConstPtr &g
 
 	geometry_msgs::PointStamped rotation_point;
 	rotation_point.header = getRobotPose()->header;
-	
+
 	/**
 	 * @brief Continue loop until interrupted externally (through cancel goal)
 	 * 				This depends on the concept of osculating circles for a spiral

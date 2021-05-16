@@ -64,11 +64,10 @@ add_message_files(
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  Spiral.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(DIRECTORY action FILES DoDishes.action)
@@ -261,12 +260,18 @@ add_dependencies(park_hauler_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin
 target_link_libraries(park_hauler_server ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
+
 add_executable(scout_search src/scout_search.cpp)
 add_dependencies(scout_search ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(scout_search ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
+add_executable(spiral_points_publisher src/spiral_points_publisher.cpp)
+add_dependencies(spiral_points_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(spiral_points_publisher ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
 
 #########################
 ###### ALL CLIENTS ######

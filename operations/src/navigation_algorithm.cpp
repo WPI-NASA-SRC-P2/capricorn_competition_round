@@ -149,16 +149,17 @@ float NavigationAlgo::getRadiusInArchimedeanSpiral(const float t)
  * @param init_theta 
  * @return std::vector<geometry_msgs::Point> 
  */
-std::vector<geometry_msgs::Point> NavigationAlgo::getNArchimedeasSpiralPoints(const geometry_msgs::Point &init_location, const int N, int init_theta)
+std::vector<geometry_msgs::PointStamped> NavigationAlgo::getNArchimedeasSpiralPoints(const geometry_msgs::PointStamped &init_location, const int N, int init_theta)
 {
-  std::vector<geometry_msgs::Point> points;
+  std::vector<geometry_msgs::PointStamped> points;
   points.resize(N);
   for (int i = init_theta; i < init_theta + N; i++)
   {
-    float th = std::pow(i * arc_spiral_incr, 0.5) * arc_spiral_multi;
+    float th = std::pow(i * arc_spiral_incr, 0.5);
     float pre = (arc_spiral_a + (arc_spiral_b * th) / (2 * M_PI));
-    points.at(i-init_theta).x = pre * cos(th) + init_location.x;
-    points.at(i-init_theta).y = pre * sin(th) + init_location.y;
+    points.at(i-init_theta).header = init_location.header;
+    points.at(i-init_theta).point.x = pre * cos(th) + init_location.point.x;
+    points.at(i-init_theta).point.y = pre * sin(th) + init_location.point.y;
   }
   return points;
 }
@@ -190,6 +191,16 @@ double NavigationAlgo::changeInPosition(const geometry_msgs::PoseStamped& curren
   //Get the change in x and y between the two poses
 	double delta_x = current_robot_pose.pose.position.x - target_robot_pose.pose.position.x;
 	double delta_y = current_robot_pose.pose.position.y - target_robot_pose.pose.position.y;
+
+  //Return the distance formula from these deltas
+	return pow(pow(delta_x, 2) + pow(delta_y, 2), 0.5);
+}
+
+double NavigationAlgo::changeInPosition(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PointStamped& target_robot_pose)
+{
+  //Get the change in x and y between the two poses
+	double delta_x = current_robot_pose.pose.position.x - target_robot_pose.point.x;
+	double delta_y = current_robot_pose.pose.position.y - target_robot_pose.point.y;
 
   //Return the distance formula from these deltas
 	return pow(pow(delta_x, 2) + pow(delta_y, 2), 0.5);
@@ -277,4 +288,85 @@ bool NavigationAlgo::transformPoint(geometry_msgs::PointStamped& point, const st
   point.header = to_transform.header;
 
   return ret;
+}
+
+/**
+ * @brief 
+ *          http://www.ambrsoft.com/TrigoCalc/Circle3D.htm
+ * 
+ * @param points 
+ * @return double 
+ */
+double NavigationAlgo::getRadiusOfThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points)
+{
+  if(points.size()!=3)
+  {
+    ROS_ERROR("Must get 3 points to get Radius, supplied %i points", points.size());
+
+    return -1.0;
+  }
+
+
+  std::vector<double> abcd = getABCDofThreePointsCircle(points);
+  double A, B, C, D;
+  A = abcd.at(0);
+  B = abcd.at(1);
+  C = abcd.at(2);
+  D = abcd.at(3);
+
+  return std::sqrt((B*B + C*C - 4*A*D)/(4*A*A));
+}
+
+geometry_msgs::PointStamped NavigationAlgo::getCenterOfThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points)
+{
+  if(points.size()!=3)
+  {
+    ROS_ERROR("Must get 3 points to get Center Location, supplied %i points", points.size());
+
+    geometry_msgs::PointStamped err;
+    return err;
+  }
+
+  std::vector<double> abcd = getABCDofThreePointsCircle(points);
+  double A, B, C, D;
+  A = abcd.at(0);
+  B = abcd.at(1);
+  C = abcd.at(2);
+  D = abcd.at(3);
+
+  geometry_msgs::PointStamped center;
+  center.header = points.at(0).header;
+  center.point.x = -B/(2*A);
+  center.point.y = -C/(2*A);
+  return center; 
+}
+
+std::vector<double> NavigationAlgo::getABCDofThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points)
+{
+  if(points.size()!=3)
+  {
+    ROS_ERROR("Must get 3 points to calculate the A B C and D constants, supplied %i points", points.size());
+    
+    // Not sure if this is right, but needs to return something. 
+    std::vector<double> err;
+    return err;
+  }
+  double x1,x2,x3,y1,y2,y3;
+  x1 = points.at(0).point.x;
+  y1 = points.at(0).point.y;
+
+  x2 = points.at(1).point.x;
+  y2 = points.at(1).point.y;
+  
+  x3 = points.at(2).point.x;
+  y3 = points.at(2).point.y;
+  
+  std::vector<double> abcd_points;
+  abcd_points.resize(4);
+  abcd_points.at(0) = x1*(y2-y3) - y1*(x2-x3) + x2*y3 - x3*y2; // A
+  abcd_points.at(1) = (x1*x1 + y1*y1)*(y3-y2) + (x2*x2 + y2*y2)*(y1-y3) + (x3*x3 + y3*y3)*(y2-y1); // B
+  abcd_points.at(2) = (x1*x1 + y1*y1)*(x2-x3) + (x2*x2 + y2*y2)*(x3-x1) + (x3*x3 + y3*y3)*(x1-x2); // C
+  abcd_points.at(3) = (x1*x1 + y1*y1)*(x3*y2-x2*y3) + (x2*x2 + y2*y2)*(x1*y3-x3*y1) + (x3*x3 + y3*y3)*(x2*y1-x1*y2); // D
+
+  return abcd_points;
 }
