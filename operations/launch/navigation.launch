@@ -10,9 +10,11 @@
 
     <group ns="/capricorn/$(arg robot_name)">
         <param name="cheat_odom" value="$(arg use_cheat_odom)"/>
-        <!--TODO: only run publish_cheat_odom if use_cheat_odom is true-->
         <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" args="$(arg robot_name)" if="$(arg use_cheat_odom)"/>
         <node name="start_nav_server" pkg="operations" type="start_nav_server" args="$(arg robot_name)" output="$(arg output)"/>
         <node name="wheel_speed_processing" pkg="operations" type="wheel_speed_processing" args="$(arg robot_name)" />
+
+        <!--TODO: only run map_to_odom when use_cheat_odom is false-->
+        <node name="map_to_odom" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom 100"/>
     </group>
 </launch>

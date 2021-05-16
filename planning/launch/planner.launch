@@ -1,5 +1,5 @@
 <launch>
-  <arg name="robot_name" default="small_excavator_1" />
+  <arg name="robot_name" default="small_scout_1" />
   <arg name="output" default="screen" />
 
 
