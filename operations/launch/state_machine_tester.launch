@@ -1,0 +1,8 @@
+<launch>
+    <arg name="robot_name" default="small_excavator_1" />
+    <arg name="task" default="0" />
+
+    <group ns="/capricorn/$(arg robot_name)">
+        <node pkg="operations" type="state_machine_tester" name="state_machine_tester" args="$(arg robot_name) $(arg task)" output="screen" />
+    </group>
+</launch>

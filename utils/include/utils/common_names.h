@@ -163,29 +163,21 @@ namespace COMMON_NAMES
   /****** STATE MACHINE ENUM ******/
   enum STATE_MACHINE_TASK
   {
-    EXCAVATOR_INIT,         // Wait for Instructions
-                          // or it may get close to scout
-    EXCAVATOR_KEEP_LOOKOUT,     // Takes Excavator to a location from which it will
+    EXCAVATOR_GO_TO_LOC,     // Takes Excavator to a location from which it will
                           // be quicker to get to the digging location
-    EXCAVATOR_FIND_SCOUT,
     EXCAVATOR_GO_TO_SCOUT,   // Get close to the volatile when it is detected
     EXCAVATOR_PARK_AND_PUB,     // Publish a message that excavator has reached, 
                           // And park where the scout was located. 
-    EXCAVATOR_FIND_VOLATILE,    // Dig and see if any volatile is detected. 
-                          // If no volatile found, change the orientation slightly
-                          // Else change state
-    EXCAVATOR_DIG_VOLATILE,
-    EXCAVATOR_DUMP_VOLATILE,    // Start digging and dumping into the hauler
-                          // This must check if hauler is close, else wait
-    EXCAVATOR_NEXT_QUE_TASK     // Inform the team level state machine that task completed, 
-                          // Follow further instructions
+    EXCAVATOR_DIG_AND_DUMP_VOLATILE,
+    EXCAVATOR_GOTO_DEFAULT_ARM_POSE,   
   };
 
 } // namespace CAPRICORN_COMMON_NAMES
 
 /****** EXCAVATOR TASK ENUM ******/
-  enum Tasks{
+  enum EXCAVATOR_ARM_TASK{
     START_DIGGING = 1, 
     START_UNLOADING = 2, 
+    GO_TO_DEFAULT,
   };
 

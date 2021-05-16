@@ -1,7 +1,6 @@
 #ifndef EXCAVATOR_STATE_MACHINE_H
 #define EXCAVATOR_STATE_MACHINE_H
 
-#include <ros/ros.h>
 #include <iostream>
 #include <operations/NavigationAction.h> 
 #include <operations/NavigationVisionAction.h>
@@ -14,22 +13,16 @@
 #include <perception/ObjectArray.h>
 #include <geometry_msgs/PointStamped.h>
 
-
 using namespace COMMON_NAMES;
  
-std::string g_robot_name;
 typedef actionlib::SimpleActionServer<operations::ExcavatorStateMachineTaskAction> SM_SERVER;
 
 const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
-  STATE_MACHINE_TASK::EXCAVATOR_INIT, 
-  STATE_MACHINE_TASK::EXCAVATOR_KEEP_LOOKOUT, 
-  STATE_MACHINE_TASK::EXCAVATOR_FIND_SCOUT, 
+  STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOC, 
   STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT, 
   STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB, 
-  STATE_MACHINE_TASK::EXCAVATOR_FIND_VOLATILE, 
-  STATE_MACHINE_TASK::EXCAVATOR_DIG_VOLATILE, 
-  STATE_MACHINE_TASK::EXCAVATOR_DUMP_VOLATILE, 
-  STATE_MACHINE_TASK::EXCAVATOR_NEXT_QUE_TASK, 
+  STATE_MACHINE_TASK::EXCAVATOR_DIG_AND_DUMP_VOLATILE, 
+  STATE_MACHINE_TASK::EXCAVATOR_GOTO_DEFAULT_ARM_POSE, 
   };
 
 class ExcavatorStateMachine
@@ -37,17 +30,7 @@ class ExcavatorStateMachine
 
 private:
   ros::NodeHandle nh_;
-
-  ros::Subscriber sub_scout_vol_location_;
-  ros::Subscriber lookout_pos_sub_;
-  ros::Subscriber objects_sub_;
-  ros::Subscriber hauler_parked_sub_;
-
-  ros::Publisher excavator_ready_pub_;
-  ros::Publisher park_hauler_pub_;
-  ros::Publisher return_hauler_pub_;   // WTF is this name??
-
-  STATE_MACHINE_TASK robot_state_ = STATE_MACHINE_TASK::EXCAVATOR_INIT;
+  
   std::string robot_name_;
 
   const double SLEEP_TIME = 0.5;
@@ -78,103 +61,62 @@ private:
   NavigationVisionClient* navigation_vision_client_;
   operations::NavigationVisionGoal navigation_vision_goal_;
 
-  geometry_msgs::PoseStamped next_nav_goal_;  // Having a shared goal is not a good idea
-                                              // This is very problematic when messages
-                                              // are received out of expected order
-  geometry_msgs::PointStamped scout_loc_stamp_;
-
-  perception::ObjectArray g_objects_;
-  
-  std::mutex g_objects_mutex;
-  std::mutex navigation_mutex;
-  std::mutex hauler_parked_mutex;
-
-  
   /**
-   * @brief Callback for the location of lookout pose
-   * 
-   * @param msg 
-   */
-  void lookoutLocCB(const geometry_msgs::PoseStamped &msg);
-
-  void haulerParkedCB(std_msgs::Empty msg);
-
-  /**
-   * @brief Callback for the location of found volatile
-   * 
-   * @param msg 
-   */
-  void scoutVolLocCB(const geometry_msgs::PoseStamped &msg);
-
-  /**
-   * @brief Callback function which subscriber to Objects message published from object detection
-   * 
-   * @param objs 
-   */
-  void objectsCallback(const perception::ObjectArray& objs);
-
-  /**
-   * @brief Waits for the scout to find the volatile
-   *        Basically does nothing
-   *        Ideally, should be used to stay close to scout
-   *          for minimising the time when the volatile is found
+   * @brief Once the goal is received, go close to the predicted volatile location. 
+   *          Publish that the excavator has reached close enough for scout to move out
    * 
    */
-  void initState();
+  bool goToScout();
 
   /**
    * @brief Once the goal is received, go close to the predicted volatile location. 
    *          Publish that the excavator has reached close enough for scout to move out
    * 
    */
-  void goToScout();
-
-  /**
-   * @brief Once the goal is received, go close to the predicted volatile location. 
-   *          Publish that the excavator has reached close enough for scout to move out
-   * 
-   */
-  void goToLookout(); //Needs comment
+  bool goToLoc(const geometry_msgs::PoseStamped& loc); //Needs comment
 
   /**
    * @brief Goes to the actual location where the volatile was predicted. 
    * 
    */
-  void parkExcavator();
+  bool parkExcavator();
 
   /**
    * @brief Dig the volatile location
    * 
    */
-  void digVolatile();
+  bool digVolatile();
 
   /**
    * @brief Dump the volatile at Hauler Location
    * 
    */
-  void dumpVolatile();
+  bool dumpVolatile();
 
   /**
-   * @brief Subscribes to detected object topic and find scout's location.
-   *        Updates the global stamped scout location.
+   * @brief Digs and dump continuously until volatile is available
    * 
-   * @return true if scout was found
-   * @return false if scout wasn't found
+   * @return true 
+   * @return false 
    */
-  bool updateScoutLocation();
+  bool digAndDumpVolatile();
 
   /**
-   * @brief Excavator starts rotating about the center, stops when scout is found.
+   * @brief Takes excavator arm to default arm position (used for object detection)
    * 
+   * @return true 
+   * @return false 
    */
-  void findScout();
+  bool goToDefaultArmPosition();
 
 public:
   ExcavatorStateMachine(ros::NodeHandle nh, const std::string& robot_name);
 
   ~ExcavatorStateMachine();
-
+  
+  friend void cancelGoal(ExcavatorStateMachine* sm);
   friend void execute(const operations::ExcavatorStateMachineTaskGoalConstPtr& goal, SM_SERVER* as, ExcavatorStateMachine* sm);
+  
   void startStateMachine();
   void stopStateMachine(); // Do we need it though?
 };

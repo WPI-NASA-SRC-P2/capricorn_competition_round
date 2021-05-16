@@ -244,6 +244,12 @@ target_link_libraries(excavator_pid_node ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
+add_executable(start_excavator_sm src/start_excavator_sm.cpp)
+add_dependencies(start_excavator_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(start_excavator_sm ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
 ##################
 ##### HAULER #####
 ##################
@@ -297,6 +303,12 @@ ${catkin_LIBRARIES}
 add_executable(scout_search src/scout_search.cpp)
 add_dependencies(scout_search ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(scout_search ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+add_executable(state_machine_tester src/state_machine_tester.cpp)
+add_dependencies(state_machine_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(state_machine_tester ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 

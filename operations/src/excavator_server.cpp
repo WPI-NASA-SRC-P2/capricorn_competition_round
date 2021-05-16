@@ -146,20 +146,10 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     }
     else // Else raise the arms where volatiles were found and proceed to dumping
     {
-      static bool once = true;
       publishAngles(yaw_angle, 1, 1, -2.6);
       ros::Duration(SLEEP_DURATION).sleep();
       publishAngles(yaw_angle, -0.5, 1, -1.1);
       ros::Duration(SLEEP_DURATION).sleep();
-      /**
-       * Hauler can only detect the excavator arm best, when it is in this 'default' location. this location is very important for parking the Hauler.
-       * We set this arm pose and wait for the hauler to park. When parked, proceed to dumping.
-       */
-      if(once)
-      {
-        publishAngles(-1, -1, 1.5792, -0.7786); // This set of values moves the scoop over the surface
-        once = false;
-      }
     }
   }
   else if(task == START_UNLOADING) // dumping angles
@@ -172,6 +162,10 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     ros::Duration(SLEEP_DURATION).sleep();
     publishAngles(0, -2, 1, -1); // This set of values moves the scoop to the front center
     ros::Duration(SLEEP_DURATION).sleep();
+  }
+  else if(task == GO_TO_DEFAULT) // dumping angles
+  {
+    publishAngles(-1, -1, 1.5792, -0.7786);
   }
   else
   {
