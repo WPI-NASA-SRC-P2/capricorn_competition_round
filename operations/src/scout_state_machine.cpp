@@ -78,8 +78,8 @@ void ScoutStateMachine::startStateMachine()
 
                 unexplored.header.frame_id = MAP;
 
-                unexplored.pose.position.x = 0;
-                unexplored.pose.position.y = -25;
+                unexplored.pose.position.x = 40;
+                unexplored.pose.position.y = 0;
                 unexplored.pose.position.z = 0;
 
                 unexplored.pose.orientation.w = 1;
@@ -133,17 +133,17 @@ void ScoutStateMachine::startStateMachine()
             // Lock the vol flag mutex
             std::lock_guard<std::mutex> vol_flag_lock(vol_flag_mutex_);
 
-            // if(vol_detected_)
-            // {
-            //     printf("Found a volatile! Localizing...\n");
+            if(vol_detected_)
+            {
+                printf("Found a volatile! Localizing...\n");
 
-            //     // Cancel the spiral goal
-            //     navigation_client_->cancelGoal();
+                // Cancel the spiral goal
+                navigation_client_->cancelGoal();
 
-            //     first_iter_ = true;
+                first_iter_ = true;
 
-            //     robot_state_ = LOCATOR_STATES::LOCATE;
-            // }
+                robot_state_ = LOCATOR_STATES::LOCATE;
+            }
 
             break;
         }
