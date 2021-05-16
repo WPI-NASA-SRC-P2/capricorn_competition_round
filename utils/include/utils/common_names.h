@@ -1,3 +1,5 @@
+#pragma once
+
 namespace COMMON_NAMES
 {
   /****** ROBOTS ******/
