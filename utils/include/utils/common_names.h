@@ -16,7 +16,7 @@ namespace COMMON_NAMES
   /****** ROBOT FRAMES ******/
   const std::string MAP = "map";
   const std::string ODOM = "odom";
-  const std::string ROBOT_BASE = "base_footprint";
+  const std::string ROBOT_BASE = "_base_footprint";
   const std::string ROBOT_CHASSIS = "_small_chassis";
 
   /****** WHEELS ******/
@@ -89,6 +89,9 @@ namespace COMMON_NAMES
   const std::string VOLATILE_LOCATION_TOPIC = "/volatile_location";
   const std::string SCHEDULER_TOPIC = "/scheduler";
   const std::string HAULER_FILLED = "/hauler_filled";
+  const std::string LOOKOUT_LOCATION_TOPIC = "/lookout_location";
+  const std::string PARK_HAULER = "/park_hauler";
+  const std::string HAULER_PARKED_TOPIC = "/hauler_parked";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
