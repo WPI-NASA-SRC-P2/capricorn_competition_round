@@ -11,7 +11,7 @@ geometry_msgs/PointStamped point # NAV_TYPE::REVOLVE
 uint32 drive_mode              # Whether or not this is a manual drive. Corresponds to COMMON_NAMES::NAV_TYPE
 ---
 # Define the result
-# See COMMON_NAMES::NAV_RESULT for possible values
+# See COMMON_NAMES::COMMON_RESULT for possible values
 uint32 result
 ---
 # Define a feedback message

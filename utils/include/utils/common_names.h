@@ -40,6 +40,7 @@ namespace COMMON_NAMES
   const std::string PARK_HAULER_ACTIONLIB = "park_hauler";
   const std::string FIND_PP_RS_ACTIONLIB = "_find_pp_rs";
   const std::string NAVIGATION_VISION_ACTIONLIB = "_navigation_vision";
+  const std::string STATE_MACHINE_ACTIONLIB = "_state_machine";
 
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";
@@ -151,11 +152,33 @@ namespace COMMON_NAMES
     FOLLOW,  // Follow an object in frame
   };
   
-  enum NAV_RESULT
+  enum COMMON_RESULT
   {
     FAILED,
     SUCCESS,
-    INTERRUPTED
+    INTERRUPTED,
+    INVALID_GOAL,
+  };
+
+  /****** STATE MACHINE ENUM ******/
+  enum STATE_MACHINE_TASK
+  {
+    EXCAVATOR_INIT,         // Wait for Instructions
+                          // or it may get close to scout
+    EXCAVATOR_KEEP_LOOKOUT,     // Takes Excavator to a location from which it will
+                          // be quicker to get to the digging location
+    EXCAVATOR_FIND_SCOUT,
+    EXCAVATOR_GO_TO_SCOUT,   // Get close to the volatile when it is detected
+    EXCAVATOR_PARK_AND_PUB,     // Publish a message that excavator has reached, 
+                          // And park where the scout was located. 
+    EXCAVATOR_FIND_VOLATILE,    // Dig and see if any volatile is detected. 
+                          // If no volatile found, change the orientation slightly
+                          // Else change state
+    EXCAVATOR_DIG_VOLATILE,
+    EXCAVATOR_DUMP_VOLATILE,    // Start digging and dumping into the hauler
+                          // This must check if hauler is close, else wait
+    EXCAVATOR_NEXT_QUE_TASK     // Inform the team level state machine that task completed, 
+                          // Follow further instructions
   };
 
 } // namespace CAPRICORN_COMMON_NAMES
@@ -165,3 +188,4 @@ namespace COMMON_NAMES
     START_DIGGING = 1, 
     START_UNLOADING = 2, 
   };
+

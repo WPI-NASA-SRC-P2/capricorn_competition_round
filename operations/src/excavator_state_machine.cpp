@@ -78,64 +78,13 @@ void ExcavatorStateMachine::objectsCallback(const perception::ObjectArray& objs)
 
 void ExcavatorStateMachine::startStateMachine()
 {
-    // Waiting for the servers to start
-    navigation_client_->waitForServer();
-    excavator_arm_client_->waitForServer();
-    navigation_vision_client_->waitForServer(); //Not being used currently
-    ROS_WARN("Servers started");
-
-    while (ros::ok() && state_machine_continue_)
-    {   
-        switch (robot_state_)
-        {
-        case EXCAVATOR_STATES::INIT:
-            initState();
-            break;
-        case EXCAVATOR_STATES::KEEP_LOOKOUT:
-            goToLookout();
-            break;
-        case EXCAVATOR_STATES::GO_TO_SCOUT:
-            goToScout();
-            break;
-        case EXCAVATOR_STATES::FIND_SCOUT:
-            findScout();
-            break;
-        case EXCAVATOR_STATES::PARK_AND_PUB:
-            parkExcavator();
-            break;
-        case EXCAVATOR_STATES::DIG_VOLATILE:
-            digVolatile();
-            break;
-        case EXCAVATOR_STATES::DUMP_VOLATILE:
-            dumpVolatile();
-            break;
-        case EXCAVATOR_STATES::NEXT_QUE_TASK:
-            robot_state_ = INIT; 
-            // this is temporary, ideally it should publish to schedular
-            // that it is available, and schedular should send the next
-            // Goal to follow. 
-            break;
-
-        default:
-            ROS_ERROR_STREAM(robot_name_ + " state machine encountered unhandled state!");
-            break;
-        }
-        // sleep for some time
-        ros::Duration(SLEEP_TIME).sleep();
-        ros::spinOnce();
-
-        // call function to update the states (Because most of these things are actionlibs
-        // So they will be running in a seperate node)
-        // This function should keep track of the executed actionlibs, and their current states
-        // If succeeded
-    }
 }
 
 void ExcavatorStateMachine::initState()
 {
     if(lookout_loc_received_)
     {   
-        robot_state_ = KEEP_LOOKOUT;
+        robot_state_ = STATE_MACHINE_TASK::EXCAVATOR_KEEP_LOOKOUT;
         lookout_loc_received_ = false;
         lookout_reached_ = false;
         ROS_INFO("Going to lookout location");
@@ -166,7 +115,7 @@ void ExcavatorStateMachine::goToLookout()
         lookout_reached_ = true;
 
         if(volatile_found_)
-            robot_state_ = GO_TO_SCOUT;
+            robot_state_ = STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT;
     }
 }
 
@@ -187,7 +136,7 @@ void ExcavatorStateMachine::goToScout()
     else if(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
     {
         ROS_INFO("Reached to the scout");
-        robot_state_ = EXCAVATOR_STATES::PARK_AND_PUB;
+        robot_state_ = STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB;
         nav_server_idle_ = true;
     }
 }
@@ -217,7 +166,7 @@ void ExcavatorStateMachine::parkExcavator()
     else if(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) 
     {
         ROS_INFO("GOAL FINISHED");
-        robot_state_ = DIG_VOLATILE;
+        robot_state_ = STATE_MACHINE_TASK::EXCAVATOR_DIG_VOLATILE;
         nav_server_idle_ = true;
         
     }
@@ -252,7 +201,7 @@ void ExcavatorStateMachine::digVolatile()
         if (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         {    
             excavator_server_idle_ = true;
-            robot_state_ = DUMP_VOLATILE;
+            robot_state_ = STATE_MACHINE_TASK::EXCAVATOR_DUMP_VOLATILE;
             clods_in_scoop_ = true;
         }
     }
@@ -284,7 +233,7 @@ void ExcavatorStateMachine::dumpVolatile()
             //  if(volatile completely dug)
             //      next_state
             //  else
-            robot_state_ = DIG_VOLATILE;
+            robot_state_ = STATE_MACHINE_TASK::EXCAVATOR_DIG_VOLATILE;
             
             if(digging_attempt_ > DIGGING_TRIES_)
             {
@@ -292,7 +241,7 @@ void ExcavatorStateMachine::dumpVolatile()
                 std_msgs::Empty empty_msg;
                 return_hauler_pub_.publish(empty_msg);
                 digging_attempt_ = 0;
-                robot_state_ = INIT;
+                robot_state_ = STATE_MACHINE_TASK::EXCAVATOR_INIT;
             }
         }
     }
@@ -320,7 +269,7 @@ void ExcavatorStateMachine::findScout()
 
             updateScoutLocation();
             nav_server_idle_ = true;
-            robot_state_ = PARK_AND_PUB;
+            robot_state_ = STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB;
         }
     }
 }
@@ -357,4 +306,121 @@ bool ExcavatorStateMachine::updateScoutLocation()
     scout_loc_stamp_.header.stamp = ros::Time(0);
     scout_loc_stamp_.point = scout_loc.pose.position;
     return true;
+}
+
+bool checkTask(STATE_MACHINE_TASK task)
+{
+    return EXCAVATOR_TASKS.find(task) != EXCAVATOR_TASKS.end();
+}
+
+
+/**
+ * @brief Function which gets executed when any goal is received to actionlib
+ * 
+ * @param goal for action lib
+ * @param as variable to send feedback
+ * @param sm ExcavatorStateMachine object
+ */
+void execute(const operations::ExcavatorStateMachineTaskGoalConstPtr& goal, SM_SERVER* as, ExcavatorStateMachine* sm)
+{
+    operations::ExcavatorStateMachineTaskResult result;
+    // Waiting for the servers to start
+    sm->navigation_client_->waitForServer();
+    sm->excavator_arm_client_->waitForServer();
+    sm->navigation_vision_client_->waitForServer(); //Not being used currently
+    ROS_WARN("Servers started");
+
+    sm->robot_state_ = (STATE_MACHINE_TASK)goal->task;
+
+    if(!checkTask(sm->robot_state_))
+    {
+        // the class is not valid, send the appropriate result
+        result.result = COMMON_NAMES::COMMON_RESULT::INVALID_GOAL;
+        as->setAborted(result, "Invalid Task");
+        ROS_INFO_STREAM("Invalid Task - "<<g_robot_name<<" State Machine");
+        return;
+    }
+
+    while (ros::ok() && sm->state_machine_continue_)
+    {   
+        switch (sm->robot_state_)
+        {
+        case STATE_MACHINE_TASK::EXCAVATOR_INIT:
+            sm->initState();
+            break;
+        case STATE_MACHINE_TASK::EXCAVATOR_KEEP_LOOKOUT:
+            sm->goToLookout();
+            break;
+        case STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT:
+            sm->goToScout();
+            break;
+        case STATE_MACHINE_TASK::EXCAVATOR_FIND_SCOUT:
+            sm->findScout();
+            break;
+        case STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB:
+            sm->parkExcavator();
+            break;
+        case STATE_MACHINE_TASK::EXCAVATOR_DIG_VOLATILE:
+            sm->digVolatile();
+            break;
+        case STATE_MACHINE_TASK::EXCAVATOR_DUMP_VOLATILE:
+            sm->dumpVolatile();
+            break;
+        case STATE_MACHINE_TASK::EXCAVATOR_NEXT_QUE_TASK:
+            sm->robot_state_ = STATE_MACHINE_TASK::EXCAVATOR_INIT; 
+            // this is temporary, ideally it should publish to schedular
+            // that it is available, and schedular should send the next
+            // Goal to follow. 
+            break;
+
+        default:
+            ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
+            break;
+        }
+        // sleep for some time
+        ros::Duration(sm->SLEEP_TIME).sleep();
+        ros::spinOnce();
+
+        // call function to update the states (Because most of these things are actionlibs
+        // So they will be running in a seperate node)
+        // This function should keep track of the executed actionlibs, and their current states
+        // If succeeded
+    }
+}
+
+/**
+ * @brief Function called when the goal is cancelled
+ * 
+ */
+void cancelGoal()
+{
+    ROS_INFO_STREAM("Cancelling "<<g_robot_name<<"  Vision Goal");
+}
+
+int main(int argc, char* argv[])
+{
+    if(argc != 2 && argc != 4)
+    {
+        ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
+
+        return -1;
+    }
+
+    g_robot_name = argv[1];
+
+    ros::init(argc, argv, g_robot_name + "_sm");
+    ros::NodeHandle nh;
+
+    ExcavatorStateMachine* sm = new ExcavatorStateMachine(nh, g_robot_name);
+
+    SM_SERVER server(nh, g_robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, boost::bind(&execute, _1, &server, sm), false);
+	server.registerPreemptCallback(&cancelGoal);
+    server.start();
+
+    ROS_INFO("Started Excavator State Machine Actionlib Server");
+    ros::spin();
+
+    ROS_WARN("Excavator state machine died!\n");
+
+    return 0;
 }

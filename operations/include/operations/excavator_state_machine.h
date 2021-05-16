@@ -6,35 +6,31 @@
 #include <operations/NavigationAction.h> 
 #include <operations/NavigationVisionAction.h>
 #include <actionlib/client/simple_action_client.h>
+#include <actionlib/server/simple_action_server.h>
 #include <utils/common_names.h>
 #include <operations/ExcavatorAction.h>
+#include <operations/ExcavatorStateMachineTaskAction.h>
 #include <std_msgs/Empty.h>
 #include <perception/ObjectArray.h>
 #include <geometry_msgs/PointStamped.h>
 
 
 using namespace COMMON_NAMES;
+ 
+std::string g_robot_name;
+typedef actionlib::SimpleActionServer<operations::ExcavatorStateMachineTaskAction> SM_SERVER;
 
-enum EXCAVATOR_STATES
-{
-  INIT = 0,         // Wait for Instructions
-                        // or it may get close to scout
-  KEEP_LOOKOUT,     // Takes Excavator to a location from which it will
-                        // be quicker to get to the digging location
-  FIND_SCOUT,
-  GO_TO_SCOUT,   // Get close to the volatile when it is detected
-  PARK_AND_PUB,     // Publish a message that excavator has reached, 
-                        // And park where the scout was located. 
-  FIND_VOLATILE,    // Dig and see if any volatile is detected. 
-                        // If no volatile found, change the orientation slightly
-                        // Else change state
-  DIG_VOLATILE,
-  DUMP_VOLATILE,    // Start digging and dumping into the hauler
-                        // This must check if hauler is close, else wait
-  NEXT_QUE_TASK     // Inform the team level state machine that task completed, 
-                        // Follow further instructions
-};
-
+const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
+  STATE_MACHINE_TASK::EXCAVATOR_INIT, 
+  STATE_MACHINE_TASK::EXCAVATOR_KEEP_LOOKOUT, 
+  STATE_MACHINE_TASK::EXCAVATOR_FIND_SCOUT, 
+  STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT, 
+  STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB, 
+  STATE_MACHINE_TASK::EXCAVATOR_FIND_VOLATILE, 
+  STATE_MACHINE_TASK::EXCAVATOR_DIG_VOLATILE, 
+  STATE_MACHINE_TASK::EXCAVATOR_DUMP_VOLATILE, 
+  STATE_MACHINE_TASK::EXCAVATOR_NEXT_QUE_TASK, 
+  };
 
 class ExcavatorStateMachine
 {
@@ -51,7 +47,7 @@ private:
   ros::Publisher park_hauler_pub_;
   ros::Publisher return_hauler_pub_;   // WTF is this name??
 
-  EXCAVATOR_STATES robot_state_ = EXCAVATOR_STATES::INIT;
+  STATE_MACHINE_TASK robot_state_ = STATE_MACHINE_TASK::EXCAVATOR_INIT;
   std::string robot_name_;
 
   const double SLEEP_TIME = 0.5;
@@ -178,6 +174,7 @@ public:
 
   ~ExcavatorStateMachine();
 
+  friend void execute(const operations::ExcavatorStateMachineTaskGoalConstPtr& goal, SM_SERVER* as, ExcavatorStateMachine* sm);
   void startStateMachine();
   void stopStateMachine(); // Do we need it though?
 };

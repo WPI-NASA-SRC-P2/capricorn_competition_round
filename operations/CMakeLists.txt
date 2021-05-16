@@ -82,6 +82,7 @@ add_action_files(DIRECTORY action
   ResourceLocaliser.action
   Hauler.action
   Excavator.action
+  ExcavatorStateMachineTask.action
 )
 
 generate_messages(
@@ -243,12 +244,6 @@ target_link_libraries(excavator_pid_node ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
-add_executable(start_excavator_sm src/start_excavator_sm.cpp)
-add_dependencies(start_excavator_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(start_excavator_sm ${PROJECT_NAME}
-${catkin_LIBRARIES}
-)
-
 ##################
 ##### HAULER #####
 ##################
@@ -262,12 +257,6 @@ add_executable(hauler_actionlib_client src/hauler_client.cpp)
 add_dependencies(hauler_actionlib_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(hauler_actionlib_client ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-)
-
-add_executable(start_hauler_sm src/start_hauler_sm.cpp)
-add_dependencies(start_hauler_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(start_hauler_sm ${PROJECT_NAME}
-${catkin_LIBRARIES}
 )
 
 ###################

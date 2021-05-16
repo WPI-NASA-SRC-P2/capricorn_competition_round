@@ -435,7 +435,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			{
 				ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
 				operations::NavigationResult res;
-				res.result = NAV_RESULT::INTERRUPTED;
+				res.result = COMMON_RESULT::INTERRUPTED;
 				action_server->setSucceeded(res);
 
 				return;
@@ -468,13 +468,13 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				if(manual_driving_)
 				{
 					ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
-					res.result = NAV_RESULT::INTERRUPTED;
+					res.result = COMMON_RESULT::INTERRUPTED;
 				}
 				else
 				{
 					//AAAH ERROR
 					ROS_ERROR_STREAM("Turn to waypoint " << i << " did not succeed. Exiting.\n");
-					res.result = NAV_RESULT::FAILED;
+					res.result = COMMON_RESULT::FAILED;
 					
 				}
 				action_server->setSucceeded(res);
@@ -507,12 +507,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				if(manual_driving_)
 				{
 					ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
-					res.result = NAV_RESULT::INTERRUPTED;
+					res.result = COMMON_RESULT::INTERRUPTED;
 				} else 
 				{
 					//AAAH ERROR
 					ROS_ERROR_STREAM("Drive to waypoint " << i << " did not succeed.\n");
-					res.result = NAV_RESULT::FAILED;
+					res.result = COMMON_RESULT::FAILED;
 				}
 				action_server->setSucceeded(res);
 
@@ -543,13 +543,13 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 		if(manual_driving_)
 		{
 			ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
-			res.result = NAV_RESULT::INTERRUPTED;
+			res.result = COMMON_RESULT::INTERRUPTED;
 		}
 		else
 		{
 			//AAAH ERROR
 			ROS_ERROR_STREAM("Final turn did not succeed. Exiting.\n");
-			res.result = NAV_RESULT::FAILED;
+			res.result = COMMON_RESULT::FAILED;
 			
 		}
 		action_server->setSucceeded(res);
@@ -562,7 +562,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 	brakeRobot(true);
 
 	operations::NavigationResult res;
-	res.result = NAV_RESULT::SUCCESS;
+	res.result = COMMON_RESULT::SUCCESS;
 	action_server->setSucceeded(res);
 
 	printf("setSucceeded on server_\n");
@@ -582,7 +582,7 @@ void NavigationServer::linearDriving(const operations::NavigationGoalConstPtr &g
 	}
 	
 	operations::NavigationResult res;
-	res.result = NAV_RESULT::SUCCESS;
+	res.result = COMMON_RESULT::SUCCESS;
 	action_server->setSucceeded(res);
 	return;
 }
@@ -600,7 +600,7 @@ void NavigationServer::angularDriving(const operations::NavigationGoalConstPtr &
 	moveRobotWheels(wheel_speeds);
 	
 	operations::NavigationResult res;
-	res.result = NAV_RESULT::SUCCESS;
+	res.result = COMMON_RESULT::SUCCESS;
 	action_server->setSucceeded(res);
 	return;
 }
@@ -628,7 +628,7 @@ void NavigationServer::revolveDriving(const operations::NavigationGoalConstPtr &
 	revolveRobot(revolve_about, forward_velocity);
 
 	operations::NavigationResult res;
-	res.result = NAV_RESULT::SUCCESS;
+	res.result = COMMON_RESULT::SUCCESS;
 	action_server->setSucceeded(res);
 	return;
 }
@@ -698,7 +698,7 @@ void NavigationServer::spiralDriving(const operations::NavigationGoalConstPtr &g
 	brakeRobot(true);
 
   operations::NavigationResult res;
-	res.result = NAV_RESULT::SUCCESS;
+	res.result = COMMON_RESULT::SUCCESS;
 	action_server->setSucceeded(res);
 	return;
 }
@@ -712,7 +712,7 @@ void NavigationServer::followDriving(const operations::NavigationGoalConstPtr &g
 	//TODO: actually make it follow the thing
 
 	operations::NavigationResult res;
-	res.result = NAV_RESULT::SUCCESS;
+	res.result = COMMON_RESULT::SUCCESS;
 	action_server->setSucceeded(res);
 	return;
 }
