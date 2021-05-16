@@ -1,4 +1,4 @@
-#include <operations/excavator_state_machine.h>
+#include <state_machines/excavator_state_machine.h>
 
 ExcavatorStateMachine::ExcavatorStateMachine(ros::NodeHandle nh, const std::string &robot_name) : nh_(nh), robot_name_(robot_name)
 {

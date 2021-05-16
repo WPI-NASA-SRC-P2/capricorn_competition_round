@@ -7,15 +7,15 @@
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/server/simple_action_server.h>
 #include <utils/common_names.h>
-#include <operations/ExcavatorAction.h>
-#include <operations/ExcavatorStateMachineTaskAction.h>
 #include <std_msgs/Empty.h>
+#include <operations/ExcavatorAction.h>
 #include <perception/ObjectArray.h>
 #include <geometry_msgs/PointStamped.h>
+#include <state_machines/ExcavatorStateMachineTaskAction.h>
 
 using namespace COMMON_NAMES;
 
-typedef actionlib::SimpleActionServer<operations::ExcavatorStateMachineTaskAction> SM_SERVER;
+typedef actionlib::SimpleActionServer<state_machines::ExcavatorStateMachineTaskAction> SM_SERVER;
 
 const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
     STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOC,
@@ -104,7 +104,7 @@ public:
   ~ExcavatorStateMachine();
 
   friend void cancelGoal(ExcavatorStateMachine *sm);
-  friend void execute(const operations::ExcavatorStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ExcavatorStateMachine *sm);
+  friend void execute(const state_machines::ExcavatorStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ExcavatorStateMachine *sm);
 };
 
 #endif // EXCAVATOR_STATE_MACHINE_H

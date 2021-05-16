@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   utils
   geometry_msgs
-  perception
   gazebo_msgs
   srcp2_msgs
   tf2
@@ -82,7 +81,6 @@ add_action_files(DIRECTORY action
   ResourceLocaliser.action
   Hauler.action
   Excavator.action
-  ExcavatorStateMachineTask.action
 )
 
 generate_messages(
@@ -149,7 +147,6 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation_algorithm.cpp
-  src/excavator_state_machine.cpp
   src/hauler_state_machine.cpp
   src/scout_state_machine.cpp
   src/navigation_server.cpp
@@ -244,12 +241,6 @@ target_link_libraries(excavator_pid_node ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
-add_executable(start_excavator_sm src/start_excavator_sm.cpp)
-add_dependencies(start_excavator_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(start_excavator_sm ${PROJECT_NAME}
-${catkin_LIBRARIES}
-)
-
 ##################
 ##### HAULER #####
 ##################
@@ -303,12 +294,6 @@ ${catkin_LIBRARIES}
 add_executable(scout_search src/scout_search.cpp)
 add_dependencies(scout_search ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(scout_search ${PROJECT_NAME}
-${catkin_LIBRARIES}
-)
-
-add_executable(state_machine_tester src/state_machine_tester.cpp)
-add_dependencies(state_machine_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(state_machine_tester ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 

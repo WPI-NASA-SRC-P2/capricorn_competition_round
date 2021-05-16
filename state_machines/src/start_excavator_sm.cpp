@@ -12,7 +12,7 @@
  */
 
 #include <ros/ros.h>
-#include <operations/excavator_state_machine.h>
+#include <state_machines/excavator_state_machine.h>
 
 std::string g_robot_name;
 
@@ -37,11 +37,11 @@ bool checkTask(STATE_MACHINE_TASK task)
  * @param as variable to send feedback
  * @param sm ExcavatorStateMachine object
  */
-void execute(const operations::ExcavatorStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ExcavatorStateMachine *sm)
+void execute(const state_machines::ExcavatorStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ExcavatorStateMachine *sm)
 {
 	ROS_INFO_STREAM("Received " << g_robot_name << "  State Machine Goal: " << goal->task);
 
-	operations::ExcavatorStateMachineTaskResult result;
+	state_machines::ExcavatorStateMachineTaskResult result;
 
 	// Waiting for the servers to start
 	sm->navigation_client_->waitForServer();
