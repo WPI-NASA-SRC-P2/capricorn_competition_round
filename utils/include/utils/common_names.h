@@ -43,6 +43,9 @@ namespace COMMON_NAMES
   const std::string FIND_PP_RS_ACTIONLIB = "_find_pp_rs";
   const std::string NAVIGATION_VISION_ACTIONLIB = "_navigation_vision";
 
+  /****** SERVICES ******/
+  const std::string SCOUT_SEARCH_SERVICE = "/scout_search";
+
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";
   const std::string PROCESSING_PLANT_GAZEBO = "processing_plant";

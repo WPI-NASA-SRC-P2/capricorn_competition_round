@@ -18,6 +18,7 @@ Command Line Arguments Required:
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <nav_msgs/Odometry.h>
 #include <operations/navigation_algorithm.h>
+#include <operations/Spiral.h>
 
 #define UPDATE_HZ 10
 
@@ -39,6 +40,8 @@ static std::vector<geometry_msgs::PointStamped> g_spiral_points;
 double g_last_dist = 0.0;
 bool g_going_to_goal = false;
 bool g_new_trajectory = false;
+bool resume_spiral = false;
+bool new_stop_call = false;
 const double CHECKPOINT_THRESHOLD = 2.0;
 
 /**
@@ -209,12 +212,40 @@ void execute()
     
     while (ros::ok())
     {
+      if(resume_spiral)
+      {
         spiralSearch();
         if(g_new_trajectory)
           g_client->sendGoal(g_nav_goal);
+      }
+      else if (new_stop_call)
+      {        
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_nav_goal.forward_velocity = 0;
+        g_nav_goal.direction = 0;
+        g_nav_goal.angular_velocity = 0;
+        g_client->sendGoal(g_nav_goal);
+        new_stop_call = false;
+      }
+      
         update_rate.sleep();
         ros::spinOnce();
     }
+}
+
+bool serviceCB(operations::Spiral::Request  &req,
+         operations::Spiral::Response &res)
+{
+  resume_spiral = req.resume_spiral_motion;
+  
+  // Whever interrupted, it assumes that this location has volatiles, 
+  // and robots will park. So it should continue from the next point after that. 
+  if(!resume_spiral)
+  {
+    g_spiral_points.erase(g_spiral_points.begin()); 
+    new_stop_call = true;
+  }
+  return true;
 }
 
 int main(int argc, char** argv)
@@ -247,7 +278,8 @@ int main(int argc, char** argv)
     }
 
     ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
-
+    
+    ros::ServiceServer service = nh.advertiseService(COMMON_NAMES::SCOUT_SEARCH_SERVICE, serviceCB);
     ROS_INFO_STREAM("Starting Searching - "<<robot_name);
     execute();
     return 0;
