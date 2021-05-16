@@ -1,0 +1,6 @@
+
+<launch>
+
+    <arg name="robot_name" default="small_scout_1" />  
+    <node name="$(arg robot_name)_localmap" pkg="maploc" type="obstacle_localmaps.py" output="screen" args="$(arg robot_name)" />
+</launch>

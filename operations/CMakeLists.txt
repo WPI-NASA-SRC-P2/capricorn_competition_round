@@ -317,6 +317,12 @@ target_link_libraries(park_hauler_client ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
+add_executable(scout_search src/scout_search.cpp)
+add_dependencies(scout_search ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(scout_search ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
 # target_link_libraries(start_scout_sm navigation_algorithm)
 
 #############
