@@ -87,7 +87,7 @@ void execute(const state_machines::ExcavatorStateMachineTaskGoalConstPtr &goal, 
 	result.result = output ? COMMON_NAMES::COMMON_RESULT::SUCCESS : COMMON_NAMES::COMMON_RESULT::FAILED;
 	as->setSucceeded(result);
 
-	ROS_INFO_STREAM(g_robot_name << "Goal Finished");
+	ROS_INFO_STREAM(g_robot_name << " State Machine: Goal Finished");
 
 	return;
 }
