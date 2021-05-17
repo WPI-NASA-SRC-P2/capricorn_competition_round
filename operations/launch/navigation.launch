@@ -8,7 +8,7 @@
         <arg name="robot_name" value="$(arg robot_name)" />
     </include> -->
 
-    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /map /odom 100" unless="$(arg use_cheat_odom)"/>
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /odom /map 100" unless="$(arg use_cheat_odom)"/>
 
     <group ns="/capricorn/$(arg robot_name)">
         <param name="cheat_odom" value="$(arg use_cheat_odom)"/>
