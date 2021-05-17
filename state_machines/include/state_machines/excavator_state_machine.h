@@ -7,9 +7,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/server/simple_action_server.h>
 #include <utils/common_names.h>
-#include <std_msgs/Empty.h>
 #include <operations/ExcavatorAction.h>
-#include <perception/ObjectArray.h>
 #include <geometry_msgs/PointStamped.h>
 #include <state_machines/ExcavatorStateMachineTaskAction.h>
 
