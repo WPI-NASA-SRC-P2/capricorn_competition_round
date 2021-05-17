@@ -147,7 +147,6 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation/navigation_algorithm.cpp
-  src/hauler/hauler_state_machine.cpp
   src/scout/scout_state_machine.cpp
   src/navigation/navigation_server.cpp
 )

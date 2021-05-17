@@ -74,6 +74,7 @@ namespace COMMON_NAMES
   const std::string PARK_HAULER_HOPPER_SERVER_NODE_NAME = "_park_hauler_server";
   const std::string PARK_HAULER_HOPPER_CLIENT_NODE_NAME = "_park_hauler_client";
   const std::string SCOUT_SEARCH_NODE_NAME = "_scout_search";
+  const std::string STATE_MACHINE_SERVER_NODE_NAME = "_sm_server";
 
   /****** TOPIC NAMES ******/
   const std::string CAPRICORN_TOPIC = "/capricorn/";
@@ -113,7 +114,6 @@ namespace COMMON_NAMES
   const std::string EXCAVATOR_ARRIVED_TOPIC = "/excavator_arrived";
   const std::string HAULER_ARRIVED_TOPIC = "/hauler_arrived";
 
-
   /****** OBJECT DETECTION CLASS NAMES ******/
   const std::string OBJECT_DETECTION_PROCESSING_PLANT_CLASS = "processingPlant";
   const std::string OBJECT_DETECTION_REPAIR_STATION_CLASS = "repairStation";
@@ -130,10 +130,10 @@ namespace COMMON_NAMES
   /****** NAVIGATION VISION ENUMS ******/
   enum NAV_VISION_TYPE
   {
-    V_FOLLOW, // Follow an object 
+    V_FOLLOW, // Follow an object
     V_REACH,  // Reach the goal and stop
   };
-  
+
   enum NAV_VISION_RESULT
   {
     V_FAILED,
@@ -151,7 +151,7 @@ namespace COMMON_NAMES
     SPIRAL,  // Archimedean spiral (scout finding volatiles)
     FOLLOW,  // Follow an object in frame
   };
-  
+
   /****** COMMON RESULTS ENUMS (This is used by every actionlibrary)******/
   enum COMMON_RESULT
   {
@@ -164,21 +164,32 @@ namespace COMMON_NAMES
   /****** STATE MACHINE ENUM ******/
   enum STATE_MACHINE_TASK
   {
-    EXCAVATOR_GO_TO_LOC,     // Takes Excavator to a location from which it will
-                          // be quicker to get to the digging location
-    EXCAVATOR_GO_TO_SCOUT,   // Get close to the volatile when it is detected
-    EXCAVATOR_PARK_AND_PUB,     // Publish a message that excavator has reached, 
-                          // And park where the scout was located. 
+    EXCAVATOR_GO_TO_LOC,    // Takes Excavator to a location from which it will
+                            // be quicker to get to the digging location
+    EXCAVATOR_GO_TO_SCOUT,  // Get close to the volatile when it is detected
+    EXCAVATOR_PARK_AND_PUB, // Publish a message that excavator has reached,
+                            // And park where the scout was located.
     EXCAVATOR_DIG_AND_DUMP_VOLATILE,
-    EXCAVATOR_GOTO_DEFAULT_ARM_POSE,   
+    EXCAVATOR_GOTO_DEFAULT_ARM_POSE,
+
+    HAULER_GO_TO_LOC,         // Takes Hauler to a location
+    HAULER_FOLLOW_EXCAVATOR,  // Hauler follows excavator
+    HAULER_PARK_AT_EXCAVATOR, // Hauler parks at excavator
+    HAULER_GO_TO_PROC_PLANT,  // Hauler goes to processing plant
+    HAULER_PARK_AT_HOPPER,
+    HAULER_DUMP_VOLATILE,
+    HAULER_UNDOCK_EXCAVATOR,
+    HAULER_UNDOCK_HOPPER,
+    HAULER_DUMP_VOLATILE_TO_PROC_PLANT,
+    HAULER_GO_BACK_TO_EXCAVATOR,
   };
 
 } // namespace CAPRICORN_COMMON_NAMES
 
 /****** EXCAVATOR TASK ENUM ******/
-  enum EXCAVATOR_ARM_TASK{
-    START_DIGGING = 1, 
-    START_UNLOADING = 2, 
-    GO_TO_DEFAULT,
-  };
-
+enum EXCAVATOR_ARM_TASK
+{
+  START_DIGGING = 1,
+  START_UNLOADING = 2,
+  GO_TO_DEFAULT,
+};
