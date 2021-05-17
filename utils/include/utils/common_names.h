@@ -169,11 +169,22 @@ namespace COMMON_NAMES
   /****** STATE MACHINE ENUM ******/
   enum STATE_MACHINE_TASK
   {
-    EXCAVATOR_GO_TO_LOC,    // Takes Excavator to a location from which it will
-                            // be quicker to get to the digging location
-    EXCAVATOR_GO_TO_SCOUT,  // Get close to the volatile when it is detected
-    EXCAVATOR_PARK_AND_PUB, // Publish a message that excavator has reached,
+    // SCOUT STATES //
+    SCOUT_SEARCH_VOLATILE,    // Execute spiral motion to search for the volatiles. 
+    SCOUT_STOP_SEARCH,        // Stop executing the search algorithm.
+    SCOUT_LOCATE_VOLATILE,    // Pinpoint the location of the volatile
+    SCOUT_UNDOCK,             // Move the Scout away from the Excavator
+
+    // EXCAVATOR STATES //
+    EXCAVATOR_GO_TO_LOC,      // Takes Excavator to a location from which it will
+                                // be quicker to get to the digging location
+    EXCAVATOR_GO_TO_SCOUT,    // Get close to the volatile when it is detected
+    EXCAVATOR_PARK_AND_PUB,   // Publish a message that excavator has reached, 
+                                // And park where the scout was located. 
                             // And park where the scout was located.
+                                // And park where the scout was located. 
+                            // And park where the scout was located.
+                                // And park where the scout was located. 
     EXCAVATOR_DIG_AND_DUMP_VOLATILE,
     EXCAVATOR_GOTO_DEFAULT_ARM_POSE,
 

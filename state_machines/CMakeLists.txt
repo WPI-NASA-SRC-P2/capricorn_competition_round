@@ -135,7 +135,8 @@ include_directories(
 
 ## Declare a C++ library
  add_library(${PROJECT_NAME}
-  src/excavator_state_machine.cpp
+ src/excavator_state_machine.cpp
+ src/scout_state_machine.cpp
  )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
@@ -167,6 +168,12 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_executable(start_excavator_sm_server src/start_excavator_sm_server.cpp)
 add_dependencies(start_excavator_sm_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(start_excavator_sm_server ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+add_executable(start_scout_sm src/start_scout_sm.cpp)
+add_dependencies(start_scout_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(start_scout_sm ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
