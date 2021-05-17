@@ -31,6 +31,9 @@
     <!-- Launch the 20x20 object detection map-->
     <node name="$(arg robot_name)_localmap" pkg="maploc" type="obstacle_localmaps.py" output="screen" args="$(arg robot_name)" />
 
+    <!-- Launch the reset odom service -->
+    <node name="odom_reset_service_node" pkg="maploc" type="reset_odom" output="screen" />
+
 </launch>
     
     

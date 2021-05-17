@@ -1,5 +1,5 @@
 geometry_msgs/PoseStamped ref_pose
 string target_robot_name
-bool not_gt
+bool use_ground_truth
 ---
 bool success

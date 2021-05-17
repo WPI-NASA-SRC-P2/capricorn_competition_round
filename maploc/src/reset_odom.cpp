@@ -122,28 +122,29 @@ bool resetOdomPose(std::string robot_name, geometry_msgs::PoseStamped stamped_po
 }
 
 // service callback function that resets the odometry of the specified rover w.r.t. the specified pose
-// if not_gt
+// if use_ground_truth
 // method returns a boolean due to services needing to have a boolean return statement and to provide feedback on success of service call
 bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res) {
 
     // obtain the service call request data
     geometry_msgs::PoseStamped ref_pose = req.ref_pose;
     std::string target_robot_name = req.target_robot_name;
-    bool not_gt = req.not_gt;
+    bool use_ground_truth = req.use_ground_truth;
     
-    // if using ground truth, get true pose if first call, else use the stored in memory ground truth pose
-    if(!not_gt) {
-        // calls the desired robot within the robot_first map
-        std::map<std::string, bool>::iterator it = robot_first.find(target_robot_name);
+    // calls the desired robot within the robot_first map
+    std::map<std::string, bool>::iterator it = robot_first.find(target_robot_name);
 
-        // if the robot called does not exist, throw an exception
-        // TODO: make sure this throws an exception 
-        if (it == robot_first.end()) {
-            ROS_ERROR("No robot was found with input target robot name!");
-            // response for service returns false
-            res.success = false;
-            return false;
-        }
+    // if the robot called does not exist, throw an exception
+    // TODO: make sure this throws an exception 
+    if (it == robot_first.end()) {
+        ROS_ERROR("No robot was found with input target robot name!");
+        // response for service returns false
+        res.success = false;
+        return false;
+    }
+
+    // if using ground truth, get true pose if first call, else use the stored in memory ground truth pose
+    if(use_ground_truth) {
         // if gt_first_robot call is true
         if (it->second) {
             // obtain the ground truth pose of the rover using the provided service call
