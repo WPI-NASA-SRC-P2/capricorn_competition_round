@@ -7,6 +7,7 @@
 #include <state_machines/ScoutStateMachineTaskAction.h>
 #include <operations/Spiral.h>
 #include <operations/ResourceLocaliserAction.h>
+#include <srcp2_msgs/VolSensorMsg.h>
 
 using namespace COMMON_NAMES;
 
@@ -27,6 +28,9 @@ private:
   std::string robot_name_;
 
   ros::ServiceClient spiralClient_;
+  ros::Subscriber volatile_sub_;
+  bool near_volatile_ = false;
+  bool new_message_received = false;
   
   typedef actionlib::SimpleActionClient<operations::ResourceLocaliserAction> ResourceLocaliserClient_;
   ResourceLocaliserClient_* resource_localiser_client_;
@@ -61,6 +65,13 @@ private:
    * 
    */
   bool undockRobot();
+
+  /**
+   * @brief Volatile sensor callback
+   * 
+   * @param msg 
+   */
+  void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr& msg);
 
 public:
   ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name);

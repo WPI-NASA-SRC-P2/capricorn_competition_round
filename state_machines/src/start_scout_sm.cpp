@@ -42,6 +42,9 @@ void execute(const state_machines::ScoutStateMachineTaskGoalConstPtr &goal, SM_S
 	ROS_INFO_STREAM("Received " << g_robot_name << "  State Machine Goal: " << goal->task);
 
 	state_machines::ScoutStateMachineTaskResult result;
+  state_machines::ScoutStateMachineTaskFeedback feedback;
+  feedback.volatile_found = false;
+  as->publishFeedback(feedback);
 
 	// Waiting for the servers to start
   sm->resource_localiser_client_->waitForServer(); 
@@ -65,6 +68,16 @@ void execute(const state_machines::ScoutStateMachineTaskGoalConstPtr &goal, SM_S
 	{
 	case STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE:
 		output = sm->startSearchingVolatile();
+    // returns true if volatile found
+    // if volatile found, then announce that it found vol
+    // And start finding volatile on its own without supervisor
+    // telling what to do (cause its obvious)
+    if(output)
+    {
+      feedback.volatile_found = true;
+      as->publishFeedback(feedback);
+      output = sm->locateVolatile();
+    }
 		break;
 	case STATE_MACHINE_TASK::SCOUT_STOP_SEARCH:
 		output = sm->stopSearchingVolatile();
@@ -79,7 +92,6 @@ void execute(const state_machines::ScoutStateMachineTaskGoalConstPtr &goal, SM_S
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
 		break;
 	}
-
 	result.result = output ? COMMON_NAMES::COMMON_RESULT::SUCCESS : COMMON_NAMES::COMMON_RESULT::FAILED;
 	as->setSucceeded(result);
 

@@ -3,6 +3,7 @@
 ScoutStateMachine::ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name) : nh_(nh), robot_name_(robot_name)
 {
     resource_localiser_client_ = new ResourceLocaliserClient_(RESOURCE_LOCALISER_ACTIONLIB, true);
+    volatile_sub_ = nh.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutStateMachine::volatileSensorCB, this);
 }
 
 ScoutStateMachine::~ScoutStateMachine()
@@ -12,7 +13,16 @@ ScoutStateMachine::~ScoutStateMachine()
 
 bool ScoutStateMachine::startSearchingVolatile()
 {
-  return resumeSearchingVolatile(true);
+  // If starting spiral fails
+  if(!resumeSearchingVolatile(true))
+    return false;
+  
+  while(ros::ok())
+  {
+    if(near_volatile_)
+        return true;
+    ros::Duration(0.1).sleep();
+  }
 }
 
 bool ScoutStateMachine::stopSearchingVolatile()
@@ -41,4 +51,15 @@ bool ScoutStateMachine::locateVolatile()
 bool ScoutStateMachine::undockRobot()
 {
   return true;
+}
+
+
+/**
+ * @brief Callback for sensor topic
+ * 
+ * @param msg 
+ */
+void ScoutStateMachine::volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr& msg)
+{
+	near_volatile_ = !(msg->distance_to == -1);
 }

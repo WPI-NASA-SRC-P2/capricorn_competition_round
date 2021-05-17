@@ -7,4 +7,4 @@ uint32 result # See COMMON_NAMES::COMMON_RESULTS
 
 ---
 # Define a feedback message
-bool progress # Unused
+bool volatile_found

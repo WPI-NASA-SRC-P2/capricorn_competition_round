@@ -9,12 +9,12 @@
  * 
  */
 
-#include <state_machines/HaulerStateMachineTaskAction.h> // Note: "Action" is appended
+#include <state_machines/ScoutStateMachineTaskAction.h> // Note: "Action" is appended
 #include <actionlib/client/simple_action_client.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <utils/common_names.h>
 
-typedef actionlib::SimpleActionClient<state_machines::HaulerStateMachineTaskAction> g_client;
+typedef actionlib::SimpleActionClient<state_machines::ScoutStateMachineTaskAction> g_client;
 
 int main(int argc, char **argv)
 {
@@ -30,14 +30,14 @@ int main(int argc, char **argv)
     g_client client(robot_name + COMMON_NAMES::STATE_MACHINE_ACTIONLIB, true);
     client.waitForServer();
 
-    state_machines::HaulerStateMachineTaskGoal goal;
+    state_machines::ScoutStateMachineTaskGoal goal;
 
     // desired target object, any object detection class
     goal.task = std::stoi(argv[2]);
 
     geometry_msgs::PoseStamped zero_point;
     zero_point.header.frame_id = "map";
-    goal.goal_loc = zero_point;
+    // goal.goal_loc = zero_point;
     client.sendGoal(goal);
     bool finished_before_timeout = client.waitForResult();
     // client.cancelGoal();
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     if (finished_before_timeout)
     {
         actionlib::SimpleClientGoalState state = client.getState();
-        state_machines::HaulerStateMachineTaskResultConstPtr result = client.getResult();
+        state_machines::ScoutStateMachineTaskResultConstPtr result = client.getResult();
         if (result->result == COMMON_NAMES::COMMON_RESULT::INVALID_GOAL)
         {
             ROS_INFO("Invalid Task");
