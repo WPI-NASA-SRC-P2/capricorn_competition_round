@@ -44,8 +44,6 @@ void execute(const state_machines::ScoutStateMachineTaskGoalConstPtr &goal, SM_S
 	state_machines::ScoutStateMachineTaskResult result;
 
 	// Waiting for the servers to start
-	sm->navigation_client_->waitForServer();
-	sm->navigation_vision_client_->waitForServer(); 
   sm->resource_localiser_client_->waitForServer(); 
   
 	ROS_INFO_STREAM(g_robot_name << ": Servers Connected, Executing Goal");
@@ -97,9 +95,6 @@ void execute(const state_machines::ScoutStateMachineTaskGoalConstPtr &goal, SM_S
 void cancelGoal(ScoutStateMachine *sm)
 {
 	ROS_INFO_STREAM("Cancelling " << g_robot_name << "  State Machine Goal");
-
-	sm->navigation_vision_client_->cancelGoal();
-	sm->navigation_client_->cancelGoal();
 }
 
 int main(int argc, char *argv[])

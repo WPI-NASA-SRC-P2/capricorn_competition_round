@@ -2,15 +2,11 @@
 
 ScoutStateMachine::ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name) : nh_(nh), robot_name_(robot_name)
 {
-    navigation_client_ = new NavigationClient(NAVIGATION_ACTIONLIB, true);
-    navigation_vision_client_ = new NavigationVisionClient(robot_name + NAVIGATION_VISION_ACTIONLIB, true);
     resource_localiser_client_ = new ResourceLocaliserClient_(RESOURCE_LOCALISER_ACTIONLIB, true);
 }
 
 ScoutStateMachine::~ScoutStateMachine()
 {
-    delete navigation_client_;
-    delete navigation_vision_client_;
     delete resource_localiser_client_;
 }
 
