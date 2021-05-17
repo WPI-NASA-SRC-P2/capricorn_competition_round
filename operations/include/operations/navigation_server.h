@@ -64,6 +64,9 @@ private:
 
     ros::ServiceClient brake_client_;
 
+    // If true, use crab drive. If false, use point-and-go drive. Set in the constructor from a parameter
+    bool CRAB_DRIVE_;
+
     // Declare robot pose to be used globally
     geometry_msgs::PoseStamped robot_pose_;
     std::mutex pose_mutex_;

@@ -9,6 +9,8 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 	initPublishers(nh, robot_name);
 	initSubscribers(nh, robot_name);
 
+	nh.param("crab_drive", CRAB_DRIVE_, false);
+
 	printf("Starting navigation server...\n");
 
 	// Action server
@@ -108,8 +110,21 @@ geometry_msgs::PoseStamped* NavigationServer::getRobotPose()
  */
 void NavigationServer::initSubscribers(ros::NodeHandle& nh, std::string& robot_name)
 {
-	// TODO: Swap this topic from CHEAT_ODOM_TOPIC to the real odom topic. Or, add a flag in the launch file and switch between the two
-	update_current_robot_pose_ = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
+	bool odom_flag = true;
+	
+	nh.getParam("cheat_odom", odom_flag);
+
+	if (odom_flag)
+	{
+		update_current_robot_pose_ = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
+		ROS_INFO("Currently using cheat odom from Gazebo\n");
+	}
+	else
+	{
+		update_current_robot_pose_ = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
+		ROS_INFO("Currently using odom from rtabmap\n");
+	}
+	
 	brake_client_ = nh.serviceClient<srcp2_msgs::BrakeRoverSrv>("/" + robot_name + BRAKE_ROVER);
 }
 
@@ -456,9 +471,21 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			// Needed, otherwise we get extrapolation into the past
 			// current_waypoint.header.stamp = ros::Time(0);
 
-			//Turn wheels to heading
-			ROS_INFO("Rotating wheels\n");
-			bool turned_successfully = rotateWheels(current_waypoint);
+			bool turned_successfully;
+
+			// Based on the parameter in this server's constructor, either do crab drive or rotate in place drive.
+			if(CRAB_DRIVE_)
+			{
+				// Turn wheels to heading
+				ROS_INFO("Rotating wheels\n");
+				turned_successfully = rotateWheels(current_waypoint);
+			}
+			else
+			{
+				ROS_INFO("Rotating robot\n");
+				turned_successfully = rotateRobot(current_waypoint);
+			}
+
 			ros::Duration(1.0).sleep();
 
 			if (!turned_successfully)
