@@ -1,5 +1,4 @@
 .vscode/
 utils/bags/*.bag
 utils/dataset/images/*.jpg
-*.xml
 perception/src/__pycache__/
