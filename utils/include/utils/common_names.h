@@ -45,7 +45,7 @@ namespace COMMON_NAMES
   const std::string STATE_MACHINE_ACTIONLIB = "_state_machine";
 
   /****** SERVICES ******/
-  const std::string SCOUT_SEARCH_SERVICE = "/scout_search";
+  const std::string SCOUT_SEARCH_SERVICE = "scout_search";
 
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";

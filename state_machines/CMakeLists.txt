@@ -75,6 +75,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_action_files(
   FILES
 ExcavatorStateMachineTask.action
+ScoutStateMachineTask.action
 )
 
 ## Generate added messages and services with any dependencies listed here
