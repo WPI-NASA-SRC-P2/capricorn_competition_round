@@ -135,16 +135,9 @@ namespace COMMON_NAMES
   /****** NAVIGATION VISION ENUMS ******/
   enum NAV_VISION_TYPE
   {
-    V_FOLLOW, // Follow an object
-    V_REACH,  // Reach the goal and stop
-  };
-
-  enum NAV_VISION_RESULT
-  {
-    V_FAILED,
-    V_SUCCESS,
-    V_INTERRUPTED,
-    V_INVALID_CLASS, // If an invalid object detection is given
+    V_FOLLOW,        // Follow an object
+    V_REACH,         // Reach the goal and stop
+    V_OBS_GOTO_GOAL, // Uses go to goal with obstacle avoidance
   };
 
   /****** NAVIGATION ENUMS ******/

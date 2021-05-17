@@ -1,15 +1,17 @@
-/*
-Author BY: Mahimana Bhatt, Chris DeMaio
-Email: mbhatt@wpi.edu
+/**
+ * @file navigation_vision_server.cpp
+ * @author Mahimana Bhatt, Chris DeMaio
+ * @brief This is an actionlib server for navigation any robot using vision
+ * Command Line Arguments Required:
+ * 1. robot_name: eg. small_scout_1, small_excavator_2
+ * 
+ * @version 0.1
+ * @date 2021-05-17
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
 
-TEAM CAPRICORN
-NASA SPACE ROBOTICS CHALLENGE
-
-This is an actionlib server for parking hauler with hopper or excavator
-
-Command Line Arguments Required:
-1. robot_name: eg. small_scout_1, small_excavator_2
-*/
 #include <operations/NavigationAction.h> // Note: "Action" is appended
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/server/simple_action_server.h>
@@ -21,16 +23,20 @@ Command Line Arguments Required:
 typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
 typedef actionlib::SimpleActionServer<operations::NavigationVisionAction> Server;
 
-Client* g_client;
+using namespace COMMON_NAMES;
+
+Client *g_client;
 
 operations::NavigationGoal g_nav_goal;
 perception::ObjectArray g_objects;
 
-const int ANGLE_THRESHOLD_NARROW = 5, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
+std::string g_robot_name;
+
+const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05;
 std::mutex g_objects_mutex, g_cancel_goal_mutex;
 std::string g_desired_label;
-bool g_centered = false, g_execute_called = false, g_cancel_called = false;
+bool g_centered = false, g_reached_goal = false, g_cancel_called = false, g_send_nav_goal = false, g_previous_state_is_go_to = false;
 int g_height_threshold = 400, g_lost_detection_times = 0, g_true_detection_times = 0, g_revolve_direction = -1;
 
 enum HEIGHT_THRESHOLD
@@ -56,30 +62,47 @@ enum REVOLVE_DIRECTION
  */
 void setDesiredLabelHeightThreshold()
 {
-    if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS)
+    if (g_desired_label == OBJECT_DETECTION_EXCAVATOR_CLASS)
     {
         g_height_threshold = HEIGHT_THRESHOLD::EXCAVATOR;
     }
-    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS)
+    else if (g_desired_label == OBJECT_DETECTION_SCOUT_CLASS)
     {
         g_height_threshold = HEIGHT_THRESHOLD::SCOUT;
     }
-    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS)
+    else if (g_desired_label == OBJECT_DETECTION_HAULER_CLASS)
     {
         g_height_threshold = HEIGHT_THRESHOLD::HAULER;
     }
-    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+    else if (g_desired_label == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
     {
         g_height_threshold = HEIGHT_THRESHOLD::PROCESSING_PLANT;
     }
-    else if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_REPAIR_STATION_CLASS)
+    else if (g_desired_label == OBJECT_DETECTION_REPAIR_STATION_CLASS)
     {
         g_height_threshold = HEIGHT_THRESHOLD::REPAIR_STATION;
     }
     else
     {
         g_height_threshold = HEIGHT_THRESHOLD::OTHER;
-    }    
+    }
+}
+
+/**
+ * @brief Checks whether the desire target label is a valid object detection class or not
+ * 
+ * @return true - if the class is valid
+ * @return false - if the class is invalid
+ */
+bool check_class()
+{
+    if (g_desired_label == OBJECT_DETECTION_PROCESSING_PLANT_CLASS ||
+        g_desired_label == OBJECT_DETECTION_REPAIR_STATION_CLASS ||
+        g_desired_label == OBJECT_DETECTION_EXCAVATOR_CLASS ||
+        g_desired_label == OBJECT_DETECTION_SCOUT_CLASS ||
+        g_desired_label == OBJECT_DETECTION_HAULER_CLASS)
+        return true;
+    return false;
 }
 
 /**
@@ -87,9 +110,9 @@ void setDesiredLabelHeightThreshold()
  * 
  * @param objs 
  */
-void objectsCallback(const perception::ObjectArray& objs) 
+void objectsCallback(const perception::ObjectArray &objs)
 {
-    const std::lock_guard<std::mutex> lock(g_objects_mutex); 
+    const std::lock_guard<std::mutex> lock(g_objects_mutex);
     g_objects = objs;
 }
 
@@ -107,12 +130,12 @@ void objectsCallback(const perception::ObjectArray& objs)
  */
 void visionNavigation()
 {
-    const std::lock_guard<std::mutex> lock(g_objects_mutex);   
+    const std::lock_guard<std::mutex> lock(g_objects_mutex);
     perception::ObjectArray objects = g_objects;
     // Initialize location and size variables
     float center_obj = INIT_VALUE, height_obj = INIT_VALUE;
 
-    // Initialize error, P Control, and necessary thresholds 
+    // Initialize error, P Control, and necessary thresholds
     float error_angle = WIDTH_IMAGE, error_height = HEIGHT_IMAGE;
 
     static float prev_angular_velocity;
@@ -121,27 +144,27 @@ void visionNavigation()
     std::vector<perception::Object> obstacles;
     float err_obstacle = 0;
 
-    bool target_processing_plant = (g_desired_label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
-    bool target_excavator = (g_desired_label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS);
+    bool target_processing_plant = (g_desired_label == OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
+    bool target_excavator = (g_desired_label == OBJECT_DETECTION_EXCAVATOR_CLASS);
 
     // Find the desired object
-    for(int i = 0; i < objects.number_of_objects; i++) 
-    {   
+    for (int i = 0; i < objects.number_of_objects; i++)
+    {
         perception::Object object = objects.obj.at(i);
-        bool object_is_furnace = (object.label == COMMON_NAMES::OBJECT_DETECTION_FURNACE_CLASS);
-        bool object_is_excavator_arm = (object.label == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_ARM_CLASS);
-        if(object.label == g_desired_label) 
+        bool object_is_furnace = (object.label == OBJECT_DETECTION_FURNACE_CLASS);
+        bool object_is_excavator_arm = (object.label == OBJECT_DETECTION_EXCAVATOR_ARM_CLASS);
+        if (object.label == g_desired_label)
         {
             // Store the object's center and height
             center_obj = object.center.x;
             height_obj = object.size_y;
         }
-        else if(target_processing_plant && object_is_furnace)
+        else if (target_processing_plant && object_is_furnace)
         {
             // do not consider furnace as an obstacle when going to processing plant
             continue;
         }
-        else if(target_excavator && object_is_excavator_arm)
+        else if (target_excavator && object_is_excavator_arm)
         {
             // do not consider excavator arm as an obstacle when going to excavator
             continue;
@@ -150,12 +173,12 @@ void visionNavigation()
             obstacles.push_back(object);
     }
 
-    if(center_obj < HEIGHT_THRESHOLD::MINIMUM_THRESH)
+    if (center_obj < HEIGHT_THRESHOLD::MINIMUM_THRESH)
     {
         // object not detected, rotate on robot's axis to find the object
         g_lost_detection_times++;
         g_true_detection_times = 0;
-        if(g_lost_detection_times > LOST_FRAME_THRESHOLD)
+        if (g_lost_detection_times > LOST_FRAME_THRESHOLD)
         {
             g_nav_goal.angular_velocity = g_revolve_direction * ANGULAR_VELOCITY;
             g_nav_goal.forward_velocity = 0;
@@ -167,7 +190,7 @@ void visionNavigation()
         // get the direction of crab walk needed to avoid obstacle
         float direction = checkObstacle(obstacles);
 
-        if(abs(direction) > 0.0)
+        if (abs(direction) > 0.0)
         {
             // if there is an obstacle to avoid, crab walk
             g_nav_goal.forward_velocity = FORWARD_VELOCITY;
@@ -187,7 +210,7 @@ void visionNavigation()
         // compute error in height, desired height minus current height of bounding box
         error_height = g_height_threshold - height_obj;
 
-        if(error_angle < 0)
+        if (error_angle < 0)
         {
             g_revolve_direction = REVOLVE_DIRECTION::CLOCK;
         }
@@ -195,25 +218,25 @@ void visionNavigation()
         {
             g_revolve_direction = REVOLVE_DIRECTION::COUNTER_CLOCK;
         }
-    
+
         if (abs(error_angle) > ANGLE_THRESHOLD_WIDE)
         {
             // if the bounding box is not in the center of the image
             g_centered = false;
         }
-      
-        if(g_centered || abs(error_angle) < ANGLE_THRESHOLD_NARROW)
+
+        if (g_centered || abs(error_angle) < ANGLE_THRESHOLD_NARROW)
         {
             // if the bounding box is in the center of image following the narrow angle
             g_centered = true;
             g_nav_goal.angular_velocity = 0;
-            if(error_height < 0 && g_true_detection_times > FOUND_FRAME_THRESHOLD)
+            if (error_height < 0 && g_true_detection_times > FOUND_FRAME_THRESHOLD)
             {
                 // If the object is having desired height, stop the robot
                 g_nav_goal.forward_velocity = 0;
-                g_execute_called = false;
+                g_reached_goal = true;
                 g_centered = false;
-                ROS_INFO_STREAM("Reached Goal - "<<g_desired_label);
+                ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached Goal - " << g_desired_label);
                 return;
             }
             else
@@ -228,18 +251,18 @@ void visionNavigation()
             g_nav_goal.angular_velocity = error_angle * PROPORTIONAL_ANGLE;
             g_nav_goal.forward_velocity = 0;
 
-            if(g_nav_goal.angular_velocity < prev_angular_velocity - g_angular_vel_step_size)
+            if (g_nav_goal.angular_velocity < prev_angular_velocity - g_angular_vel_step_size)
             {
                 g_nav_goal.angular_velocity = prev_angular_velocity - g_angular_vel_step_size;
             }
-            if(g_nav_goal.angular_velocity > prev_angular_velocity + g_angular_vel_step_size)
+            if (g_nav_goal.angular_velocity > prev_angular_velocity + g_angular_vel_step_size)
             {
                 g_nav_goal.angular_velocity = prev_angular_velocity + g_angular_vel_step_size;
             }
         }
     }
 
-    if(prev_centered && !g_centered)
+    if (prev_centered && !g_centered)
     {
         g_nav_goal.angular_velocity = 0;
         g_nav_goal.forward_velocity = 0;
@@ -251,73 +274,47 @@ void visionNavigation()
 }
 
 /**
- * @brief Checks whether the desire target label is a valid object detection class or not
+ * @brief Function for obstacle avoidance + go to goal
  * 
- * @return true - if the class is valid
- * @return false - if the class is invalid
  */
-bool check_class()
+void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
 {
-    if(g_desired_label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_REPAIR_STATION_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS ||
-       g_desired_label ==  COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS)
-        return true;
-    return false;
-}
+    const std::lock_guard<std::mutex> lock(g_objects_mutex);
 
-/**
- * @brief Function which gets executed when any goal is received to actionlib
- * 
- * @param goal for action lib
- * @param as variable to send feedback
- */
-void execute(const operations::NavigationVisionGoalConstPtr& goal, Server* as)
-{
-    operations::NavigationVisionResult result;
-    g_execute_called = true;
-    g_desired_label = goal->desired_object_label;
-    ROS_INFO_STREAM("Goal Received - "<<g_desired_label);
+    perception::ObjectArray objects = g_objects;
 
+    std::vector<perception::Object> obstacles;
 
-    if(!check_class())
+    for (int i = 0; i < objects.number_of_objects; i++)
+        obstacles.push_back(objects.obj.at(i));
+
+    float direction = checkObstacle(obstacles);
+
+    if (abs(direction) > 0.0)
     {
-        // the class is not valid, send the appropriate result
-        result.result = COMMON_NAMES::NAV_VISION_RESULT::V_INVALID_CLASS;
-        as->setAborted(result, "Invalid Object Detection Class or Cannot go to the class");
-        ROS_INFO("Invalid Object Detection Class or Cannot go to the class");
-        return;
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_nav_goal.forward_velocity = FORWARD_VELOCITY;
+        g_nav_goal.direction = direction;
+        g_nav_goal.angular_velocity = 0;
+        g_send_nav_goal = true;
+        g_previous_state_is_go_to = false;
+        ROS_INFO("Avoiding Obstacle");
     }
-
-    // Set the desired bounding box target height according to the desired target class
-    setDesiredLabelHeightThreshold();
-    ros::Rate update_rate(UPDATE_HZ);
-    
-    do
+    else
     {
-        while (ros::ok() && g_execute_called && !g_cancel_called)
+        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+        g_nav_goal.pose = goal_loc;
+        if (g_previous_state_is_go_to)
         {
-            visionNavigation();
-            update_rate.sleep();
-            g_client->sendGoal(g_nav_goal);
-            const std::lock_guard<std::mutex> lock(g_cancel_goal_mutex); 
+            g_send_nav_goal = false;
+            if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+            {
+                ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached GoTo Goal");
+                g_reached_goal = true;
+            }
         }
-
-        if(g_cancel_called)
-        {
-            g_cancel_called = false;
-            result.result = COMMON_NAMES::NAV_VISION_RESULT::V_INTERRUPTED;
-            as->setSucceeded(result, "Cancelled Goal");
-            return;
-        }
-
-        g_execute_called = true;
+        g_previous_state_is_go_to = true;
     }
-    while(goal->mode == COMMON_NAMES::NAV_VISION_TYPE::V_FOLLOW);
-
-    result.result = COMMON_NAMES::NAV_VISION_RESULT::V_SUCCESS;
-    as->setSucceeded(result);
 }
 
 /**
@@ -326,34 +323,116 @@ void execute(const operations::NavigationVisionGoalConstPtr& goal, Server* as)
  */
 void cancelGoal()
 {
-    ROS_INFO("Cancelled Vision Goal");
-    const std::lock_guard<std::mutex> lock(g_cancel_goal_mutex); 
+    const std::lock_guard<std::mutex> lock(g_cancel_goal_mutex);
     g_cancel_called = true;
-    ROS_INFO("Done Cancelling");
+
     g_nav_goal.forward_velocity = 0;
     g_nav_goal.angular_velocity = 0;
     g_client->sendGoal(g_nav_goal);
+
+    ROS_INFO_STREAM(g_robot_name << " NAV VISION : Cancelled Goal");
 }
 
-int main(int argc, char** argv)
+/**
+ * @brief Function which gets executed when any goal is received to actionlib
+ * 
+ * @param goal for action lib
+ * @param as variable to send feedback
+ */
+void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
 {
-    if(argc != 2 && argc != 4)
+    operations::NavigationVisionResult result;
+
+    NAV_VISION_TYPE mode = (NAV_VISION_TYPE)goal->mode;
+    ROS_INFO_STREAM(g_robot_name << " NAV VISION : Goal Received - " << mode);
+
+    if (mode == NAV_VISION_TYPE::V_FOLLOW || mode == NAV_VISION_TYPE::V_REACH)
+    {
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_desired_label = goal->desired_object_label;
+        if (!check_class())
+        {
+            // the class is not valid, send the appropriate result
+            result.result = COMMON_RESULT::INVALID_GOAL;
+            as->setAborted(result, "Invalid Object Detection Class or Cannot go to the class");
+            ROS_INFO("Invalid Object Detection Class or Cannot go to the class");
+            return;
+        }
+
+        // Set the desired bounding box target height according to the desired target class
+        setDesiredLabelHeightThreshold();
+    }
+    else if (mode == NAV_VISION_TYPE::V_OBS_GOTO_GOAL)
+    {
+        g_send_nav_goal = true;
+        g_previous_state_is_go_to = false;
+    }
+
+    g_cancel_called = false;
+    g_reached_goal = false;
+    ros::Rate update_rate(UPDATE_HZ);
+
+    while (ros::ok() && !g_reached_goal && !g_cancel_called)
+    {
+        switch (mode)
+        {
+        case NAV_VISION_TYPE::V_FOLLOW:
+            visionNavigation();
+            g_client->sendGoal(g_nav_goal);
+            g_reached_goal = false;
+            break;
+        case NAV_VISION_TYPE::V_REACH:
+            visionNavigation();
+            g_client->sendGoal(g_nav_goal);
+            break;
+        case NAV_VISION_TYPE::V_OBS_GOTO_GOAL:
+            goToGoalObsAvoid(goal->goal_loc);
+            if (g_send_nav_goal)
+            {
+                g_client->sendGoal(g_nav_goal);
+            }
+            break;
+        default:
+            ROS_ERROR_STREAM(g_robot_name + " NAV VISION: Encountered Unhandled State!");
+            break;
+        }
+
+        update_rate.sleep();
+        const std::lock_guard<std::mutex> lock(g_cancel_goal_mutex);
+    }
+
+    if (g_cancel_called)
+    {
+        g_cancel_called = false;
+        result.result = COMMON_RESULT::INTERRUPTED;
+        as->setSucceeded(result, "Cancelled Goal");
+        return;
+    }
+
+    g_reached_goal = false;
+    result.result = COMMON_RESULT::SUCCESS;
+    as->setSucceeded(result);
+}
+
+int main(int argc, char **argv)
+{
+    if (argc != 2 && argc != 4)
     {
         ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
         return -1;
     }
 
-    std::string robot_name(argv[1]);
-    ros::init(argc, argv, robot_name + COMMON_NAMES::NAVIGATION_VISION_SERVER_NODE_NAME);
+    g_robot_name = argv[1];
+    ros::init(argc, argv, g_robot_name + NAVIGATION_VISION_SERVER_NODE_NAME);
     ros::NodeHandle nh;
 
-    g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-    g_client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
+    g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+    g_client = new Client(CAPRICORN_TOPIC + g_robot_name + "/" + NAVIGATION_ACTIONLIB, true);
 
-    ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
+    ros::Subscriber objects_sub = nh.subscribe(CAPRICORN_TOPIC + g_robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
 
-    Server server(nh, robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
-	server.registerPreemptCallback(&cancelGoal);
+    Server server(nh, g_robot_name + NAVIGATION_VISION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
+    server.registerPreemptCallback(&cancelGoal);
     server.start();
     ROS_INFO("Starting Navigation Vision Server");
     ros::spin();
