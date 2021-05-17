@@ -5,11 +5,7 @@
         <arg name="robot_name" value="$(arg robot_name)" />
     </include>
 
-    <group ns="/capricorn/$(arg robot_name)">
-        <!-- <include file="$(find perception)/launch/object_detection.launch">
-            <arg name="robot_name" value="$(arg robot_name)" />
-        </include> -->
-        
+    <group ns="/capricorn/$(arg robot_name)">        
         <node pkg="state_machines" type="start_scout_sm" name="scout_1_sm" args="$(arg robot_name)" output="screen" />
 
         <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>

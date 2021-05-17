@@ -1,0 +1,9 @@
+# Define the goal
+uint32 task # ENUM from COMMON_NAMES::STATE_MACHINE_TASK 
+geometry_msgs/PoseStamped goal_loc 
+---
+# Define the result
+uint32 result # See COMMON_NAMES::COMMON_RESULTS
+---
+# Define a feedback message
+bool progress # Unused

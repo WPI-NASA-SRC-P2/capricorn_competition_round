@@ -1,5 +1,5 @@
 <launch>
-    <arg name="robot_name" default="small_excavator_1" />
+    <arg name="robot_name" default="small_hauler_1" />
     <arg name="task" default="0" />
 
     <group ns="/capricorn/$(arg robot_name)">

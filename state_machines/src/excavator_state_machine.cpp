@@ -16,8 +16,7 @@ ExcavatorStateMachine::~ExcavatorStateMachine()
 
 bool ExcavatorStateMachine::goToLoc(const geometry_msgs::PoseStamped &loc)
 {
-    ROS_INFO("Going to given location");
-
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Going to given location");
     navigation_action_goal_.pose = loc;
     navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
@@ -28,7 +27,7 @@ bool ExcavatorStateMachine::goToLoc(const geometry_msgs::PoseStamped &loc)
 
 bool ExcavatorStateMachine::goToScout()
 {
-    ROS_INFO("Going going");
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Going to Scout");
     geometry_msgs::PoseStamped temp_msg;
     navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_SCOUT_CLASS;
     navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_REACH;
@@ -39,7 +38,7 @@ bool ExcavatorStateMachine::goToScout()
 
 bool ExcavatorStateMachine::parkExcavator()
 {
-    ROS_INFO("Actual Goal Received");
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Parking to Excavator");
     /////////////////////////////////////////////
     //// Hardcoded straigh walk for 1.5 meters ////
     /////////////////////////////////////////////
@@ -57,6 +56,7 @@ bool ExcavatorStateMachine::parkExcavator()
 
 bool ExcavatorStateMachine::digVolatile()
 {
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Digging Volatile");
     bool volatile_found = false;
 
     operations::ExcavatorGoal goal;
@@ -76,6 +76,7 @@ bool ExcavatorStateMachine::digVolatile()
 
 bool ExcavatorStateMachine::dumpVolatile()
 {
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Dumping Volatile");
     operations::ExcavatorGoal goal;
     goal.task = START_UNLOADING;
 
@@ -92,6 +93,7 @@ bool ExcavatorStateMachine::dumpVolatile()
 
 bool ExcavatorStateMachine::digAndDumpVolatile()
 {
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Excavating Volatile");
     bool volatile_found = false;
     while (digVolatile())
     {
@@ -104,6 +106,7 @@ bool ExcavatorStateMachine::digAndDumpVolatile()
 
 bool ExcavatorStateMachine::goToDefaultArmPosition()
 {
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Going to Default Excavator Arm Position");
     operations::ExcavatorGoal goal;
     goal.task = GO_TO_DEFAULT;
 

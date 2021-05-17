@@ -1,34 +1,45 @@
+/**
+ * @file hauler_state_machine.h
+ * @author Mahimana Bhatt (mbhatt@wpi.edu)
+ * @brief Hauler state machine which controls all the operations done by hauler
+ * @version 0.1
+ * @date 2021-05-16
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+
 #ifndef HAULER_STATE_MACHINE_H
 #define HAULER_STATE_MACHINE_H
 
-#include <ros/ros.h>
 #include <iostream>
-#include <operations/NavigationAction.h> 
-#include <actionlib/client/simple_action_client.h>
-#include <utils/common_names.h>
-#include <std_msgs/Empty.h>
-#include <operations/HaulerAction.h>
+#include <operations/NavigationAction.h>
 #include <operations/NavigationVisionAction.h>
+#include <actionlib/client/simple_action_client.h>
+#include <actionlib/server/simple_action_server.h>
+#include <utils/common_names.h>
+#include <operations/HaulerAction.h>
+#include <geometry_msgs/PointStamped.h>
+#include <state_machines/HaulerStateMachineTaskAction.h>
 #include <operations/ParkRobotAction.h>
 #include <srcp2_msgs/ScoreMsg.h>
 
 using namespace COMMON_NAMES;
 
-enum HAULER_STATES
-{
-  INIT = 0,           // Wait for Instructions
-  GO_TO_LOOKOUT,
-  GO_TO_DIG_SITE,     // Get close to the digging site when it is detected
-  FOLLOW_EXCAVATOR,   // Currently sets hauler up to park. 
-                      // Is necessary for parking method)
-  PARK_AT_EXCAVATOR,  // Park the hauler when it is good to do so
-                      // TODO: Needs a 'park' publisher by excavator
-  ACCEPT_VOLATILE,    // Just wait till volatile is completely dug
-  GO_TO_PROC_PLANT,   // Go to processing plant (visual navigation)
-  PARK_AT_HOPPER,     // Park hopper to dump the volatiles
-  DUMP_VOLATILE       // Dump volatile into the hopper
-};
+typedef actionlib::SimpleActionServer<state_machines::HaulerStateMachineTaskAction> SM_SERVER;
 
+const std::set<STATE_MACHINE_TASK> HAULER_TASKS = {
+    STATE_MACHINE_TASK::HAULER_GO_TO_LOC,
+    STATE_MACHINE_TASK::HAULER_FOLLOW_EXCAVATOR,
+    STATE_MACHINE_TASK::HAULER_PARK_AT_EXCAVATOR,
+    STATE_MACHINE_TASK::HAULER_GO_TO_PROC_PLANT,
+    STATE_MACHINE_TASK::HAULER_PARK_AT_HOPPER,
+    STATE_MACHINE_TASK::HAULER_DUMP_VOLATILE,
+    STATE_MACHINE_TASK::HAULER_UNDOCK_EXCAVATOR,
+    STATE_MACHINE_TASK::HAULER_UNDOCK_HOPPER,
+    STATE_MACHINE_TASK::HAULER_DUMP_VOLATILE_TO_PROC_PLANT,
+    STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR,
+};
 
 class HaulerStateMachine
 {
@@ -36,156 +47,117 @@ class HaulerStateMachine
 private:
   ros::NodeHandle nh_;
 
-  ros::Subscriber dig_site_location_;   // Redundant name? site and location?
-  ros::Subscriber hauler_filled_sub_;   // Subscriber to wait till hauler is filled
-  ros::Subscriber excav_ready_sub_;   // Subscriber to wait till hauler is filled
-  ros::Subscriber lookout_loc_sub_;   // Subscriber to wait till hauler is filled
-
-  ros::Publisher hauler_ready_pub_;
-
-  HAULER_STATES robot_state_ = HAULER_STATES::INIT;
   std::string robot_name_;
 
   const double SLEEP_TIME = 0.5;
-  
-  // To start and stop the state machine
-  bool state_machine_continue_ = true;
-
-  // Status of actionlib servers
-  bool nav_server_idle_ = true;
-  bool nav_vis_server_idle_ = true;
-  bool hauler_server_idle_ = true;
-  bool park_server_idle_ = true;
-  bool park_excavator_ = false;
-  bool lookout_received_ = false;
-    
-  // Variables to be set by subscriber callback
-  bool volatile_found_ = false;
-  bool hauler_filled_ = false;
-  geometry_msgs::PoseStamped dig_site_pose_;
-  geometry_msgs::PoseStamped lookout_pose_;
 
   // Actionlib servers' defining
   typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
-  NavigationClient* navigation_client_;
+  NavigationClient *navigation_client_;
   operations::NavigationGoal navigation_action_goal_;
 
   typedef actionlib::SimpleActionClient<operations::HaulerAction> HaulerClient;
-  HaulerClient* hauler_client_;
+  HaulerClient *hauler_client_;
   operations::HaulerGoal hauler_goal_;
 
   typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> NavigationVisionClient;
-  NavigationVisionClient* navigation_vision_client_;
+  NavigationVisionClient *navigation_vision_client_;
   operations::NavigationVisionGoal navigation_vision_goal_;
 
   typedef actionlib::SimpleActionClient<operations::ParkRobotAction> ParkRobotClient;
-  ParkRobotClient* park_robot_client_;
+  ParkRobotClient *park_robot_client_;
   operations::ParkRobotGoal park_robot_goal_;
-
-  std::mutex dig_site_mutex;
-  std::mutex excavator_ready_mutex;
-  std::mutex lookout_received_mutex;
-  std::mutex hauler_filled_mutex;
-
-
-  /**
-   * @brief Callback for the location of found digging site
-   * 
-   * @param msg 
-   */
-  void digSiteLocCB(const geometry_msgs::PoseStamped &msg);
-
-
-  /**
-   * @brief Callback, as the signal for hauler to go back to hopper for dumping volatiles
-   * 
-   * @param msg 
-   */
-  void haulerFilledCB(const std_msgs::Empty &msg);
-
-
-  /**
-   * @brief Callback for notifying state machine that excavator has completed parking.
-   * 
-   * @param msg 
-   */
-  void excavReadyCB(const std_msgs::Empty &msg);
-
-  /**
-   * @brief Callback for notifying state machine that lookout location has been received.
-   *        Also saves the lookout location received.
-   * 
-   * @param msg 
-   */
-  void lookoutLocCB(const geometry_msgs::PoseStamped &msg);
-
-  /**
-   * @brief Waits for the scout to find the volatile
-   *        Basically does nothing
-   *        Ideally, should be used to stay close to Excavator
-   *        for minimising the time when the volatile is found
-   * 
-   */
-  void initState();
-
 
   /**
    * @brief Currently, there are specific requirements for the parking to be successful. 
    *          These conditions are taken care of in this function.
    *          Condition: The Hauler should be in the lower 3rd quadrant (bottom right) of the excavator
    * 
+   * @return true : if task is successful
+   * @return false : if task is failed or aborted or interrupted
    */
-  void goToDigSite();
-
+  bool goToLoc(const geometry_msgs::PoseStamped &loc); //Needs comment
 
   /**
    * @brief Visual Navigation: Currently, takes hauler close to the excavator for parking 
    * 
+   * @return true : if task is successful
+   * @return false : if task is failed or aborted or interrupted
    */
-  void followExcavator();
-
+  bool followExcavator();
 
   /**
    * @brief Parks the excavator for dumping
    * 
+   * @return true : if task is successful
+   * @return false : if task is failed or aborted or interrupted
    */
-  void parkAtExcavator();
-
-
-  /**
-   * @brief Hang on until excavator publishes a message denoting digging complete
-   * 
-   */
-  void waitTillFilled();
-
+  bool parkAtExcavator(std::string excavator_name = OBJECT_DETECTION_EXCAVATOR_CLASS);
 
   /**
    * @brief Visual navigation: Will take the hauler to processing plant
    * 
+   * @return true : if task is successful
+   * @return false : if task is failed or aborted or interrupted
    */
-  void goToProcPlant();
+  bool goToProcPlant();
 
   /**
    * @brief Parks the hauler at the hopper for dumping the volatiles
    * 
+   * @return true : if task is successful
+   * @return false : if task is failed or aborted or interrupted
    */
-  void parkAtHopper();
+  bool parkAtHopper();
 
   /**
    * @brief Dump the volatile in hopper
    * 
+   * @return true : if task is successful
+   * @return false : if task is failed or aborted or interrupted
    */
-  void dumpVolatile();
+  bool dumpVolatile();
 
-  void goToLookout();
+  /**
+   * @brief Undocks hauler from excavator
+   * 
+   * @return true : if task is successful
+   * @return false : if task is failed or aborted or interrupted
+   */
+  bool undockExcavator();
+
+  /**
+   * @brief Undocks hauler from hopper
+   * 
+   * @return true : if task is successful
+   * @return false : if task is failed or aborted or interrupted
+   */
+  bool undockHopper();
+
+  /**
+   * @brief Goes to processing plant using navigation or navigation vision,
+   * parks the hauler wrt hopper, dumps the volatile and undocks the hauler from hopper
+   * 
+   * @return true : if task is successful
+   * @return false : if task is failed or aborted or interrupted
+   */
+  bool dumpVolatileToProcPlant();
+
+  /**
+   * @brief Goes back to excavator using navigation or navigation vision
+   * 
+   * @return true : if task is successful
+   * @return false : if task is failed or aborted or interrupted
+   */
+  bool goBackToExcavator();
 
 public:
-  HaulerStateMachine(ros::NodeHandle nh, const std::string& robot_name);
+  HaulerStateMachine(ros::NodeHandle nh, const std::string &robot_name);
 
   ~HaulerStateMachine();
 
-  void startStateMachine();
-  void stopStateMachine(); // Do we need it though?
+  friend void cancelGoal(HaulerStateMachine *sm);
+  friend void execute(const state_machines::HaulerStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, HaulerStateMachine *sm);
 };
 
 #endif // HAULER_STATE_MACHINE_H

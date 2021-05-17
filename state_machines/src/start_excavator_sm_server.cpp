@@ -39,7 +39,7 @@ bool checkTask(STATE_MACHINE_TASK task)
  */
 void execute(const state_machines::ExcavatorStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ExcavatorStateMachine *sm)
 {
-	ROS_INFO_STREAM("Received " << g_robot_name << "  State Machine Goal: " << goal->task);
+	ROS_INFO_STREAM(g_robot_name << " State Machine: Received Goal: " << goal->task);
 
 	state_machines::ExcavatorStateMachineTaskResult result;
 

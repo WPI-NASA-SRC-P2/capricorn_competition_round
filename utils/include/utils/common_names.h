@@ -169,35 +169,37 @@ namespace COMMON_NAMES
   /****** STATE MACHINE ENUM ******/
   enum STATE_MACHINE_TASK
   {
-    // SCOUT STATES //
-    SCOUT_SEARCH_VOLATILE,    // Execute spiral motion to search for the volatiles. 
-    SCOUT_STOP_SEARCH,        // Stop executing the search algorithm.
-    SCOUT_LOCATE_VOLATILE,    // Pinpoint the location of the volatile
-    SCOUT_UNDOCK,             // Move the Scout away from the Excavator
+    /**************SCOUT STATES**************/
+    SCOUT_SEARCH_VOLATILE, // Execute spiral motion to search for the volatiles.
+    SCOUT_STOP_SEARCH,     // Stop executing the search algorithm.
+    SCOUT_LOCATE_VOLATILE, // Pinpoint the location of the volatile
+    SCOUT_UNDOCK,          // Move the Scout away from the Excavator
 
-    // EXCAVATOR STATES //
-    EXCAVATOR_GO_TO_LOC,      // Takes Excavator to a location from which it will
-                                // be quicker to get to the digging location
-    EXCAVATOR_GO_TO_SCOUT,    // Get close to the volatile when it is detected
-    EXCAVATOR_PARK_AND_PUB,   // Publish a message that excavator has reached, 
-                                // And park where the scout was located. 
-                            // And park where the scout was located.
-                                // And park where the scout was located. 
-                            // And park where the scout was located.
-                                // And park where the scout was located. 
-    EXCAVATOR_DIG_AND_DUMP_VOLATILE,
-    EXCAVATOR_GOTO_DEFAULT_ARM_POSE,
+    /**************EXCAVATOR STATES**************/
+    EXCAVATOR_GO_TO_LOC,             // Takes Excavator to a location from which it will
+                                     // be quicker to get to the digging location
+    EXCAVATOR_GO_TO_SCOUT,           // Get close to the volatile when it is detected
+    EXCAVATOR_PARK_AND_PUB,          // Publish a message that excavator has reached,
+                                     // And park where the scout was located.
+    EXCAVATOR_DIG_AND_DUMP_VOLATILE, // Takes care of digging, and dumping
+                                     // the volatile in hauler if volatile is found
+    EXCAVATOR_GOTO_DEFAULT_ARM_POSE, // Moves excavator's arm to a default position used for object detection
 
-    HAULER_GO_TO_LOC,         // Takes Hauler to a location
-    HAULER_FOLLOW_EXCAVATOR,  // Hauler follows excavator
-    HAULER_PARK_AT_EXCAVATOR, // Hauler parks at excavator
-    HAULER_GO_TO_PROC_PLANT,  // Hauler goes to processing plant
-    HAULER_PARK_AT_HOPPER,
-    HAULER_DUMP_VOLATILE,
-    HAULER_UNDOCK_EXCAVATOR,
-    HAULER_UNDOCK_HOPPER,
-    HAULER_DUMP_VOLATILE_TO_PROC_PLANT,
-    HAULER_GO_BACK_TO_EXCAVATOR,
+    /**************HAULER STATES**************/
+    HAULER_GO_TO_LOC,                   // Takes Hauler to a location
+    HAULER_DUMP_VOLATILE_TO_PROC_PLANT, // Undocks hauler from excavator, goes to processing plant,
+                                        // parks hauler to processing plant, dumps volatile and
+                                        // undocks hauler from hopper
+    HAULER_GO_BACK_TO_EXCAVATOR,        // Takes hauler from any location to excavator and parks
+    HAULER_PARK_AT_EXCAVATOR,           // Hauler parks at excavator
+    HAULER_FOLLOW_EXCAVATOR,            // Hauler follows excavator
+
+    // redundant modes for hauler (everything is taken care by above modes)
+    HAULER_GO_TO_PROC_PLANT, // Hauler goes to processing plant
+    HAULER_PARK_AT_HOPPER,   // Parks hauler wrt hopper
+    HAULER_DUMP_VOLATILE,    // Empty hauler's bin
+    HAULER_UNDOCK_EXCAVATOR, // undock from excavator (basically backward motion from excavator)
+    HAULER_UNDOCK_HOPPER,    // undock from hopper (backward motion from hopper)
   };
 
 } // namespace CAPRICORN_COMMON_NAMES
