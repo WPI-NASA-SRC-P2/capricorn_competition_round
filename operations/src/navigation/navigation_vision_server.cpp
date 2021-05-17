@@ -36,8 +36,8 @@ const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE =
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05;
 std::mutex g_objects_mutex, g_cancel_goal_mutex;
 std::string g_desired_label;
-bool g_centered = false, g_reached_goal = false, g_cancel_called = false, g_send_nav_goal = false, g_previous_state_is_go_to = false;
-int g_height_threshold = 400, g_lost_detection_times = 0, g_true_detection_times = 0, g_revolve_direction = -1;
+bool g_reached_goal = false, g_cancel_called = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false;
+int g_height_threshold = 400;
 
 enum HEIGHT_THRESHOLD
 {
@@ -113,7 +113,156 @@ bool check_class()
 void objectsCallback(const perception::ObjectArray &objs)
 {
     const std::lock_guard<std::mutex> lock(g_objects_mutex);
+    g_message_received = true;
     g_objects = objs;
+}
+
+/**
+ * @brief Function for centering robot wrt object
+ * 
+ * Steps:
+ * 1. Rotate robot util the desired object detection class has its bounding box in the center of the frame
+ */
+bool center()
+{
+    const std::lock_guard<std::mutex> lock(g_objects_mutex);
+    perception::ObjectArray objects = g_objects;
+    // Initialize location and size variables
+    float center_obj = INIT_VALUE, error_angle = WIDTH_IMAGE;
+
+    static float prev_angular_velocity;
+    static int lost_detection_times = 0, true_detection_times = 0, revolve_direction = -1, centered_times = 0;
+
+    if (centered_times > 10)
+    {
+        g_nav_goal.angular_velocity = 0;
+        centered_times = 0;
+        ROS_INFO_STREAM(g_robot_name << " NAV VISION : Center finished to " << g_desired_label);
+        return true;
+    }
+
+    // Find the desired objects
+    for (int i = 0; i < objects.number_of_objects; i++)
+    {
+        perception::Object object = objects.obj.at(i);
+        if (object.label == g_desired_label)
+        {
+            // Store the object's center
+            center_obj = object.center.x;
+        }
+    }
+
+    if (center_obj < HEIGHT_THRESHOLD::MINIMUM_THRESH)
+    {
+        // object not detected, rotate on robot's axis to find the object
+        lost_detection_times++;
+        true_detection_times = 0;
+        if (lost_detection_times > LOST_FRAME_THRESHOLD)
+        {
+            g_nav_goal.angular_velocity = revolve_direction * ANGULAR_VELOCITY;
+            g_nav_goal.forward_velocity = 0;
+        }
+        return false;
+    }
+    else
+    {
+        g_nav_goal.direction = 0;
+        lost_detection_times = 0;
+        true_detection_times++;
+
+        // object found, compute the error in angle i.e. the error between the center of image and center of bounding box
+        float center_img = (WIDTH_IMAGE / 2.0);
+        error_angle = center_img - center_obj;
+
+        if (error_angle < 0)
+        {
+            revolve_direction = REVOLVE_DIRECTION::CLOCK;
+        }
+        else
+        {
+            revolve_direction = REVOLVE_DIRECTION::COUNTER_CLOCK;
+        }
+
+        if (abs(error_angle) < ANGLE_THRESHOLD_NARROW)
+        {
+            // if the bounding box is in the center of image following the narrow angle
+            centered_times++;
+
+            if (centered_times > 10)
+            {
+                g_nav_goal.angular_velocity = 0;
+            }
+        }
+        else
+        {
+            centered_times = 0;
+            // proportional controller for calculating angular velocity needed to center the object in the image
+            g_nav_goal.angular_velocity = error_angle * PROPORTIONAL_ANGLE;
+            g_nav_goal.forward_velocity = 0;
+
+            if (g_nav_goal.angular_velocity < prev_angular_velocity - g_angular_vel_step_size)
+            {
+                g_nav_goal.angular_velocity = prev_angular_velocity - g_angular_vel_step_size;
+            }
+            if (g_nav_goal.angular_velocity > prev_angular_velocity + g_angular_vel_step_size)
+            {
+                g_nav_goal.angular_velocity = prev_angular_velocity + g_angular_vel_step_size;
+            }
+        }
+    }
+
+    // maintaing previous values
+    prev_angular_velocity = g_nav_goal.angular_velocity;
+}
+
+/**
+ * @brief Function for centering mode for robot wrt object
+ * 
+ * Steps:
+ * 1. Rotate robot util the desired object detection class has its bounding box in the center of the frame
+ */
+void centering()
+{
+    if (center())
+        g_reached_goal = true;
+}
+
+/**
+ * @brief Function for navigation robot away from an object
+ * 
+ * Steps:
+ * 1. Rotate robot util the desired object detection class has its bounding box in the center of the frame
+ * 2. Drive back from the object
+ */
+void undock()
+{
+    static bool centered = false;
+
+    if (centered)
+    {
+        if (!g_send_nav_goal && g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+        {
+            ROS_INFO_STREAM(g_robot_name << " NAV VISION: Undocked Successfully");
+            g_reached_goal = true;
+            centered = false;
+            g_send_nav_goal = false;
+        }
+        if (g_send_nav_goal)
+        {
+            geometry_msgs::PoseStamped pt;
+            pt.header.frame_id = g_robot_name + ROBOT_BASE;
+            pt.pose.position.x = -5;
+            g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+            g_nav_goal.pose = pt;
+            g_client->sendGoal(g_nav_goal);
+            g_send_nav_goal = false;
+        }
+    }
+
+    if (!centered)
+    {
+        centered = center();
+    }
 }
 
 /**
@@ -132,14 +281,15 @@ void visionNavigation()
 {
     const std::lock_guard<std::mutex> lock(g_objects_mutex);
     perception::ObjectArray objects = g_objects;
-    // Initialize location and size variables
-    float center_obj = INIT_VALUE, height_obj = INIT_VALUE;
-
-    // Initialize error, P Control, and necessary thresholds
-    float error_angle = WIDTH_IMAGE, error_height = HEIGHT_IMAGE;
 
     static float prev_angular_velocity;
-    static bool prev_centered;
+    static bool prev_centered, centered = false;
+    static int lost_detection_times = 0, true_detection_times = 0, revolve_direction = -1;
+
+    // Initialize location and size variables
+    float center_obj = INIT_VALUE, height_obj = INIT_VALUE;
+    // Initialize error, P Control, and necessary thresholds
+    float error_angle = WIDTH_IMAGE, error_height = HEIGHT_IMAGE;
 
     std::vector<perception::Object> obstacles;
     float err_obstacle = 0;
@@ -147,7 +297,7 @@ void visionNavigation()
     bool target_processing_plant = (g_desired_label == OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
     bool target_excavator = (g_desired_label == OBJECT_DETECTION_EXCAVATOR_CLASS);
 
-    // Find the desired object
+    // Find the desired objects
     for (int i = 0; i < objects.number_of_objects; i++)
     {
         perception::Object object = objects.obj.at(i);
@@ -176,11 +326,11 @@ void visionNavigation()
     if (center_obj < HEIGHT_THRESHOLD::MINIMUM_THRESH)
     {
         // object not detected, rotate on robot's axis to find the object
-        g_lost_detection_times++;
-        g_true_detection_times = 0;
-        if (g_lost_detection_times > LOST_FRAME_THRESHOLD)
+        lost_detection_times++;
+        true_detection_times = 0;
+        if (lost_detection_times > LOST_FRAME_THRESHOLD)
         {
-            g_nav_goal.angular_velocity = g_revolve_direction * ANGULAR_VELOCITY;
+            g_nav_goal.angular_velocity = revolve_direction * ANGULAR_VELOCITY;
             g_nav_goal.forward_velocity = 0;
         }
         return;
@@ -202,8 +352,8 @@ void visionNavigation()
 
         g_nav_goal.direction = 0;
 
-        g_lost_detection_times = 0;
-        g_true_detection_times++;
+        lost_detection_times = 0;
+        true_detection_times++;
         // object found, compute the error in angle i.e. the error between the center of image and center of bounding box
         float center_img = (WIDTH_IMAGE / 2.0) + err_obstacle;
         error_angle = center_img - center_obj;
@@ -212,30 +362,30 @@ void visionNavigation()
 
         if (error_angle < 0)
         {
-            g_revolve_direction = REVOLVE_DIRECTION::CLOCK;
+            revolve_direction = REVOLVE_DIRECTION::CLOCK;
         }
         else
         {
-            g_revolve_direction = REVOLVE_DIRECTION::COUNTER_CLOCK;
+            revolve_direction = REVOLVE_DIRECTION::COUNTER_CLOCK;
         }
 
         if (abs(error_angle) > ANGLE_THRESHOLD_WIDE)
         {
             // if the bounding box is not in the center of the image
-            g_centered = false;
+            centered = false;
         }
 
-        if (g_centered || abs(error_angle) < ANGLE_THRESHOLD_NARROW)
+        if (centered || abs(error_angle) < ANGLE_THRESHOLD_NARROW)
         {
             // if the bounding box is in the center of image following the narrow angle
-            g_centered = true;
+            centered = true;
             g_nav_goal.angular_velocity = 0;
-            if (error_height < 0 && g_true_detection_times > FOUND_FRAME_THRESHOLD)
+            if (error_height < 0 && true_detection_times > FOUND_FRAME_THRESHOLD)
             {
                 // If the object is having desired height, stop the robot
                 g_nav_goal.forward_velocity = 0;
                 g_reached_goal = true;
-                g_centered = false;
+                centered = false;
                 ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached Goal - " << g_desired_label);
                 return;
             }
@@ -262,7 +412,7 @@ void visionNavigation()
         }
     }
 
-    if (prev_centered && !g_centered)
+    if (prev_centered && !centered)
     {
         g_nav_goal.angular_velocity = 0;
         g_nav_goal.forward_velocity = 0;
@@ -270,7 +420,7 @@ void visionNavigation()
 
     // maintaing previous values
     prev_angular_velocity = g_nav_goal.angular_velocity;
-    prev_centered = g_centered;
+    prev_centered = centered;
 }
 
 /**
@@ -346,7 +496,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     NAV_VISION_TYPE mode = (NAV_VISION_TYPE)goal->mode;
     ROS_INFO_STREAM(g_robot_name << " NAV VISION : Goal Received - " << mode);
 
-    if (mode == NAV_VISION_TYPE::V_FOLLOW || mode == NAV_VISION_TYPE::V_REACH)
+    if (mode == NAV_VISION_TYPE::V_FOLLOW || mode == NAV_VISION_TYPE::V_REACH || mode == NAV_VISION_TYPE::V_UNDOCK || mode == NAV_VISION_TYPE::V_CENTER)
     {
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_desired_label = goal->desired_object_label;
@@ -364,16 +514,20 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     }
     else if (mode == NAV_VISION_TYPE::V_OBS_GOTO_GOAL)
     {
-        g_send_nav_goal = true;
         g_previous_state_is_go_to = false;
     }
 
+    g_send_nav_goal = true;
     g_cancel_called = false;
     g_reached_goal = false;
+
     ros::Rate update_rate(UPDATE_HZ);
 
     while (ros::ok() && !g_reached_goal && !g_cancel_called)
     {
+        if (!g_message_received)
+            continue;
+
         switch (mode)
         {
         case NAV_VISION_TYPE::V_FOLLOW:
@@ -385,6 +539,17 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
             visionNavigation();
             g_client->sendGoal(g_nav_goal);
             break;
+        case NAV_VISION_TYPE::V_UNDOCK:
+            undock();
+            if (g_send_nav_goal)
+            {
+                g_client->sendGoal(g_nav_goal);
+            }
+            break;
+        case NAV_VISION_TYPE::V_CENTER:
+            centering();
+            g_client->sendGoal(g_nav_goal);
+            break;
         case NAV_VISION_TYPE::V_OBS_GOTO_GOAL:
             goToGoalObsAvoid(goal->goal_loc);
             if (g_send_nav_goal)
@@ -394,7 +559,9 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
             break;
         default:
             ROS_ERROR_STREAM(g_robot_name + " NAV VISION: Encountered Unhandled State!");
-            break;
+            result.result = COMMON_RESULT::INVALID_GOAL;
+            as->setSucceeded(result, "Cancelled Goal");
+            return;
         }
 
         update_rate.sleep();

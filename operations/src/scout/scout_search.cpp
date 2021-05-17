@@ -138,7 +138,7 @@ void driveSprial()
       g_nav_goal.drive_mode = NAV_TYPE::REVOLVE;
       g_nav_goal.point = center_of_rot;
       g_nav_goal.forward_velocity = 2.0;
-      ROS_WARN_STREAM("Circular Motion radius: " << center_of_rot.point.y << "\tdist: " << dist);
+      ROS_INFO_STREAM("Circular Motion radius: " << center_of_rot.point.y << "\tdist: " << dist);
       g_last_dist = 100; // Just to make it big for the next iteration
       g_new_trajectory = true;
     }
@@ -148,7 +148,7 @@ void driveSprial()
       point_0 = g_spiral_points.at(0).point;
       point_2 = g_spiral_points.at(2).point;
 
-      ROS_WARN_STREAM("Going to goal dist:" << dist);
+      ROS_INFO_STREAM("Going to goal dist:" << dist);
 
       g_nav_goal.drive_mode = NAV_TYPE::GOAL;
       g_nav_goal.pose.pose.position = g_spiral_points.at(1).point;
@@ -160,7 +160,6 @@ void driveSprial()
     }
     else
     {
-      ROS_WARN_STREAM("Dist:" << dist << "\tLast Dist:" << g_last_dist);
       g_last_dist = dist;
       g_new_trajectory = false;
     }
@@ -269,7 +268,6 @@ int main(int argc, char **argv)
   while (ros::ok() && !cb_init)
   {
     ros::Duration(0.1).sleep();
-    ROS_WARN_STREAM(cb_init);
     ros::spinOnce();
   }
 
