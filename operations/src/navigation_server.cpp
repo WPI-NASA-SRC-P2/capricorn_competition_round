@@ -9,6 +9,8 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 	initPublishers(nh, robot_name);
 	initSubscribers(nh, robot_name);
 
+	nh.param("crab_drive", CRAB_DRIVE_, false);
+
 	printf("Starting navigation server...\n");
 
 	// Action server
@@ -469,9 +471,21 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			// Needed, otherwise we get extrapolation into the past
 			// current_waypoint.header.stamp = ros::Time(0);
 
-			//Turn wheels to heading
-			ROS_INFO("Rotating wheels\n");
-			bool turned_successfully = rotateWheels(current_waypoint);
+			bool turned_successfully;
+
+			// Based on the parameter in this server's constructor, either do crab drive or rotate in place drive.
+			if(CRAB_DRIVE_)
+			{
+				// Turn wheels to heading
+				ROS_INFO("Rotating wheels\n");
+				turned_successfully = rotateWheels(current_waypoint);
+			}
+			else
+			{
+				ROS_INFO("Rotating robot\n");
+				turned_successfully = rotateRobot(current_waypoint);
+			}
+
 			ros::Duration(1.0).sleep();
 
 			if (!turned_successfully)
