@@ -146,7 +146,6 @@ include_directories(
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/navigation/navigation_algorithm.cpp
-  src/scout/scout_state_machine.cpp
   src/navigation/navigation_server.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
@@ -243,12 +242,6 @@ ${catkin_LIBRARIES}
 ###### SCOUT ######
 ###################
 
-add_executable(start_scout_sm src/scout/start_scout_sm.cpp)
-add_dependencies(start_scout_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(start_scout_sm
-  ${catkin_LIBRARIES} ${PROJECT_NAME}
-)
-
 add_executable(resource_localiser src/scout/resource_localiser.cpp)
 add_dependencies(resource_localiser ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(resource_localiser
@@ -323,7 +316,7 @@ ${catkin_LIBRARIES}
 # All the cpp executable nodes should be listed here as well
 install(TARGETS navigation_client trajectory_processor wheel_speed_processing
                 excavator_actionlib_client hauler_actionlib_server #excavator_actionlib_server
-                hauler_actionlib_client start_scout_sm resource_localiser resource_localiser_tester
+                hauler_actionlib_client resource_localiser resource_localiser_tester
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
