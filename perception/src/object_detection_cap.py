@@ -215,7 +215,7 @@ def detectionAlgorithm():
 
     # run object detection on input image
     output_dict = g_model_fn(input_tensor)
-    rospy.loginfo_once("Started Object Detection Finally")
+    rospy.logwarn_once("Started Object Detection Finally")
 
     # processing object detected data
     num_detections = int(output_dict.pop('num_detections'))
@@ -269,7 +269,7 @@ def detectionCallback(image, disparity):
     """
     Camera image and disparity combined callback
     """  
-    rospy.loginfo_once("Callback Working")
+    rospy.logwarn_once("Callback Working")
 
     global g_image
     global g_disparity
@@ -309,7 +309,7 @@ def initObjectDetection(path_to_model, path_to_label_map):
     # initialize category index to convert integer indices to class labels
     global g_category_index
     g_category_index = label_map_util.create_category_index_from_labelmap(str.format(path_to_label_map), use_display_name=True)
-    rospy.loginfo("Registering loop callback for {}".format(g_robot_name))       
+    rospy.logwarn("Registering loop callback for {}".format(g_robot_name))       
 
     while not rospy.is_shutdown():
         if(g_disparity is not None and g_image is not None):
