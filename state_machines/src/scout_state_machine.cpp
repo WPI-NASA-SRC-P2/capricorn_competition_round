@@ -27,10 +27,8 @@ bool ScoutStateMachine::stopSearchingVolatile()
 bool ScoutStateMachine::resumeSearchingVolatile(const bool resume)
 {
   spiralClient_ = nh_.serviceClient<operations::Spiral>(SCOUT_SEARCH_SERVICE);
-  ros::Duration(1).sleep();
-  ROS_INFO_STREAM("Spiraling");
   operations::Spiral srv;
-  srv.request.resume_spiral_motion = false;
+  srv.request.resume_spiral_motion = resume;
   return spiralClient_.call(srv);
 }
 
