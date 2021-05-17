@@ -36,11 +36,11 @@ bool checkTask(STATE_MACHINE_TASK task)
  * @param as variable to send feedback
  * @param sm HaulerStateMachine object
  */
-void execute(const state_machines::HaulerStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, HaulerStateMachine *sm)
+void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, HaulerStateMachine *sm)
 {
     ROS_INFO_STREAM(g_robot_name << " State Machine: Received Goal: " << goal->task);
 
-    state_machines::HaulerStateMachineTaskResult result;
+    state_machines::RobotStateMachineTaskResult result;
 
     // Waiting for the servers to start
     sm->navigation_client_->waitForServer();

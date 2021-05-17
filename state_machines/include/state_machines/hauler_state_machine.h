@@ -20,13 +20,13 @@
 #include <utils/common_names.h>
 #include <operations/HaulerAction.h>
 #include <geometry_msgs/PointStamped.h>
-#include <state_machines/HaulerStateMachineTaskAction.h>
+#include <state_machines/RobotStateMachineTaskAction.h>
 #include <operations/ParkRobotAction.h>
 #include <srcp2_msgs/ScoreMsg.h>
 
 using namespace COMMON_NAMES;
 
-typedef actionlib::SimpleActionServer<state_machines::HaulerStateMachineTaskAction> SM_SERVER;
+typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
 
 const std::set<STATE_MACHINE_TASK> HAULER_TASKS = {
     STATE_MACHINE_TASK::HAULER_GO_TO_LOC,
@@ -157,7 +157,7 @@ public:
   ~HaulerStateMachine();
 
   friend void cancelGoal(HaulerStateMachine *sm);
-  friend void execute(const state_machines::HaulerStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, HaulerStateMachine *sm);
+  friend void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, HaulerStateMachine *sm);
 };
 
 #endif // HAULER_STATE_MACHINE_H

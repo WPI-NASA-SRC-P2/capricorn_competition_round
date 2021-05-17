@@ -37,12 +37,12 @@ bool checkTask(STATE_MACHINE_TASK task)
  * @param as variable to send feedback
  * @param sm ScoutStateMachine object
  */
-void execute(const state_machines::ScoutStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ScoutStateMachine *sm)
+void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ScoutStateMachine *sm)
 {
 	ROS_INFO_STREAM("Received " << g_robot_name << "  State Machine Goal: " << goal->task);
 
-	state_machines::ScoutStateMachineTaskResult result;
-  state_machines::ScoutStateMachineTaskFeedback feedback;
+	state_machines::RobotStateMachineTaskResult result;
+  state_machines::RobotStateMachineTaskFeedback feedback;
   feedback.volatile_found = false;
   as->publishFeedback(feedback);
 

@@ -9,11 +9,11 @@
 #include <utils/common_names.h>
 #include <operations/ExcavatorAction.h>
 #include <geometry_msgs/PointStamped.h>
-#include <state_machines/ExcavatorStateMachineTaskAction.h>
+#include <state_machines/RobotStateMachineTaskAction.h>
 
 using namespace COMMON_NAMES;
 
-typedef actionlib::SimpleActionServer<state_machines::ExcavatorStateMachineTaskAction> SM_SERVER;
+typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
 
 const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
     STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOC,
@@ -102,7 +102,7 @@ public:
   ~ExcavatorStateMachine();
 
   friend void cancelGoal(ExcavatorStateMachine *sm);
-  friend void execute(const state_machines::ExcavatorStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ExcavatorStateMachine *sm);
+  friend void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ExcavatorStateMachine *sm);
 };
 
 #endif // EXCAVATOR_STATE_MACHINE_H

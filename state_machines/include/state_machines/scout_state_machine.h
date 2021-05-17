@@ -4,14 +4,14 @@
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/server/simple_action_server.h>
 #include <utils/common_names.h>
-#include <state_machines/ScoutStateMachineTaskAction.h>
+#include <state_machines/RobotStateMachineTaskAction.h>
 #include <operations/Spiral.h>
 #include <operations/ResourceLocaliserAction.h>
 #include <srcp2_msgs/VolSensorMsg.h>
 
 using namespace COMMON_NAMES;
 
-typedef actionlib::SimpleActionServer<state_machines::ScoutStateMachineTaskAction> SM_SERVER;
+typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
 
 const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
     STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE,
@@ -79,7 +79,7 @@ public:
   ~ScoutStateMachine();
 
   friend void cancelGoal(ScoutStateMachine *sm);
-  friend void execute(const state_machines::ScoutStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ScoutStateMachine *sm);
+  friend void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ScoutStateMachine *sm);
 };
 
 // #endif // SCOUT_STATE_MACHINE_H
