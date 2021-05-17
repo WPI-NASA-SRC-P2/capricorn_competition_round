@@ -1,11 +1,11 @@
 <launch>
-    <arg name="robot_name" default="small_scout_1" />
+    <!-- <arg name="robot_name" default="small_scout_1" /> -->
 
-    <include file="$(find operations)/launch/start_scout.launch"/>
+    <include file="$(find state_machines)/launch/start_scout.launch"/>
 
-    <include file="$(find operations)/launch/start_excavator.launch"/>
+    <include file="$(find state_machines)/launch/start_excavator.launch"/>
 
-    <include file="$(find operations)/launch/start_hauler.launch"/>
+    <include file="$(find state_machines)/launch/start_hauler.launch"/>
 
-    <node name="scheduler" pkg="team_level" type="scheduler" args="$(arg robot_name)" output="screen" />
+    <!-- <node name="scheduler" pkg="team_level" type="scheduler" args="$(arg robot_name)" output="screen" /> -->
 </launch>
