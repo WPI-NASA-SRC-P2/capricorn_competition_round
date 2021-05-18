@@ -126,24 +126,24 @@ void Scheduler::updateHauler()
 
 void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
 {
-  sendRobotGoal(scout_client_, scout_goal_, task);
+  sendRobotGoal(SCOUT, scout_client_, scout_goal_, task);
 }
 
 void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
 {
-  sendRobotGoal(excavator_client_, excavator_goal_, task);
+  sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task);
 }
 
 void Scheduler::sendHaulerGoal(const STATE_MACHINE_TASK task)
 {
-  sendRobotGoal(hauler_client_, hauler_goal_, task);
+  sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task);
 }
 
-void Scheduler::sendRobotGoal(RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task)
+void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task)
 {
   if (robot_goal.task != task)
   {
-    ROS_WARN_STREAM("Setting Task" << task);
+    ROS_WARN_STREAM("SCHEDULER : Setting " << robot_name << " Task: " << task);
     robot_goal.task = task;
     robot_client->sendGoal(robot_goal);
   }

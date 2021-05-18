@@ -67,7 +67,7 @@ private:
 
   void startExcavator();
 
-  void sendRobotGoal(RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task);
+  void sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task);
 
   void sendScoutGoal(const STATE_MACHINE_TASK task);
 
