@@ -190,13 +190,14 @@ namespace COMMON_NAMES
     HAULER_GO_BACK_TO_EXCAVATOR = 11,        // Takes hauler from any location to excavator and parks
     HAULER_PARK_AT_EXCAVATOR = 12,           // Hauler parks at excavator
     HAULER_FOLLOW_EXCAVATOR = 13,            // Hauler follows excavator
+    HAULER_RESET_ODOM = 14,
 
     // redundant modes for hauler (everything is taken care by above modes)
-    HAULER_GO_TO_PROC_PLANT = 14, // Hauler goes to processing plant
+    HAULER_GO_TO_PROC_PLANT = 15, // Hauler goes to processing plant
     HAULER_PARK_AT_HOPPER = 16,   // Parks hauler wrt hopper
     HAULER_DUMP_VOLATILE = 17,    // Empty hauler's bin
     HAULER_UNDOCK_EXCAVATOR = 18, // undock from excavator (basically backward motion from excavator)
-    HAULER_UNDOCK_HOPPER = 19,    // undock from hopper (backward motion from hopper)
+    HAULER_UNDOCK_HOPPER = 19    // undock from hopper (backward motion from hopper)
   };
 
 } // namespace CAPRICORN_COMMON_NAMES

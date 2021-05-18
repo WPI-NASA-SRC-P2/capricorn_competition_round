@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   srcp2_msgs
   tf2
   tf2_ros
+  maploc
   operations
 )
 
@@ -118,7 +119,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES state_machines
-  CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs operations
+  CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs operations 
   DEPENDS system_lib
 )
 
