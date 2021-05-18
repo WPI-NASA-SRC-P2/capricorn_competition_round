@@ -186,7 +186,7 @@ void spiralSearch()
   {
     g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
     g_nav_goal.forward_velocity = FORWARD_VELOCITY;
-    g_nav_goal.direction = direction;
+    g_nav_goal.direction = std::copysign(M_PI_2, direction);
     g_nav_goal.angular_velocity = 0;
     g_new_trajectory = true;
     ROS_INFO("Avoiding Obstacle");
@@ -221,6 +221,7 @@ void execute()
       g_nav_goal.angular_velocity = 0;
       g_client->sendGoal(g_nav_goal);
       new_stop_call = false;
+      g_going_to_goal = false;
     }
 
     update_rate.sleep();
