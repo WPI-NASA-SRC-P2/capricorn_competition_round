@@ -23,6 +23,7 @@
 #include <state_machines/RobotStateMachineTaskAction.h>
 #include <operations/ParkRobotAction.h>
 #include <srcp2_msgs/ScoreMsg.h>
+#include <maploc/ResetOdom.h>
 
 using namespace COMMON_NAMES;
 
@@ -39,6 +40,7 @@ const std::set<STATE_MACHINE_TASK> HAULER_TASKS = {
     STATE_MACHINE_TASK::HAULER_UNDOCK_HOPPER,
     STATE_MACHINE_TASK::HAULER_DUMP_VOLATILE_TO_PROC_PLANT,
     STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR,
+    STATE_MACHINE_TASK::HAULER_RESET_ODOM
 };
 
 class HaulerStateMachine
@@ -48,6 +50,8 @@ private:
   ros::NodeHandle nh_;
 
   std::string robot_name_;
+
+  ros::ServiceClient resetHaulerOdometryClient_;
 
   const double SLEEP_TIME = 0.5;
 
@@ -145,11 +149,24 @@ private:
 
   /**
    * @brief Goes back to excavator using navigation or navigation vision
-   * 
+   * @test Do roslaunch maploc mapping.launch robot_name:=small_hauler_1 get_true_pose:=false, to get the wrong pose of hauler.
+   * In Rviz, check if the odometry being visualized is the hauler's.
+   * Do roslaunch state_machines start_hauler.launch to launch hauler state machine.
+   * Do roslaunch state_machines state_machine_tester.launch robot_name:=small_hauler_1 task:=14 to test this task.
+   * If the odometry in Rviz changes once the tester was run, test is successful.
    * @return true : if task is successful
    * @return false : if task is failed or aborted or interrupted
    */
   bool goBackToExcavator();
+
+  bool resetOdometry();
+
+  /**
+   * @brief resets odometry, used after parking is done for hauler. 
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session. 
+   */
 
 public:
   HaulerStateMachine(ros::NodeHandle nh, const std::string &robot_name);

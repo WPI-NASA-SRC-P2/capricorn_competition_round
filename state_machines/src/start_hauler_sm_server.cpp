@@ -95,6 +95,9 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
     case STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR:
         output = sm->goBackToExcavator();
         break;
+    case STATE_MACHINE_TASK::HAULER_RESET_ODOM:
+        output = sm->resetOdometry();
+        break;
     default:
         ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
         break;
