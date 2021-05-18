@@ -126,9 +126,9 @@ void Scheduler::updateHauler()
   updateRobotStatus();
 
   if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT)
+    sendHaulerGoal(HAULER_FOLLOW_EXCAVATOR);
+  else if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_task_completed_)
     sendHaulerGoal(HAULER_PARK_AT_EXCAVATOR);
-  // else if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_task_completed_)
-  //   sendHaulerGoal(HAULER_PARK_AT_EXCAVATOR);
   else if (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_)
     sendHaulerGoal(HAULER_DUMP_VOLATILE_TO_PROC_PLANT);
   else if (hauler_goal_.task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_task_completed_)
@@ -155,6 +155,9 @@ void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client,
   if (robot_goal.task != task)
   {
     ROS_WARN_STREAM("SCHEDULER : Setting " << robot_name << " Task: " << task);
+    if (task == EXCAVATOR_PARK_AND_PUB)
+      ros::Duration(20.0f).sleep();
+
     robot_goal.task = task;
     robot_client->sendGoal(robot_goal);
   }

@@ -251,7 +251,7 @@ void undock()
         {
             geometry_msgs::PoseStamped pt;
             pt.header.frame_id = g_robot_name + ROBOT_BASE;
-            pt.pose.position.x = -5;
+            pt.pose.position.y = -5;
             g_nav_goal.drive_mode = NAV_TYPE::GOAL;
             g_nav_goal.pose = pt;
             g_client->sendGoal(g_nav_goal);
