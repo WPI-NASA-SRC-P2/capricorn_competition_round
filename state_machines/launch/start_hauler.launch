@@ -12,8 +12,8 @@
     </include>
 
     <group ns="/capricorn/$(arg robot_name)">        
-        <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="log"/>
-        <node name="park_hauler_server" pkg="operations" type="park_hauler_server" args="$(arg robot_name)" output="log"/>
+        <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
+        <node name="park_hauler_server" pkg="operations" type="park_hauler_server" args="$(arg robot_name)" output="screen"/>
         <node pkg="operations" type="hauler_actionlib_server" name="hauler_actionlib_server" args="$(arg robot_name)" output="log" />
         <node pkg="state_machines" type="start_hauler_sm_server" name="hauler_1_sm" args="$(arg robot_name)" output="screen" />
     </group>

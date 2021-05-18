@@ -43,7 +43,7 @@ private:
   state_machines::RobotStateMachineTaskGoal excavator_goal_;
   state_machines::RobotStateMachineTaskGoal hauler_goal_;
 
-  bool scout_done_ = false, excavator_done_ = false, hauler_done_ = false;
+  bool scout_task_completed_ = false, excavator_task_completed_ = false, hauler_task_completed_ = false;
 
   void initTeam(const int team_number);
 

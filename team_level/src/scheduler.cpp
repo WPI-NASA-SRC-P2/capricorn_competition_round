@@ -44,13 +44,11 @@ void Scheduler::schedulerLoop()
 
   while (ros::ok() && start_scheduler_)
   {
-    updateRobotStatus();
-
     updateScout();
     updateExcavator();
     updateHauler();
 
-    ros::Duration(0.1).sleep();
+    ros::Duration(0.5).sleep();
     ros::spinOnce();
   }
 }
@@ -79,9 +77,9 @@ void Scheduler::startSearching()
 
 void Scheduler::updateRobotStatus()
 {
-  scout_done_ = scout_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
-  excavator_done_ = excavator_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
-  hauler_done_ = hauler_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+  scout_task_completed_ = scout_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+  excavator_task_completed_ = excavator_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+  hauler_task_completed_ = hauler_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
 }
 
 void Scheduler::startExcavator()
@@ -96,32 +94,45 @@ void Scheduler::startScout()
 
 void Scheduler::updateScout()
 {
-  if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_done_)
+  updateRobotStatus();
+
+  if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
     sendScoutGoal(SCOUT_UNDOCK);
-  else if (scout_goal_.task == SCOUT_UNDOCK && scout_done_)
+  else if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
     sendScoutGoal(SCOUT_SEARCH_VOLATILE);
 }
 
 void Scheduler::updateExcavator()
 {
-  if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_done_)
-    sendExcavatorGoal(EXCAVATOR_GO_TO_SCOUT);
-  else if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_done_)
+  updateRobotStatus();
+
+  static bool first_task = true;
+  if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_task_completed_)
+  {
+    if ((excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_) || first_task)
+    {
+      sendExcavatorGoal(EXCAVATOR_GO_TO_SCOUT);
+      first_task = false;
+    }
+  }
+  else if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
     sendExcavatorGoal(EXCAVATOR_PARK_AND_PUB);
-  else if (hauler_goal_.task == HAULER_PARK_AT_EXCAVATOR && hauler_done_)
+  else if (hauler_goal_.task == HAULER_PARK_AT_EXCAVATOR && hauler_task_completed_)
     sendExcavatorGoal(EXCAVATOR_DIG_AND_DUMP_VOLATILE);
 }
 
 void Scheduler::updateHauler()
 {
-  if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_done_)
-    sendHaulerGoal(HAULER_FOLLOW_EXCAVATOR);
-  else if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_done_)
+  updateRobotStatus();
+
+  if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT)
     sendHaulerGoal(HAULER_PARK_AT_EXCAVATOR);
-  else if (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_)
+  // else if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_task_completed_)
+  //   sendHaulerGoal(HAULER_PARK_AT_EXCAVATOR);
+  else if (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_)
     sendHaulerGoal(HAULER_DUMP_VOLATILE_TO_PROC_PLANT);
-  else if (hauler_goal_.task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_done_)
-    sendHaulerGoal(HAULER_FOLLOW_EXCAVATOR);
+  else if (hauler_goal_.task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_task_completed_)
+    sendHaulerGoal(HAULER_PARK_AT_EXCAVATOR);
 }
 
 void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
