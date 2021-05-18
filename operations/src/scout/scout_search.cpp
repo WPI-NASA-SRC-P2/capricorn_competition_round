@@ -212,7 +212,6 @@ void execute()
       if (g_new_trajectory)
       {
         g_client->sendGoal(g_nav_goal);
-        g_going_to_goal = false;
         g_new_trajectory = false;
       }
     }
