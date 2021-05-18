@@ -65,7 +65,7 @@ void rotateRobot(const DrivingDirection rotate_direction, const float rotational
   goal.angular_velocity = rotate_direction * ROTATION_VELOCITY * rotational_velocity_multiplier;
 
   navigation_client_->sendGoal(goal);
-  ros::Duration(0.5).sleep();
+  ros::Duration(0.1).sleep();
 }
 
 /**
@@ -214,6 +214,7 @@ void getBestPose()
       // This case may not arise normally, but can arise during battery low situation
       // as volatile sensor stops working in battery low mode
     }
+    ros::Duration(0.1).sleep();
   }
   return;
 }
