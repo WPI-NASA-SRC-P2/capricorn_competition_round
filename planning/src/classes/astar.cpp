@@ -225,6 +225,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point ta
         continue;
 
       double tentative_gscore = gScores[current.second] + distance(current.second, neighbor, oGrid.info.width);
+      if (collinear(neighbor, current.second, came_from[current.second], oGrid.info.width)) tentative_gscore -= .95; // bias towards straight lines
       if (tentative_gscore < gScores[neighbor])
       {
         gScores[neighbor] = tentative_gscore;
