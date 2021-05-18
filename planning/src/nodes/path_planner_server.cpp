@@ -21,12 +21,15 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   auto global_oGrid_CPY = global_oGrid_;
   locationLock.unlock();
 
-  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 3);
+  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 8);
+
+  #ifdef DEBUG_INSTRUMENTATION
+  debug_oGridPublisher.publish(paddedGrid);
+  #endif
 
   auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position);
 
   #ifdef DEBUG_INSTRUMENTATION
-  debug_oGridPublisher.publish(paddedGrid);
   debug_pathPublisher.publish(path);
   #endif
 
@@ -57,7 +60,7 @@ int main(int argc, char *argv[])
   std::string robot_name(argv[1]);
 
   //ROS Topic names
-  std::string oGrid_topic_ = "/capricorn/small_scout_1object_detection_map";
+  std::string oGrid_topic_ = "/capricorn/small_scout_1/object_detection_map";
 
   //create a nodehandle
   ros::NodeHandle nh;
