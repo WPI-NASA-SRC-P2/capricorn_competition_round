@@ -13,11 +13,12 @@ ScoutStateMachine::~ScoutStateMachine()
 
 bool ScoutStateMachine::startSearchingVolatile()
 {
+  continue_spiral_ = true;
   // If starting spiral fails
   if(!resumeSearchingVolatile(true))
     return false;
   
-  while(ros::ok())
+  while(ros::ok() && continue_spiral_)
   {
     if(near_volatile_)
         return true;
@@ -27,6 +28,7 @@ bool ScoutStateMachine::startSearchingVolatile()
 
 bool ScoutStateMachine::stopSearchingVolatile()
 {
+  continue_spiral_ = false;
   return resumeSearchingVolatile(false);
 }
 

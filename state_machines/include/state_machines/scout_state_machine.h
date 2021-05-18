@@ -31,6 +31,7 @@ private:
   ros::Subscriber volatile_sub_;
   bool near_volatile_ = false;
   bool new_message_received = false;
+  bool continue_spiral_ = false;
   
   typedef actionlib::SimpleActionClient<operations::ResourceLocaliserAction> ResourceLocaliserClient_;
   ResourceLocaliserClient_* resource_localiser_client_;

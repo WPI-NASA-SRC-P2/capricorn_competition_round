@@ -28,21 +28,22 @@ class Scheduler
 private:
   ros::NodeHandle nh_;
 
-  /**
-   * @brief The sequence MUST not be changed:
-   *        SEQUENCE: 0 = SCOUT
-   *                  1 = EXCAVATOR
-   *                  2 = HAULER
-   * 
-   */
-  std::vector<std::string> robots_in_team_;
+  std::string SCOUT, EXCAVATOR, HAULER;
 
   SCHEDULER_STATES robot_state_ = SCHEDULER_STATES::INIT;
   
   bool start_scheduler_ = false;
 
   typedef actionlib::SimpleActionClient<state_machines::RobotStateMachineTaskAction> RobotClient;
-  std::map<std::string, RobotClient*> map_of_clients_;
+  RobotClient* scout_client_;
+  RobotClient* excavator_client_;
+  RobotClient* hauler_client_;
+
+  state_machines::RobotStateMachineTaskGoal scout_goal_;
+  state_machines::RobotStateMachineTaskGoal excavator_goal_;
+  state_machines::RobotStateMachineTaskGoal hauler_goal_;
+
+  bool scout_done_ = false, excavator_done_ = false, hauler_done_ = false;
 
   void initTeam(const int team_number);
 
@@ -54,19 +55,23 @@ private:
 
   void startSearching();
 
-  void initOdomAtHopper();
+  void updateRobotStatus();
 
-  void goToVolatile();
+  void updateScout();
 
-  void parkRobots();
+  void updateExcavator();
 
-  void excavateVolatile();
+  void updateHauler();
 
-  void depositVolatile();
+  void startScout();
 
-  void resetHaulerOdom();
-
-  void reuniteTeam();
+  void sendRobotGoal(RobotClient* robot_client, state_machines::RobotStateMachineTaskGoal& robot_goal, const STATE_MACHINE_TASK task);
+  
+  void sendScoutGoal(const STATE_MACHINE_TASK task);
+  
+  void sendExcavatorGoal(const STATE_MACHINE_TASK task);
+  
+  void sendHaulerGoal(const STATE_MACHINE_TASK task);
 
 public:
   Scheduler(ros::NodeHandle nh, const int team_number = 1);

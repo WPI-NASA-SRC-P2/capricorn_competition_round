@@ -107,6 +107,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 void cancelGoal(ScoutStateMachine *sm)
 {
 	ROS_INFO_STREAM("Cancelling " << g_robot_name << "  State Machine Goal");
+  sm->stopSearchingVolatile();
 }
 
 int main(int argc, char *argv[])

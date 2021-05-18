@@ -12,8 +12,10 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   geometry_msgs
+  actionlib
   utils
   state_machines
+  srcp2_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -158,6 +160,12 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 # ${catkin_LIBRARIES}
 # )
 
+
+add_executable(start_scheduler src/start_scheduler.cpp)
+add_dependencies(start_scheduler ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(start_scheduler ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
