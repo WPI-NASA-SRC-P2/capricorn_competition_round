@@ -171,6 +171,8 @@ namespace COMMON_NAMES
     SCOUT_STOP_SEARCH = 1,     // Stop executing the search algorithm.
     SCOUT_LOCATE_VOLATILE = 2, // Pinpoint the location of the volatile
     SCOUT_UNDOCK = 3,          // Move the Scout away from the Excavator
+    SCOUT_RESET_ODOM_GROUND_TRUTH = 20,     // Reset scout odometry with ground truth
+    SCOUT_RESET_ODOM = 21,     // Reset scout odometry without ground truth
 
     /**************EXCAVATOR STATES**************/
     EXCAVATOR_GO_TO_LOC = 4,             // Takes Excavator to a location from which it will
@@ -181,6 +183,8 @@ namespace COMMON_NAMES
     EXCAVATOR_DIG_AND_DUMP_VOLATILE = 7, // Takes care of digging, and dumping
                                          // the volatile in hauler if volatile is found
     EXCAVATOR_GOTO_DEFAULT_ARM_POSE = 8, // Moves excavator's arm to a default position used for object detection
+    EXCAVATOR_RESET_ODOM_GROUND_TRUTH = 22,           // Reset excavator odometry
+    EXCAVATOR_RESET_ODOM = 23,           // Reset excavator odometry
 
     /**************HAULER STATES**************/
     HAULER_GO_TO_LOC = 9,                    // Takes Hauler to a location

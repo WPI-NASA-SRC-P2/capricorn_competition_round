@@ -79,6 +79,18 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	case STATE_MACHINE_TASK::EXCAVATOR_GOTO_DEFAULT_ARM_POSE:
 		output = sm->goToDefaultArmPosition();
 		break;
+	case STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM_GROUND_TRUTH:
+		output = sm->resetOdometry();
+		break;
+	case STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM:
+		geometry_msgs::Pose testPose;
+		testPose.position.x = 4;                       //Answer to life, universe and everything. 
+		testPose.position.y = 2;
+		testPose.position.z = 0;
+		testPose.orientation.w = 1;
+
+		output = sm->resetOdometry(testPose);
+		break;
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
 		break;

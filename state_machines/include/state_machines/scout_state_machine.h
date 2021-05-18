@@ -9,6 +9,7 @@
 #include <operations/Spiral.h>
 #include <operations/ResourceLocaliserAction.h>
 #include <srcp2_msgs/VolSensorMsg.h>
+#include <maploc/ResetOdom.h>
 
 using namespace COMMON_NAMES;
 
@@ -19,6 +20,7 @@ const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
     STATE_MACHINE_TASK::SCOUT_STOP_SEARCH,
     STATE_MACHINE_TASK::SCOUT_LOCATE_VOLATILE,
     STATE_MACHINE_TASK::SCOUT_UNDOCK,
+    STATE_MACHINE_TASK::HAULER_RESET_ODOM
 };
 
 class ScoutStateMachine
@@ -29,6 +31,7 @@ private:
   std::string robot_name_;
 
   ros::ServiceClient spiralClient_;
+  ros::ServiceClient resetScoutOdometryClient_;
   ros::Subscriber volatile_sub_;
   bool near_volatile_ = false;
   bool new_message_received = false;
@@ -78,6 +81,16 @@ private:
    * @param msg 
    */
   void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg);
+
+  bool resetOdometry(const geometry_msgs::Pose& POSE);
+  bool resetOdometry();
+
+  /**
+   * @brief resets odometry, used after parking is done for scout. 
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session. 
+   */
 
 public:
   ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name);

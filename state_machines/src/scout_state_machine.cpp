@@ -69,3 +69,25 @@ void ScoutStateMachine::volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPt
 {
   near_volatile_ = !(msg->distance_to == -1);
 }
+
+bool ScoutStateMachine::resetOdometry(const geometry_msgs::Pose& POSE)
+{
+    resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+    maploc::ResetOdom srv;
+    srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
+    srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
+    srv.request.ref_pose.pose = POSE;
+
+    return resetScoutOdometryClient_.call(srv);
+}
+
+bool ScoutStateMachine::resetOdometry()
+{
+    resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+    maploc::ResetOdom srv;
+    srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
+    srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
+    srv.request.use_ground_truth = true;
+
+    return resetScoutOdometryClient_.call(srv);
+}

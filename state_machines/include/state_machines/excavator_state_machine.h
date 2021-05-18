@@ -10,6 +10,7 @@
 #include <operations/ExcavatorAction.h>
 #include <geometry_msgs/PointStamped.h>
 #include <state_machines/RobotStateMachineTaskAction.h>
+#include <maploc/ResetOdom.h>
 
 using namespace COMMON_NAMES;
 
@@ -21,6 +22,7 @@ const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
     STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB,
     STATE_MACHINE_TASK::EXCAVATOR_DIG_AND_DUMP_VOLATILE,
     STATE_MACHINE_TASK::EXCAVATOR_GOTO_DEFAULT_ARM_POSE,
+    STATE_MACHINE_TASK::HAULER_RESET_ODOM
 };
 
 class ExcavatorStateMachine
@@ -29,6 +31,8 @@ private:
   ros::NodeHandle nh_;
 
   std::string robot_name_;
+
+  ros::ServiceClient resetExcavatorOdometryClient_;
 
   const double SLEEP_TIME = 0.5;
   const double ROTATION_SPEED = 0.5;
@@ -95,6 +99,9 @@ private:
    * @return false 
    */
   bool goToDefaultArmPosition();
+
+  bool resetOdometry(const geometry_msgs::Pose& POSE);
+  bool resetOdometry();
 
 public:
   ExcavatorStateMachine(ros::NodeHandle nh, const std::string &robot_name);
