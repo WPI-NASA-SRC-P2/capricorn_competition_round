@@ -53,5 +53,7 @@ OccupancyGrid CSpace::getCSpace(nav_msgs::OccupancyGrid &oGrid, const int thresh
 			paddedGrid.data[i] = 0;
 	}
 
+
+	paddedGrid.header.frame_id = "odom";
 	return paddedGrid;
 }
