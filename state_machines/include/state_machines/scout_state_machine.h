@@ -5,6 +5,7 @@
 #include <actionlib/server/simple_action_server.h>
 #include <utils/common_names.h>
 #include <state_machines/RobotStateMachineTaskAction.h>
+#include <operations/NavigationVisionAction.h>
 #include <operations/Spiral.h>
 #include <operations/ResourceLocaliserAction.h>
 #include <srcp2_msgs/VolSensorMsg.h>
@@ -32,9 +33,13 @@ private:
   bool near_volatile_ = false;
   bool new_message_received = false;
   bool continue_spiral_ = false;
-  
+
+  typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> NavigationVisionClient;
+  NavigationVisionClient *navigation_vision_client_;
+  operations::NavigationVisionGoal navigation_vision_goal_;
+
   typedef actionlib::SimpleActionClient<operations::ResourceLocaliserAction> ResourceLocaliserClient_;
-  ResourceLocaliserClient_* resource_localiser_client_;
+  ResourceLocaliserClient_ *resource_localiser_client_;
 
   /**
    * @brief Start the searching algorithm
@@ -72,7 +77,7 @@ private:
    * 
    * @param msg 
    */
-  void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr& msg);
+  void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg);
 
 public:
   ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name);

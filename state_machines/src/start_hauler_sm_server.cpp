@@ -30,6 +30,20 @@ bool checkTask(STATE_MACHINE_TASK task)
 }
 
 /**
+ * @brief Function called when the goal is cancelled
+ * 
+ */
+void cancelGoal(HaulerStateMachine *sm)
+{
+    ROS_INFO_STREAM(g_robot_name << " State Machine : Cancelling Goal");
+
+    sm->navigation_client_->cancelGoal();
+    sm->hauler_client_->cancelGoal();
+    sm->navigation_vision_client_->cancelGoal();
+    sm->park_robot_client_->cancelGoal();
+}
+
+/**
  * @brief Function which gets executed when any goal is received to actionlib
  * 
  * @param goal for action lib
@@ -47,6 +61,8 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
     sm->hauler_client_->waitForServer();
     sm->navigation_vision_client_->waitForServer(); //Not being used currently
     sm->park_robot_client_->waitForServer();        //Not being used currently
+
+    cancelGoal(sm);
 
     ROS_INFO_STREAM(g_robot_name << " State Machine : Servers Connected, Executing Goal");
 
@@ -93,7 +109,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
         output = sm->dumpVolatileToProcPlant();
         break;
     case STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR:
-        output = sm->goBackToExcavator();
+        output = sm->goBackToExcavator(goal->goal_loc);
         break;
     case STATE_MACHINE_TASK::HAULER_RESET_ODOM:
         output = sm->resetOdometry();
@@ -109,20 +125,6 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
     ROS_INFO_STREAM(g_robot_name << " State Machine: Goal Finished");
 
     return;
-}
-
-/**
- * @brief Function called when the goal is cancelled
- * 
- */
-void cancelGoal(HaulerStateMachine *sm)
-{
-    ROS_INFO_STREAM(g_robot_name << " State Machine : Cancelling Goal");
-
-    sm->navigation_client_->cancelGoal();
-    sm->hauler_client_->cancelGoal();
-    sm->navigation_vision_client_->cancelGoal();
-    sm->park_robot_client_->cancelGoal();
 }
 
 int main(int argc, char *argv[])

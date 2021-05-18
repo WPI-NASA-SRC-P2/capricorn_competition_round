@@ -78,13 +78,21 @@ bool HaulerStateMachine::dumpVolatile()
 bool HaulerStateMachine::undockExcavator()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from Excavator");
-    return false;
+    navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool HaulerStateMachine::undockHopper()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from Hopper");
-    return false;
+    navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_HOPPER_CLASS;
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool HaulerStateMachine::dumpVolatileToProcPlant()
@@ -93,14 +101,19 @@ bool HaulerStateMachine::dumpVolatileToProcPlant()
     return (goToProcPlant() && parkAtHopper() && dumpVolatile() && undockHopper());
 }
 
-bool HaulerStateMachine::goBackToExcavator()
+bool HaulerStateMachine::goBackToExcavator(const geometry_msgs::PoseStamped &loc)
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Going Back to Excavator (High Level Goal)");
-    return false;
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_OBS_GOTO_GOAL;
+    navigation_action_goal_.pose = loc;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool HaulerStateMachine::resetOdometry()
 {
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Ressting odom with GT");
     resetHaulerOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
     maploc::ResetOdom srv;
     srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;

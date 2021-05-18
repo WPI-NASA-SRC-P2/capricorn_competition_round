@@ -4,7 +4,7 @@
 #include <utils/common_names.h>
 #include <mutex>
 #include <vector>
-#include <state_machines/RobotStateMachineTaskAction.h>  
+#include <state_machines/RobotStateMachineTaskAction.h>
 #include <actionlib/client/simple_action_client.h>
 
 using namespace COMMON_NAMES;
@@ -31,13 +31,13 @@ private:
   std::string SCOUT, EXCAVATOR, HAULER;
 
   SCHEDULER_STATES robot_state_ = SCHEDULER_STATES::INIT;
-  
+
   bool start_scheduler_ = false;
 
   typedef actionlib::SimpleActionClient<state_machines::RobotStateMachineTaskAction> RobotClient;
-  RobotClient* scout_client_;
-  RobotClient* excavator_client_;
-  RobotClient* hauler_client_;
+  RobotClient *scout_client_;
+  RobotClient *excavator_client_;
+  RobotClient *hauler_client_;
 
   state_machines::RobotStateMachineTaskGoal scout_goal_;
   state_machines::RobotStateMachineTaskGoal excavator_goal_;
@@ -65,12 +65,14 @@ private:
 
   void startScout();
 
-  void sendRobotGoal(RobotClient* robot_client, state_machines::RobotStateMachineTaskGoal& robot_goal, const STATE_MACHINE_TASK task);
-  
+  void startExcavator();
+
+  void sendRobotGoal(RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task);
+
   void sendScoutGoal(const STATE_MACHINE_TASK task);
-  
+
   void sendExcavatorGoal(const STATE_MACHINE_TASK task);
-  
+
   void sendHaulerGoal(const STATE_MACHINE_TASK task);
 
 public:
