@@ -18,6 +18,7 @@ Using the image, the objects are detected, preprocessed to compute a list of obj
 and then published in perception/Objects message
 """
 import rospy
+import tf as tf2
 import sys
 import message_filters
 import threading
@@ -50,7 +51,7 @@ Fx = K[0]
 Fy = K[4]
 Cx = K[2]
 Cy = K[5]
-STEREO_BASELINE = Cx / (2 * Fx)
+baseline = 0.210
 HEIGHT = 480
 WIDTH = 640
 UPDATE_HZ = 20.0
@@ -128,17 +129,47 @@ def estimate3dLocation(i, box, cl, score, disp_img):
     else:
         high_y = int(center_y)
         
+    depth_min = 0.01
+    disp_max = baseline * Fx / depth_min
+
+    depth_max = 150
+    disp_min = baseline * Fx / depth_max
+
+    disp_final = 0.0001
+    num_pixels = 0
+
+    # calculates mean disparity in the middle rows of the detected object bounding boxes
     for w in range (low_x, high_x):
         for v in range (low_y, high_y):
-            if(disp_img[v, w] > min_disp):
-                min_disp = disp_img[v, w]
+            if(disp_img[v, w] >= disp_min and disp_img[v,w] <= disp_max):
+                disp_final += disp_img[v, w]
+                num_pixels += 1           
+
+    if num_pixels!=0 : 
+        disp_final /= num_pixels 
 
     # calculating 3d location from the estimated disparity and camera's intrinsic parameters
-    center_disparity = min_disp
-    depth = STEREO_BASELINE * Fx / center_disparity
+    center_disparity = disp_final
+    depth = baseline * Fx / center_disparity
     x = (center_x - Cx) * depth / Fx
     y = (center_y - Cy) * depth / Fy
     z = depth
+
+    # # for visualization
+
+    # label = (g_category_index.get(cl)).get('name')
+
+    # if (label == "processingPlant") : 
+    #     br.sendTransform((x,y,z), tf2.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "processing_plant_position_estimate", g_robot_name + "_left_camera_optical") 
+
+    # if (label == "repairStation") : 
+    #     br.sendTransform((x,y,z), tf2.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "repair_station_position_estimate", g_robot_name + "_left_camera_optical")
+
+    # if (label == "excavator") : 
+    #     br.sendTransform((x,y,z), tf2.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "small_excavator_1_position_estimate", g_robot_name + "_left_camera_optical")
+
+    # if (label == "hauler") : 
+    #     br.sendTransform((x,y,z), tf2.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "small_hauler_1_position_estimate", g_robot_name + "_left_camera_optical")            
 
     # calculating the width of the output object
     w_x_1 = (l_x - Cx) * depth / Fx
@@ -295,6 +326,9 @@ def initObjectDetection(path_to_model, path_to_label_map):
 
     global img_pub
     global objects_pub
+
+    global br
+    br = tf2.TransformBroadcaster()
 
     # initialize publisher
     img_pub = rospy.Publisher('/capricorn/'+g_robot_name+'/object_detection/image', Image, queue_size=10)
