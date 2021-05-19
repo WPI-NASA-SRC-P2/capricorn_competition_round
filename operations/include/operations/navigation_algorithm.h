@@ -247,7 +247,15 @@ public:
    */
   static geometry_msgs::PointStamped getCenterOfThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points);
 
-
+  /**
+   * @brief For parking, a the location of scout is given to the excavator. But for better parking, the 
+   *          point closer to the goal is given to the excavator for parking. 
+   * 
+   * @param point 
+   * @param closer_distance 
+   * @return geometry_msgs::PointStamped 
+   */
+  static geometry_msgs::PointStamped getPointCloserToOrigin(const geometry_msgs::PointStamped& point, const double closer_distance);
 };
 
 #endif

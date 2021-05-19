@@ -370,3 +370,18 @@ std::vector<double> NavigationAlgo::getABCDofThreePointsCircle(const std::vector
 
   return abcd_points;
 }
+
+geometry_msgs::PointStamped NavigationAlgo::getPointCloserToOrigin(const geometry_msgs::PointStamped& point, const double closer_distance)
+{
+  double x,y;
+  x = point.point.x;
+  y = point.point.y;
+
+  double theta = std::atan2(y, x);
+  geometry_msgs::PointStamped out_point;
+  out_point.header = point.header;
+  out_point.point.x = x - cos(theta)*closer_distance;
+  out_point.point.y = y - sin(theta)*closer_distance;
+
+  return out_point;
+}
