@@ -49,7 +49,6 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	testPose.position.z = 0;
 	testPose.orientation.w = 1;
 
-
 	// Waiting for the servers to start
 	sm->navigation_client_->waitForServer();
 	sm->excavator_arm_client_->waitForServer();

@@ -49,7 +49,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	testPose.position.z = 0;
 	testPose.orientation.w = 1;
 
-	state_machines::RobotStateMachineTaskResult result;
+  state_machines::RobotStateMachineTaskResult result;
   state_machines::RobotStateMachineTaskFeedback feedback;
   feedback.volatile_found = false;
   as->publishFeedback(feedback);
@@ -102,7 +102,6 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	case STATE_MACHINE_TASK::SCOUT_RESET_ODOM:
 		output = sm->resetOdometry(testPose);
 		break;
-
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
 		break;

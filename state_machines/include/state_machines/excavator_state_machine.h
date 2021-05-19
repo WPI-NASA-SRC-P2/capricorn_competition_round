@@ -22,7 +22,8 @@ const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
     STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB,
     STATE_MACHINE_TASK::EXCAVATOR_DIG_AND_DUMP_VOLATILE,
     STATE_MACHINE_TASK::EXCAVATOR_GOTO_DEFAULT_ARM_POSE,
-    STATE_MACHINE_TASK::HAULER_RESET_ODOM
+    STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM_GROUND_TRUTH,
+    STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM
 };
 
 class ExcavatorStateMachine
@@ -102,6 +103,14 @@ private:
 
   bool resetOdometry(const geometry_msgs::Pose& POSE);
   bool resetOdometry();
+
+  bool syncOdometry(const geometry_msgs::Pose& POSE);
+    /**
+   * @brief centers excavator wrt processing plant and then resets the odometry according to whatever pose we pass it.
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted
+   */
 
 public:
   ExcavatorStateMachine(ros::NodeHandle nh, const std::string &robot_name);
