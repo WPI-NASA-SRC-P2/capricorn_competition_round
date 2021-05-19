@@ -104,6 +104,14 @@ private:
   bool resetOdometry(const geometry_msgs::Pose& POSE);
   bool resetOdometry();
 
+  bool syncOdometry(const geometry_msgs::Pose& POSE);
+    /**
+   * @brief centers excavator wrt processing plant and then resets the odometry according to whatever pose we pass it.
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted
+   */
+
 public:
   ExcavatorStateMachine(ros::NodeHandle nh, const std::string &robot_name);
 

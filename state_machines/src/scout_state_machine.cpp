@@ -92,7 +92,7 @@ bool ScoutStateMachine::resetOdometry()
     return resetScoutOdometryClient_.call(srv);
 }
 
-bool ScoutStateMachine::syncOdometry()
+bool ScoutStateMachine::syncOdometry(const geometry_msgs::Pose& POSE)
 {
   navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
   navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
@@ -100,6 +100,6 @@ bool ScoutStateMachine::syncOdometry()
   navigation_vision_client_->waitForResult();
   if (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
   {
-    
+    resetOdometry(POSE);
   }
 }

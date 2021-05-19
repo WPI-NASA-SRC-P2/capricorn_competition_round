@@ -173,6 +173,7 @@ namespace COMMON_NAMES
     SCOUT_UNDOCK = 3,          // Move the Scout away from the Excavator
     SCOUT_RESET_ODOM_GROUND_TRUTH = 20,     // Reset scout odometry with ground truth
     SCOUT_RESET_ODOM = 21,     // Reset scout odometry without ground truth
+    SCOUT_SYNC_ODOM = 24,      //Centers wrt processing plant and resets odometry 
 
     /**************EXCAVATOR STATES**************/
     EXCAVATOR_GO_TO_LOC = 4,             // Takes Excavator to a location from which it will
@@ -185,6 +186,7 @@ namespace COMMON_NAMES
     EXCAVATOR_GOTO_DEFAULT_ARM_POSE = 8, // Moves excavator's arm to a default position used for object detection
     EXCAVATOR_RESET_ODOM_GROUND_TRUTH = 22,           // Reset excavator odometry
     EXCAVATOR_RESET_ODOM = 23,           // Reset excavator odometry
+    EXCAVATOR_SYNC_ODOM = 25,            //Centers wrt processing plant and resets odometry 
 
     /**************HAULER STATES**************/
     HAULER_GO_TO_LOC = 9,                    // Takes Hauler to a location
