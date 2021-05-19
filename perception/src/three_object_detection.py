@@ -66,7 +66,7 @@ g_excavator_image = None
 g_hauler_image = None
 g_scout_disparity = None
 
-g_class_individual_thresh = {"processingPlant" : 0.8, "repairStation" : 0.8, "hopper" : 0.8, "excavator" : 0.7, "scout" : 0.7}
+g_class_individual_thresh = {"processingPlant" : 0.8, "repairStation" : 0.8, "hopper" : 0.6, "excavator" : 0.7, "scout" : 0.7}
 g_class_not_to_be_duplicated = {"processingPlant", "repairStation", "hopper", "furnace", "excavatorArm"}
 
 def preProcessObjectDetection(scores, classes, num_detections, final_list) -> None:

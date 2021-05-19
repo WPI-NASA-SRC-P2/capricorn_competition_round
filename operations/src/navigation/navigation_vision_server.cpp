@@ -46,6 +46,7 @@ enum HEIGHT_THRESHOLD
     HAULER = 200,
     PROCESSING_PLANT = 340,
     REPAIR_STATION = 340,
+    FURNACE = 150,
     OTHER = 50,
     MINIMUM_THRESH = -1,
 };
@@ -100,6 +101,7 @@ bool check_class()
         g_desired_label == OBJECT_DETECTION_REPAIR_STATION_CLASS ||
         g_desired_label == OBJECT_DETECTION_EXCAVATOR_CLASS ||
         g_desired_label == OBJECT_DETECTION_SCOUT_CLASS ||
+        g_desired_label == OBJECT_DETECTION_FURNACE_CLASS ||
         g_desired_label == OBJECT_DETECTION_HAULER_CLASS)
         return true;
     return false;
