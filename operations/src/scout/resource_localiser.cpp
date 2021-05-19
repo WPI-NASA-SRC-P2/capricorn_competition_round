@@ -84,7 +84,7 @@ void stopRobot()
   goal.angular_velocity = 0;
 
   navigation_client_->sendGoal(goal);
-  // ros::Duration(0.5).sleep();
+  ros::Duration(0.5).sleep();
 }
 
 void getOnTopOfVolatile()
@@ -92,7 +92,7 @@ void getOnTopOfVolatile()
 
   geometry_msgs::PoseStamped hard_coded_pose;
   hard_coded_pose.header.frame_id = robot_name_ + ROBOT_BASE;
-  hard_coded_pose.pose.position.x = 0.650; // Hardcoded distance of volatile sensor to the base footprint
+  hard_coded_pose.pose.position.x = 0.450; // Hardcoded distance of volatile sensor to the base footprint
 
   operations::NavigationGoal goal;
   goal.pose = hard_coded_pose; // Position estimation is not perfect
@@ -230,6 +230,7 @@ void localiseResource(const operations::ResourceLocaliserGoalConstPtr &localiser
   ROS_INFO("Starting locating volatile sequence");
   if (near_volatile_)
   {
+    stopRobot();
     getBestPose();
 
     ROS_INFO("Driving on top of volatile");
