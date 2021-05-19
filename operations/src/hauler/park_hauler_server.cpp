@@ -25,7 +25,7 @@ Command Line Arguments Required:
 #include <perception/ObjectArray.h>
 #include <operations/NavigationVisionAction.h>
 
-#define UPDATE_HZ 10
+#define UPDATE_HZ 8
 
 typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> VisionClient;
 typedef actionlib::SimpleActionServer<operations::ParkRobotAction> Server;
@@ -47,7 +47,7 @@ std::mutex g_hauler_objects_mutex, g_excavator_objects_mutex, g_cancel_goal_mute
 bool g_hauler_message_received = false, g_excavator_message_received = false;
 
 // global variables for park excavator
-const int ROBOT_ANTENNA_HEIGHT_THRESH = 120, HAULER_HEIGHT_THRESH = 180, ANGLE_THRESHOLD_NARROW = 5, ANGLE_THRESH_WIDE = 100, EXCAVATOR_TIMES_DETECT_TIMES = 10, EXCAVATOR_HEIGHT_THRESH = 300;
+const int ROBOT_ANTENNA_HEIGHT_THRESH = 110, HAULER_HEIGHT_THRESH = 180, ANGLE_THRESHOLD_NARROW = 5, ANGLE_THRESH_WIDE = 100, EXCAVATOR_TIMES_DETECT_TIMES = 10, EXCAVATOR_HEIGHT_THRESH = 300;
 const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0;
 bool g_parked = false, g_found_orientation = false, g_cancel_called = false, g_revolve_direction_set = false;
 float g_max_diff = -1, g_revolve_direction = EXC_FORWARD_VELOCITY;
@@ -333,13 +333,12 @@ void parkWrtExcavator()
             g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = 0;
             g_nav_goal.angular_velocity = 0;
+            findExcavator();
             g_parked = true;
             return;
         }
 
-        if (center_exc > 0)
-            findExcavator();
-
+        ROS_INFO("Moving Straight");
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = EXC_FORWARD_VELOCITY;
         g_nav_goal.angular_velocity = 0;
