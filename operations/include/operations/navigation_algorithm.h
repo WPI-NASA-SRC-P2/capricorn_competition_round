@@ -255,7 +255,7 @@ public:
    * @param closer_distance 
    * @return geometry_msgs::PointStamped 
    */
-  static geometry_msgs::Point getPointCloserToOrigin(const geometry_msgs::Point& point, const double closer_distance);
+  static geometry_msgs::Pose getPointCloserToOrigin(const geometry_msgs::Pose& point, const geometry_msgs::Pose& self_point, const double closer_distance);
 };
 
 #endif

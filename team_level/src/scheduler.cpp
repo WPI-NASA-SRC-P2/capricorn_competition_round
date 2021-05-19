@@ -20,6 +20,7 @@ void Scheduler::initTeam(const int team_number)
 
   scout_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + SCOUT + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
   excavator_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + EXCAVATOR + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
+  hauler_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + HAULER + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
 
   initClients();
 }
@@ -159,7 +160,7 @@ void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
     std::lock_guard<std::mutex> lock(scout_pose_mutex);
     geometry_msgs::PoseStamped excavator_goal_pose;
     excavator_goal_pose.header.frame_id = MAP;
-    excavator_goal_pose.pose.position =  NavigationAlgo::getPointCloserToOrigin(scout_pose_.pose.position, 5.0);
+    excavator_goal_pose.pose =  NavigationAlgo::getPointCloserToOrigin(scout_pose_.pose, excavator_pose_.pose, 5.0);
     sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, excavator_goal_pose);
   }
   else
@@ -177,7 +178,7 @@ void Scheduler::sendHaulerGoal(const STATE_MACHINE_TASK task)
     geometry_msgs::PoseStamped hauler_goal_pose;
     geometry_msgs::PoseStamped ref_pose = excavator_waiting ? excavator_pose_ : scout_pose_;
     hauler_goal_pose.header.frame_id = MAP;
-    hauler_goal_pose.pose.position =  NavigationAlgo::getPointCloserToOrigin(ref_pose.pose.position, 10.0);
+    hauler_goal_pose.pose =  NavigationAlgo::getPointCloserToOrigin(ref_pose.pose, hauler_pose_.pose, 10.0);
     sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task, hauler_goal_pose);
   }
   else
@@ -234,5 +235,18 @@ void Scheduler::updateExcavatorPose(const nav_msgs::Odometry::ConstPtr &msg)
   std::lock_guard<std::mutex> lock(excavator_pose_mutex);
   excavator_pose_.header = msg->header;
   excavator_pose_.pose = msg->pose.pose;
+}
+
+
+/**
+ * @brief Callback to the robot pose topic
+ * 
+ * @param msg 
+ */
+void Scheduler::updateHaulerPose(const nav_msgs::Odometry::ConstPtr &msg)
+{
+  std::lock_guard<std::mutex> lock(hauler_pose_mutex);
+  hauler_pose_.header = msg->header;
+  hauler_pose_.pose = msg->pose.pose;
 }
 

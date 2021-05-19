@@ -47,12 +47,15 @@ private:
 
   geometry_msgs::PoseStamped scout_pose_;
   geometry_msgs::PoseStamped excavator_pose_;
+  geometry_msgs::PoseStamped hauler_pose_;
 
   ros::Subscriber scout_odom_sub_;
   ros::Subscriber excavator_odom_sub_;
+  ros::Subscriber hauler_odom_sub_;
   
   std::mutex scout_pose_mutex;
   std::mutex excavator_pose_mutex;
+  std::mutex hauler_pose_mutex;
 
   bool scout_task_completed_ = false, excavator_task_completed_ = false, hauler_task_completed_ = false;
 
@@ -91,6 +94,8 @@ private:
   void updateScoutPose(const nav_msgs::Odometry::ConstPtr &msg);
 
   void updateExcavatorPose(const nav_msgs::Odometry::ConstPtr &msg);
+
+  void updateHaulerPose(const nav_msgs::Odometry::ConstPtr &msg);
 
 public:
   Scheduler(ros::NodeHandle nh, const int team_number = 1);
