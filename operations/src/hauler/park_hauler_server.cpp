@@ -41,7 +41,7 @@ Client *g_nav_client;
 VisionClient *g_navigation_vision_client;
 operations::NavigationGoal g_nav_goal;
 
-const float HOPPER_FORWARD_VELOCITY = 0.4, EXC_FORWARD_VELOCITY = 0.2;
+const float HOPPER_FORWARD_VELOCITY = 0.3, EXC_FORWARD_VELOCITY = 0.2;
 std::mutex g_hauler_objects_mutex, g_excavator_objects_mutex, g_cancel_goal_mutex;
 
 bool g_hauler_message_received = false, g_excavator_message_received = false;
@@ -50,14 +50,13 @@ bool g_hauler_message_received = false, g_excavator_message_received = false;
 const int ROBOT_ANTENNA_HEIGHT_THRESH = 110, HAULER_HEIGHT_THRESH = 180, ANGLE_THRESHOLD_NARROW = 5, ANGLE_THRESH_WIDE = 100, EXCAVATOR_TIMES_DETECT_TIMES = 10, EXCAVATOR_HEIGHT_THRESH = 300;
 const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0;
 bool g_parked = false, g_found_orientation = false, g_cancel_called = false, g_revolve_direction_set = false;
-float g_max_diff = -1, g_revolve_direction = EXC_FORWARD_VELOCITY;
+float g_revolve_direction = EXC_FORWARD_VELOCITY;
 int g_times_excavator = 0;
 
 // global variables for park hopper
 const int TIMES_REACHED_THRESHOLD = 10, DIFF_HOPPER_X_THRESH = 50, DIFF_FURNACE_X_THRESH = 500, HOPPER_ORBIT_THRESH = 320;
 const float PROCESSING_PLANT_RADIUS = 1.8, INIT_VALUE = -100.00;
-int g_hopper_x, g_processing_plant_z, g_furnace_x, g_hopper_height, g_times_reached = 0, g_center_image_x = 320, g_target_height = 385;
-double g_hopper_z;
+int g_times_reached = 0, g_center_image_x = 320, g_target_height = 385;
 
 bool g_execute_called = false;
 perception::ObjectArray g_hauler_objects, g_excavator_objects;
@@ -104,6 +103,22 @@ void findProcessingPlant()
 }
 
 /**
+ * @brief find the excavator using navigation vision
+ * 
+ */
+void centerFurnace()
+{
+    g_navigation_vision_client->waitForServer();
+    operations::NavigationVisionGoal goal;
+    // desired target object, any object detection class
+    goal.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_FURNACE_CLASS;
+    goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
+    g_navigation_vision_client->sendGoal(goal);
+    g_navigation_vision_client->waitForResult();
+    return;
+}
+
+/**
  * @brief Function for parking a robot with respect to hopper
  * 
  * Steps:
@@ -119,6 +134,9 @@ void parkWrtHopper()
     perception::ObjectArray objects = g_hauler_objects;
 
     int n = objects.number_of_objects;
+    float processing_plant_z = INIT_VALUE, hopper_x = INIT_VALUE, hopper_z = INIT_VALUE, hopper_height = INIT_VALUE, furnace_z = INIT_VALUE, furnace_x = INIT_VALUE, furnace_size_x = INIT_VALUE;
+    float furnace_center_y = INIT_VALUE, processing_plant_x = INIT_VALUE;
+    static bool centering = true;
 
     for (int i = 0; i < n; i++)
     {
@@ -126,65 +144,90 @@ void parkWrtHopper()
 
         if (object.label == COMMON_NAMES::OBJECT_DETECTION_HOPPER_CLASS)
         {
-            //If hopper is detected store g_hopper_x and g_hopper_z
-            g_hopper_x = object.center.x; // in pixels
-            g_hopper_z = object.point.pose.position.z;
-            g_hopper_height = object.size_y;
-            ROS_INFO_STREAM("Detected Hopper");
+            //If hopper is detected store hopper_x and hopper_z
+            hopper_x = object.center.x; // in pixels
+            hopper_z = object.point.pose.position.z;
+            hopper_height = object.size_y;
         }
 
-        if (object.label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+        else if (object.label == COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
         {
-            //If processingPlant is detected store g_processing_plant_z
-            g_processing_plant_z = object.point.pose.position.z; // in meters
+            //If processingPlant is detected store processing_plant_z
+            processing_plant_z = object.point.pose.position.z; // in meters
+            processing_plant_x = object.center.x;
         }
-        if (object.label == COMMON_NAMES::OBJECT_DETECTION_FURNACE_CLASS)
+        else if (object.label == COMMON_NAMES::OBJECT_DETECTION_FURNACE_CLASS)
         {
-            //If furnace is detected store g_furnace_x
-            g_furnace_x = object.center.x; // in meters
+            //If furnace is detected store furnace_z
+            furnace_x = object.center.x;
+            furnace_z = object.point.pose.position.z; // in meters
+            furnace_size_x = object.size_x;           // in meters
+            furnace_center_y = object.center.y;
         }
     }
 
-    if ((abs(g_hopper_x - g_center_image_x) < DIFF_HOPPER_X_THRESH) && (abs(g_furnace_x - g_center_image_x) < DIFF_FURNACE_X_THRESH)) //check to see if hopper is close to center and if furnace is detected
-    {
-        if (g_hopper_height >= g_target_height) //if hopper is too close, stop the robot
-        {
-            ROS_INFO_STREAM("Stopping Hauler");
-            g_times_reached++;
+    bool processing_plant_detected = (processing_plant_z != INIT_VALUE), furnace_detected = (furnace_z != INIT_VALUE), hopper_detected = (hopper_x != INIT_VALUE);
 
-            if (g_times_reached == TIMES_REACHED_THRESHOLD)
-            {
-                g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-                g_nav_goal.forward_velocity = 0;
-                g_nav_goal.angular_velocity = 0;
-                g_parked = true;
-            }
-        }
-        else //otherwise drive towards hopper
+    if (furnace_detected && furnace_center_y < 55)
+    {
+        ROS_INFO("REACHED HOPPER");
+        for (int i = 0; i < 10; i++)
         {
-            ROS_INFO_STREAM("Driving To Hopper");
             g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = HOPPER_FORWARD_VELOCITY;
-            g_nav_goal.angular_velocity = 0;
+            g_nav_client->sendGoal(g_nav_goal);
+            ros::Duration(0.2).sleep();
         }
+        g_nav_goal.forward_velocity = 0;
+        g_parked = true;
+        centering = true;
+        return;
     }
-    else
+
+    if (hopper_detected && furnace_detected && furnace_size_x > 100 && abs(hopper_x - furnace_x) < 30)
     {
-        double radius = g_processing_plant_z + PROCESSING_PLANT_RADIUS; //set radius of orbit, 1.8 is the depth of the object
+        if (centering && furnace_x > 90)
+        {
+            centerFurnace();
+            centering = false;
+        }
+        g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+        g_nav_goal.forward_velocity = HOPPER_FORWARD_VELOCITY;
+        return;
+    }
+
+    double radius = -1;
+    centering = true;
+
+    if (processing_plant_detected && hopper_detected)
+        g_nav_goal.forward_velocity = std::copysign(HOPPER_FORWARD_VELOCITY, hopper_x - processing_plant_x);
+
+    if (furnace_detected)
+    {
+        if (abs(furnace_x - g_center_image_x) > 80 && furnace_size_x > 100)
+            centerFurnace();
+
+        if (hopper_detected)
+        {
+            g_nav_goal.forward_velocity = std::copysign(HOPPER_FORWARD_VELOCITY, hopper_x - furnace_x);
+        }
+        radius = furnace_z + PROCESSING_PLANT_RADIUS; //set radius of orbit, 1.8 is the depth of the object
+    }
+    else if (processing_plant_detected)
+    {
+        radius = processing_plant_z + PROCESSING_PLANT_RADIUS; //set radius of orbit, 1.8 is the depth of the object
+    }
+
+    if (processing_plant_z > 10)
+        findProcessingPlant();
+
+    if (radius > -1)
+    {
         geometry_msgs::PointStamped pt;
         pt.point.x = radius;
         pt.header.frame_id = g_robot_name + COMMON_NAMES::ROBOT_CHASSIS;
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::REVOLVE; //all nav goals will be using the revolve drive
         g_nav_goal.point = pt;
-
-        if (g_hopper_x > HOPPER_ORBIT_THRESH) // if the hopper is on the right side of the screen, orbit right
-        {
-            g_nav_goal.forward_velocity = HOPPER_FORWARD_VELOCITY;
-        }
-        else //otherwise orbit left
-        {
-            g_nav_goal.forward_velocity = -HOPPER_FORWARD_VELOCITY;
-        }
     }
 }
 
@@ -424,18 +467,15 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
     {
         // check the mode, park with hopper
         // Assumes the robot has reached near processing plant
+        g_nav_goal.forward_velocity = HOPPER_FORWARD_VELOCITY;
         ROS_INFO("Parking To Hopper");
         findProcessingPlant();
         // initialize all the necessary variables
         park_mode = OBJECT_PARKER::HOPPER;
         g_times_reached = 0;
-        g_hopper_x = -1;
-        g_processing_plant_z = -1;
-        g_furnace_x = -1;
-        g_hopper_height = -1;
         g_center_image_x = 320;
         g_target_height = 385;
-        double g_hopper_z;
+        double hopper_z;
     }
     else
     {
@@ -460,7 +500,6 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
         g_times_excavator = 0;
         g_found_orientation = false;
         g_revolve_direction_set = false;
-        g_max_diff = -1;
     }
 
     while (ros::ok() && !g_parked && !g_cancel_called)
