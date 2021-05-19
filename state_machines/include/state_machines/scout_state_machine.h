@@ -20,7 +20,8 @@ const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
     STATE_MACHINE_TASK::SCOUT_STOP_SEARCH,
     STATE_MACHINE_TASK::SCOUT_LOCATE_VOLATILE,
     STATE_MACHINE_TASK::SCOUT_UNDOCK,
-    STATE_MACHINE_TASK::HAULER_RESET_ODOM
+    STATE_MACHINE_TASK::SCOUT_RESET_ODOM_GROUND_TRUTH,
+    STATE_MACHINE_TASK::SCOUT_RESET_ODOM
 };
 
 class ScoutStateMachine
@@ -84,14 +85,15 @@ private:
 
   bool resetOdometry(const geometry_msgs::Pose& POSE);
   bool resetOdometry();
-
   /**
-   * @brief resets odometry, used after parking is done for scout. 
+   * @brief resets odometry, used after parking is done for scout, the oone withj pose signature is used when ground truth is not being used.
    * 
    * @return true : if task is successful.
-   * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session. 
+   * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session for the ground truth version.
    */
 
+  bool syncOdometry();
+  
 public:
   ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name);
 
