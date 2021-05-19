@@ -102,6 +102,9 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	case STATE_MACHINE_TASK::SCOUT_RESET_ODOM:
 		output = sm->resetOdometry(testPose);
 		break;
+	case STATE_MACHINE_TASK::SCOUT_SYNC_ODOM:
+		output = sm->resetOdometry(testPose);
+		break;
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
 		break;
