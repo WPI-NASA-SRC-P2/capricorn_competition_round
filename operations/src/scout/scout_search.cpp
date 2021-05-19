@@ -43,6 +43,7 @@ bool g_new_trajectory = false;
 bool resume_spiral = false;
 bool new_stop_call = false;
 const double CHECKPOINT_THRESHOLD = 2.0;
+bool was_driving = false;
 
 /**
  * @brief Callback to the robot pose topic
@@ -120,8 +121,10 @@ void driveSprial()
   {
     double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
     bool done_driving = g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+    ROS_INFO("Get Ready");
     if (g_going_to_goal && !done_driving)
     {
+      ROS_INFO("I think I'm going to goal");
       g_last_dist = dist;
       ros::Duration(0.1).sleep();
       g_going_to_goal = true;
@@ -140,8 +143,10 @@ void driveSprial()
       ROS_INFO_STREAM("Circular Motion radius: " << center_of_rot.point.y << "\tdist: " << dist);
       g_last_dist = 100; // Just to make it big for the next iteration
       g_new_trajectory = true;
+      // g_going_to_goal = true;
+      was_driving = false;
     }
-    else if (dist > g_last_dist)
+    else if (dist > g_last_dist || was_driving)
     {
       geometry_msgs::Point point_0, point_2;
       point_0 = g_spiral_points.at(0).point;
@@ -156,9 +161,11 @@ void driveSprial()
       // g_client->sendGoal(g_nav_goal);
       g_going_to_goal = true;
       g_new_trajectory = true;
+      was_driving = true;
     }
     else
     {
+      ROS_INFO_STREAM("Continuing spiral" << dist << g_last_dist);
       g_last_dist = dist;
       g_new_trajectory = false;
     }
@@ -188,6 +195,7 @@ void spiralSearch()
     g_nav_goal.direction = direction;
     g_nav_goal.angular_velocity = 0;
     g_new_trajectory = true;
+    // g_going_to_goal = true;
     ROS_INFO("Avoiding Obstacle");
     return;
   }
@@ -258,7 +266,21 @@ int main(int argc, char **argv)
   ros::init(argc, argv, robot_name + COMMON_NAMES::SCOUT_SEARCH_NODE_NAME);
   ros::NodeHandle nh;
 
-  ros::Subscriber odom_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
+  bool odom_flag;
+	nh.getParam("cheat_odom", odom_flag);
+
+  ros::Subscriber odom_sub;
+
+	if (odom_flag)
+	{
+		odom_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
+		ROS_INFO("Currently using cheat odom from Gazebo\n");
+	}
+	else
+	{
+		odom_sub = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, updateRobotPose);
+		ROS_INFO("Currently using odom from rtabmap\n");
+	}
 
   g_client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
   g_client->waitForServer();
