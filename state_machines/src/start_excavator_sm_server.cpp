@@ -92,7 +92,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 		output = sm->resetOdometry(testPose);
 		break;
 	case STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM :
-		output = sm->resetOdometry(testPose);
+		output = sm->syncOdometry(testPose);
 		break;
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
