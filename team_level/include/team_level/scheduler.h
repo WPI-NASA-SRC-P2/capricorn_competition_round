@@ -6,6 +6,8 @@
 #include <vector>
 #include <state_machines/RobotStateMachineTaskAction.h>
 #include <actionlib/client/simple_action_client.h>
+#include <nav_msgs/Odometry.h>
+#include <operations/navigation_algorithm.h>
 
 using namespace COMMON_NAMES;
 
@@ -43,6 +45,15 @@ private:
   state_machines::RobotStateMachineTaskGoal excavator_goal_;
   state_machines::RobotStateMachineTaskGoal hauler_goal_;
 
+  geometry_msgs::PoseStamped scout_pose_;
+  geometry_msgs::PoseStamped excavator_pose_;
+
+  ros::Subscriber scout_odom_sub_;
+  ros::Subscriber excavator_odom_sub_;
+  
+  std::mutex scout_pose_mutex;
+  std::mutex excavator_pose_mutex;
+
   bool scout_task_completed_ = false, excavator_task_completed_ = false, hauler_task_completed_ = false;
 
   void initTeam(const int team_number);
@@ -68,12 +79,18 @@ private:
   void startExcavator();
 
   void sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task);
+  
+  void sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task, const geometry_msgs::PoseStamped& goal_loc);
 
   void sendScoutGoal(const STATE_MACHINE_TASK task);
 
   void sendExcavatorGoal(const STATE_MACHINE_TASK task);
 
   void sendHaulerGoal(const STATE_MACHINE_TASK task);
+
+  void updateScoutPose(const nav_msgs::Odometry::ConstPtr &msg);
+
+  void updateExcavatorPose(const nav_msgs::Odometry::ConstPtr &msg);
 
 public:
   Scheduler(ros::NodeHandle nh, const int team_number = 1);

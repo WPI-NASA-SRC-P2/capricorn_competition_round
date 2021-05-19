@@ -35,15 +35,14 @@ int main(int argc, char **argv)
 
 
   ros::Duration(0.1).sleep();
-  geometry_msgs::PointStamped zero_point;
-  zero_point.header.frame_id = "map";
-  zero_point.point.x = x;
-  zero_point.point.y = y;
-  geometry_msgs::PointStamped closer_point = NavigationAlgo::getPointCloserToOrigin(zero_point, 10);
+  geometry_msgs::Point zero_point;
+  zero_point.x = x;
+  zero_point.y = y;
+  geometry_msgs::Point closer_point = NavigationAlgo::getPointCloserToOrigin(zero_point, 10);
 
   marker.points.resize(2);
-  marker.points.at(0) = zero_point.point;
-  marker.points.at(1) = closer_point.point;
+  marker.points.at(0) = zero_point;
+  marker.points.at(1) = closer_point;
   
   marker.colors.resize(2);
   marker.colors.at(0) = (marker.color);
