@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   utils
   perception
   srcp2_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -62,11 +63,10 @@ find_package(catkin REQUIRED COMPONENTS
  )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  ResetOdom.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -78,6 +78,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
+   geometry_msgs
    std_msgs
  )
 
@@ -169,6 +170,12 @@ target_link_libraries(publish_cheat_odom
 add_executable(initialize_rtabmap src/initialize_rtabmap.cpp)
 add_dependencies(initialize_rtabmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(initialize_rtabmap
+  ${catkin_LIBRARIES}
+)
+
+add_executable(reset_odom src/reset_odom.cpp)
+add_dependencies(reset_odom ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(reset_odom
   ${catkin_LIBRARIES}
 )
 

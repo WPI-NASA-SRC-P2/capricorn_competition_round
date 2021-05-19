@@ -26,7 +26,7 @@ Client* g_client;
 operations::NavigationGoal g_nav_goal;
 perception::ObjectArray g_objects;
 
-const int ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
+const int ANGLE_THRESHOLD_NARROW = 5, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05;
 std::mutex g_objects_mutex, g_cancel_goal_mutex;
 std::string g_desired_label;
@@ -35,7 +35,7 @@ int g_height_threshold = 400, g_lost_detection_times = 0, g_true_detection_times
 
 enum HEIGHT_THRESHOLD
 {
-    EXCAVATOR = 240,
+    EXCAVATOR = 220,
     SCOUT = 200,
     HAULER = 200,
     PROCESSING_PLANT = 400,
@@ -207,9 +207,9 @@ void visionNavigation()
             // if the bounding box is in the center of image following the narrow angle
             g_centered = true;
             g_nav_goal.angular_velocity = 0;
-            if(error_height <= 0 && g_true_detection_times > FOUND_FRAME_THRESHOLD)
+            if(error_height < 0 && g_true_detection_times > FOUND_FRAME_THRESHOLD)
             {
-                // If the object is big enough, stop the robot
+                // If the object is having desired height, stop the robot
                 g_nav_goal.forward_velocity = 0;
                 g_execute_called = false;
                 g_centered = false;
@@ -218,7 +218,7 @@ void visionNavigation()
             }
             else
             {
-                // Keep driving forward
+                // Keep driving forward according to height of the object
                 g_nav_goal.forward_velocity = FORWARD_VELOCITY;
             }
         }
