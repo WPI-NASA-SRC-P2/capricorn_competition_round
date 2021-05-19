@@ -6,7 +6,7 @@
   NASA SPACE ROBOTICS CHALLENGE -->
 
 <launch>
-    <arg name="rviz" default="false" />
+    <arg name="rviz" default="true" />
     <arg name="launch_stereo_proc" default="true" />
     <arg name="path_to_model" default='$(find perception)/model' /> 
     <arg name="path_to_labelmap" default='$(find perception)/model/saved_model.pbtxt' /> 
@@ -17,5 +17,5 @@
 
     <node name="three_object_detection" pkg="perception" type="three_object_detection.py" output="log" args="$(arg path_to_model) $(arg path_to_labelmap)" />
 
-    <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find utils)/rviz/object_detection.rviz"/>
+    <node if="$(arg rviz)" pkg="rviz" type="rviz" name="object_detection_rviz" args="-d $(find utils)/rviz/object_detection.rviz"/>
 </launch>
