@@ -75,7 +75,7 @@ void ExcavatorStateMachine::startStateMachine()
 }
 
 void ExcavatorStateMachine::initState()
-{
+{  
     if(volatile_found_)
     {
         robot_state_ = GO_TO_VOLATILE;

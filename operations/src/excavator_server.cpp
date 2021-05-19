@@ -106,63 +106,66 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
   std::string scoop_value;
   if(task == START_DIGGING) // digging angles
   {
-    publishAngles(theta, 0, 0, 0); // Step for safe trajectory to not bump into camera
-    ros::Duration(SLEEP_DURATION).sleep();
+    publishAngles(0, -2, 1, 0); // Move the arm up
+    publishAngles(theta, -2, 1, 0); // Step for safe trajectory to not bump into camera
+    ros::Duration(2).sleep();
     publishAngles(theta, 1, 1, -2); // This set of values move the scoop under the surface
+    ros::Duration(2).sleep();
+    
     float yaw_angle = theta;
 
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
     ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
 
-    // while (!volatile_found && yaw_angle > -1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
-    // {
-    //   // move the shoulder yaw joint from left to right under the surface
-    //   publishAngles(yaw_angle, 1, 1, -0.6);
-    //   ros::Duration(1).sleep();
-    //   yaw_angle -= 0.2;
-    //   ROS_INFO_STREAM(std::to_string(yaw_angle));
-    //   scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
-    //   ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
-    // }
-
-    if(yaw_angle<-1) // If digging happens towards the right of excavator
+    while (!volatile_found && yaw_angle < 1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
     {
-      publishAngles(theta, 1, 1, -0.6);
-      ros::Duration(SLEEP_DURATION).sleep();
-      if(true) // If volatiles found towards the right, move to the center and then raise the arm
+      // move the shoulder yaw joint from right to left under the surface
+      publishAngles(yaw_angle, 1, 1, -0.6);
+      ros::Duration(1).sleep();
+      yaw_angle += 0.2;
+      ROS_INFO_STREAM(std::to_string(yaw_angle));
+      scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
+      ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
+    }
+
+    if(yaw_angle < 0.785 && yaw_angle > -0.785) // If digging happens towards the front of excavator
+    {
+      if(volatile_found) // If volatiles found towards the center, move to the rightmost position and raise the arm
       {
-        publishAngles(theta, 1, 1, -2.6); // Set of values inside the surface
-        ros::Duration(SLEEP_DURATION).sleep();
-        publishAngles(theta, -0.5, 1, -1.1); // Intermediate set of values for smooth motion
-        ros::Duration(SLEEP_DURATION).sleep();
-        publishAngles(theta, -2, 1, 0.4); // This set of values moves the scoop over the surface
-      }
-      else // Else raise the arm and dump the regolith in the center
-      {
-        publishAngles(theta, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
-        ros::Duration(SLEEP_DURATION).sleep();
-        publishAngles(theta, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
-        return false;
+        publishAngles(-0.785, 1, 1, -2.6); // Set of values moves the arm to the right while inside the surface
+        ros::Duration(2).sleep();
+        publishAngles(-0.785, -0.5, 1, -1.1); // Intermediate set of values for smooth motion
+        ros::Duration(2).sleep();
+        publishAngles(-0.785, -2, 1, 0.4); // This set of values moves the scoop over the surface
       }
     }
-    else // Else raise the arms where volatiles were found and proceed to dumping
+    else // Else raise the arm where volatiles were found or drop regolith to the left
     {
-      publishAngles(yaw_angle, 1, 1, -2.6);
-      ros::Duration(SLEEP_DURATION).sleep();
-      publishAngles(yaw_angle, -0.5, 1, -1.1);
-      ros::Duration(SLEEP_DURATION).sleep();
-      publishAngles(yaw_angle, -2, 1, 0.4); // This set of values moves the scoop over the surface
+      if(volatile_found)
+      {
+        publishAngles(yaw_angle, 1, 1, -2.6); // Set of values moves the scoop to not drop volatiles
+        ros::Duration(2).sleep();
+        publishAngles(yaw_angle, -0.5, 1, -1.1); // Intermediate set of values to raise the arm above the surface
+        ros::Duration(2).sleep();
+        publishAngles(yaw_angle, -2, 1, 0.4); // This set of values moves the arm over the surface
+      }
+      else // Else raise the arm and dump the regolith in the left
+      {
+        publishAngles(1.57, -2, 1, 0.4); // This set of values moves the arm to the left and above the surface
+        ros::Duration(SLEEP_DURATION).sleep();
+        publishAngles(1.57, -2, 1, 1.5); // This set of values moves the scoop to drop regolith on the ground
+        ros::Duration(SLEEP_DURATION).sleep();
+        return false;
+      }
     }
   }
   else if(task == START_UNLOADING) // dumping angles
   {
-    publishAngles(0.25, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
+    publishAngles(0, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(0.25, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    publishAngles(0, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(-1, -2, 1, -0.7786); // This set of values moves the scoop to the front center
-    ros::Duration(1).sleep();
-    publishAngles(-1, -1, 2, -0.7786); // This set of values moves the scoop to the front center
+    publishAngles(0, -2, 1, -0.7786); // This set of values moves the scoop to the front center
     ros::Duration(3).sleep();
   }
   else
@@ -194,6 +197,24 @@ void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_serve
 }
 
 /**
+ * @brief Function called when the goal is cancelled
+ * 
+ */
+void cancelGoal()
+{
+    std_msgs::Float64 shoulder_yaw_msg;
+    shoulder_yaw_msg.data = -1.57;
+
+    ROS_INFO("Cancelled Excavator Goal");
+    const std::lock_guard<std::mutex> lock(excavator_cancel_goal_mutex); 
+    ROS_INFO("Done Cancelling");
+    excavator_shoulder_yaw_publisher_.publish(shoulder_yaw_msg);
+    ros::Duration(SLEEP_DURATION).sleep();
+    publishAngles(-1.57, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    ros::Duration(SLEEP_DURATION).sleep();
+}
+
+/**
  * @brief The main method for excavator server
  * 
  * @param argc The number of arguments passed
@@ -201,7 +222,8 @@ void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_serve
  * @return int 
  */
 int main(int argc, char** argv)
-{
+{ 
+  
   // Check if the node is being run through roslauch, and have one parameter of RobotName_Number
   if (argc != 2 && argc != 4)
   {
@@ -219,6 +241,7 @@ int main(int argc, char** argv)
     initExcavatorPublisher(nh, robot_name);
     ros::Subscriber sub = nh.subscribe("/"+robot_name + SCOOP_INFO, 1000, scoopCallback); // scoop info subscriber
     Server server(nh, EXCAVATOR_ACTIONLIB, boost::bind(&execute, _1, &server), false);
+    server.registerPreemptCallback(&cancelGoal);
     server.start();
     ROS_INFO("STARTED EXCAVATOR SERVER");
     ros::spin();

@@ -22,9 +22,7 @@ int main(int argc, char** argv)
   Client client(EXCAVATOR_ACTIONLIB, true);
   client.waitForServer();
   ROS_INFO("FOUND SERVER");
-
-  while(true && ros::ok())
-  {
+    
     operations::ExcavatorGoal goal;
     goal.task = START_DIGGING; // START_DIGGING = 1
     goal.target.x = 0.7; // set of target digging values to the left of the excavator
@@ -37,6 +35,8 @@ int main(int argc, char** argv)
     client.waitForResult();
     if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
       ROS_INFO_STREAM("Yay! The scoop is now full");
+
+    // ros::Duration(5).sleep();
 
     goal.task = START_UNLOADING; // START_UNLOADING = 2
     goal.target.x = 0.7; // set of target dumping values to the right of the excavator
@@ -52,7 +52,6 @@ int main(int argc, char** argv)
 
     std::string message3(client.getState().toString().c_str());
     ROS_INFO_STREAM("Current State: " + message3);
-  }
 
   return 0;
 }
