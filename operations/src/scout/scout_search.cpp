@@ -121,10 +121,8 @@ void driveSprial()
   {
     double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
     bool done_driving = g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
-    ROS_INFO("Get Ready");
     if (g_going_to_goal && !done_driving)
     {
-      ROS_INFO("I think I'm going to goal");
       g_last_dist = dist;
       ros::Duration(0.1).sleep();
       g_going_to_goal = true;
@@ -165,7 +163,6 @@ void driveSprial()
     }
     else
     {
-      ROS_INFO_STREAM("Continuing spiral" << dist << g_last_dist);
       g_last_dist = dist;
       g_new_trajectory = false;
     }
