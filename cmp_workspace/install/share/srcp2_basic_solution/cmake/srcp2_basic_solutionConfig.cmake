@@ -154,7 +154,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /home/srcp2/cmp_workspace/install/lib;/home/srcp2/ros_workspace/install/lib;/opt/ros/noetic/lib)
+    foreach(path /home/srcp2/cmp_workspace/install/lib;/home/srcp2/cmp_workspace/install/lib;/home/srcp2/ros_workspace/install/lib;/opt/ros/noetic/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
@@ -211,7 +211,7 @@ foreach(depend ${depends})
   _unpack_libraries_with_build_configuration(srcp2_basic_solution_LIBRARIES ${srcp2_basic_solution_LIBRARIES})
 
   _list_append_unique(srcp2_basic_solution_LIBRARY_DIRS ${${srcp2_basic_solution_dep}_LIBRARY_DIRS})
-  list(APPEND srcp2_basic_solution_EXPORTED_TARGETS ${${srcp2_basic_solution_dep}_EXPORTED_TARGETS})
+  _list_append_deduplicate(srcp2_basic_solution_EXPORTED_TARGETS ${${srcp2_basic_solution_dep}_EXPORTED_TARGETS})
 endforeach()
 
 set(pkg_cfg_extras "")

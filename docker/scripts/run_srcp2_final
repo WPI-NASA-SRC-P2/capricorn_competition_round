@@ -377,7 +377,7 @@ docker run --rm $detach_option $interactive \
     \
     --cpus=$cpus \
     --memory=$mem \
-    --memory-swap="5.0g" \
+    --memory-swap=$mem \
     \
     --env=ROS_HOME="/home/srcp2" \
     --env=ROSCONSOLE_STDOUT_LINE_BUFFERED="1" \
