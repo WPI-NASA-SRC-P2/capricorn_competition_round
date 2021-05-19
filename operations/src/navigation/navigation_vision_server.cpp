@@ -41,11 +41,11 @@ int g_height_threshold = 400;
 
 enum HEIGHT_THRESHOLD
 {
-    EXCAVATOR = 220,
+    EXCAVATOR = 170,
     SCOUT = 200,
     HAULER = 200,
-    PROCESSING_PLANT = 400,
-    REPAIR_STATION = 400,
+    PROCESSING_PLANT = 340,
+    REPAIR_STATION = 340,
     OTHER = 50,
     MINIMUM_THRESH = -1,
 };

@@ -62,6 +62,8 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 
 	bool output = false;
 
+	
+
 	switch (robot_state)
 	{
 	case STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOC:
