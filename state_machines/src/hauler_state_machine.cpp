@@ -87,11 +87,12 @@ bool HaulerStateMachine::undockExcavator()
 bool HaulerStateMachine::undockHopper()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from Hopper");
-    navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_HOPPER_CLASS;
-    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
-    navigation_vision_client_->sendGoal(navigation_vision_goal_);
-    navigation_vision_client_->waitForResult();
-    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+    geometry_msgs::PoseStamped pt;
+    pt.header.frame_id = robot_name_ + ROBOT_BASE;
+    pt.pose.position.x = -10;
+    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+    navigation_action_goal_.pose = pt;
+    navigation_client_->sendGoal(navigation_action_goal_);
 }
 
 bool HaulerStateMachine::dumpVolatileToProcPlant()
