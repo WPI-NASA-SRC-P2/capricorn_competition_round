@@ -71,7 +71,7 @@ bool HaulerStateMachine::dumpVolatile()
     hauler_goal_.desired_state = true;
     hauler_client_->sendGoal(hauler_goal_);
     hauler_client_->waitForResult();
-    return (hauler_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+    return (hauler_client_->getState().isDone());
 }
 
 bool HaulerStateMachine::undockExcavator()
