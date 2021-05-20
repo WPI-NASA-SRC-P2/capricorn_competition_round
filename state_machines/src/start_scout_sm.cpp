@@ -60,6 +60,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	ROS_INFO_STREAM(g_robot_name << ": Servers Connected, Executing Goal");
 
 	STATE_MACHINE_TASK robot_state = (STATE_MACHINE_TASK)goal->task;
+	geometry_msgs::Pose resetPose = (geometry_msgs::Pose)goal->goal_loc.pose; //Doubtful
 
 	if (!checkTask(robot_state))
 	{
@@ -100,10 +101,10 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 		output = sm->resetOdometry();
 		break;
 	case STATE_MACHINE_TASK::SCOUT_RESET_ODOM:
-		output = sm->resetOdometry(testPose);
+		output = sm->resetOdometry(resetPose);
 		break;
 	case STATE_MACHINE_TASK::SCOUT_SYNC_ODOM:
-		output = sm->syncOdometry(testPose);
+		output = sm->syncOdometry(resetPose);
 		break;
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
