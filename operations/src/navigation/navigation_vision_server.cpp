@@ -17,6 +17,8 @@
 #include <actionlib/server/simple_action_server.h>
 #include <operations/NavigationVisionAction.h>
 #include <operations/obstacle_avoidance.h>
+#include <operations/navigation_algorithm.h>
+#include <nav_msgs/Odometry.h>
 
 #define UPDATE_HZ 10
 
@@ -31,21 +33,24 @@ operations::NavigationGoal g_nav_goal;
 perception::ObjectArray g_objects;
 
 std::string g_robot_name;
+geometry_msgs::PoseStamped g_robot_pose;
 
 const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05;
-std::mutex g_objects_mutex, g_cancel_goal_mutex;
+const double NOT_AVOID_OBSTACLE_THRESHOLD = 5.0;
+std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex;
 std::string g_desired_label;
 bool g_reached_goal = false, g_cancel_called = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false;
 int g_height_threshold = 400;
 
 enum HEIGHT_THRESHOLD
 {
-    EXCAVATOR = 220,
+    EXCAVATOR = 170,
     SCOUT = 200,
     HAULER = 200,
-    PROCESSING_PLANT = 400,
-    REPAIR_STATION = 400,
+    PROCESSING_PLANT = 340,
+    REPAIR_STATION = 340,
+    FURNACE = 150,
     OTHER = 50,
     MINIMUM_THRESH = -1,
 };
@@ -100,6 +105,7 @@ bool check_class()
         g_desired_label == OBJECT_DETECTION_REPAIR_STATION_CLASS ||
         g_desired_label == OBJECT_DETECTION_EXCAVATOR_CLASS ||
         g_desired_label == OBJECT_DETECTION_SCOUT_CLASS ||
+        g_desired_label == OBJECT_DETECTION_FURNACE_CLASS ||
         g_desired_label == OBJECT_DETECTION_HAULER_CLASS)
         return true;
     return false;
@@ -429,7 +435,8 @@ void visionNavigation()
  */
 void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
 {
-    const std::lock_guard<std::mutex> lock(g_objects_mutex);
+    const std::lock_guard<std::mutex> obj_lock(g_objects_mutex);
+    const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
 
     perception::ObjectArray objects = g_objects;
 
@@ -439,8 +446,9 @@ void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
         obstacles.push_back(objects.obj.at(i));
 
     float direction = checkObstacle(obstacles);
+    double distance = NavigationAlgo::changeInPosition(g_robot_pose, goal_loc);
 
-    if (abs(direction) > 0.0)
+    if (abs(direction) > 0.0 && distance > NOT_AVOID_OBSTACLE_THRESHOLD)
     {
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = FORWARD_VELOCITY;
@@ -454,6 +462,7 @@ void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
     {
         g_nav_goal.drive_mode = NAV_TYPE::GOAL;
         g_nav_goal.pose = goal_loc;
+        ROS_INFO_STREAM(g_robot_name<<" Outgoing nav vision goal"<<goal_loc);
         if (g_previous_state_is_go_to)
         {
             g_send_nav_goal = false;
@@ -581,6 +590,18 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     as->setSucceeded(result);
 }
 
+/**
+ * @brief Callback to the robot pose topic
+ * 
+ * @param msg 
+ */
+void odomCallback(const nav_msgs::Odometry::ConstPtr &msg)
+{
+  const std::lock_guard<std::mutex> lock(g_odom_mutex);
+  g_robot_pose.header = msg->header;
+  g_robot_pose.pose = msg->pose.pose;
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 2 && argc != 4)
@@ -597,6 +618,8 @@ int main(int argc, char **argv)
     g_client = new Client(CAPRICORN_TOPIC + g_robot_name + "/" + NAVIGATION_ACTIONLIB, true);
 
     ros::Subscriber objects_sub = nh.subscribe(CAPRICORN_TOPIC + g_robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
+
+    ros::Subscriber robot_odom_sub = nh.subscribe(CAPRICORN_TOPIC + g_robot_name + CHEAT_ODOM_TOPIC, 1, &odomCallback);
 
     Server server(nh, g_robot_name + NAVIGATION_VISION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.registerPreemptCallback(&cancelGoal);

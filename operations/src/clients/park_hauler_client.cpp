@@ -20,9 +20,9 @@ Command Line Arguments Required:
 // defining client for ParkRobot ActionLib
 typedef actionlib::SimpleActionClient<operations::ParkRobotAction> g_client;
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-    if(argc != 3 && argc != 5)
+    if (argc < 2)
     {
         ROS_ERROR_STREAM("This node must be launched with the robotname and the target location (should be hopper or excavator) passed as first and second command line arguments!");
         return -1;
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 
     std::string hopper_or_excavator(argv[2]);
 
-    if(hopper_or_excavator != COMMON_NAMES::OBJECT_DETECTION_HOPPER_CLASS && hopper_or_excavator != COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS)
+    if (hopper_or_excavator != COMMON_NAMES::OBJECT_DETECTION_HOPPER_CLASS && hopper_or_excavator != COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS)
     {
         ROS_ERROR_STREAM("Wrong Target Location Given. Please give hopper or excavator as second argument");
         return 0;
@@ -40,19 +40,19 @@ int main(int argc, char** argv)
     ros::init(argc, argv, robot_name + COMMON_NAMES::PARK_HAULER_HOPPER_CLIENT_NODE_NAME);
 
     // initializing the client
-    g_client client(robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true); 
+    g_client client(robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true);
 
     // wait for the server to run
     client.waitForServer();
 
     // defining goal
-    operations::ParkRobotGoal goal; 
-    
+    operations::ParkRobotGoal goal;
+
     // the second argument given would be the target object for parking, options: hopper or excavator
-    goal.hopper_or_excavator = hopper_or_excavator; 
+    goal.hopper_or_excavator = hopper_or_excavator;
 
     client.sendGoal(goal);
-    
+
     if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         ROS_INFO("Reached goal");
 

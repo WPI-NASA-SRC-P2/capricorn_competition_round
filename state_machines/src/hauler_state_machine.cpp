@@ -19,13 +19,12 @@ HaulerStateMachine::~HaulerStateMachine()
 
 bool HaulerStateMachine::goToLoc(const geometry_msgs::PoseStamped &loc)
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Going to given location");
-    navigation_action_goal_.pose = loc;
-    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-
-    navigation_client_->sendGoal(navigation_action_goal_);
-    navigation_client_->waitForResult();
-    return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Going Back to Goal (High Level Vision Goal)");
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_OBS_GOTO_GOAL;
+    navigation_vision_goal_.goal_loc = loc;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool HaulerStateMachine::followExcavator()
@@ -72,7 +71,7 @@ bool HaulerStateMachine::dumpVolatile()
     hauler_goal_.desired_state = true;
     hauler_client_->sendGoal(hauler_goal_);
     hauler_client_->waitForResult();
-    return (hauler_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+    return (hauler_client_->getState().isDone());
 }
 
 bool HaulerStateMachine::undockExcavator()
@@ -88,17 +87,20 @@ bool HaulerStateMachine::undockExcavator()
 bool HaulerStateMachine::undockHopper()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from Hopper");
-    navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_HOPPER_CLASS;
-    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
-    navigation_vision_client_->sendGoal(navigation_vision_goal_);
-    navigation_vision_client_->waitForResult();
-    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+    geometry_msgs::PoseStamped pt;
+    pt.header.frame_id = robot_name_ + ROBOT_BASE;
+    pt.pose.position.x = -5;
+    pt.pose.orientation.w = 1;
+    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+    navigation_action_goal_.pose = pt;
+    navigation_client_->sendGoal(navigation_action_goal_);
+    navigation_client_->waitForResult();
 }
 
 bool HaulerStateMachine::dumpVolatileToProcPlant()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Dumping Volatile to Processing Plant (High Level Goal)");
-    return (goToProcPlant() && parkAtHopper() && dumpVolatile() && undockHopper());
+    return (undockExcavator() && goToProcPlant() && parkAtHopper() && dumpVolatile() && undockHopper());
 }
 
 bool HaulerStateMachine::goBackToExcavator(const geometry_msgs::PoseStamped &loc)

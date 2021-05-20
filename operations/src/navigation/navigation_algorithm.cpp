@@ -370,3 +370,46 @@ std::vector<double> NavigationAlgo::getABCDofThreePointsCircle(const std::vector
 
   return abcd_points;
 }
+
+geometry_msgs::Pose NavigationAlgo::getPointCloserToOrigin(const geometry_msgs::Pose& ref_point, const geometry_msgs::Pose& self_point, const double closer_distance)
+{
+  double ref_x,ref_y;
+  ref_x = ref_point.position.x;
+  ref_y = ref_point.position.y;
+
+  double self_x,self_y;
+  self_x = self_point.position.x;
+  self_y = self_point.position.y;
+
+  double x = ref_x - self_x;
+  double y = ref_y - self_y;
+  double theta = std::atan2(y, x);
+  
+  double out_x = ref_x - cos(theta)*closer_distance;
+  double out_y = ref_y - sin(theta)*closer_distance;
+
+  double dist = std::hypot(out_x - self_x, out_y - self_y);
+
+  geometry_msgs::Pose out_point;
+  if(dist<closer_distance)
+    out_point = self_point;
+  else
+  {
+    out_point.position.x = out_x;
+    out_point.position.y = out_y;
+
+    // tf::Quaternion quat(self_point.orientation.x, self_point.orientation.y, self_point.orientation.z, self_point.orientation.w);
+    // tf::Matrix3x3 m(quat);
+    // double roll, pitch, yaw;
+    // m.getRPY(roll, pitch, yaw);
+    // double out_yaw = yaw+theta;
+
+    tf2::Quaternion myQuaternion;
+    myQuaternion.setRPY( 0, 0, theta );
+
+    tf2::convert(myQuaternion, out_point.orientation);
+    // ROS_INFO_STREAM(yaw<<" "<<yaw<<" "<<yaw<<" "<<yaw<<" "<<yaw<<" "<<yaw<<" ");
+  }
+
+  return out_point;
+}

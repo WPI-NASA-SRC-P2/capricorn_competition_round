@@ -1,4 +1,4 @@
-#include <operations/ExcavatorAction.h> 
+#include <operations/ExcavatorAction.h>
 #include <actionlib/server/simple_action_server.h>
 #include <string.h>
 #include "ros/ros.h"
@@ -6,7 +6,8 @@
 #include <srcp2_msgs/ExcavatorScoopMsg.h>
 #include <utils/common_names.h>
 #include <geometry_msgs/Point.h> // To get target point in order to orient shoulder joint
-#include <math.h> // used in findShoulderAngle() for atan2()
+#include <math.h>                // used in findShoulderAngle() for atan2()
+#include <mutex>
 
 using namespace COMMON_NAMES;
 
@@ -23,6 +24,7 @@ float curr_sh_pitch = 0;
 float curr_elb_pitch = 0;
 float curr_wrt_pitch = 0;
 bool volatile_found = false; // flag to store value received from scoop_info topic
+std::mutex excavator_cancel_goal_mutex;
 
 int SLEEP_DURATION = 5; // The sleep duration
 
@@ -46,7 +48,7 @@ void initExcavatorPublisher(ros::NodeHandle &nh, const std::string &robot_name)
  * 
  * @param msg  The scoop info message
  */
-void scoopCallback(const srcp2_msgs::ExcavatorScoopMsg::ConstPtr& msg)
+void scoopCallback(const srcp2_msgs::ExcavatorScoopMsg::ConstPtr &msg)
 {
   volatile_found = msg->volatile_clod_mass;
 }
@@ -62,7 +64,6 @@ float findShoulderAngle(const geometry_msgs::Point &target, const geometry_msgs:
 {
   return atan2((target.y - shoulder.y), (target.x - shoulder.x));
 }
-
 
 /**
  * @brief This function publishes the joint angles to the publishers
@@ -80,7 +81,7 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
   std_msgs::Float64 shoulder_pitch_msg;
   std_msgs::Float64 elbow_pitch_msg;
   std_msgs::Float64 wrist_pitch_msg;
-  
+
   shoulder_yaw_msg.data = shoulder_yaw;
   shoulder_pitch_msg.data = shoulder_pitch;
   elbow_pitch_msg.data = elbow_pitch;
@@ -101,76 +102,81 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
  */
 bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
 {
-  float theta = findShoulderAngle(target, shoulder);
+  // float theta = findShoulderAngle(target, shoulder);
+  float theta = -1.57;
   std::string scoop_value;
-  if(task == START_DIGGING) // digging angles
+  if (task == START_DIGGING) // digging angles
   {
-    publishAngles(theta, 0, 0, 0); // Step for safe trajectory to not bump into camera
-    ros::Duration(SLEEP_DURATION).sleep();
+    publishAngles(0, -2, 1, 0);     // Move the arm up
+    publishAngles(theta, -2, 1, 0); // Step for safe trajectory to not bump into camera
+    ros::Duration(2).sleep();
     publishAngles(theta, 1, 1, -2); // This set of values move the scoop under the surface
+    ros::Duration(2).sleep();
+
     float yaw_angle = theta;
 
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
     ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
 
-    while (!volatile_found && yaw_angle > -1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
+    while (!volatile_found && yaw_angle < 1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
     {
-      // move the shoulder yaw joint from left to right under the surface
+      // move the shoulder yaw joint from right to left under the surface
       publishAngles(yaw_angle, 1, 1, -0.6);
       ros::Duration(1).sleep();
-      yaw_angle -= 0.2;
+      yaw_angle += 0.2;
       ROS_INFO_STREAM(std::to_string(yaw_angle));
       scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
       ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
     }
 
-    if(yaw_angle<-1) // If digging happens towards the right of excavator
+    if (yaw_angle < 0.785 && yaw_angle > -0.785) // If digging happens towards the front of excavator
     {
-      publishAngles(0, 1, 1, -0.6);
-      ros::Duration(SLEEP_DURATION).sleep();
-      if(volatile_found) // If volatiles found towards the right, move to the center and then raise the arm
+      if (volatile_found) // If volatiles found towards the center, move to the rightmost position and raise the arm
       {
-        publishAngles(0, 1, 1, -2.6); // Set of values inside the surface
-        ros::Duration(SLEEP_DURATION).sleep();
-        publishAngles(0, -0.5, 1, -1.1); // Intermediate set of values for smooth motion
-        ros::Duration(SLEEP_DURATION).sleep();
-        publishAngles(0, -2, 1, 0.4); // This set of values moves the scoop over the surface
+        publishAngles(-0.785, 1, 1, -2.6); // Set of values moves the arm to the right while inside the surface
+        ros::Duration(2).sleep();
+        publishAngles(-0.785, -0.5, 1, -1.1); // Intermediate set of values for smooth motion
+        ros::Duration(2).sleep();
+        publishAngles(-0.785, -2, 1, 0.4); // This set of values moves the scoop over the surface
       }
-      else // Else raise the arm and dump the regolith in the center
+    }
+    else // Else raise the arm where volatiles were found or drop regolith to the left
+    {
+      if (volatile_found)
       {
-        publishAngles(0, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
+        publishAngles(yaw_angle, 1, 1, -2.6); // Set of values moves the scoop to not drop volatiles
+        ros::Duration(2).sleep();
+        publishAngles(yaw_angle, -0.5, 1, -1.1); // Intermediate set of values to raise the arm above the surface
+        ros::Duration(2).sleep();
+        publishAngles(yaw_angle, -2, 1, 0.4); // This set of values moves the arm over the surface
+      }
+      else // Else raise the arm and dump the regolith in the left
+      {
+        publishAngles(1.57, -2, 1, 0.4); // This set of values moves the arm to the left and above the surface
         ros::Duration(SLEEP_DURATION).sleep();
-        publishAngles(0, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
+        publishAngles(1.57, -2, 1, 1.5); // This set of values moves the scoop to drop regolith on the ground
+        ros::Duration(SLEEP_DURATION).sleep();
         return false;
       }
     }
-    else // Else raise the arms where volatiles were found and proceed to dumping
-    {
-      publishAngles(yaw_angle, 1, 1, -2.6);
-      ros::Duration(SLEEP_DURATION).sleep();
-      publishAngles(yaw_angle, -0.5, 1, -1.1);
-      ros::Duration(SLEEP_DURATION).sleep();
-    }
   }
-  else if(task == START_UNLOADING) // dumping angles
+  else if (task == START_UNLOADING) // dumping angles
   {
-    publishAngles(0, -1, 1.5792, -0.7786);
+    publishAngles(0.15, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(theta, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
+    publishAngles(0.15, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(theta, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
-    ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(0, -2, 1, -1); // This set of values moves the scoop to the front center
-    ros::Duration(SLEEP_DURATION).sleep();
+    publishAngles(0.15, -2, 1, -0.7786); // This set of values moves the scoop to the front center
+    ros::Duration(3).sleep();
   }
-  else if(task == GO_TO_DEFAULT) // dumping angles
+  else if (task == GO_TO_DEFAULT) // dumping angles
   {
     publishAngles(-1, -1, 1.5792, -0.7786);
   }
   else
   {
     ROS_ERROR("Unhandled state encountered in Excavator actionlib server");
-  } 
+  }
   return true;
 }
 
@@ -180,19 +186,37 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
  * @param goal The desired excavator task
  * @param action_server The server object for excavator action
  */
-void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_server) //const operations::ExcavatorFeedbackConstPtr& feedback,
+void execute(const operations::ExcavatorGoalConstPtr &goal, Server *action_server) //const operations::ExcavatorFeedbackConstPtr& feedback,
 {
   geometry_msgs::Point shoulder_wrt_base_footprint; // Transforming from robot base frame to shoulder joint frame
-  shoulder_wrt_base_footprint.x = 0.7; // Value from tf topic from the simulation, all values in meters
+  shoulder_wrt_base_footprint.x = 0.7;              // Value from tf topic from the simulation, all values in meters
   shoulder_wrt_base_footprint.y = 0.0;
   shoulder_wrt_base_footprint.z = 0.1;
 
   bool dig_dump_result = publishExcavatorMessage(goal->task, goal->target, shoulder_wrt_base_footprint);
   ros::Duration(SLEEP_DURATION).sleep();
   // action_server->working(); // might use for feedback
-  
+
   // SUCCEESS or FAILED depending upon if it could find volatile
   dig_dump_result ? action_server->setSucceeded() : action_server->setAborted();
+}
+
+/**
+ * @brief Function called when the goal is cancelled
+ * 
+ */
+void cancelGoal()
+{
+  std_msgs::Float64 shoulder_yaw_msg;
+  shoulder_yaw_msg.data = -1.57;
+
+  ROS_INFO("Cancelled Excavator Goal");
+  const std::lock_guard<std::mutex> lock(excavator_cancel_goal_mutex);
+  ROS_INFO("Done Cancelling");
+  excavator_shoulder_yaw_publisher_.publish(shoulder_yaw_msg);
+  ros::Duration(SLEEP_DURATION).sleep();
+  publishAngles(-1.57, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
+  ros::Duration(SLEEP_DURATION).sleep();
 }
 
 /**
@@ -202,8 +226,9 @@ void execute(const operations::ExcavatorGoalConstPtr& goal, Server* action_serve
  * @param argv The array of arguments passed
  * @return int 
  */
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
+
   // Check if the node is being run through roslauch, and have one parameter of RobotName_Number
   if (argc != 2 && argc != 4)
   {
@@ -219,9 +244,11 @@ int main(int argc, char** argv)
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
     initExcavatorPublisher(nh, robot_name);
-    ros::Subscriber sub = nh.subscribe("/"+robot_name + SCOOP_INFO, 1000, scoopCallback); // scoop info subscriber
+    ros::Subscriber sub = nh.subscribe("/" + robot_name + SCOOP_INFO, 1000, scoopCallback); // scoop info subscriber
     Server server(nh, EXCAVATOR_ACTIONLIB, boost::bind(&execute, _1, &server), false);
+    server.registerPreemptCallback(&cancelGoal);
     server.start();
+    ROS_INFO("STARTED EXCAVATOR SERVER");
     ros::spin();
 
     return 0;

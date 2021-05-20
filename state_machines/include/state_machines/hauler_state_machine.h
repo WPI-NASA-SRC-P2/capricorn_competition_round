@@ -158,7 +158,6 @@ private:
    */
   bool goBackToExcavator(const geometry_msgs::PoseStamped &loc);
 
-  bool resetOdometry();
 
   /**
    * @brief resets odometry, used after parking is done for hauler. 
@@ -166,6 +165,7 @@ private:
    * @return true : if task is successful.
    * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session. 
    */
+  bool resetOdometry();
 
 public:
   HaulerStateMachine(ros::NodeHandle nh, const std::string &robot_name);

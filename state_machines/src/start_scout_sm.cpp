@@ -76,16 +76,16 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	{
 	case STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE:
 		output = sm->startSearchingVolatile();
-    // returns true if volatile found
-    // if volatile found, then announce that it found vol
-    // And start finding volatile on its own without supervisor
-    // telling what to do (cause its obvious)
-    if(output)
-    {
-      feedback.volatile_found = true;
-      as->publishFeedback(feedback);
-      output = sm->locateVolatile();
-    }
+		// returns true if volatile found
+		// if volatile found, then announce that it found vol
+		// And start finding volatile on its own without supervisor
+		// telling what to do (cause its obvious)
+		if(output)
+		{
+		feedback.volatile_found = true;
+		as->publishFeedback(feedback);
+		output = sm->locateVolatile();
+		}
 		break;
 	case STATE_MACHINE_TASK::SCOUT_STOP_SEARCH:
 		output = sm->stopSearchingVolatile();

@@ -22,6 +22,14 @@ private:
   static constexpr float arc_spiral_b = 10;   // Incerement per rev
   static constexpr float arc_spiral_incr = 5; // Distance between two points
 
+  /**
+   * @brief Calculates variables needed for calculation of center and radius of the three point circle
+   * 
+   * @param points    3 points for which the radius is to be calculated
+   * @return std::vector<double>  variables for the calculation
+   */
+  static std::vector<double> getABCDofThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points);
+
 public:
   NavigationAlgo(/* args */);
   ~NavigationAlgo();
@@ -223,11 +231,31 @@ public:
    */
   static bool transformPoint(geometry_msgs::PointStamped& point, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries = 1);
 
+  /**
+   * @brief Returns the radius formed by three points formed in the X-Y plane
+   * 
+   * @param points    3 points for which the radius is to be calculated
+   * @return double   radius of the circle
+   */
   static double getRadiusOfThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points);
 
-  static std::vector<double> getABCDofThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points);
-
+  /**
+   * @brief Returns the center of the circle formed by three points formed in the X-Y plane
+   * 
+   * @param points    3 points for which the circle is to be calculated
+   * @return double   center of the circle
+   */
   static geometry_msgs::PointStamped getCenterOfThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points);
+
+  /**
+   * @brief For parking, a the location of scout is given to the excavator. But for better parking, the 
+   *          point closer to the goal is given to the excavator for parking. 
+   * 
+   * @param point 
+   * @param closer_distance 
+   * @return geometry_msgs::PointStamped 
+   */
+  static geometry_msgs::Pose getPointCloserToOrigin(const geometry_msgs::Pose& point, const geometry_msgs::Pose& self_point, const double closer_distance);
 };
 
 #endif
