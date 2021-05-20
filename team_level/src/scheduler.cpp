@@ -87,6 +87,8 @@ void Scheduler::startSearching()
 
 void Scheduler::updateRobotStatus()
 {
+  // THIS IS BAD, MUST BE HANDLED //
+  // If the task fails, then that logic should be taken care of as well
   scout_task_completed_ = scout_client_->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
   excavator_task_completed_ = excavator_client_->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
   hauler_task_completed_ = hauler_client_->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
@@ -145,12 +147,10 @@ void Scheduler::updateHauler()
   bool dumping_done = hauler_goal_.task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_task_completed_;
   bool not_dumping = hauler_goal_.task != HAULER_DUMP_VOLATILE_TO_PROC_PLANT;
 
-  // ROS_INFO_STREAM("Combined"<<excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_);
-
   if ((dumping_done || not_dumping) && hauler_goal_.task != HAULER_PARK_AT_EXCAVATOR)
   {
     bool excavator_going = excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT || excavator_goal_.task == EXCAVATOR_GO_TO_LOC;
-    bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);// || (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_);
+    bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
     if (excavator_going || excavator_waiting)
       hauler_desired_task = (HAULER_GO_TO_LOC);
   }
@@ -179,7 +179,7 @@ void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
     geometry_msgs::PoseStamped excavator_goal_pose;
     excavator_goal_pose.header.frame_id = MAP;
     excavator_goal_pose.pose =  NavigationAlgo::getPointCloserToOrigin(scout_pose_.pose, excavator_pose_.pose, 5.0);
-    // ROS_INFO_STREAM("excavator Pose: "<<excavator_goal_pose);
+    
     sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, excavator_goal_pose);
   }
   else
@@ -192,13 +192,13 @@ void Scheduler::sendHaulerGoal(const STATE_MACHINE_TASK task)
   {
     std::lock_guard<std::mutex> lock(excavator_pose_mutex);
 
-    bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);// || (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_);
+    bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
 
     geometry_msgs::PoseStamped hauler_goal_pose;
     geometry_msgs::PoseStamped ref_pose = excavator_waiting ? excavator_pose_ : scout_pose_;
     hauler_goal_pose.header.frame_id = MAP;
     hauler_goal_pose.pose =  NavigationAlgo::getPointCloserToOrigin(ref_pose.pose, hauler_pose_.pose, -5.0);
-    // ROS_INFO_STREAM("HAULER Pose: "<<hauler_goal_pose);
+    
     sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task, hauler_goal_pose);
   }
   else
@@ -207,10 +207,11 @@ void Scheduler::sendHaulerGoal(const STATE_MACHINE_TASK task)
 
 void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task)
 {
-  ROS_WARN_STREAM("SCHEDULER : Setting " << robot_name << " Current Task: " << robot_goal.task << " task " << task);
   if (robot_goal.task != task)
   {
     ROS_WARN_STREAM("SCHEDULER : Setting " << robot_name << " Task: " << task);
+    
+    // This is bad, should be removed //
     if (task == EXCAVATOR_PARK_AND_PUB)
       ros::Duration(20.0f).sleep();
 
@@ -232,7 +233,7 @@ void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client,
 
 
 /**
- * @brief Callback to the robot pose topic
+ * @brief Callback to the scout pose topic
  * 
  * @param msg 
  */
@@ -245,7 +246,7 @@ void Scheduler::updateScoutPose(const nav_msgs::Odometry::ConstPtr &msg)
 
 
 /**
- * @brief Callback to the robot pose topic
+ * @brief Callback to the Excavator pose topic
  * 
  * @param msg 
  */
@@ -258,7 +259,7 @@ void Scheduler::updateExcavatorPose(const nav_msgs::Odometry::ConstPtr &msg)
 
 
 /**
- * @brief Callback to the robot pose topic
+ * @brief Callback to the Hauler pose topic
  * 
  * @param msg 
  */
