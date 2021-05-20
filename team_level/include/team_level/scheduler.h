@@ -61,6 +61,8 @@ private:
   STATE_MACHINE_TASK excavator_desired_task;
   STATE_MACHINE_TASK hauler_desired_task;
 
+  bool hauler_got_stuff_ = false;
+
   bool scout_task_completed_ = false, excavator_task_completed_ = false, hauler_task_completed_ = false;
 
   void initTeam(const int team_number);

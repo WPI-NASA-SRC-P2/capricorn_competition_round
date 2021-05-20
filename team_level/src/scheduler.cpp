@@ -130,7 +130,10 @@ void Scheduler::updateExcavator()
   if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
     excavator_desired_task = (EXCAVATOR_PARK_AND_PUB);
   if (hauler_goal_.task == HAULER_PARK_AT_EXCAVATOR && hauler_task_completed_)
+  {
     excavator_desired_task = (EXCAVATOR_DIG_AND_DUMP_VOLATILE);
+    hauler_got_stuff_ = true;
+  }
 }
 
 void Scheduler::updateHauler()
@@ -156,8 +159,11 @@ void Scheduler::updateHauler()
     if(hauler_goal_.task == HAULER_GO_TO_LOC && hauler_task_completed_)
     hauler_desired_task = (HAULER_PARK_AT_EXCAVATOR);
   }
-  if (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_)
+  if (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_ && hauler_got_stuff_)
+  {
     hauler_desired_task = (HAULER_DUMP_VOLATILE_TO_PROC_PLANT);
+    hauler_got_stuff_ = false;
+  }
 }
 
 void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
