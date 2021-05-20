@@ -80,11 +80,6 @@ void Scheduler::init()
   hauler_goal_.task = -1;
 }
 
-void Scheduler::startSearching()
-{
-  state_machines::RobotStateMachineTaskGoal state_machine_goal;
-}
-
 void Scheduler::updateRobotStatus()
 {
   // THIS IS BAD, MUST BE HANDLED //
