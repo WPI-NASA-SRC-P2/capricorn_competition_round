@@ -87,29 +87,83 @@ private:
 
   void startExcavator();
 
+  /**
+   * @brief Common Function for sending the robot's desired goal to their respective actionlibs
+   * 
+   * @param robot_name      The robot for which task is given
+   * @param robot_client    Pointer of client of the robot's actionlib server
+   * @param robot_goal      Goal to be sent to the actionlib server
+   * @param task            Robot's desired task to be set
+   */
   void sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task);
   
+  /**
+   * @brief Common Function for sending the robot to the given location. 
+   *        This function is specifically for GO_TO_LOC as that state also requires the location of the goal
+   *        It will take the current and goal location into consideration, and calculate a point lying on a 
+   *        line connecting the goals. That goal is sent to the server
+   * 
+   * @param robot_name      The robot for which task is given
+   * @param robot_client    Pointer of client of the robot's actionlib server
+   * @param robot_goal      Goal to be sent to the actionlib server
+   * @param task            Robot's desired task to be set
+   * @param goal_loc    
+   */
   void sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task, const geometry_msgs::PoseStamped& goal_loc);
 
+
+  /**
+   * @brief Sends the scout_desired_goal to scout state machine actionlib
+   * 
+   * @param task    Desired task to be sent to the scout
+   */
   void sendScoutGoal(const STATE_MACHINE_TASK task);
 
+
+  /**
+   * @brief Sends the excavator_desired_goal to excavator state machine actionlib
+   * 
+   * @param task    Desired task to be sent to the excavator
+   */
   void sendExcavatorGoal(const STATE_MACHINE_TASK task);
 
+
+  /**
+   * @brief Sends the hauler_desired_goal to hauler state machine actionlib
+   * 
+   * @param task    Desired task to be sent to the hauler
+   */
   void sendHaulerGoal(const STATE_MACHINE_TASK task);
 
-  void setScoutGoal(const STATE_MACHINE_TASK task);
-
-  void setExcavatorGoal(const STATE_MACHINE_TASK task);
-
-  void setHaulerGoal(const STATE_MACHINE_TASK task);
-
+  /**
+ * @brief Callback to the scout pose topic
+ * 
+ * @param msg 
+ */
   void updateScoutPose(const nav_msgs::Odometry::ConstPtr &msg);
 
+  /**
+ * @brief Callback to the Excavator pose topic
+ * 
+ * @param msg 
+ */
   void updateExcavatorPose(const nav_msgs::Odometry::ConstPtr &msg);
 
+  /**
+ * @brief Callback to the Hauler pose topic
+ * 
+ * @param msg 
+ */
   void updateHaulerPose(const nav_msgs::Odometry::ConstPtr &msg);
 
 public:
+  /**
+   * @brief Construct a new Scheduler object  
+   *        This scheduler only works for a team of scout-excav-hauler.
+   *        For 6 robots, launch this script twice and give team_number arg 2
+   * @param nh 
+   * @param team_number 
+   */
   Scheduler(ros::NodeHandle nh, const int team_number = 1);
 
   ~Scheduler();
