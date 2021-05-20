@@ -93,6 +93,7 @@ bool HaulerStateMachine::undockHopper()
     navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
     navigation_action_goal_.pose = pt;
     navigation_client_->sendGoal(navigation_action_goal_);
+    navigation_client_->waitForResult();
 }
 
 bool HaulerStateMachine::dumpVolatileToProcPlant()
