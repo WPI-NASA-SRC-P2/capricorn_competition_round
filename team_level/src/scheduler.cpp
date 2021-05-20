@@ -163,7 +163,12 @@ void Scheduler::updateHauler()
 
 void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
 {
-  sendRobotGoal(SCOUT, scout_client_, scout_goal_, task);
+  if(task == STATE_MACHINE_TASK::SCOUT_SYNC_ODOM) {
+    sendRobotGoal(SCOUT, scout_client_, scout_goal_, task, hauler_pose_);
+  } 
+  else {
+    sendRobotGoal(SCOUT, scout_client_, scout_goal_, task);
+  }
 }
 
 void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
@@ -177,6 +182,10 @@ void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
     
     sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, excavator_goal_pose);
   }
+
+  else if(task == STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM) {
+    sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, hauler_pose_);
+  } 
   else
     sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task);
 }
