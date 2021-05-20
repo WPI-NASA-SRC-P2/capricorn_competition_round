@@ -5,12 +5,9 @@ Email: mbhatt@wpi.edu
 TEAM CAPRICORN
 NASA SPACE ROBOTICS CHALLENGE
 
-This ros node takes three command line arguments:
-robot_name = small_excavator_2, etc.
-absolute_path_to_model
-absolute_path_to_labelmaptxt
+This node launches three object detection for small_scout_1, small_excavator_1, small_hauler_1
 
-It subscribes to two topics:
+It subscribes to two topics for every robot:
 1. Left camera's image_raw
 2. Disparity image (published by stereo_image_proc)
 
@@ -290,7 +287,7 @@ def initObjectDetection(path_to_model, path_to_label_map):
     """
     update_rate = rospy.Rate(UPDATE_HZ)
 
-    # Initialize subscriber
+    # Initialize subscriber for scout, excavator and hauler (image and disparity)
     scout_image_sub_left = message_filters.Subscriber('/small_scout_1/camera/left/image_raw', Image)
     scout_disp_sub = message_filters.Subscriber('/small_scout_1/camera/disparity', DisparityImage)
     excavator_image_sub_left = message_filters.Subscriber('/small_excavator_1/camera/left/image_raw', Image)
@@ -301,7 +298,7 @@ def initObjectDetection(path_to_model, path_to_label_map):
 
     ts.registerCallback(detectionCallback)
 
-    # initialize publisher
+    # initialize publisher for scout, excavator and hauler (image and disparity)
     scout_img_pub = rospy.Publisher('/capricorn/small_scout_1/object_detection/image', Image, queue_size=10)
     scout_objects_pub = rospy.Publisher('/capricorn/small_scout_1/object_detection/objects', ObjectArray, queue_size=10)
     hauler_img_pub = rospy.Publisher('/capricorn/small_hauler_1/object_detection/image', Image, queue_size=10)
