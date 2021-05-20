@@ -313,8 +313,10 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	steerRobot(wheel_angles);
 
 	// While we have not turned the desired amount
-	while (abs(NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_)) > ANGLE_EPSILON && ros::ok())
+	while (abs(delta_heading) > ANGLE_EPSILON && ros::ok())
 	{
+		delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), target_robot_pose, robot_name_, buffer_);
+		printf("Current delta heading %frad\n", delta_heading);
 
 		// target_robot_pose in the robot's frame of reference
 		geometry_msgs::PoseStamped target_in_robot_frame = target_robot_pose;
