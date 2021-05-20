@@ -44,10 +44,14 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 {
 	ROS_INFO_STREAM("Received " << g_robot_name << "  State Machine Goal: " << goal->task);
 	geometry_msgs::Pose testPose;
-	testPose.position.x = 4;                       //Answer to life, universe and everything. 
-	testPose.position.y = 2;
-	testPose.position.z = 0;
-	testPose.orientation.w = 1;
+	testPose.position.x = 8.46;                       //Answer to life, universe and everything. Just for debugging. 
+	testPose.position.y = 6.49;
+	testPose.position.z = 3.09;
+
+	testPose.orientation.x = -0.04;
+	testPose.orientation.y = -0.1;
+	testPose.orientation.z = 0.98;
+	testPose.orientation.w = 0.15;
 
   state_machines::RobotStateMachineTaskResult result;
   state_machines::RobotStateMachineTaskFeedback feedback;
