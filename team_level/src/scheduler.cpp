@@ -107,7 +107,7 @@ void Scheduler::updateScout()
 
   if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
     scout_desired_task = (SCOUT_UNDOCK);
-  else if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
+  if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
     scout_desired_task = (SCOUT_SEARCH_VOLATILE);
 }
 
@@ -115,11 +115,7 @@ void Scheduler::updateExcavator()
 {
 
   static bool first_task = true;
-  if (excavator_goal_.task == EXCAVATOR_GO_TO_LOC && excavator_task_completed_)
-  {
-    excavator_desired_task = (EXCAVATOR_GO_TO_SCOUT);
-  }
-  else if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_task_completed_)
+  if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_task_completed_)
   {
     if ((excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_) || first_task)
     {
@@ -127,9 +123,13 @@ void Scheduler::updateExcavator()
       first_task = false;
     }
   }
-  else if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
+  if (excavator_goal_.task == EXCAVATOR_GO_TO_LOC && excavator_task_completed_)
+  {
+    excavator_desired_task = (EXCAVATOR_GO_TO_SCOUT);
+  }
+  if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
     excavator_desired_task = (EXCAVATOR_PARK_AND_PUB);
-  else if (hauler_goal_.task == HAULER_PARK_AT_EXCAVATOR && hauler_task_completed_)
+  if (hauler_goal_.task == HAULER_PARK_AT_EXCAVATOR && hauler_task_completed_)
     excavator_desired_task = (EXCAVATOR_DIG_AND_DUMP_VOLATILE);
 }
 
@@ -144,20 +144,20 @@ void Scheduler::updateHauler()
 
   // ROS_INFO_STREAM("Combined"<<excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_);
 
-  if (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_)
-    hauler_desired_task = (HAULER_DUMP_VOLATILE_TO_PROC_PLANT);
-  else if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_task_completed_)
-  {
-    if(hauler_goal_.task == HAULER_GO_TO_LOC && hauler_task_completed_)
-    hauler_desired_task = (HAULER_PARK_AT_EXCAVATOR);
-  }
-  else if (dumping_done || not_dumping)
+  if ((dumping_done || not_dumping) && hauler_goal_.task != HAULER_PARK_AT_EXCAVATOR)
   {
     bool excavator_going = excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT || excavator_goal_.task == EXCAVATOR_GO_TO_LOC;
     bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);// || (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_);
     if (excavator_going || excavator_waiting)
       hauler_desired_task = (HAULER_GO_TO_LOC);
   }
+  if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_task_completed_)
+  {
+    if(hauler_goal_.task == HAULER_GO_TO_LOC && hauler_task_completed_)
+    hauler_desired_task = (HAULER_PARK_AT_EXCAVATOR);
+  }
+  if (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_)
+    hauler_desired_task = (HAULER_DUMP_VOLATILE_TO_PROC_PLANT);
 }
 
 void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
@@ -218,8 +218,6 @@ void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client,
   if (robot_goal.task != task)
   {
     ROS_WARN_STREAM("SCHEDULER : Setting " << robot_name << " Task: " << task);
-    if (task == EXCAVATOR_GO_TO_LOC)
-      ros::Duration(20.0f).sleep();
     robot_goal.task = task;
     robot_goal.goal_loc = goal_loc;
     robot_client->sendGoal(robot_goal);

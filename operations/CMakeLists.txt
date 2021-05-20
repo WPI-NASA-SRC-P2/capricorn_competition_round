@@ -202,7 +202,7 @@ target_link_libraries(wheel_speed_processing
 
 add_executable(navigation_vision_server src/navigation/navigation_vision_server.cpp)
 add_dependencies(navigation_vision_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(navigation_vision_server
+target_link_libraries(navigation_vision_server ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 

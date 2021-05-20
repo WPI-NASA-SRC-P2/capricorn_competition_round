@@ -16,13 +16,14 @@ ExcavatorStateMachine::~ExcavatorStateMachine()
 
 bool ExcavatorStateMachine::goToLoc(const geometry_msgs::PoseStamped &loc)
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Going to given location");
-    navigation_action_goal_.pose = loc;
-    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+    goToDefaultArmPosition();
 
-    navigation_client_->sendGoal(navigation_action_goal_);
-    navigation_client_->waitForResult();
-    return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Going Back to Goal (High Level Vision Goal)");
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_OBS_GOTO_GOAL;
+    navigation_vision_goal_.goal_loc = loc;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool ExcavatorStateMachine::goToScout()
@@ -100,7 +101,7 @@ bool ExcavatorStateMachine::digAndDumpVolatile()
         volatile_found = true;
         dumpVolatile();
     }
-    goToDefaultArmPosition();
+    // goToDefaultArmPosition();
     return volatile_found;
 }
 
