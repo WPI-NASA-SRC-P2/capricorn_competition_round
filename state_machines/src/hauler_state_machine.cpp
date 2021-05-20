@@ -89,7 +89,7 @@ bool HaulerStateMachine::undockHopper()
     ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from Hopper");
     geometry_msgs::PoseStamped pt;
     pt.header.frame_id = robot_name_ + ROBOT_BASE;
-    pt.pose.position.y = -5;
+    pt.pose.position.x = -5;
     pt.pose.orientation.w = 1;
     navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
     navigation_action_goal_.pose = pt;
