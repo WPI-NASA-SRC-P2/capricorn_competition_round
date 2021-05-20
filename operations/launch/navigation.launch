@@ -4,23 +4,20 @@
     <arg name="use_cheat_odom" default="false" />
     <arg name="use_crab_drive" default="false" />
 
-    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /odom /map 100" unless="$(arg use_cheat_odom)"/>
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /map /odom 100" unless="$(arg use_cheat_odom)"/>
 
     <group ns="/capricorn/$(arg robot_name)">
         <!-- Whether to use cheat odom or rtabmap. Utilized by navigation server. -->
         <param name="cheat_odom" value="$(arg use_cheat_odom)"/>
-<<<<<<< HEAD
-=======
         <!-- Whether to use crab drive or point-and-go. Utilized by navigation server. -->
         <param name="crab_drive" value="$(arg use_crab_drive)" />
 
 
->>>>>>> 039ce1fdf34def2903a63a893c14617941c21151
         <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" args="$(arg robot_name)" if="$(arg use_cheat_odom)"/>
         <node name="start_nav_server" pkg="operations" type="start_nav_server" args="$(arg robot_name)" output="$(arg output)"/>
         <node name="wheel_speed_processing" pkg="operations" type="wheel_speed_processing" args="$(arg robot_name)" />
 
         <!--TODO: only run map_to_odom when use_cheat_odom is false-->
-        <node name="map_to_odom" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom 100"/>
+        <!--node name="map_to_odom" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom 100"/-->
     </group>
 </launch>

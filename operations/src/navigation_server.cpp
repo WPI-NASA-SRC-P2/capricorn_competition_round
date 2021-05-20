@@ -273,8 +273,15 @@ planning::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const pla
 		NavigationAlgo::transformPose(map_pose, MAP, buffer_);
 
 		// Push this waypoint and its velocity to the trajectory message to return
+		//ROS_INFO("Before push back");
 		in_map_frame.waypoints.push_back(map_pose);
-		in_map_frame.velocities.push_back(traj.velocities[pt]);
+		//ROS_INFO("Middle of push back");
+		//printf("Traj velocities %f", traj.velocities[pt]);
+		//in_map_frame.velocities.push_back(traj.velocities[pt]);
+		std_msgs::Float64 temp_vel;
+		temp_vel.data = 0;
+		in_map_frame.velocities.push_back(temp_vel);
+		//ROS_INFO("After push back");
 	}
 
 	return in_map_frame;
@@ -323,6 +330,8 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 
 	double delta_heading = NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_);
 	
+	 
+
 	if (abs(delta_heading) <= ANGLE_EPSILON)
 	{
 		return true;

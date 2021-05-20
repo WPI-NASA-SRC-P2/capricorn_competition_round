@@ -65,12 +65,9 @@ private:
 
     ros::ServiceClient brake_client_;
 
-<<<<<<< HEAD
     ros::ServiceClient trajectory_client_;
-=======
     // If true, use crab drive. If false, use point-and-go drive. Set in the constructor from a parameter
     bool CRAB_DRIVE_;
->>>>>>> 039ce1fdf34def2903a63a893c14617941c21151
 
     // Declare robot pose to be used globally
     geometry_msgs::PoseStamped robot_pose_;
