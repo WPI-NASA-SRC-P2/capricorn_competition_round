@@ -47,7 +47,7 @@ std::mutex g_hauler_objects_mutex, g_excavator_objects_mutex, g_cancel_goal_mute
 bool g_hauler_message_received = false, g_excavator_message_received = false;
 
 // global variables for park excavator
-const int ROBOT_ANTENNA_HEIGHT_THRESH = 110, HAULER_HEIGHT_THRESH = 180, ANGLE_THRESHOLD_NARROW = 5, ANGLE_THRESH_WIDE = 100, EXCAVATOR_TIMES_DETECT_TIMES = 10, EXCAVATOR_HEIGHT_THRESH = 300;
+const int ROBOT_ANTENNA_HEIGHT_THRESH = 110, HAULER_HEIGHT_THRESH = 180, ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESH_WIDE = 100, EXCAVATOR_TIMES_DETECT_TIMES = 10, EXCAVATOR_HEIGHT_THRESH = 300;
 const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0;
 bool g_parked = false, g_found_orientation = false, g_cancel_called = false, g_revolve_direction_set = false;
 float g_revolve_direction = EXC_FORWARD_VELOCITY;

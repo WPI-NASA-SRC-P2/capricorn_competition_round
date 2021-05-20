@@ -57,6 +57,10 @@ private:
   std::mutex excavator_pose_mutex;
   std::mutex hauler_pose_mutex;
 
+  STATE_MACHINE_TASK scout_desired_task;
+  STATE_MACHINE_TASK excavator_desired_task;
+  STATE_MACHINE_TASK hauler_desired_task;
+
   bool scout_task_completed_ = false, excavator_task_completed_ = false, hauler_task_completed_ = false;
 
   void initTeam(const int team_number);
@@ -90,6 +94,12 @@ private:
   void sendExcavatorGoal(const STATE_MACHINE_TASK task);
 
   void sendHaulerGoal(const STATE_MACHINE_TASK task);
+
+  void setScoutGoal(const STATE_MACHINE_TASK task);
+
+  void setExcavatorGoal(const STATE_MACHINE_TASK task);
+
+  void setHaulerGoal(const STATE_MACHINE_TASK task);
 
   void updateScoutPose(const nav_msgs::Odometry::ConstPtr &msg);
 
