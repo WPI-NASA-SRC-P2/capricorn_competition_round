@@ -149,8 +149,11 @@ float NavigationAlgo::getRadiusInArchimedeanSpiral(const float t)
  * @param init_theta 
  * @return std::vector<geometry_msgs::Point> 
  */
-std::vector<geometry_msgs::PointStamped> NavigationAlgo::getNArchimedeasSpiralPoints(const geometry_msgs::PointStamped &init_location, const int N, int init_theta)
+std::vector<geometry_msgs::PointStamped> NavigationAlgo::getNArchimedeasSpiralPoints(const geometry_msgs::PointStamped &init_location, const int N, int init_theta, const int scout_number)
 {
+  float arc_spiral_a = scout_number == 1 ? arc_spiral_a_1 : arc_spiral_a_2;
+  float arc_spiral_b = scout_number == 1 ? arc_spiral_b_1 : arc_spiral_b_2;
+  float arc_spiral_incr = scout_number == 1 ? arc_spiral_incr_1 : arc_spiral_incr_2;
   std::vector<geometry_msgs::PointStamped> points;
   points.resize(N);
   for (int i = init_theta; i < init_theta + N; i++)
