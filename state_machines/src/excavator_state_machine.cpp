@@ -133,7 +133,7 @@ bool ExcavatorStateMachine::resetOdometry()
     maploc::ResetOdom srv;
     srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
     srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1;
-    srv.request.use_ground_truth = true;
+    srv.request.use_ground_truth = false;    //If launching get_true_pose=true, always keep this as false. Ditto for scout. 
 
     return resetExcavatorOdometryClient_.call(srv);
 }

@@ -84,7 +84,7 @@ private:
    */
   void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg);
 
-  bool resetOdometry(const geometry_msgs::Pose& POSE);
+  bool resetOdometry(const geometry_msgs::PoseStamped& POSE);
   bool resetOdometry();
   /**
    * @brief resets odometry, used after parking is done for scout, the oone withj pose signature is used when ground truth is not being used.
@@ -93,7 +93,7 @@ private:
    * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session for the ground truth version.
    */
 
-  bool syncOdometry(const geometry_msgs::Pose& POSE);
+  bool syncOdometry(const geometry_msgs::PoseStamped& POSE);
     /**
    * @brief centers scout wrt processing plant and then resets the odometry according to whatever pose we pass it.
    * 

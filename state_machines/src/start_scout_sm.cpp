@@ -60,7 +60,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	ROS_INFO_STREAM(g_robot_name << ": Servers Connected, Executing Goal");
 
 	STATE_MACHINE_TASK robot_state = (STATE_MACHINE_TASK)goal->task;
-	geometry_msgs::Pose resetPose = (geometry_msgs::Pose)goal->goal_loc.pose; //Doubtful
+	geometry_msgs::PoseStamped resetPose = goal->goal_loc; //Doubtful
 
 	if (!checkTask(robot_state))
 	{
