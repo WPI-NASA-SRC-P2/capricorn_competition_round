@@ -111,7 +111,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
     case STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR:
         output = sm->goBackToExcavator(goal->goal_loc);
         break;
-    case STATE_MACHINE_TASK::HAULER_RESET_ODOM:
+    case STATE_MACHINE_TASK::HAULER_RESET_ODOM:   //Reset odometry when it goes to processing plant
         output = sm->resetOdometry();
         break;
     default:
