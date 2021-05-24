@@ -29,6 +29,8 @@ Client *g_client;
 operations::NavigationGoal g_nav_goal;
 perception::ObjectArray g_objects;
 
+int ROBOT_NUMBER;
+
 const float INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8;
 std::mutex g_objects_mutex;
 int g_lost_detection_times = 0, g_true_detection_times = 0, g_revolve_direction = -1;
@@ -260,6 +262,9 @@ int main(int argc, char **argv)
   }
 
   std::string robot_name(argv[1]);
+  // Convert char to int
+  // https://www.softwaretestinghelp.com/cpp-character-conversion-functions/
+  ROBOT_NUMBER = (robot_name.back()) - 48; 
   ros::init(argc, argv, robot_name + COMMON_NAMES::SCOUT_SEARCH_NODE_NAME);
   ros::NodeHandle nh;
 
@@ -285,7 +290,7 @@ int main(int argc, char **argv)
 
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = MAP;
-  g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints();
+  g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(ROBOT_NUMBER);
 
   while (ros::ok() && !cb_init)
   {
