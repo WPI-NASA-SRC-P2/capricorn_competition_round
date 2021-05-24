@@ -94,12 +94,15 @@ bool ScoutStateMachine::resetOdometry()
 
 bool ScoutStateMachine::syncOdometry(const geometry_msgs::PoseStamped& POSE)
 {
+  ROS_INFO("Syncing Scout odom");
   navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
   navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
   navigation_vision_client_->sendGoal(navigation_vision_goal_);
   navigation_vision_client_->waitForResult();
   if (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
   {
+    ROS_INFO("Reset Odom with pose: ");
+    ROS_INFO_STREAM(POSE);
     resetOdometry(POSE);
   }
 }
