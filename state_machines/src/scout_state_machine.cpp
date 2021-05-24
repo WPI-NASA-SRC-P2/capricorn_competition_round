@@ -70,29 +70,30 @@ void ScoutStateMachine::volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPt
   near_volatile_ = !(msg->distance_to == -1);
 }
 
-bool ScoutStateMachine::resetOdometry(const geometry_msgs::PoseStamped& POSE)
+bool ScoutStateMachine::resetOdometry(const geometry_msgs::PoseStamped &POSE)
 {
-    resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
-    maploc::ResetOdom srv;
-    srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
-    srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
-    srv.request.ref_pose = POSE;
+  resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+  maploc::ResetOdom srv;
+  srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
+  srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
+  srv.request.use_ground_truth = false;
+  srv.request.ref_pose = POSE;
 
-    return resetScoutOdometryClient_.call(srv);
+  return resetScoutOdometryClient_.call(srv);
 }
 
 bool ScoutStateMachine::resetOdometry()
 {
-    resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
-    maploc::ResetOdom srv;
-    srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
-    srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
-    srv.request.use_ground_truth = false;
+  resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+  maploc::ResetOdom srv;
+  srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
+  srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
+  srv.request.use_ground_truth = true;
 
-    return resetScoutOdometryClient_.call(srv);
+  return resetScoutOdometryClient_.call(srv);
 }
 
-bool ScoutStateMachine::syncOdometry(const geometry_msgs::PoseStamped& POSE)
+bool ScoutStateMachine::syncOdometry(const geometry_msgs::PoseStamped &POSE)
 {
   ROS_INFO("Syncing Scout odom");
   navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
@@ -103,6 +104,13 @@ bool ScoutStateMachine::syncOdometry(const geometry_msgs::PoseStamped& POSE)
   {
     ROS_INFO("Reset Odom with pose: ");
     ROS_INFO_STREAM(POSE);
-    resetOdometry(POSE);
+    // resetOdometry(POSE);
+    resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+    maploc::ResetOdom srv;
+    srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
+    srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
+    srv.request.ref_pose = POSE;
+    srv.request.use_ground_truth = false;
+    return resetScoutOdometryClient_.call(srv);
   }
 }
