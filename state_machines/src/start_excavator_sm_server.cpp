@@ -43,12 +43,6 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 
 	state_machines::RobotStateMachineTaskResult result;
 
-	geometry_msgs::Pose testPose;
-	testPose.position.x = 4;                       //Answer to life, universe and everything. 
-	testPose.position.y = 2;
-	testPose.position.z = 0;
-	testPose.orientation.w = 1;
-
 	// Waiting for the servers to start
 	sm->navigation_client_->waitForServer();
 	sm->excavator_arm_client_->waitForServer();
@@ -56,6 +50,8 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	ROS_INFO_STREAM(g_robot_name << " State Machine : Servers Connected, Executing Goal");
 
 	STATE_MACHINE_TASK robot_state = (STATE_MACHINE_TASK)goal->task;
+	geometry_msgs::PoseStamped resetPose = goal->goal_loc; //Doubtful
+
 
 	if (!checkTask(robot_state))
 	{
@@ -92,10 +88,10 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 		output = sm->resetOdometry();
 		break;
 	case STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM:
-		output = sm->resetOdometry(testPose);
+		output = sm->resetOdometry(resetPose);
 		break;
 	case STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM :
-		output = sm->syncOdometry(testPose);
+		output = sm->syncOdometry(resetPose);
 		break;
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");

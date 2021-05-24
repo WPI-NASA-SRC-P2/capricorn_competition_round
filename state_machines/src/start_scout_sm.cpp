@@ -43,11 +43,6 @@ bool checkTask(STATE_MACHINE_TASK task)
 void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ScoutStateMachine *sm)
 {
 	ROS_INFO_STREAM("Received " << g_robot_name << "  State Machine Goal: " << goal->task);
-	geometry_msgs::Pose testPose;
-	testPose.position.x = 4;                       //Answer to life, universe and everything. 
-	testPose.position.y = 2;
-	testPose.position.z = 0;
-	testPose.orientation.w = 1;
 
   state_machines::RobotStateMachineTaskResult result;
   state_machines::RobotStateMachineTaskFeedback feedback;

@@ -102,10 +102,10 @@ private:
    */
   bool goToDefaultArmPosition();
 
-  bool resetOdometry(const geometry_msgs::Pose& POSE);
+  bool resetOdometry(const geometry_msgs::PoseStamped& POSE);
   bool resetOdometry();
 
-  bool syncOdometry(const geometry_msgs::Pose& POSE);
+  bool syncOdometry(const geometry_msgs::PoseStamped& POSE);
     /**
    * @brief centers excavator wrt processing plant and then resets the odometry according to whatever pose we pass it.
    * 

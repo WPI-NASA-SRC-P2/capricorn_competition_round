@@ -5,7 +5,7 @@
     <arg name="use_cheat_odom" default="true" />
     <arg name="use_crab_drive" default="false" />
 
-    <!-- <include file="$(find team_level)/launch/all_object_detection.launch"/> -->    <!--Uncomment this!-->
+    <include file="$(find team_level)/launch/all_object_detection.launch"/> 
 
     <include file="$(find team_level)/launch/all_robots.launch">
         <arg name="output" value="$(arg output)" />

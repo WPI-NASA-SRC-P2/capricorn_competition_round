@@ -116,17 +116,6 @@ bool ExcavatorStateMachine::goToDefaultArmPosition()
     return true;
 }
 
-bool ExcavatorStateMachine::resetOdometry(const geometry_msgs::Pose& POSE)
-{
-    resetExcavatorOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
-    maploc::ResetOdom srv;
-    srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
-    srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1;
-    srv.request.ref_pose.pose = POSE;
-
-    return resetExcavatorOdometryClient_.call(srv);
-}
-
 bool ExcavatorStateMachine::resetOdometry()
 {
     resetExcavatorOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
@@ -138,7 +127,18 @@ bool ExcavatorStateMachine::resetOdometry()
     return resetExcavatorOdometryClient_.call(srv);
 }
 
-bool ExcavatorStateMachine::syncOdometry(const geometry_msgs::Pose& POSE)
+bool ExcavatorStateMachine::resetOdometry(const geometry_msgs::PoseStamped& POSE)
+{
+    resetExcavatorOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+    maploc::ResetOdom srv;
+    srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
+    srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1;
+    srv.request.ref_pose = POSE;
+
+    return resetExcavatorOdometryClient_.call(srv);
+}
+
+bool ExcavatorStateMachine::syncOdometry(const geometry_msgs::PoseStamped& POSE)
 {
   navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
   navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
