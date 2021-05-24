@@ -131,9 +131,7 @@ public:
   /**
    * @brief Retruns the N points lying in spiral path
    * 
-   * @param init_location   Initial location of the robot in an environment
-   * @param N               Number of points desired
-   * @param init_theta      Pick up where left off
+   * @param scout_number Number of the scout for which points are needed. Only works with 1 or 2. 
    * @return std::vector<geometry_msgs::Point> 
    */
   static std::vector<geometry_msgs::PointStamped> getNArchimedeasSpiralPoints(const int scout_number = 1);
