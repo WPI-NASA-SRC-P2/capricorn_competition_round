@@ -149,20 +149,20 @@ float NavigationAlgo::getRadiusInArchimedeanSpiral(const float t)
  * @param init_theta 
  * @return std::vector<geometry_msgs::Point> 
  */
-std::vector<geometry_msgs::PointStamped> NavigationAlgo::getNArchimedeasSpiralPoints(const geometry_msgs::PointStamped &init_location, const int N, int init_theta, const int scout_number)
+std::vector<geometry_msgs::PointStamped> NavigationAlgo::getNArchimedeasSpiralPoints(const int scout_number)
 {
   float arc_spiral_a = scout_number == 1 ? arc_spiral_a_1 : arc_spiral_a_2;
-  float arc_spiral_b = scout_number == 1 ? arc_spiral_b_1 : arc_spiral_b_2;
-  float arc_spiral_incr = scout_number == 1 ? arc_spiral_incr_1 : arc_spiral_incr_2;
+  int init_theta = scout_number == 1 ? init_theta_1 : init_theta_2;
+
   std::vector<geometry_msgs::PointStamped> points;
   points.resize(N);
   for (int i = init_theta; i < init_theta + N; i++)
   {
     float th = std::pow(i * arc_spiral_incr, 0.5);
     float pre = (arc_spiral_a + (arc_spiral_b * th) / (2 * M_PI));
-    points.at(i-init_theta).header = init_location.header;
-    points.at(i-init_theta).point.x = pre * cos(th) + init_location.point.x;
-    points.at(i-init_theta).point.y = pre * sin(th) + init_location.point.y;
+    points.at(i-init_theta).header.frame_id = MAP;
+    points.at(i-init_theta).point.x = pre * cos(th);
+    points.at(i-init_theta).point.y = pre * sin(th);
   }
   return points;
 }

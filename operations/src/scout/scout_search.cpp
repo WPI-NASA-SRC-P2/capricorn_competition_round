@@ -285,7 +285,7 @@ int main(int argc, char **argv)
 
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = MAP;
-  g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 400, 12);
+  g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints();
 
   while (ros::ok() && !cb_init)
   {
