@@ -15,9 +15,7 @@
 #include <geometry_msgs/Pose.h>
 #include <state_machines/scout_state_machine.h>
 
-
 std::string g_robot_name;
-
 
 /**
  * @brief Checking if the input task is in the task list of the scout,
@@ -44,14 +42,14 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 {
 	ROS_INFO_STREAM("Received " << g_robot_name << "  State Machine Goal: " << goal->task);
 
-  state_machines::RobotStateMachineTaskResult result;
-  state_machines::RobotStateMachineTaskFeedback feedback;
-  feedback.volatile_found = false;
-  as->publishFeedback(feedback);
+	state_machines::RobotStateMachineTaskResult result;
+	state_machines::RobotStateMachineTaskFeedback feedback;
+	feedback.volatile_found = false;
+	as->publishFeedback(feedback);
 
 	// Waiting for the servers to start
-  sm->resource_localiser_client_->waitForServer(); 
-  
+	sm->resource_localiser_client_->waitForServer();
+
 	ROS_INFO_STREAM(g_robot_name << ": Servers Connected, Executing Goal");
 
 	STATE_MACHINE_TASK robot_state = (STATE_MACHINE_TASK)goal->task;
@@ -76,11 +74,11 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 		// if volatile found, then announce that it found vol
 		// And start finding volatile on its own without supervisor
 		// telling what to do (cause its obvious)
-		if(output)
+		if (output)
 		{
-		feedback.volatile_found = true;
-		as->publishFeedback(feedback);
-		output = sm->locateVolatile();
+			feedback.volatile_found = true;
+			as->publishFeedback(feedback);
+			output = sm->locateVolatile();
 		}
 		break;
 	case STATE_MACHINE_TASK::SCOUT_STOP_SEARCH:
@@ -98,6 +96,9 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	case STATE_MACHINE_TASK::SCOUT_RESET_ODOM:
 		output = sm->resetOdometry(resetPose);
 		break;
+	case STATE_MACHINE_TASK::SCOUT_FACE_PROCESSING_PLANT:
+		output = sm->faceProcessingPlant();
+		break;
 	case STATE_MACHINE_TASK::SCOUT_SYNC_ODOM:
 		output = sm->syncOdometry(resetPose);
 		break;
@@ -108,7 +109,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	result.result = output ? COMMON_NAMES::COMMON_RESULT::SUCCESS : COMMON_NAMES::COMMON_RESULT::FAILED;
 	as->setSucceeded(result);
 
-	ROS_INFO_STREAM(g_robot_name << "Goal Finished "<< output);
+	ROS_INFO_STREAM(g_robot_name << "Goal Finished " << output);
 
 	return;
 }
@@ -120,7 +121,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 void cancelGoal(ScoutStateMachine *sm)
 {
 	ROS_INFO_STREAM("Cancelling " << g_robot_name << "  State Machine Goal");
-  sm->stopSearchingVolatile();
+	sm->stopSearchingVolatile();
 }
 
 int main(int argc, char *argv[])

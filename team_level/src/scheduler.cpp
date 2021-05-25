@@ -18,13 +18,13 @@ void Scheduler::initTeam(const int team_number)
   EXCAVATOR = team_number == 1 ? EXCAVATOR_1 : EXCAVATOR_2;
   HAULER = team_number == 1 ? HAULER_1 : HAULER_2;
 
-  // scout_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + SCOUT + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
-  // excavator_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + EXCAVATOR + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
-  // hauler_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + HAULER + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
+  scout_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + SCOUT + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
+  excavator_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + EXCAVATOR + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
+  hauler_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + HAULER + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
 
-  scout_odom_sub_ = nh_.subscribe(SCOUT + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
-  excavator_odom_sub_ = nh_.subscribe(EXCAVATOR + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
-  hauler_odom_sub_ = nh_.subscribe(HAULER + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
+  // scout_odom_sub_ = nh_.subscribe(SCOUT + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
+  // excavator_odom_sub_ = nh_.subscribe(EXCAVATOR + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
+  // hauler_odom_sub_ = nh_.subscribe(HAULER + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
 
   initClients();
 }
@@ -60,9 +60,9 @@ void Scheduler::schedulerLoop()
     updateExcavator();
     updateScout();
 
-    sendHaulerGoal(hauler_desired_task);
-    sendExcavatorGoal(excavator_desired_task);
     sendScoutGoal(scout_desired_task);
+    sendExcavatorGoal(excavator_desired_task);
+    sendHaulerGoal(hauler_desired_task);
 
     ros::Duration(0.5).sleep();
     ros::spinOnce();
@@ -174,6 +174,8 @@ void Scheduler::updateHauler()
 
 void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
 {
+  // Scout will reset its odom w.r.t. the excavator before undocking
+  // thus check w.r.t. excavator EXCAVATOR_GO_TO_SCOUT task completion
   if (task == STATE_MACHINE_TASK::SCOUT_SYNC_ODOM) //Add AND case for the hauler to be parked near the scout to be completed for this task to be run.
   {
     sendRobotGoal(SCOUT, scout_client_, scout_goal_, task, hauler_pose_);
@@ -181,7 +183,6 @@ void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
   else
   {
     sendRobotGoal(SCOUT, scout_client_, scout_goal_, task);
-    ROS_INFO("Didnt get the right task!");
   }
 }
 

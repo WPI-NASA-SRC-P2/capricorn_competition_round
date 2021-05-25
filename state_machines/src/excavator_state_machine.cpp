@@ -122,12 +122,12 @@ bool ExcavatorStateMachine::resetOdometry()
     maploc::ResetOdom srv;
     srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
     srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1;
-    srv.request.use_ground_truth = false;    //If launching get_true_pose=true, always keep this as false. Ditto for scout. 
+    srv.request.use_ground_truth = false; //If launching get_true_pose=true, always keep this as false. Ditto for scout.
 
     return resetExcavatorOdometryClient_.call(srv);
 }
 
-bool ExcavatorStateMachine::resetOdometry(const geometry_msgs::PoseStamped& POSE)
+bool ExcavatorStateMachine::resetOdometry(const geometry_msgs::PoseStamped &POSE)
 {
     resetExcavatorOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
     maploc::ResetOdom srv;
@@ -138,14 +138,21 @@ bool ExcavatorStateMachine::resetOdometry(const geometry_msgs::PoseStamped& POSE
     return resetExcavatorOdometryClient_.call(srv);
 }
 
-bool ExcavatorStateMachine::syncOdometry(const geometry_msgs::PoseStamped& POSE)
+bool ExcavatorStateMachine::faceProcessingPlant()
 {
-  navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
-  navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
-  navigation_vision_client_->sendGoal(navigation_vision_goal_);
-  navigation_vision_client_->waitForResult();
-  if (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-  {
-    return resetOdometry(POSE);
-  }
+    navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+
+    return navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+}
+
+bool ExcavatorStateMachine::syncOdometry(const geometry_msgs::PoseStamped &POSE)
+{
+    ROS_INFO("Syncing Excavator Odom");
+    if (faceProcessingPlant())
+    {
+        return resetOdometry(POSE);
+    }
 }

@@ -52,7 +52,6 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	STATE_MACHINE_TASK robot_state = (STATE_MACHINE_TASK)goal->task;
 	geometry_msgs::PoseStamped resetPose = goal->goal_loc; //Doubtful
 
-
 	if (!checkTask(robot_state))
 	{
 		// the class is not valid, send the appropriate result
@@ -63,8 +62,6 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	}
 
 	bool output = false;
-
-	
 
 	switch (robot_state)
 	{
@@ -90,8 +87,11 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	case STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM:
 		output = sm->resetOdometry(resetPose);
 		break;
-	case STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM :
+	case STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM:
 		output = sm->syncOdometry(resetPose);
+		break;
+	case STATE_MACHINE_TASK::EXCAVATOR_FACE_PROCESSING_PLANT:
+		output = sm->faceProcessingPlant();
 		break;
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");

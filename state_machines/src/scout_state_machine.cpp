@@ -93,14 +93,19 @@ bool ScoutStateMachine::resetOdometry()
   return resetScoutOdometryClient_.call(srv);
 }
 
-bool ScoutStateMachine::syncOdometry(const geometry_msgs::PoseStamped &POSE)
+bool ScoutStateMachine::faceProcessingPlant()
 {
-  ROS_INFO("Syncing Scout odom");
   navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
   navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
   navigation_vision_client_->sendGoal(navigation_vision_goal_);
   navigation_vision_client_->waitForResult();
-  if (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+
+  return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}
+bool ScoutStateMachine::syncOdometry(const geometry_msgs::PoseStamped &POSE)
+{
+  ROS_INFO("Syncing Scout odom");
+  if (faceProcessingPlant())
   {
     return resetOdometry(POSE);
   }
