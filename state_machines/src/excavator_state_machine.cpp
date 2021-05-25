@@ -146,6 +146,6 @@ bool ExcavatorStateMachine::syncOdometry(const geometry_msgs::PoseStamped& POSE)
   navigation_vision_client_->waitForResult();
   if (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
   {
-    resetOdometry(POSE);
+    return resetOdometry(POSE);
   }
 }

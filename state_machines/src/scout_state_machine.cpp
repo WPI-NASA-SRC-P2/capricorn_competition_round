@@ -102,15 +102,6 @@ bool ScoutStateMachine::syncOdometry(const geometry_msgs::PoseStamped &POSE)
   navigation_vision_client_->waitForResult();
   if (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
   {
-    ROS_INFO("Reset Odom with pose: ");
-    ROS_INFO_STREAM(POSE);
-    // resetOdometry(POSE);
-    resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
-    maploc::ResetOdom srv;
-    srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
-    srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
-    srv.request.ref_pose = POSE;
-    srv.request.use_ground_truth = false;
-    return resetScoutOdometryClient_.call(srv);
+    return resetOdometry(POSE);
   }
 }
