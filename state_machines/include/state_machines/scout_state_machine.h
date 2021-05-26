@@ -22,7 +22,8 @@ const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
     STATE_MACHINE_TASK::SCOUT_UNDOCK,
     STATE_MACHINE_TASK::SCOUT_RESET_ODOM_GROUND_TRUTH,
     STATE_MACHINE_TASK::SCOUT_RESET_ODOM,
-    STATE_MACHINE_TASK::SCOUT_SYNC_ODOM};
+    STATE_MACHINE_TASK::SCOUT_SYNC_ODOM,
+    STATE_MACHINE_TASK::SCOUT_FACE_PROCESSING_PLANT};
 
 class ScoutStateMachine
 {
@@ -100,7 +101,7 @@ private:
    * @return false : if task is failed or aborted or interrupted
    */
 
-  bool FaceProcessingPlant();
+  bool faceProcessingPlant();
   /**
    * @brief centers scout wrt processing plant.
    * 

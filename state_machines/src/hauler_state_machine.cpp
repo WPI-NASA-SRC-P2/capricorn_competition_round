@@ -124,3 +124,13 @@ bool HaulerStateMachine::resetOdometry()
     srv.request.use_ground_truth = true;
     return resetHaulerOdometryClient_.call(srv);
 }
+
+bool HaulerStateMachine::faceProcessingPlant()
+{
+    navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+
+    return navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+}

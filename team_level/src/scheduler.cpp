@@ -18,13 +18,13 @@ void Scheduler::initTeam(const int team_number)
   EXCAVATOR = team_number == 1 ? EXCAVATOR_1 : EXCAVATOR_2;
   HAULER = team_number == 1 ? HAULER_1 : HAULER_2;
 
-  scout_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + SCOUT + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
-  excavator_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + EXCAVATOR + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
-  hauler_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + HAULER + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
+  //   scout_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + SCOUT + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
+  //   excavator_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + EXCAVATOR + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
+  //   hauler_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + HAULER + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
 
-  // scout_odom_sub_ = nh_.subscribe(SCOUT + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
-  // excavator_odom_sub_ = nh_.subscribe(EXCAVATOR + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
-  // hauler_odom_sub_ = nh_.subscribe(HAULER + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
+  scout_odom_sub_ = nh_.subscribe(SCOUT + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
+  excavator_odom_sub_ = nh_.subscribe(EXCAVATOR + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
+  hauler_odom_sub_ = nh_.subscribe(HAULER + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
 
   initClients();
 }
@@ -109,7 +109,9 @@ void Scheduler::startScout()
 void Scheduler::updateScout()
 {
 
-  if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
+  if (excavator_goal_.task == EXCAVATOR_FACE_PROCESSING_PLANT && excavator_task_completed_)
+    scout_desired_task = (SCOUT_SYNC_ODOM);
+  if (scout_goal_.task == SCOUT_SYNC_ODOM && scout_task_completed_)
     scout_desired_task = (SCOUT_UNDOCK);
   if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
     scout_desired_task = (SCOUT_SEARCH_VOLATILE);
@@ -132,6 +134,8 @@ void Scheduler::updateExcavator()
     excavator_desired_task = (EXCAVATOR_GO_TO_SCOUT);
   }
   if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
+    excavator_desired_task = (EXCAVATOR_FACE_PROCESSING_PLANT);
+  if (scout_goal_.task == SCOUT_SYNC_ODOM && scout_task_completed_)
     excavator_desired_task = (EXCAVATOR_PARK_AND_PUB);
   if (hauler_goal_.task == HAULER_PARK_AT_EXCAVATOR && hauler_task_completed_)
   {
@@ -178,7 +182,7 @@ void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
   // thus check w.r.t. excavator EXCAVATOR_GO_TO_SCOUT task completion
   if (task == STATE_MACHINE_TASK::SCOUT_SYNC_ODOM) //Add AND case for the hauler to be parked near the scout to be completed for this task to be run.
   {
-    sendRobotGoal(SCOUT, scout_client_, scout_goal_, task, hauler_pose_);
+    sendRobotGoal(SCOUT, scout_client_, scout_goal_, task, excavator_pose_);
   }
   else
   {
