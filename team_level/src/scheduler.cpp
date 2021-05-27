@@ -49,7 +49,7 @@ void Scheduler::schedulerLoop()
 
   startScout();
   startExcavator();
-
+  startHauler();
   // ensure that hauler pose is set before doing anything else
 
   while (ros::ok() && start_scheduler_)
@@ -106,12 +106,21 @@ void Scheduler::startScout()
   // sendScoutGoal(SCOUT_SYNC_ODOM);
 }
 
+void Scheduler::startHauler()
+{
+  sendHaulerGoal(HAULER_GO_TO_PROC_PLANT); //Hauler negins by going to hopper/proc_plant at the beginning
+  while (hauler_goal_.task == HAULER_GO_TO_PROC_PLANT && !hauler_task_completed_)
+  {
+    ROS_WARN("In hauler_goto_proc_plant!");
+    updateRobotStatus();
+  }
+  sendHaulerGoal(HAULER_RESET_ODOM);
+  ROS_WARN("Hauler has been reset!"); //Once hauler has reached the hopper, it uses its reset odom using ground truth. Make sure, inirtialize rtabmap is called with use_gt=false
+}
+
 void Scheduler::updateScout()
 {
-
-  if (excavator_goal_.task == EXCAVATOR_FACE_PROCESSING_PLANT && excavator_task_completed_)
-    scout_desired_task = (SCOUT_SYNC_ODOM);
-  if (scout_goal_.task == SCOUT_SYNC_ODOM && scout_task_completed_)
+  if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
     scout_desired_task = (SCOUT_UNDOCK);
   if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
     scout_desired_task = (SCOUT_SEARCH_VOLATILE);
@@ -121,6 +130,7 @@ void Scheduler::updateExcavator()
 {
 
   static bool first_task = true;
+
   if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_task_completed_)
   {
     if ((excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_) || first_task)
@@ -134,8 +144,6 @@ void Scheduler::updateExcavator()
     excavator_desired_task = (EXCAVATOR_GO_TO_SCOUT);
   }
   if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
-    excavator_desired_task = (EXCAVATOR_FACE_PROCESSING_PLANT);
-  if (scout_goal_.task == SCOUT_SYNC_ODOM && scout_task_completed_)
     excavator_desired_task = (EXCAVATOR_PARK_AND_PUB);
   if (hauler_goal_.task == HAULER_PARK_AT_EXCAVATOR && hauler_task_completed_)
   {
@@ -157,8 +165,15 @@ void Scheduler::updateHauler()
   {
     bool excavator_going = excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT || excavator_goal_.task == EXCAVATOR_GO_TO_LOC;
     bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
+
     if (excavator_going || excavator_waiting)
       hauler_desired_task = (HAULER_GO_TO_LOC);
+    else
+    {
+      // reset the hauler's odom at the hopper if the hauler is not moving towards the excavator
+      // -> does not matter if runs multiple times while waiting for the excavator, as hauler won't be moving anyways
+      hauler_desired_task = (HAULER_RESET_ODOM);
+    }
   }
   if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_task_completed_)
   {
@@ -167,13 +182,11 @@ void Scheduler::updateHauler()
   }
   if (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_ && hauler_got_stuff_)
   {
+    // before going back to the processing plant, face the processing plant to reset odom with excavator
+    //if (hauler_goal_.task = HAULER_FACE_PROCESSING_PLANT)
     hauler_desired_task = (HAULER_DUMP_VOLATILE_TO_PROC_PLANT);
     hauler_got_stuff_ = false;
   }
-  // debug for testing reset odom states
-  // hauler_desired_task = STATE_MACHINE_TASK::HAULER_RESET_ODOM;
-  // ROS_INFO("Haulers' task is: ");
-  // ROS_INFO_STREAM(hauler_desired_task);
 }
 
 void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
@@ -236,8 +249,8 @@ void Scheduler::sendHaulerGoal(const STATE_MACHINE_TASK task)
   else
   {
     sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task);
-    ROS_INFO("Hauler pose has been reset to:");
-    ROS_INFO_STREAM(hauler_pose_);
+    // ROS_INFO("Hauler pose has been reset to:");
+    // ROS_INFO_STREAM(hauler_pose_);
   }
 }
 
@@ -304,3 +317,45 @@ void Scheduler::updateHaulerPose(const nav_msgs::Odometry::ConstPtr &msg)
   hauler_pose_.header = msg->header;
   hauler_pose_.pose = msg->pose.pose;
 }
+
+/*
+// Scheduler reset odom states in order of completion
+
+// hauler reset odom
+// first reset
+beginning of simulation->
+hauler rtabmap initialized with get_true_pose = false
+startHauler() set hauler desired task to goToProcPlant()
+update hauler reset_odom with use_gt = true to obtain true pose of hauler at hopper and store it in memory if the goaltask of goToProcPlant() is completed
+hauler exits reset odom steps (finished -> hauler spin)
+// subsequent resets
+hauler arrives at hopper
+update hauler sets desired task to reset_odom with use_gt = true upon detecting hauler dump volatile to processing plant completion (dumping_done boolean)
+hauler exits reset odom steps (finished -> hauler spin)
+//////////////////
+
+// excavator reset odom
+// first reset
+excavator rtabmap initialized with get_true_pose = true
+// subsequent resets
+excavator finishes collecting volatiles
+update hauler sets desired task to face processing plant upon detecting digging completion
+update excavator sets desired task to face processing plant upon detecting digging completion
+update excavator sets desired task to reset odom w.r.t. hauler odom upon detecting hauler face processing plant completion
+excavator exits reset odom steps (finished -> excavator -> spin)
+/////////////////
+
+// scout reset odom
+// first reset
+scout rtabmap initialized with get_true_pose = true (CANNOT CALL RESET ODOM WITH use_gt = true if doing this step)
+// subsequent resets
+excavator finishes go to scout state
+update excavator sets desired task to face processing plant upon detecting excavator go to scout completion
+update scout sets desired task to face processing plant upon detecting excavator go to scout completion
+update scout sets desired task to reset odom w.r.t. excavator upon detecting excavator face processing plant completion
+update excavator sets desired task to turn to face scout again upon detecting scout reset odom completion
+scout exits reset odom steps (finished -> update scout sets desired task to undock upon detecting excavator face scout completion)
+////////////////
+
+/////////////////////////
+*/
