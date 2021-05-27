@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     ros::AsyncSpinner spin(1);
 
-    std::string topic_name = COMMON_NAMES::CAPRICORN_TOPIC + model_name + COMMON_NAMES::CHEAT_ODOM_TOPIC;
+    std::string topic_name = COMMON_NAMES::CAPRICORN_TOPIC + model_name + COMMON_NAMES::RTAB_ODOM_TOPIC;
     std::string robot_frame_name = model_name + COMMON_NAMES::ROBOT_BASE;
 
     ros::ServiceClient client = nh.serviceClient<gazebo_msgs::GetModelState>(COMMON_NAMES::MODEL_STATE_QUERY);
