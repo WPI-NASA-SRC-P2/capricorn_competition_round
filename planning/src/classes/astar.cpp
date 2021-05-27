@@ -123,6 +123,12 @@ float AStar::distGridToPoint(int index, Point p1, int width, int height)
 
 Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point target, int threshold)
 {
+
+  // Convert meters -> grid units
+  target.x = target.x/oGrid.info.resolution;
+  target.y = target.y/oGrid.info.resolution;
+
+
   if (oGrid.data.size() == 0)
   {
     ROS_WARN("Occupancy Grid is Empty.");
