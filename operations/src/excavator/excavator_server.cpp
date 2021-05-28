@@ -104,30 +104,36 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
 {
   // float theta = findShoulderAngle(target, shoulder);
   float theta = -1.57;
+  static float last_vol_loc_angle = -1.57;
+  float yaw_angle;
+
+  if (target.x == 1)
+      last_vol_loc_angle = theta;
+
   std::string scoop_value;
   if (task == START_DIGGING) // digging angles
   {
     publishAngles(0, -2, 1, 0);     // Move the arm up
-    publishAngles(theta, -2, 1, 0); // Step for safe trajectory to not bump into camera
+    publishAngles(last_vol_loc_angle, -2, 1, 0); // Step for safe trajectory to not bump into camera
     ros::Duration(2).sleep();
-    publishAngles(theta, 1, 1, -2); // This set of values move the scoop under the surface
-    ros::Duration(2).sleep();
-
-    float yaw_angle = theta;
+    publishAngles(last_vol_loc_angle, 1, 1, -2); // This set of values move the scoop under the surface
+    ros::Duration(5).sleep();
 
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
     ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
 
-    while (!volatile_found && yaw_angle < 1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
+    while (!volatile_found && last_vol_loc_angle < 1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
     {
       // move the shoulder yaw joint from right to left under the surface
-      publishAngles(yaw_angle, 1, 1, -0.6);
-      ros::Duration(1).sleep();
-      yaw_angle += 0.2;
-      ROS_INFO_STREAM(std::to_string(yaw_angle));
+      publishAngles(last_vol_loc_angle, 1, 1, -0.6);
+      ros::Duration(3).sleep();
+      last_vol_loc_angle += 0.2;
+      ROS_INFO_STREAM(std::to_string(last_vol_loc_angle));
       scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
       ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
     }
+
+    yaw_angle = last_vol_loc_angle;
 
     if (yaw_angle < 0.785 && yaw_angle > -0.785) // If digging happens towards the front of excavator
     {
@@ -156,6 +162,7 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
         ros::Duration(SLEEP_DURATION).sleep();
         publishAngles(1.57, -2, 1, 1.5); // This set of values moves the scoop to drop regolith on the ground
         ros::Duration(SLEEP_DURATION).sleep();
+        last_vol_loc_angle = theta;
         return false;
       }
     }

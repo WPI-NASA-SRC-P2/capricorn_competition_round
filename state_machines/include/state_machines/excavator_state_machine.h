@@ -35,6 +35,7 @@ private:
 
   const int DIGGING_TRIES_ = 2; // BIG HACK FOR DEMO
   int digging_attempt_ = 0;
+  int new_vol_loc_flag_ = 1;
 
   typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
   NavigationClient *navigation_client_;
