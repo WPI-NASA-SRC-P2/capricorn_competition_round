@@ -57,14 +57,14 @@ void Scheduler::schedulerLoop()
   {
     updateRobotStatus();
 
-    // updateHauler();
-    // updateExcavator();
+    updateHauler();
+    updateExcavator();
     updateScout();
 
     sendScoutGoal(scout_desired_task);
-    ROS_WARN("SCOUT SHOULD BE SCANNING FOR VOLATILES HERE");
-    // sendExcavatorGoal(excavator_desired_task);
-    // sendHaulerGoal(hauler_desired_task);
+    // ROS_WARN("SCOUT SHOULD BE SCANNING FOR VOLATILES HERE");
+    sendExcavatorGoal(excavator_desired_task);
+    sendHaulerGoal(hauler_desired_task);
 
     ros::Duration(0.5).sleep();
     ros::spinOnce();
@@ -105,9 +105,9 @@ void Scheduler::startExcavator()
 void Scheduler::startScout()
 {
   sendScoutGoal(SCOUT_SEARCH_VOLATILE);
-  scout_goal_.task = SCOUT_SEARCH_VOLATILE;
-  scout_desired_task = (SCOUT_SEARCH_VOLATILE);
-  scout_task_completed_ = false;
+  // scout_goal_.task = SCOUT_SEARCH_VOLATILE;
+  // scout_desired_task = (SCOUT_SEARCH_VOLATILE);
+  // scout_task_completed_ = false;
   // sendScoutGoal(SCOUT_SYNC_ODOM);
 }
 
@@ -131,14 +131,13 @@ void Scheduler::startHauler()
 
 void Scheduler::updateScout()
 {
-  // if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
-  //   scout_desired_task = (SCOUT_UNDOCK);
-  // if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
-  //   scout_desired_task = (SCOUT_SEARCH_VOLATILE);
+  if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
+    scout_desired_task = (SCOUT_UNDOCK);
+  if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
+    scout_desired_task = (SCOUT_SEARCH_VOLATILE);
   if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_task_completed_)
   {
-    scout_desired_task = (SCOUT_SEARCH_VOLATILE);
-    ROS_ERROR("SCOUT IS ON STRIKE");
+    ROS_ERROR("SCOUT FOUND VOLATILE");
   }
 }
 
