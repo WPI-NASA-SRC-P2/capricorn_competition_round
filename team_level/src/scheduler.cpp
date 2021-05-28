@@ -50,8 +50,8 @@ void Scheduler::schedulerLoop()
 
   // ensure that hauler pose is set before doing anything else
   startHauler();
-  startExcavator();
   startScout();
+  startExcavator();
 
   while (ros::ok() && start_scheduler_)
   {
@@ -107,14 +107,17 @@ void Scheduler::startExcavator()
 
 void Scheduler::startScout()
 {
-  sendScoutGoal(SCOUT_SEARCH_VOLATILE);
+  scout_desired_task = (SCOUT_SEARCH_VOLATILE);
+  sendScoutGoal(scout_desired_task);
   // scout_goal_.task = SCOUT_SEARCH_VOLATILE;
   // scout_desired_task = (SCOUT_SEARCH_VOLATILE);
   // scout_task_completed_ = false;
   // sendScoutGoal(SCOUT_SYNC_ODOM);
-  scout_goal_.task = SCOUT_SEARCH_VOLATILE;
-  scout_task_completed_ = false;
+  // scout_goal_.task = SCOUT_SEARCH_VOLATILE;
+  // scout_task_completed_ = false;
   // scout_desired_task = (SCOUT_SEARCH_VOLATILE);
+  ROS_ERROR("Current goal (IN START SCOUT): ");
+  ROS_ERROR_STREAM(scout_desired_task);
 }
 
 void Scheduler::startHauler()
@@ -141,6 +144,8 @@ void Scheduler::updateScout()
     scout_desired_task = (SCOUT_UNDOCK);
   if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
     scout_desired_task = (SCOUT_SEARCH_VOLATILE);
+  ROS_ERROR("Desired task (IN UPDATE SCOUT)): ");
+  ROS_ERROR_STREAM(scout_desired_task);
   // if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_task_completed_)
   // {
   //   ROS_ERROR("SCOUT FOUND VOLATILE");
@@ -175,10 +180,6 @@ void Scheduler::updateExcavator()
 
 void Scheduler::updateHauler()
 {
-  ROS_INFO_STREAM("Scout Task:" << (scout_goal_.task) << " task completed:" << scout_task_completed_);
-  ROS_INFO_STREAM("Excav Task:" << (excavator_goal_.task) << " task completed:" << excavator_task_completed_);
-  ROS_INFO_STREAM("Hauler Task:" << (hauler_goal_.task) << " task completed:" << hauler_task_completed_);
-
   bool dumping_done = hauler_goal_.task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_task_completed_;
   bool not_dumping = hauler_goal_.task != HAULER_DUMP_VOLATILE_TO_PROC_PLANT;
 
@@ -284,7 +285,7 @@ void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client,
   {
     ROS_WARN_STREAM("SCHEDULER : Setting " << robot_name << " Task: " << task);
 
-    // This is bad, should be removed //
+    // This is bad, should be removed //sendRobotGoal
     if (task == EXCAVATOR_PARK_AND_PUB)
       ros::Duration(20.0f).sleep();
 

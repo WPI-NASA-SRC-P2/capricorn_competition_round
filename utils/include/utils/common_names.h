@@ -167,7 +167,7 @@ namespace COMMON_NAMES
   enum STATE_MACHINE_TASK
   {
     /**************SCOUT STATES**************/
-    SCOUT_SEARCH_VOLATILE = 0,          // Execute spiral motion to search for the volatiles.
+    SCOUT_SEARCH_VOLATILE = 42,         // Execute spiral motion to search for the volatiles.
     SCOUT_STOP_SEARCH = 1,              // Stop executing the search algorithm.
     SCOUT_LOCATE_VOLATILE = 2,          // Pinpoint the location of the volatile
     SCOUT_UNDOCK = 3,                   // Move the Scout away from the Excavator
