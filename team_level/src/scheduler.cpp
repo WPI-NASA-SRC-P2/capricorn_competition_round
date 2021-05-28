@@ -48,10 +48,10 @@ void Scheduler::schedulerLoop()
   init();
   ROS_INFO("All State machines connected!");
 
-  startScout();
   startExcavator();
   // ensure that hauler pose is set before doing anything else
   startHauler();
+  startScout();
 
   while (ros::ok() && start_scheduler_)
   {
@@ -113,13 +113,6 @@ void Scheduler::startScout()
 
 void Scheduler::startHauler()
 {
-  sendHaulerGoal(HAULER_GO_TO_PROC_PLANT);
-  hauler_goal_.task = HAULER_GO_TO_PROC_PLANT;
-  while (!hauler_task_completed_)
-  {
-    updateRobotStatus();
-  }
-  hauler_task_completed_ = false;
   sendHaulerGoal(HAULER_PARK_AT_HOPPER);
   hauler_goal_.task = HAULER_PARK_AT_HOPPER;
   while (!hauler_task_completed_)
