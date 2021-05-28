@@ -114,14 +114,14 @@ void NavigationServer::initSubscribers(ros::NodeHandle& nh, std::string& robot_n
 	
 	nh.getParam("cheat_odom", odom_flag);
 
+	update_current_robot_pose_ = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
+
 	if (odom_flag)
 	{
-		update_current_robot_pose_ = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
 		ROS_INFO("Currently using cheat odom from Gazebo\n");
 	}
 	else
-	{
-		update_current_robot_pose_ = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
+	{	
 		ROS_INFO("Currently using odom from rtabmap\n");
 	}
 	

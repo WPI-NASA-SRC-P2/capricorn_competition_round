@@ -18,10 +18,11 @@ using namespace COMMON_NAMES;
 class NavigationAlgo
 {
 private:
-  static constexpr float arc_spiral_a = 15;    // Inner radius (starting radius of the spiral)
+  static constexpr float arc_spiral_a_1 = 20, arc_spiral_a_2 = 15;    // Inner radius (starting radius of the spiral)
+  static constexpr int init_theta_1 = 8, init_theta_2 = 18;
   static constexpr float arc_spiral_b = 10;   // Incerement per rev
   static constexpr float arc_spiral_incr = 5; // Distance between two points
-
+  static constexpr int N = 500;
   /**
    * @brief Calculates variables needed for calculation of center and radius of the three point circle
    * 
@@ -130,12 +131,10 @@ public:
   /**
    * @brief Retruns the N points lying in spiral path
    * 
-   * @param init_location   Initial location of the robot in an environment
-   * @param N               Number of points desired
-   * @param init_theta      Pick up where left off
+   * @param scout_number Number of the scout for which points are needed. Only works with 1 or 2. 
    * @return std::vector<geometry_msgs::Point> 
    */
-  static std::vector<geometry_msgs::PointStamped> getNArchimedeasSpiralPoints(const geometry_msgs::PointStamped &init_location, const int N, int init_theta = 0);
+  static std::vector<geometry_msgs::PointStamped> getNArchimedeasSpiralPoints(const int scout_number = 1);
 
   /**
    * @brief Get the Kinetic Energy object

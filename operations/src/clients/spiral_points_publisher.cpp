@@ -1,6 +1,7 @@
 #include <visualization_msgs/Marker.h>
 #include <operations/navigation_algorithm.h>
 #include <ros/ros.h>
+#include <std_msgs/ColorRGBA.h>
 
 int main(int argc, char **argv)
 {
@@ -25,20 +26,34 @@ int main(int argc, char **argv)
   marker.pose.orientation.y = 0.0;
   marker.pose.orientation.z = 0.0;
   marker.pose.orientation.w = 1.0;
-  marker.color.a = 0.5; // Don't forget to set the alpha!
-  marker.color.r = 0.0;
-  marker.color.g = 1.0;
-  marker.color.b = 0.0;
+  std_msgs::ColorRGBA green_color, red_color;
+  green_color.a = 0.5; // Don't forget to set the alpha!
+  green_color.r = 0.0;
+  green_color.g = 1.0;
+  green_color.b = 0.0;
+
+  red_color.a = 0.5; // Don't forget to set the alpha!
+  red_color.r = 1.0;
+  red_color.g = 0.0;
+  red_color.b = 0.0;
 
   ros::Duration(0.1).sleep();
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = "map";
-  std::vector<geometry_msgs::PointStamped> spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(zero_point, 400, 12);
+  int number_of_points = 500;
+  std::vector<geometry_msgs::PointStamped> spiral_points_1 = NavigationAlgo::getNArchimedeasSpiralPoints(1);
+  std::vector<geometry_msgs::PointStamped> spiral_points_2 = NavigationAlgo::getNArchimedeasSpiralPoints(2);
 
-  marker.points.resize(spiral_points.size());
+  marker.points.resize(2*number_of_points);
+  marker.colors.resize(2*number_of_points);
 
-  for (int i = 0; i < spiral_points.size(); i++)
-    marker.points.at(i) = spiral_points.at(i).point;
+  for (int i = 0; i < number_of_points; i++)
+  {
+    marker.points.at(i) = spiral_points_1.at(i).point;
+    marker.colors.at(i) = green_color;
+    marker.points.at(number_of_points + i) = spiral_points_2.at(i).point;
+    marker.colors.at(number_of_points + i) = red_color;
+  }
 
   while (ros::ok())
   {
