@@ -246,7 +246,7 @@ int main(int argc, char **argv)
     initExcavatorPublisher(nh, robot_name);
     ros::Subscriber sub = nh.subscribe("/" + robot_name + SCOOP_INFO, 1000, scoopCallback); // scoop info subscriber
     Server server(nh, EXCAVATOR_ACTIONLIB, boost::bind(&execute, _1, &server), false);
-    server.registerPreemptCallback(&cancelGoal);
+    // server.registerPreemptCallback(&cancelGoal);
     server.start();
     ROS_INFO("STARTED EXCAVATOR SERVER");
     ros::spin();
