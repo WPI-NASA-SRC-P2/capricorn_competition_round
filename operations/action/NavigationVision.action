@@ -1,8 +1,11 @@
 # Define the goal
-string desired_object_label  
+string desired_object_label # Object Detection Class Name
+geometry_msgs/PoseStamped goal_loc # Go to goal pose
+uint32 mode # See COMMON_NAMES::NAV_VISION_TYPE, two modes, follow and reach
 ---
 # Define the result
-bool object_reached
+# See COMMON_NAMES::NAV_VISION_RESULT for possible values
+uint32 result
 ---
 # Define a feedback message
-bool centered
+float32 percent_complete

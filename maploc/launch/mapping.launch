@@ -1,0 +1,40 @@
+<!--
+  Author: Team Bebop
+  Slack: #team_bebop
+
+  Team Capricorn
+  NASA SPACE ROBOTICS CHALLENGE -->
+
+ <!-- This launch file is used to launch the unified coordinates rtabmap, 
+      nodes publish rover odom, rover rtabmap, and rover 20x20 object detection map-->
+<launch>
+
+    
+    <arg name="robot_name" default="small_scout_1" />
+    <arg name="node_start_delay" default="5.0" /> 
+    <arg name="output" default="screen" />
+    <!-- specify initialize_rtabmap for ground_truth start, or cheat_initialize_rtabmap for using cheat odom -->
+    <!-- For the Hauler, please specify false as the hauler should get its true pose using the reset_odom service instead after it reaches the hopper-->
+    <!--Use true arg wisely, as you will need to restart the simulation if you have used the true pose-->
+    <arg name="get_true_pose" default="true"/>
+
+    <!-- Launch the unified coordinates rtabmap (copied from compare_rtab_odom.launch)-->
+    <include file="$(find maploc)/launch/rtabmap.launch">
+      <arg name="robot_name" value="$(arg robot_name)"/>
+      <!-- Will be setting the default of use_rtabmap to false once confirmed that object detection map is sufficient for navigation-->
+      <!-- default false will produce only odometry and not the full map to conserve resources and improve accuracy-->
+      <arg name="use_rtabmap" value="false"/>
+    </include>
+    
+    <!-- The node "initialize_rtabmap" is launhed with a delay of $node_start_delay, as it takes some time for the client to become available, without delay the execution sometimes get stuck at "Rtabmap client loaded" -->
+    <node name="$(arg robot_name)_initialize_rtabmap" pkg="maploc" type="initialize_rtabmap" output="screen" args="$(arg robot_name) $(arg get_true_pose)" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "/>
+
+    <!-- Launch the 20x20 object detection map-->
+    <node name="$(arg robot_name)_localmap" pkg="maploc" type="obstacle_localmaps.py" output="screen" args="$(arg robot_name)" />
+
+    <!-- Launch the reset odom service -->
+    <node name="$(arg robot_name)_odom_reset_service_node" pkg="maploc" type="reset_odom" output="screen" />
+
+</launch>
+    
+    

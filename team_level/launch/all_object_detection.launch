@@ -1,0 +1,16 @@
+<launch>
+
+    <include file="$(find perception)/launch/object_detection.launch">
+        <arg name="robot_name" value="small_scout_1" />
+    </include>
+
+    <include file="$(find perception)/launch/object_detection.launch">
+        <arg name="robot_name" value="small_excavator_1" />
+    </include>
+
+    <include file="$(find perception)/launch/object_detection.launch">
+        <arg name="robot_name" value="small_hauler_1" />
+    </include>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find utils)/rviz/object_detection.rviz"/>
+</launch>

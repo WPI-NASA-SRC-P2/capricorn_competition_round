@@ -1,3 +1,5 @@
+#pragma once
+
 namespace COMMON_NAMES
 {
   /****** ROBOTS ******/
@@ -16,7 +18,7 @@ namespace COMMON_NAMES
   /****** ROBOT FRAMES ******/
   const std::string MAP = "map";
   const std::string ODOM = "odom";
-  const std::string ROBOT_BASE = "base_footprint";
+  const std::string ROBOT_BASE = "_base_footprint";
   const std::string ROBOT_CHASSIS = "_small_chassis";
 
   /****** WHEELS ******/
@@ -40,6 +42,10 @@ namespace COMMON_NAMES
   const std::string PARK_HAULER_ACTIONLIB = "park_hauler";
   const std::string FIND_PP_RS_ACTIONLIB = "_find_pp_rs";
   const std::string NAVIGATION_VISION_ACTIONLIB = "_navigation_vision";
+  const std::string STATE_MACHINE_ACTIONLIB = "_state_machine";
+
+  /****** SERVICES ******/
+  const std::string SCOUT_SEARCH_SERVICE = "scout_search";
 
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";
@@ -57,10 +63,12 @@ namespace COMMON_NAMES
   /****** RTABMAP ******/
   const std::string RESET_POSE_CLIENT = "/camera/reset_odom_to_pose";
   const std::string TRUE_POSE_SRV = "/get_true_pose";
+  const std::string RESET_ODOMETRY = "reset_rover_odom_srv";
+  const std::string RTAB_ODOM_TOPIC = "/camera/odom";
 
   /****** ROS NODE NAMES ******/
   const std::string NAVIGATION_VISION_SERVER_NODE_NAME = "_navigation_vision_server";
-  const std::string NAVIGATION_VISION_CLIENT_NODE_NAME = "_navigation_vision_server";
+  const std::string NAVIGATION_VISION_CLIENT_NODE_NAME = "_navigation_vision_client";
   const std::string PR_DATASET_NODE_NAME = "_pr_dataset";
   const std::string GROUND_TRUTH_PR_NODE_NAME = "_ground_truth_pr";
   const std::string PR_LOCALIZATION_NODE_NAME = "_pr_localization";
@@ -70,8 +78,10 @@ namespace COMMON_NAMES
   const std::string NOISY_IMAGE_NODE_NAME = "_noisy_image_eliminate";
   const std::string HORIZON_TRACKING_NODE_NAME = "_horzion_tracking";
   const std::string FIND_PP_RS_SERVER_NODE_NAME = "_find_pp_rs_server";
-  const std::string PARK_HAULER_HOPPER_SERVER_NODE_NAME = "_park_hauler_server_hopper";
-  const std::string PARK_HAULER_HOPPER_CLIENT_NODE_NAME = "_park_hauler_vision_hopper";
+  const std::string PARK_HAULER_HOPPER_SERVER_NODE_NAME = "_park_hauler_server";
+  const std::string PARK_HAULER_HOPPER_CLIENT_NODE_NAME = "_park_hauler_client";
+  const std::string SCOUT_SEARCH_NODE_NAME = "_scout_search";
+  const std::string STATE_MACHINE_SERVER_NODE_NAME = "_sm_server";
 
   /****** TOPIC NAMES ******/
   const std::string CAPRICORN_TOPIC = "/capricorn/";
@@ -87,6 +97,9 @@ namespace COMMON_NAMES
   const std::string VOLATILE_LOCATION_TOPIC = "/volatile_location";
   const std::string SCHEDULER_TOPIC = "/scheduler";
   const std::string HAULER_FILLED = "/hauler_filled";
+  const std::string LOOKOUT_LOCATION_TOPIC = "/lookout_location";
+  const std::string PARK_HAULER = "/park_hauler";
+  const std::string HAULER_PARKED_TOPIC = "/hauler_parked";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
@@ -109,7 +122,6 @@ namespace COMMON_NAMES
   const std::string EXCAVATOR_ARRIVED_TOPIC = "/excavator_arrived";
   const std::string HAULER_ARRIVED_TOPIC = "/hauler_arrived";
 
-
   /****** OBJECT DETECTION CLASS NAMES ******/
   const std::string OBJECT_DETECTION_PROCESSING_PLANT_CLASS = "processingPlant";
   const std::string OBJECT_DETECTION_REPAIR_STATION_CLASS = "repairStation";
@@ -123,6 +135,16 @@ namespace COMMON_NAMES
   const std::string OBJECT_DETECTION_PP_SMALL_THRUSTER_CLASS = "ppSmallThruster";
   const std::string OBJECT_DETECTION_ROCK_CLASS = "rock";
 
+  /****** NAVIGATION VISION ENUMS ******/
+  enum NAV_VISION_TYPE
+  {
+    V_REACH = 0,         // Reach the goal and stop
+    V_FOLLOW = 1,        // Follow an object
+    V_CENTER = 2,        // Centers the robot to a given class
+    V_UNDOCK = 3,        // Undocks from given class
+    V_OBS_GOTO_GOAL = 4, // Uses go to goal with obstacle avoidance
+  };
+
   /****** NAVIGATION ENUMS ******/
   enum NAV_TYPE
   {
@@ -132,18 +154,59 @@ namespace COMMON_NAMES
     SPIRAL,  // Archimedean spiral (scout finding volatiles)
     FOLLOW,  // Follow an object in frame
   };
-  
-  enum NAV_RESULT
+
+  /****** COMMON RESULTS ENUMS (This is used by every actionlibrary)******/
+  enum COMMON_RESULT
   {
     FAILED,
     SUCCESS,
-    INTERRUPTED
+    INTERRUPTED,
+    INVALID_GOAL,
+  };
+
+  /****** STATE MACHINE ENUM ******/
+  enum STATE_MACHINE_TASK
+  {
+    /**************SCOUT STATES**************/
+    SCOUT_SEARCH_VOLATILE = 0, // Execute spiral motion to search for the volatiles.
+    SCOUT_STOP_SEARCH = 1,     // Stop executing the search algorithm.
+    SCOUT_LOCATE_VOLATILE = 2, // Pinpoint the location of the volatile
+    SCOUT_UNDOCK = 3,          // Move the Scout away from the Excavator
+
+    /**************EXCAVATOR STATES**************/
+    EXCAVATOR_GO_TO_LOC = 4,             // Takes Excavator to a location from which it will
+                                         // be quicker to get to the digging location
+    EXCAVATOR_GO_TO_SCOUT = 5,           // Get close to the volatile when it is detected
+    EXCAVATOR_PARK_AND_PUB = 6,          // Publish a message that excavator has reached,
+                                         // And park where the scout was located.
+    EXCAVATOR_DIG_AND_DUMP_VOLATILE = 7, // Takes care of digging, and dumping
+                                         // the volatile in hauler if volatile is found
+    EXCAVATOR_GOTO_DEFAULT_ARM_POSE = 8, // Moves excavator's arm to a default position used for object detection
+
+    /**************HAULER STATES**************/
+    HAULER_GO_TO_LOC = 9,                    // Takes Hauler to a location
+    HAULER_DUMP_VOLATILE_TO_PROC_PLANT = 10, // Undocks hauler from excavator, goes to processing plant,
+                                             // parks hauler to processing plant, dumps volatile and
+                                             // undocks hauler from hopper
+    HAULER_GO_BACK_TO_EXCAVATOR = 11,        // Takes hauler from any location to excavator and parks
+    HAULER_PARK_AT_EXCAVATOR = 12,           // Hauler parks at excavator
+    HAULER_FOLLOW_EXCAVATOR = 13,            // Hauler follows excavator
+    HAULER_RESET_ODOM = 14,
+
+    // redundant modes for hauler (everything is taken care by above modes)
+    HAULER_GO_TO_PROC_PLANT = 15, // Hauler goes to processing plant
+    HAULER_PARK_AT_HOPPER = 16,   // Parks hauler wrt hopper
+    HAULER_DUMP_VOLATILE = 17,    // Empty hauler's bin
+    HAULER_UNDOCK_EXCAVATOR = 18, // undock from excavator (basically backward motion from excavator)
+    HAULER_UNDOCK_HOPPER = 19    // undock from hopper (backward motion from hopper)
   };
 
 } // namespace CAPRICORN_COMMON_NAMES
 
 /****** EXCAVATOR TASK ENUM ******/
-  enum Tasks{
-    START_DIGGING = 1, 
-    START_UNLOADING = 2, 
-  };
+enum EXCAVATOR_ARM_TASK
+{
+  START_DIGGING = 1,
+  START_UNLOADING = 2,
+  GO_TO_DEFAULT = 3,
+};

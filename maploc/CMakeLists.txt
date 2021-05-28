@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   utils
   perception
   srcp2_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -62,11 +63,10 @@ find_package(catkin REQUIRED COMPONENTS
  )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  ResetOdom.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -78,6 +78,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
+   geometry_msgs
    std_msgs
  )
 
@@ -112,7 +113,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
  INCLUDE_DIRS include
- LIBRARIES maploc
+#  LIBRARIES maploc
  CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf utils std_msgs message_runtime rtabmap_ros perception srcp2_msgs
 #  DEPENDS system_lib
 ) 
@@ -172,6 +173,12 @@ target_link_libraries(initialize_rtabmap
   ${catkin_LIBRARIES}
 )
 
+add_executable(reset_odom src/reset_odom.cpp)
+add_dependencies(reset_odom ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(reset_odom
+  ${catkin_LIBRARIES}
+)
+
 add_executable(odom_error src/odom_error.cpp)
 add_dependencies(odom_error ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(odom_error
@@ -188,6 +195,11 @@ add_executable(pr_dataset src/pr_dataset.cpp)
 add_dependencies(pr_dataset ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(pr_dataset
   ${catkin_LIBRARIES}
+)
+
+install(PROGRAMS
+src/ground_truth_localmaps.py
+DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 #############
