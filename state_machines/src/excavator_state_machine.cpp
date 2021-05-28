@@ -155,4 +155,9 @@ bool ExcavatorStateMachine::syncOdometry(const geometry_msgs::PoseStamped &POSE)
     {
         return resetOdometry(POSE);
     }
+    else
+  {
+    return false;
+    ROS_INFO("Did not face processing plant yet!");
+  }
 }

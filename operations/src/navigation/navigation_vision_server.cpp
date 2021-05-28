@@ -462,13 +462,13 @@ void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
     {
         g_nav_goal.drive_mode = NAV_TYPE::GOAL;
         g_nav_goal.pose = goal_loc;
-        ROS_INFO_STREAM(g_robot_name<<" Outgoing nav vision goal"<<goal_loc);
+        // ROS_INFO_STREAM(g_robot_name<<" Outgoing nav vision goal"<<goal_loc);          //Uncomment this if you wish to
         if (g_previous_state_is_go_to)
         {
             g_send_nav_goal = false;
             if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
             {
-                ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached GoTo Goal");
+                // ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached GoTo Goal");
                 g_reached_goal = true;
             }
         }
@@ -597,9 +597,9 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
  */
 void odomCallback(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  const std::lock_guard<std::mutex> lock(g_odom_mutex);
-  g_robot_pose.header = msg->header;
-  g_robot_pose.pose = msg->pose.pose;
+    const std::lock_guard<std::mutex> lock(g_odom_mutex);
+    g_robot_pose.header = msg->header;
+    g_robot_pose.pose = msg->pose.pose;
 }
 
 int main(int argc, char **argv)
