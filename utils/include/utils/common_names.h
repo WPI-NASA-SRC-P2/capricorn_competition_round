@@ -189,6 +189,7 @@ namespace COMMON_NAMES
     EXCAVATOR_RESET_ODOM = 23,              // Reset excavator odometry
     EXCAVATOR_SYNC_ODOM = 25,               //Centers wrt processing plant and resets odometry
     EXCAVATOR_FACE_PROCESSING_PLANT = 27,   //Centers wrt processing plant
+    EXCAVATOR_GO_TO_REPAIR = 29,            // sends excavator to repair station using visual navigation
 
     /**************HAULER STATES**************/
     HAULER_GO_TO_LOC = 9,                    // Takes Hauler to a location

@@ -93,6 +93,9 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	case STATE_MACHINE_TASK::EXCAVATOR_FACE_PROCESSING_PLANT:
 		output = sm->faceProcessingPlant();
 		break;
+	case STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR:
+		output = sm->goToRepairStation();
+		break;
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
 		break;

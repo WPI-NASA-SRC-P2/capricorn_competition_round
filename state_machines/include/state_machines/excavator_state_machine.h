@@ -25,7 +25,8 @@ const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
     STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM_GROUND_TRUTH,
     STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM,
     STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM,
-    STATE_MACHINE_TASK::EXCAVATOR_FACE_PROCESSING_PLANT};
+    STATE_MACHINE_TASK::EXCAVATOR_FACE_PROCESSING_PLANT,
+    STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR};
 
 class ExcavatorStateMachine
 {
@@ -116,6 +117,13 @@ private:
   bool syncOdometry(const geometry_msgs::PoseStamped &POSE);
   /**
    * @brief centers excavator wrt processing plant and then resets the odometry according to whatever pose we pass it.
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted
+   */
+  bool goToRepairStation();
+  /**
+   * @brief REACHES THE REPAIR STATION
    * 
    * @return true : if task is successful.
    * @return false : if task is failed or aborted or interrupted

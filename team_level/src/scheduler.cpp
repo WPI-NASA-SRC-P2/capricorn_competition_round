@@ -48,9 +48,9 @@ void Scheduler::schedulerLoop()
   init();
   ROS_INFO("All State machines connected!");
 
-  startExcavator();
   // ensure that hauler pose is set before doing anything else
   startHauler();
+  startExcavator();
   startScout();
 
   while (ros::ok() && start_scheduler_)
@@ -62,7 +62,7 @@ void Scheduler::schedulerLoop()
     updateScout();
 
     sendScoutGoal(scout_desired_task);
-    // ROS_WARN("SCOUT SHOULD BE SCANNING FOR VOLATILES HERE");
+    //ROS_WARN("SCOUT SHOULD BE SCANNING FOR VOLATILES HERE");
     sendExcavatorGoal(excavator_desired_task);
     sendHaulerGoal(hauler_desired_task);
 
@@ -100,6 +100,9 @@ void Scheduler::updateRobotStatus()
 void Scheduler::startExcavator()
 {
   sendExcavatorGoal(EXCAVATOR_GOTO_DEFAULT_ARM_POSE);
+  sendExcavatorGoal(EXCAVATOR_GO_TO_REPAIR);
+  //excavator_goal_.task = EXCAVATOR_GO_TO_REPAIR;
+  excavator_task_completed_ = excavator_client_->getState().isDone();
 }
 
 void Scheduler::startScout()
@@ -109,6 +112,9 @@ void Scheduler::startScout()
   // scout_desired_task = (SCOUT_SEARCH_VOLATILE);
   // scout_task_completed_ = false;
   // sendScoutGoal(SCOUT_SYNC_ODOM);
+  scout_goal_.task = SCOUT_SEARCH_VOLATILE;
+  scout_task_completed_ = false;
+  // scout_desired_task = (SCOUT_SEARCH_VOLATILE);
 }
 
 void Scheduler::startHauler()
@@ -117,14 +123,14 @@ void Scheduler::startHauler()
   hauler_goal_.task = HAULER_PARK_AT_HOPPER;
   while (!hauler_task_completed_)
   {
-    updateRobotStatus();
+    hauler_task_completed_ = hauler_client_->getState().isDone();
   }
   hauler_task_completed_ = false;
   sendHaulerGoal(HAULER_RESET_ODOM);
   hauler_goal_.task = HAULER_RESET_ODOM;
   while (!hauler_task_completed_)
   {
-    updateRobotStatus();
+    hauler_task_completed_ = hauler_client_->getState().isDone();
   }
   // ROS_ERROR("Hauler has been reset!"); //Once hauler has reached the hopper, it uses its reset odom using ground truth. Make sure, inirtialize rtabmap is called with use_gt=false
 }
@@ -135,10 +141,10 @@ void Scheduler::updateScout()
     scout_desired_task = (SCOUT_UNDOCK);
   if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
     scout_desired_task = (SCOUT_SEARCH_VOLATILE);
-  if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_task_completed_)
-  {
-    ROS_ERROR("SCOUT FOUND VOLATILE");
-  }
+  // if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_task_completed_)
+  // {
+  //   ROS_ERROR("SCOUT FOUND VOLATILE");
+  // }
 }
 
 void Scheduler::updateExcavator()
@@ -182,7 +188,10 @@ void Scheduler::updateHauler()
     bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
 
     if (excavator_going || excavator_waiting)
+    {
       hauler_desired_task = (HAULER_GO_TO_LOC);
+      ROS_ERROR("HAULER THINKS IT'S READY TO MOVE");
+    }
     else
     {
       // reset the hauler's odom at the hopper if the hauler is not moving towards the excavator

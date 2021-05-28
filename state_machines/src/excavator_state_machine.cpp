@@ -37,6 +37,17 @@ bool ExcavatorStateMachine::goToScout()
     return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
+bool ExcavatorStateMachine::goToRepairStation()
+{
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Going to Scout");
+    geometry_msgs::PoseStamped temp_msg;
+    navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_REACH;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}
+
 bool ExcavatorStateMachine::parkExcavator()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Parking to Excavator");
@@ -156,8 +167,8 @@ bool ExcavatorStateMachine::syncOdometry(const geometry_msgs::PoseStamped &POSE)
         return resetOdometry(POSE);
     }
     else
-  {
-    return false;
-    ROS_INFO("Did not face processing plant yet!");
-  }
+    {
+        return false;
+        ROS_INFO("Did not face processing plant yet!");
+    }
 }
