@@ -9,6 +9,7 @@
 #include <operations/Spiral.h>
 #include <operations/ResourceLocaliserAction.h>
 #include <srcp2_msgs/VolSensorMsg.h>
+#include <operations/obstacle_avoidance.h>
 
 using namespace COMMON_NAMES;
 
@@ -24,23 +25,27 @@ const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
 class ScoutBaseState
 {
 private:
+  ros::Subscriber volatile_sub_;
+  ros::Subscriber objects_sub_;
+
+protected:
   ros::NodeHandle nh_;
 
   std::string robot_name_;
 
   ros::ServiceClient spiralClient_;
-  ros::Subscriber volatile_sub_;
 
   bool near_volatile_ = false;
-  bool new_message_received = false;
+
+  std::mutex objects_mutex_;
+  perception::ObjectArray::ConstPtr vision_objects_;
+  bool objects_msg_received_ = false;
 
   typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> NavigationVisionClient;
   NavigationVisionClient *navigation_vision_client_;
 
   typedef actionlib::SimpleActionClient<operations::ResourceLocaliserAction> ResourceLocaliserClient_;
   ResourceLocaliserClient_ *resource_localiser_client_;
-
-  ScoutBaseState(ros::NodeHandle nh, const std::string &robot_name);
 
   /**
    * @brief Volatile sensor callback
@@ -49,27 +54,62 @@ private:
    */
   void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg);
 
+  void objectsCallback(const perception::ObjectArray::ConstPtr objs);
+
 public:
-  /**
-   * @brief Get the Base State object. Use this function to access a pointer to the object of
-   * ScoutBaseState. Only one object of this class is created and it is shared with all the classes that use
-   * ScoutBaseState.
-   *
-   * @param nh ros Nodehandle
-   * @return ScoutBaseState*
-   */
-  static ScoutBaseState* getScoutBaseState(ros::NodeHandle nh, const std::string &robot_name);
+  ScoutBaseState(ros::NodeHandle nh, const std::string &robot_name);
   ~ScoutBaseState();
 
-  /**
-   * @brief disable copy constructor. This is required for singleton pattern
-   *
-   */
-  ScoutBaseState(ScoutBaseState const&) = delete;
+  bool entryPoint();
+  bool exec();
+  bool exitPoint();
+};
 
-  /**
-   * @brief disable assignment operator. This is required for singleton pattern
-   *
-   */
-  void operator=(ScoutBaseState const&) = delete;
+class Undock: public ScoutBaseState
+{
+public:
+  Undock(ros::NodeHandle nh, const std::string &robot_name);
+  bool entryPoint();
+  bool exec();
+  bool exitPoint();
+};
+
+class Search: public ScoutBaseState
+{
+public:
+  bool entryPoint();
+  bool exec();
+  bool exitPoint();
+};
+
+class Locate: public ScoutBaseState
+{
+public:
+  bool entryPoint();
+  bool exec();
+  bool exitPoint();
+};
+
+class SolarCharge: public ScoutBaseState
+{
+public:
+  bool entryPoint();
+  bool exec();
+  bool exitPoint();
+};
+
+class RepairRobot: public ScoutBaseState
+{
+public:
+  bool entryPoint();
+  bool exec();
+  bool exitPoint();
+};
+
+class ResetOdom: public ScoutBaseState
+{
+public:
+  bool entryPoint();
+  bool exec();
+  bool exitPoint();
 };

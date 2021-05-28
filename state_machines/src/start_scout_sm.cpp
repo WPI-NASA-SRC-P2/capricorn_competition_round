@@ -16,33 +16,21 @@
 
 int main(int argc, char *argv[])
 {
-	if (argc != 2 && argc != 4)
-	{
-		ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
-		return -1;
-	}
+	// if (argc != 2 && argc != 4)
+	// {
+	// 	ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
+	// 	return -1;
+	// }
 
 	std::string g_robot_name = argv[1];
 
 	ros::init(argc, argv, g_robot_name + "_sm");
 	ros::NodeHandle nh;
 
-	ScoutBaseState* base_state;
-	base_state = ScoutBaseState::getScoutBaseState(nh, g_robot_name);
-
-	ScoutBaseState* base_state_2;
-	base_state_2 = ScoutBaseState::getScoutBaseState(nh, g_robot_name);
-
-	ScoutBaseState* base_state_3;
-	base_state_3 = ScoutBaseState::getScoutBaseState(nh, g_robot_name);
-
-	ScoutBaseState* base_state_4;
-	base_state_4 = ScoutBaseState::getScoutBaseState(nh, g_robot_name);
-
-	ScoutBaseState* base_state_5;
-	base_state_5 = ScoutBaseState::getScoutBaseState(nh, g_robot_name);
-
-	// ROS_WARN("Scout state machine died!\n");
-
+	ScoutBaseState base_state(nh, g_robot_name);
+	Undock undock(nh, g_robot_name);
+	ROS_INFO_STREAM("entryPoint: "<<undock.entryPoint());
+	ROS_INFO_STREAM("exec: "<<undock.exec());
+	ROS_INFO_STREAM("exitPoint: "<<undock.exitPoint());
 	return 0;
 }
