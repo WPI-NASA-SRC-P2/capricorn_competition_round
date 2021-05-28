@@ -1,63 +1,35 @@
 #include <state_machines/scout_state_machine.h>
 
-ScoutStateMachine::ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name) : nh_(nh), robot_name_(robot_name)
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// S C O U T   B A S E   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Singleton implementation */
+ScoutBaseState* ScoutBaseState::getScoutBaseState(ros::NodeHandle nh, const std::string &robot_name)
+{
+  static ScoutBaseState* currentObject_ = nullptr;
+
+  // check if an object of this class already exists, if not create one
+  if (currentObject_ == nullptr)
+  {
+    static ScoutBaseState obj(nh, robot_name);
+    currentObject_ = &obj;
+    ROS_WARN("ONCE CALLED");
+  }
+  return currentObject_;
+}
+
+ScoutBaseState::ScoutBaseState(ros::NodeHandle nh, const std::string &robot_name) : nh_(nh), robot_name_(robot_name)
 {
   resource_localiser_client_ = new ResourceLocaliserClient_(RESOURCE_LOCALISER_ACTIONLIB, true);
   navigation_vision_client_ = new NavigationVisionClient(robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
-  volatile_sub_ = nh.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutStateMachine::volatileSensorCB, this);
+  volatile_sub_ = nh_.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutBaseState::volatileSensorCB, this);
 }
 
-ScoutStateMachine::~ScoutStateMachine()
+ScoutBaseState::~ScoutBaseState()
 {
   delete resource_localiser_client_;
-}
-
-bool ScoutStateMachine::startSearchingVolatile()
-{
-  continue_spiral_ = true;
-  // If starting spiral fails
-  if (!resumeSearchingVolatile(true))
-    return false;
-
-  while (ros::ok() && continue_spiral_)
-  {
-    if (near_volatile_)
-      return true;
-    ros::Duration(0.1).sleep();
-  }
-}
-
-bool ScoutStateMachine::stopSearchingVolatile()
-{
-  continue_spiral_ = false;
-  return resumeSearchingVolatile(false);
-}
-
-bool ScoutStateMachine::resumeSearchingVolatile(const bool resume)
-{
-  spiralClient_ = nh_.serviceClient<operations::Spiral>(SCOUT_SEARCH_SERVICE);
-  operations::Spiral srv;
-  srv.request.resume_spiral_motion = resume;
-  return spiralClient_.call(srv);
-}
-
-bool ScoutStateMachine::locateVolatile()
-{
-  stopSearchingVolatile();
-
-  operations::ResourceLocaliserGoal goal;
-  resource_localiser_client_->sendGoal(goal);
-  resource_localiser_client_->waitForResult();
-  return (resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-}
-
-bool ScoutStateMachine::undockRobot()
-{
-  navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
-  navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
-  navigation_vision_client_->sendGoal(navigation_vision_goal_);
-  navigation_vision_client_->waitForResult();
-  return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+  delete navigation_vision_client_;
 }
 
 /**
@@ -65,7 +37,8 @@ bool ScoutStateMachine::undockRobot()
  * 
  * @param msg 
  */
-void ScoutStateMachine::volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg)
+void ScoutBaseState::volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg)
 {
   near_volatile_ = !(msg->distance_to == -1);
 }
+
