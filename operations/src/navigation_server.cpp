@@ -334,6 +334,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 
 	if (abs(delta_heading) <= ANGLE_EPSILON)
 	{
+		ROS_INFO("Delta heading not greater than epsilon threshold, done rotating...");
 		return true;
 	}
 
@@ -343,7 +344,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	// While we have not turned the desired amount
 	while (abs(NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_)) > ANGLE_EPSILON && ros::ok())
 	{
-
+		printf("Change in heading: %f \n", NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_));
 		// target_robot_pose in the robot's frame of reference
 		geometry_msgs::PoseStamped target_in_robot_frame = target_robot_pose;
 		NavigationAlgo::transformPose(target_in_robot_frame, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);

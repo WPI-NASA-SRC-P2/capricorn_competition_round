@@ -103,8 +103,8 @@ class ObjectPlotter:
         for theta in range(0,360,1):
             theta = theta*pi/180
             # convert meters to pixels
-            obx_p = obx/self.occ_grid.info.resolution
-            oby_p = oby/self.occ_grid.info.resolution
+            obx_p = obx/self.occ_grid.info.resolution + 0.00000001
+            oby_p = oby/self.occ_grid.info.resolution + 0.00000001
             radius_p = radius/self.occ_grid.info.resolution
             # for cos, range is 0-2PI
             circX = int((obx_p + radius_p*np.cos(theta)))
