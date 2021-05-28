@@ -39,6 +39,7 @@ void Scheduler::initClients()
 void Scheduler::startScheduler()
 {
   start_scheduler_ = true;
+
   schedulerLoop();
 }
 
@@ -49,8 +50,8 @@ void Scheduler::schedulerLoop()
 
   startScout();
   startExcavator();
-  startHauler();
   // ensure that hauler pose is set before doing anything else
+  startHauler();
 
   while (ros::ok() && start_scheduler_)
   {
@@ -108,14 +109,31 @@ void Scheduler::startScout()
 
 void Scheduler::startHauler()
 {
-  sendHaulerGoal(HAULER_GO_TO_PROC_PLANT); //Hauler negins by going to hopper/proc_plant at the beginning
-  while (hauler_goal_.task == HAULER_GO_TO_PROC_PLANT && !hauler_task_completed_)
+  sendHaulerGoal(HAULER_GO_TO_PROC_PLANT);
+  hauler_goal_.task = HAULER_GO_TO_PROC_PLANT;
+  while (!hauler_task_completed_)
   {
-    ROS_WARN("In hauler_goto_proc_plant!");
+    ROS_WARN("HAULER GOING TO PROC PLANT");
     updateRobotStatus();
   }
+  hauler_task_completed_ = false;
+  sendHaulerGoal(HAULER_PARK_AT_HOPPER);
+  hauler_goal_.task = HAULER_PARK_AT_HOPPER;
+  while (!hauler_task_completed_)
+  {
+    ROS_WARN("HAULER PARKING AT HOPPER");
+    updateRobotStatus();
+  }
+  hauler_task_completed_ = false;
   sendHaulerGoal(HAULER_RESET_ODOM);
-  ROS_WARN("Hauler has been reset!"); //Once hauler has reached the hopper, it uses its reset odom using ground truth. Make sure, inirtialize rtabmap is called with use_gt=false
+  hauler_goal_.task = HAULER_RESET_ODOM;
+  while (!hauler_task_completed_)
+  {
+    ROS_WARN("HAULER_RESETTING ODOM");
+    updateRobotStatus();
+  }
+
+  ROS_ERROR("Hauler has been reset!"); //Once hauler has reached the hopper, it uses its reset odom using ground truth. Make sure, inirtialize rtabmap is called with use_gt=false
 }
 
 void Scheduler::updateScout()
