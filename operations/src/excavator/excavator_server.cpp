@@ -40,7 +40,6 @@ std::string desired_label = OBJECT_DETECTION_HAULER_CLASS;
 std::mutex objects_mutex;
 bool objects_received = 0;
 
-
 /**
  * @brief Initializing the publisher here
  * 
@@ -96,7 +95,7 @@ float findShoulderAngle(const geometry_msgs::Point &target)
 }
 
 /**
- * @brief Prints a point to the terminal with description - FOR DEBUGGING ONLY
+ * @brief Prints a point to the terminal with description
  * 
  * @param description descrition of the point
  * @param point point values
@@ -121,19 +120,26 @@ geometry_msgs::PoseStamped getHaulerPose(geometry_msgs::PointStamped stamped_poi
 
   bool pointDetected = false;
 
-   for(int i = 0; i < objects.number_of_objects; i++) 
-    {   
-        perception::Object object = objects.obj.at(i);
-        if(object.label == desired_label) {
-            // Store the object's location
-            currentHaulerPoseStamped= object.point;
-            pointDetected = true;
-            break;
-        }
-    }
+  int count = 0;
+  while(count < 5 && !pointDetected) // Checks five times for hauler pose so that missed frames don't cause error
+  {
+    for(int i = 0; i < objects.number_of_objects; i++) 
+      {   
+          perception::Object object = objects.obj.at(i);
+          // ROS_INFO_STREAM("Object label: " << object.label);
+          if(object.label == desired_label) {
+              // Store the object's location
+              currentHaulerPoseStamped= object.point;
+              pointDetected = true;
+              ROS_INFO_STREAM("Point Detected");
+              break;
+          }
+      }
+      count++;
+  }
 
     if (!pointDetected)
-      ROS_INFO_STREAM("Hauler not detected, using default hauler position ([0, 0, 2] in left camera optical frame)");
+      ROS_INFO_STREAM("Hauler not detected, using default hauler position in left camera optical frame");
     
     return currentHaulerPoseStamped;
 }
@@ -228,15 +234,14 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
  */
 bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
 {
-  float dumpAngle = getDumpAngleInBase(3);
+  float dumpAngle = getDumpAngleInBase(3); // Get dumping angle based on hauler position from object detection using three tries for transformation
 
-  // float theta = findShoulderAngle(target, shoulder);
-  float theta = -1.57;
-  static float last_vol_loc_angle = -1.57;
+  float theta = -1.57; // Rightmost arm position
+  static float last_vol_loc_angle = -1.57; // variable for storing last volatile location angle
   float yaw_angle;
 
-  if (target.x == 1)
-      last_vol_loc_angle = theta;
+  if (target.x == 1) // Target for when the excavator parked to a new volatile position
+      last_vol_loc_angle = theta; // Start looking for angles from the rightmost angle
 
   std::string scoop_value;
   if (task == START_DIGGING) // digging angles
@@ -246,6 +251,8 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     ros::Duration(2).sleep();
     publishAngles(last_vol_loc_angle, 1, 1, -2); // This set of values move the scoop under the surface
     ros::Duration(5).sleep();
+
+    dumpAngle = getDumpAngleInBase(3);
 
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
     ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
@@ -261,7 +268,7 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
       ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
     }
 
-    yaw_angle = last_vol_loc_angle;
+    yaw_angle = last_vol_loc_angle; // The last volatile angle is stored here
 
     if (yaw_angle < 0.785 && yaw_angle > -0.785) // If digging happens towards the front of excavator
     {
@@ -381,6 +388,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     initExcavatorPublisher(nh, robot_name);
     ros::Subscriber sub = nh.subscribe("/" + robot_name + SCOOP_INFO, 1000, scoopCallback); // scoop info subscriber
+    ros::Subscriber objects_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback); // object array subscriber 
     Server server(nh, EXCAVATOR_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     // server.registerPreemptCallback(&cancelGoal);
     server.start();

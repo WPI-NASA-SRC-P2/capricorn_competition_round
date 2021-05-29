@@ -50,7 +50,7 @@ bool ExcavatorStateMachine::parkExcavator()
     navigation_action_goal_.pose = hard_coded_pose; // Position estimation is not perfect
     navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
-    new_vol_loc_flag_ = 1;
+    new_vol_loc_flag_ = 1; // Flag set to 1 when excavator parks to a new volatile location
 
     navigation_client_->sendGoal(navigation_action_goal_);
     navigation_client_->waitForResult();
@@ -74,7 +74,7 @@ bool ExcavatorStateMachine::digVolatile()
     goal.target.y = 0;
     goal.target.z = 0;
 
-    new_vol_loc_flag_ = 0;
+    new_vol_loc_flag_ = 0; // Flag set to zero when excavator continues at a volatile location
 
     excavator_arm_client_->sendGoal(goal);
     digging_attempt_++;
