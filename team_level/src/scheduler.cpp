@@ -50,8 +50,8 @@ void Scheduler::schedulerLoop()
 
   // ensure that hauler pose is set before doing anything else
   startHauler();
-  startScout();
   startExcavator();
+  startScout();
 
   while (ros::ok() && start_scheduler_)
   {
