@@ -9,6 +9,12 @@
 #include <math.h>                // used in findShoulderAngle() for atan2()
 #include <mutex>
 
+#include <perception/ObjectArray.h>
+#include <perception/Object.h>
+#include <operations/navigation_algorithm.h>
+
+#include <tf/transform_listener.h>
+
 using namespace COMMON_NAMES;
 
 // Initialization for joint angle publishers
@@ -27,6 +33,13 @@ bool volatile_found = false; // flag to store value received from scoop_info top
 std::mutex excavator_cancel_goal_mutex;
 
 int SLEEP_DURATION = 5; // The sleep duration
+
+// Variables for object detection of hauler with respect to excavator
+perception::ObjectArray objectArray;
+std::string desired_label = OBJECT_DETECTION_HAULER_CLASS;
+std::mutex objects_mutex;
+bool objects_received = 0;
+
 
 /**
  * @brief Initializing the publisher here
@@ -54,16 +67,129 @@ void scoopCallback(const srcp2_msgs::ExcavatorScoopMsg::ConstPtr &msg)
 }
 
 /**
+ * @brief Callback function which subscriber to Objects message published from object detection
+ * 
+ * @param objs 
+ */
+void objectsCallback(const perception::ObjectArray &objs)
+{
+    const std::lock_guard<std::mutex> lock(objects_mutex);
+    objects_received = true;
+    objectArray = objs;
+}
+
+/**
  * @brief Calculates the orientation of the shoulder joint based on the passed target point
  * 
  * @param target the x, y coordinates of the volatiles in the body frame of the excavator
  * @param shoulder the x, y coordinates of the shoulder joint in the body frame of excavator
  * @return atan2((target.y - shoulder.y), (target.x - shoulder.x)) is the required yaw angle of the shoulder joint
  */
-float findShoulderAngle(const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
+float findShoulderAngle(const geometry_msgs::Point &target)
 {
-  return atan2((target.y - shoulder.y), (target.x - shoulder.x));
+  geometry_msgs::Point shoulder_wrt_base;
+  shoulder_wrt_base.x = 0.7;
+  shoulder_wrt_base.y = 0.000001;
+  shoulder_wrt_base.z = 0.100000;
+
+  return atan2((target.y - shoulder_wrt_base.y), (target.x - shoulder_wrt_base.x));
 }
+
+/**
+ * @brief Prints a point to the terminal with description - FOR DEBUGGING ONLY
+ * 
+ * @param description descrition of the point
+ * @param point point values
+ */
+void printPoint(std::string const &description, geometry_msgs::Point &point)
+{
+    ROS_INFO_STREAM(description << ": [" << point.x << ", " << point.y << ", " << point.z << "]");
+}
+
+/**
+ * @brief Get the hauler pose in camera frame through object detection
+ * 
+ * @param stamped_point the point to store the information in
+ * @return geometry_msgs::PoseStamped 
+ */
+geometry_msgs::PoseStamped getHaulerPose(geometry_msgs::PointStamped stamped_point)
+{
+
+  geometry_msgs::PoseStamped currentHaulerPoseStamped;
+  currentHaulerPoseStamped.pose.position = stamped_point.point; 
+  perception::ObjectArray objects = objectArray;
+
+  bool pointDetected = false;
+
+   for(int i = 0; i < objects.number_of_objects; i++) 
+    {   
+        perception::Object object = objects.obj.at(i);
+        if(object.label == desired_label) {
+            // Store the object's location
+            currentHaulerPoseStamped= object.point;
+            pointDetected = true;
+            break;
+        }
+    }
+
+    if (!pointDetected)
+      ROS_INFO_STREAM("Hauler not detected, using default hauler position ([0, 0, 2] in left camera optical frame)");
+    
+    return currentHaulerPoseStamped;
+}
+
+/**
+ * @brief Get the dumping point location in base footprint frame - CODE DUPLICATION OF NAVIGATION ALGORITHM -> TRANSFORM POINT
+ * 
+ * @param tries Number of times transform should be attempted
+ * @return geometry_msgs::Point The dumping point loaction in base footprint frame
+ */
+float getDumpAngleInBase(int tries)
+{
+  tf::TransformListener tf_listener_; // For transformation from camera frame to shoulder frame
+
+  std::string base_frame = "small_excavator_1" + ROBOT_BASE;
+  std::string left_camera_frame = "small_excavator_1" + LEFT_CAMERA_ROBOT_LINK;
+
+  bool transformSet = false; // flag to keep track of when valid frames are found
+  int countTries = 0; // counter to keep track of tries
+  
+  geometry_msgs::PointStamped initial_point_stamped; // object to store detected hauler point in base frame
+  initial_point_stamped.point.z = 2.0; // Default assumed location is [0, 0, 2] in left camera frame in case object detection fails
+
+  printPoint("Default point in left camera frame", initial_point_stamped.point);
+
+  initial_point_stamped.point = getHaulerPose(initial_point_stamped).pose.position; // try to get hauler location from object detection
+
+  printPoint("Detected point in left camera frame", initial_point_stamped.point);
+
+  geometry_msgs::PointStamped final_point_stamped; // point stamped object to store transformation of point from camera frame to base frame
+
+  /*
+    Set the frames for point stamped objects, required for transformation
+  */
+  initial_point_stamped.header.frame_id = left_camera_frame;
+  final_point_stamped.header.frame_id = base_frame;
+
+  while(countTries<tries && !transformSet) {
+        try{
+            tf_listener_.transformPoint(base_frame, initial_point_stamped, final_point_stamped);
+            transformSet = true;
+        }
+        catch (tf::TransformException &ex) {
+            ROS_INFO_STREAM("Could not transform hauler detection from " << left_camera_frame << " to " << base_frame);
+            ROS_ERROR("%s", ex.what());
+            ros::Duration(1.0).sleep();
+            continue;
+        }
+        countTries++;
+    }
+
+  printPoint("Transformed point in base frame", final_point_stamped.point);
+
+  return findShoulderAngle(final_point_stamped.point);
+}
+
 
 /**
  * @brief This function publishes the joint angles to the publishers
@@ -102,6 +228,8 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
  */
 bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
 {
+  float dumpAngle = getDumpAngleInBase(3);
+
   // float theta = findShoulderAngle(target, shoulder);
   float theta = -1.57;
   static float last_vol_loc_angle = -1.57;
@@ -169,11 +297,12 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
   }
   else if (task == START_UNLOADING) // dumping angles
   {
-    publishAngles(0.15, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
+    // previous shoulder yaw was 0.15
+    publishAngles(dumpAngle, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(0.15, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    publishAngles(dumpAngle, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(0.15, -2, 1, -0.7786); // This set of values moves the scoop to the front center
+    publishAngles(dumpAngle, -2, 1, -0.7786); // This set of values moves the scoop to the front center
     ros::Duration(3).sleep();
   }
   else if (task == GO_TO_DEFAULT) // dumping angles
