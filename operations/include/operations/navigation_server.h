@@ -33,13 +33,13 @@ public:
 
 private:
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
-    const float BASE_DRIVE_SPEED = 0.45; //Need to experiment, defaults are 0.6 and 0.3
-    const float BASE_SPIN_SPEED = 0.225;
+    const float BASE_DRIVE_SPEED = 0.6; //Need to experiment, defaults are 0.6 and 0.3
+    const float BASE_SPIN_SPEED = 0.3;
 
     // Tolerances for linear and angular moves
-    const float DIST_EPSILON = 0.1;
-    const float ANGLE_EPSILON = 0.2;
-    const float SPIRAL_SPEED = 0.5;
+    const float DIST_EPSILON = 0.05;   // default = 0.05
+    const float ANGLE_EPSILON = 0.01; // default = 0.01
+    const float SPIRAL_SPEED = 0.1;   // default = 0.5
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
     const double TRAJECTORY_RESET_DIST = 5;
