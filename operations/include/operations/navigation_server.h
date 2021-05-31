@@ -33,8 +33,8 @@ public:
 
 private:
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
-    const float BASE_DRIVE_SPEED = 0.45; //Need to experiment, defaults are 0.6 and 0.3
-    const float BASE_SPIN_SPEED = 0.225;
+    const float BASE_DRIVE_SPEED = 0.6; //Need to experiment, defaults are 0.6 and 0.3
+    const float BASE_SPIN_SPEED = 0.3;
 
     // Tolerances for linear and angular moves
     const float DIST_EPSILON = 0.1;
