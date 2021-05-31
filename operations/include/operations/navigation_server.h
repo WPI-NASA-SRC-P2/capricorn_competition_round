@@ -3,7 +3,8 @@
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Imu.h>
-#include <operations/TrajectoryWithVelocities.h>
+#include <planning/TrajectoryWithVelocities.h>
+#include "planning/trajectory.h"
 #include <nav_msgs/Odometry.h>
 #include <srcp2_msgs/BrakeRoverSrv.h>
 
@@ -64,6 +65,7 @@ private:
 
     ros::ServiceClient brake_client_;
 
+    ros::ServiceClient trajectory_client_;
     // If true, use crab drive. If false, use point-and-go drive. Set in the constructor from a parameter
     bool CRAB_DRIVE_;
 
@@ -178,17 +180,17 @@ private:
      * @brief Sends a goal received from the Robot SM to the planner. Receives and returns the trajectory
      * 
      * @param goal The end goal for the robot to go to
-     * @return operations::TrajectoryWithVelocities* 
+     * @return planning::TrajectoryWithVelocities* 
      */
-    operations::TrajectoryWithVelocities sendGoalToPlanner(const geometry_msgs::PoseStamped &goal);
+    planning::TrajectoryWithVelocities sendGoalToPlanner(const geometry_msgs::PoseStamped& goal);
 
     /**
      * @brief Used to transform each pose in the trajectory into the map frame.
      * 
      * @param traj The trajectory to transform the poses of
-     * @return operations::TrajectoryWithVelocities The resulting trajectory
+     * @return planning::TrajectoryWithVelocities The resulting trajectory
      */
-    operations::TrajectoryWithVelocities getTrajInMapFrame(const operations::TrajectoryWithVelocities &traj);
+    planning::TrajectoryWithVelocities getTrajInMapFrame(const planning::TrajectoryWithVelocities& traj);
 
     /**
      * @brief Set the manual brake on the robot.
