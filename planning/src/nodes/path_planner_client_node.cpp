@@ -31,8 +31,8 @@ int main(int argc, char **argv)
   pose.pose.position.z = 0;
   pose.pose.orientation.x = 0;
   pose.pose.orientation.y = 0;
-  pose.pose.orientation.z = 1;
-  pose.pose.orientation.w = 0;
+  pose.pose.orientation.z = 0;
+  pose.pose.orientation.w = 1;
   srv.request.targetPose = pose;
 
   //printf(client.isValid());

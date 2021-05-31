@@ -246,6 +246,8 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	{
 		ROS_INFO("Trajectory client call succeeded");
 		traj = srv.response.trajectory;
+		//TODO: Delete hotfix once planner issue with extra waypoints has been solved
+		traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 2);
 	}
 	else
 	{
