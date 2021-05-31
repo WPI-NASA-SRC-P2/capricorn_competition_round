@@ -79,10 +79,10 @@ void navigationCB(const geometry_msgs::Point::ConstPtr& goal_point)
     t1.pose.position.y = goal_point->y;
     t1.pose.position.z = 0;
 
-    t1.pose.orientation.w = 0.707;
+    t1.pose.orientation.w = 1;
     t1.pose.orientation.x = 0;
     t1.pose.orientation.y = 0;
-    t1.pose.orientation.z = 0.707;
+    t1.pose.orientation.z = 0;
 
     goal.pose = t1;
 
