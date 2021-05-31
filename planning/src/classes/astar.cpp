@@ -103,7 +103,7 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
   while (current != -1)
   {
     if (!collinear(lastPt, current, reverse_list[current], oGrid.info.width))
-      p.poses.push_back(poseStampedFromIndex(current, oGrid));
+      p.poses.push_back(poseStampedFromIndex(current, oGrid, robot_name));
 
     lastPt = current;
     current = reverse_list[current];
@@ -122,7 +122,7 @@ float AStar::distGridToPoint(int index, Point p1, int width, int height)
   return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 }
 
-Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, int threshold, String robot_name)
+Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, int threshold, std::string & robot_name)
 {
   // Convert meters -> grid units
   target.x = target.x/oGrid.info.resolution;

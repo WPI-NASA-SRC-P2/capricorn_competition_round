@@ -10,9 +10,6 @@
 class PathServer
 {
 private:
-
-  std::string robot_name_ = "";
-  
   nav_msgs::OccupancyGrid global_oGrid_;
 
   std::mutex oGrid_mutex_;
