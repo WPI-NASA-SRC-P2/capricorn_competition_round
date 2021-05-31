@@ -113,7 +113,7 @@ add_service_files(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
  INCLUDE_DIRS include
- LIBRARIES maploc
+#  LIBRARIES maploc
  CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf utils std_msgs message_runtime rtabmap_ros perception srcp2_msgs
 #  DEPENDS system_lib
 ) 

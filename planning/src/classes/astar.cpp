@@ -150,6 +150,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point ta
       // Loop through the bottom edge
       if ((distGridToPoint(i, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
+        if(oGrid.data[i] > threshold) continue;
         minDist = distGridToPoint(i, target, oGrid.info.width, oGrid.info.height);
         bestIndex = i;
       }
@@ -157,6 +158,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point ta
       // Loop through the right edge
       if ((distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
+        if(oGrid.data[i * oGrid.info.width] > threshold) continue;
         minDist = distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height);
         bestIndex = oGrid.info.width * i;
       }
@@ -164,6 +166,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point ta
       // Loop through the left edge
       if ((distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
+        if(oGrid.data[oGrid.info.width * (i + 1)] > threshold) continue;
         minDist = distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height);
         bestIndex = (oGrid.info.width * (i + 1)) - 1;
       }
@@ -171,6 +174,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point ta
       // Loop through the top
       if ((distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
+        if(oGrid.data[oGrid.data.size() - 1 - i] > threshold) continue;
         minDist = distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height);
         bestIndex = oGrid.data.size() - 1 - i;
       }
@@ -225,6 +229,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, const Point ta
         continue;
 
       double tentative_gscore = gScores[current.second] + distance(current.second, neighbor, oGrid.info.width);
+      if (collinear(neighbor, current.second, came_from[current.second], oGrid.info.width)) tentative_gscore -= .95; // bias towards straight lines
       if (tentative_gscore < gScores[neighbor])
       {
         gScores[neighbor] = tentative_gscore;

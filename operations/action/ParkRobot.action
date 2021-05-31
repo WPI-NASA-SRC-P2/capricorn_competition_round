@@ -2,7 +2,8 @@
 string hopper_or_excavator  
 ---
 # Define the result
-bool object_reached
+# See COMMON_NAMES::NAV_VISION_RESULT for possible values
+uint32 result
 ---
 # Define a feedback message
 bool process

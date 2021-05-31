@@ -18,10 +18,18 @@ using namespace COMMON_NAMES;
 class NavigationAlgo
 {
 private:
-  static constexpr float arc_spiral_a = 0;   // Inner radius (starting radius of the spiral)
-  static constexpr float arc_spiral_b = 2.7; // Incerement per rev
-  static constexpr float arc_spiral_multi = 2;
-  static constexpr float arc_spiral_incr = 3.9;
+  static constexpr float arc_spiral_a_1 = 20, arc_spiral_a_2 = 15;    // Inner radius (starting radius of the spiral)
+  static constexpr int init_theta_1 = 8, init_theta_2 = 18;
+  static constexpr float arc_spiral_b = 10;   // Incerement per rev
+  static constexpr float arc_spiral_incr = 5; // Distance between two points
+  static constexpr int N = 500;
+  /**
+   * @brief Calculates variables needed for calculation of center and radius of the three point circle
+   * 
+   * @param points    3 points for which the radius is to be calculated
+   * @return std::vector<double>  variables for the calculation
+   */
+  static std::vector<double> getABCDofThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points);
 
 public:
   NavigationAlgo(/* args */);
@@ -123,12 +131,10 @@ public:
   /**
    * @brief Retruns the N points lying in spiral path
    * 
-   * @param init_location   Initial location of the robot in an environment
-   * @param N               Number of points desired
-   * @param init_theta      Pick up where left off
+   * @param scout_number Number of the scout for which points are needed. Only works with 1 or 2. 
    * @return std::vector<geometry_msgs::Point> 
    */
-  static std::vector<geometry_msgs::Point> getNArchimedeasSpiralPoints(const geometry_msgs::Point &init_location, const int N, int init_theta = 0);
+  static std::vector<geometry_msgs::PointStamped> getNArchimedeasSpiralPoints(const int scout_number = 1);
 
   /**
    * @brief Get the Kinetic Energy object
@@ -180,6 +186,15 @@ public:
   static double changeInPosition(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& target_robot_pose);
 
   /**
+   * @brief Calculates the distance between two poses in XY.
+   * 
+   * @param current_robot_pose The current robot pose (map frame)
+   * @param target_robot_pose  The next pose (map frame)
+   * @return double            Distance formula between the x and y components of each pose.
+   */
+  static double changeInPosition(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PointStamped& target_robot_pose);
+
+  /**
    * @brief Calculates the yaw of the desired_pose relative to the robot.
    * 
    * @param desired_pose The pose that we want the yaw of.
@@ -215,6 +230,31 @@ public:
    */
   static bool transformPoint(geometry_msgs::PointStamped& point, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries = 1);
 
+  /**
+   * @brief Returns the radius formed by three points formed in the X-Y plane
+   * 
+   * @param points    3 points for which the radius is to be calculated
+   * @return double   radius of the circle
+   */
+  static double getRadiusOfThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points);
+
+  /**
+   * @brief Returns the center of the circle formed by three points formed in the X-Y plane
+   * 
+   * @param points    3 points for which the circle is to be calculated
+   * @return double   center of the circle
+   */
+  static geometry_msgs::PointStamped getCenterOfThreePointsCircle(const std::vector<geometry_msgs::PointStamped>& points);
+
+  /**
+   * @brief For parking, a the location of scout is given to the excavator. But for better parking, the 
+   *          point closer to the goal is given to the excavator for parking. 
+   * 
+   * @param point 
+   * @param closer_distance 
+   * @return geometry_msgs::PointStamped 
+   */
+  static geometry_msgs::Pose getPointCloserToOrigin(const geometry_msgs::Pose& point, const geometry_msgs::Pose& self_point, const double closer_distance);
 };
 
 #endif
