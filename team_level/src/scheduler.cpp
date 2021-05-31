@@ -18,9 +18,13 @@ void Scheduler::initTeam(const int team_number)
   EXCAVATOR = team_number == 1 ? EXCAVATOR_1 : EXCAVATOR_2;
   HAULER = team_number == 1 ? HAULER_1 : HAULER_2;
 
-  scout_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + SCOUT + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
-  excavator_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + EXCAVATOR + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
-  hauler_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + HAULER + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
+  // scout_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + SCOUT + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
+  // excavator_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + EXCAVATOR + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
+  // hauler_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + HAULER + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
+
+  scout_odom_sub_ = nh_.subscribe(SCOUT + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
+  excavator_odom_sub_ = nh_.subscribe(EXCAVATOR + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
+  hauler_odom_sub_ = nh_.subscribe(HAULER + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
 
   initClients();
 }
