@@ -74,10 +74,11 @@ PoseStamped AStar::poseStampedFromIndex(int ind, const nav_msgs::OccupancyGrid &
 
   ps.pose.position.x = (indx - oGrid.info.width / 2) * oGrid.info.resolution;
   ps.pose.position.y = (indy - oGrid.info.height / 2) * oGrid.info.resolution;
+  ps.pose.orientation.w = 1.0;
 
   ps.header = oGrid.header;
   // TODO: Tell albert to properly set the frame id in map generation.
-  ps.header.frame_id = "odom";
+  ps.header.frame_id = robot_name + "_small_chassis";
   return ps;
 }
 
@@ -96,7 +97,7 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
 
   p.header = oGrid.header;
   // TODO: Tell albert to properly set the frame id in map generation.
-  p.header.frame_id = "odom";
+  p.header.frame_id = robot_name + "_small_chassis";
 
   // Loop through the list of node associations backwards. If a node is not collinear with the nodes before and after it, add it to the path.
   while (current != -1)
