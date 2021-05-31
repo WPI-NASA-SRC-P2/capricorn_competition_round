@@ -37,9 +37,9 @@ private:
     const float BASE_SPIN_SPEED = 0.3;
 
     // Tolerances for linear and angular moves
-    const float DIST_EPSILON = 0.5;   // default = 0.05
-    const float ANGLE_EPSILON = M_PI; // default = 0.01
-    const float SPIRAL_SPEED = 0.1;   // default = 0.5
+    const float DIST_EPSILON = 0.1;
+    const float ANGLE_EPSILON = 0.2;
+    const float SPIRAL_SPEED = 0.5;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
     const double TRAJECTORY_RESET_DIST = 5;

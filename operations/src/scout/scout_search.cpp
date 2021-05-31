@@ -187,21 +187,21 @@ void spiralSearch()
 
   float direction = checkObstacle(obstacles);
 
-  // if (abs(direction) > 0.0)
-  // {
-  //   g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
-  //   g_nav_goal.forward_velocity = FORWARD_VELOCITY;
-  //   g_nav_goal.direction = direction;
-  //   g_nav_goal.angular_velocity = 0;
-  //   g_new_trajectory = true;
-  //   // g_going_to_goal = true;
-  //   ROS_INFO("Avoiding Obstacle");
-  //   return;
-  // }
-  // else
-  // {
-  driveSprial();
-  // }
+  if (abs(direction) > 0.0)
+  {
+    g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+    g_nav_goal.forward_velocity = FORWARD_VELOCITY;
+    g_nav_goal.direction = direction;
+    g_nav_goal.angular_velocity = 0;
+    g_new_trajectory = true;
+    // g_going_to_goal = true;
+    ROS_INFO("Avoiding Obstacle");
+    return;
+  }
+  else
+  {
+    driveSprial();
+  }
 }
 
 /**
@@ -264,25 +264,25 @@ int main(int argc, char **argv)
   std::string robot_name(argv[1]);
   // Convert char to int
   // https://www.softwaretestinghelp.com/cpp-character-conversion-functions/
-  ROBOT_NUMBER = (robot_name.back()) - 48;
+  ROBOT_NUMBER = (robot_name.back()) - 48; 
   ros::init(argc, argv, robot_name + COMMON_NAMES::SCOUT_SEARCH_NODE_NAME);
   ros::NodeHandle nh;
 
   bool odom_flag;
-  nh.getParam("cheat_odom", odom_flag);
+	nh.getParam("cheat_odom", odom_flag);
 
   ros::Subscriber odom_sub;
 
-  if (odom_flag)
-  {
-    odom_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
-    ROS_INFO("Currently using cheat odom from Gazebo\n");
-  }
-  else
-  {
-    odom_sub = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, updateRobotPose);
-    ROS_INFO("Currently using odom from rtabmap\n");
-  }
+	if (odom_flag)
+	{
+		odom_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
+		ROS_INFO("Currently using cheat odom from Gazebo\n");
+	}
+	else
+	{
+		odom_sub = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, updateRobotPose);
+		ROS_INFO("Currently using odom from rtabmap\n");
+	}
 
   g_client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
   g_client->waitForServer();
@@ -290,7 +290,7 @@ int main(int argc, char **argv)
 
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = MAP;
-  g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(2);
+  g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(ROBOT_NUMBER);
 
   while (ros::ok() && !cb_init)
   {
