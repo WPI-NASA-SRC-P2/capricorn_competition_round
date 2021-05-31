@@ -5,6 +5,7 @@
 #include "planning/TrajectoryWithVelocities.h"
 #include <geometry_msgs/Point.h>
 
+
 //Setting the node's update rate
 #define UPDATE_HZ 10
 
@@ -23,9 +24,10 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
 
   ROS_INFO("Before cspace");
 
+
   auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 3);
 
-  auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position);
+  auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, 50, robot_name_);
 
   #ifdef DEBUG_INSTRUMENTATION
   debug_oGridPublisher.publish(paddedGrid);
@@ -57,6 +59,8 @@ int main(int argc, char *argv[])
   ros::init(argc, argv, "path_planner_server");
 
   std::string robot_name(argv[1]);
+
+  robot_name_ = robot_name;
 
   //ROS Topic names
   std::string oGrid_topic_ = "/capricorn/small_scout_1/object_detection_map";

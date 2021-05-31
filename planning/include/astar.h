@@ -11,6 +11,8 @@
 
 class AStar
 {
+
+  
 private:
   /**
    * @brief Create a geometry_msgs::Point object
