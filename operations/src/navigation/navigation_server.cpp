@@ -397,7 +397,12 @@ bool NavigationServer::driveDistance(double delta_distance)
 			// Reset the distance traveled
 			total_distance_traveled_ = 0;
 
-			get_new_trajectory_ = true;
+			
+			///// CHANGE MADE BY ASHAY /////
+			// Not sure why this was needed in the first place
+			// This setting breaks stuff when running
+			
+			// get_new_trajectory_ = true;
 			return true;
 		}
 

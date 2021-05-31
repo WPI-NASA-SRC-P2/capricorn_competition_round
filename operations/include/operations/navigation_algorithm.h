@@ -215,7 +215,7 @@ public:
    * @return true Transform succeeded
    * @return false Transform failed
    */
-  static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration = 0.1, int tries = 1);
+  static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration = 0.1, int tries = 3);
 
   /**
    * @brief Same as transformPose, but for a point. Passes through to transformPose.
