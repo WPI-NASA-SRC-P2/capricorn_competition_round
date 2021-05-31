@@ -187,21 +187,21 @@ void spiralSearch()
 
   float direction = checkObstacle(obstacles);
 
-  if (abs(direction) > 0.0)
-  {
-    g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
-    g_nav_goal.forward_velocity = FORWARD_VELOCITY;
-    g_nav_goal.direction = direction;
-    g_nav_goal.angular_velocity = 0;
-    g_new_trajectory = true;
-    // g_going_to_goal = true;
-    ROS_INFO("Avoiding Obstacle");
-    return;
-  }
-  else
-  {
-    driveSprial();
-  }
+  // if (abs(direction) > 0.0)
+  // {
+  //   g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+  //   g_nav_goal.forward_velocity = FORWARD_VELOCITY;
+  //   g_nav_goal.direction = direction;
+  //   g_nav_goal.angular_velocity = 0;
+  //   g_new_trajectory = true;
+  //   // g_going_to_goal = true;
+  //   ROS_INFO("Avoiding Obstacle");
+  //   return;
+  // }
+  // else
+  // {
+  driveSprial();
+  // }
 }
 
 /**
