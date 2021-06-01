@@ -24,7 +24,9 @@
 
     <!-- Name must be variable to that multiple launches don't collide-->
     <node pkg="robot_localization" type="ekf_localization_node" name="$(arg robot_name)_localization_ekf_node_odom" clear_params="true">
-        <param name="frequency" value="10." />
+        <!-- <param name="frequency" value="10." />  -->
+        <!-- frequency directly tied to all_robots.launch! -->
+        <param name="frequency" value="10." /> 
         <param name="sensor_timeout" value="0.2" />
         <param name="publish_tf" value="true" />
         <param name="map_frame" value="map" />

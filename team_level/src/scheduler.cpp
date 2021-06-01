@@ -125,10 +125,10 @@ void Scheduler::startScout()
   // scout_desired_task = (SCOUT_SEARCH_VOLATILE);
 
   //scout_goal_.task = SCOUT_SEARCH_VOLATILE;
-  while (!scout_task_completed_)
-  {
-    scout_task_completed_ = scout_client_->getState().isDone();
-  }
+  // while (!scout_task_completed_)
+  // {
+  //   scout_task_completed_ = scout_client_->getState().isDone();
+  // }
 
   ROS_ERROR("Current goal (IN START SCOUT): ");
   ROS_ERROR_STREAM(scout_desired_task);
@@ -149,6 +149,7 @@ void Scheduler::startHauler()
   {
     hauler_task_completed_ = hauler_client_->getState().isDone();
   }
+  sendHaulerGoal(HAULER_UNDOCK_HOPPER);
   // ROS_ERROR("Hauler has been reset!"); //Once hauler has reached the hopper, it uses its reset odom using ground truth. Make sure, inirtialize rtabmap is called with use_gt=false
 }
 
@@ -207,7 +208,7 @@ void Scheduler::updateHauler()
       hauler_desired_task = (HAULER_GO_TO_LOC);
       ROS_ERROR("HAULER THINKS IT'S READY TO MOVE");
     }
-    else
+    else if (dumping_done)
     {
       // reset the hauler's odom at the hopper if the hauler is not moving towards the excavator
       // -> does not matter if runs multiple times while waiting for the excavator, as hauler won't be moving anyways
