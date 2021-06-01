@@ -1,8 +1,14 @@
 <launch>
-	<arg name="robot_name" value="small_scout_1" />
+    <arg name="robot_name" default="small_scout_1" />
+    <arg name="output" default="screen" />
+    <arg name="use_cheat_odom" default="true" />
+    <arg name="use_crab_drive" default="false" />
 
 	<include file="$(find operations)/launch/navigation.launch">
-			<arg name="robot_name" value="$(arg robot_name)" />
+        <arg name="robot_name" value="$(arg robot_name)" />
+        <arg name="output" value="$(arg output)" />
+        <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
+        <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
 	</include>
 
 	<include file="$(find planning)/launch/planner.launch">
@@ -13,5 +19,5 @@
 			<arg name="robot_name" value="$(arg robot_name)" />
 	</include> -->
 
-	<node name="cmd_line_wpt" pkg="operations" type="navigation_client" args="$(arg robot_name)" output="log" />
+	<node name="$(arg robot_name)_cmd_line_wpt" pkg="operations" type="navigation_client" args="$(arg robot_name)" output="log" />
 </launch>
