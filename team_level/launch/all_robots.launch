@@ -6,7 +6,7 @@
     <arg name="use_crab_drive" default="false" />
 
     <!-- /map /odom 10 number is directly related to the robot_localization frequency! -->
-    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /map /odom 10" unless="$(arg use_cheat_odom)"/>
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /map /odom 100" unless="$(arg use_cheat_odom)"/>
 
     <include file="$(find state_machines)/launch/start_scout.launch">
         <arg name="robot_name" value="small_scout_1" />

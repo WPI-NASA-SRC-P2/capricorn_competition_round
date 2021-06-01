@@ -13,7 +13,7 @@
     <param name="use_sim_time" type="bool" value="true"/>
 
     <!-- RTABMAP NOW OUTPUTS TO /capricorn/robotname/camera/odom -->
-    <arg name="namespace" value="/capricorn/$(arg robot_name)/camera" />
+    <arg name="namespace" value="/$(arg robot_name)/camera" />
     <arg name="launch_stereo_proc" default="false" />
     <arg name="output" default="screen" />
 
