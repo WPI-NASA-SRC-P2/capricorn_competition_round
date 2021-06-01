@@ -12,9 +12,8 @@
     <arg name="rviz" default="false" />
     <param name="use_sim_time" type="bool" value="true"/>
 
-    <!-- changing namespace to have /capricorn/rover_name/camera since we produce all of these messages-->
-    <!--<arg name="namespace" value="/capricorn/$(arg robot_name)/camera" />-->
-    <arg name="namespace" value="/$(arg robot_name)/camera" />
+    <!-- RTABMAP NOW OUTPUTS TO /capricorn/robotname/camera/odom -->
+    <arg name="namespace" value="/capricorn/$(arg robot_name)/camera" />
     <arg name="launch_stereo_proc" default="false" />
     <arg name="output" default="screen" />
 

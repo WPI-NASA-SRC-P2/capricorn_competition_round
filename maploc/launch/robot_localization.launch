@@ -15,22 +15,23 @@
 
     <arg name="robot_name" />
     <!-- <arg name="robot_number" default="1"/> -->
-    <arg name="output_topic" default="odometry/filtered_twist" />
-    <arg name="use_encoders" default="true" />
+    <arg name="output_topic" default="$(arg robot_name)/camera/odom" />
+    <arg name="use_encoders" default="false" />
     <arg name="use_imu"      default="true" />
     <arg name="use_lidar"    default="false" />
     <arg name="use_camera"   default="true" />
     <arg name="use_cheat"    default="false" />
 
     <!-- Name must be variable to that multiple launches don't collide-->
-    <node pkg="robot_localization" type="ekf_localization_node" name="robot_localization_ekf_node_odom" clear_params="true">
+    <node pkg="robot_localization" type="ekf_localization_node" name="$(arg robot_name)_localization_ekf_node_odom" clear_params="true">
         <param name="frequency" value="10." />
         <param name="sensor_timeout" value="0.2" />
         <param name="publish_tf" value="true" />
         <param name="map_frame" value="map" />
-        <param name="odom_frame" value="$(arg robot_name)_odom" />
-        <param name="base_link_frame" value="$(arg robot_name)_tf/base_footprint" />
-        <param name="world_frame" value="$(arg robot_name)_odom" />
+        <!-- <param name="odom_frame" value="$(arg robot_name)_odom" /> -->
+        <param name="odom_frame" value="odom" />
+        <param name="base_link_frame" value="$(arg robot_name)_base_footprint" />
+        <param name="world_frame" value="map" />
         <param name="print_diagnostics" value="true" />
         <remap from="odometry/filtered" to="$(arg output_topic)" />
 
@@ -48,8 +49,8 @@
 
         <param name="imu0_remove_gravitational_acceleration" value="true" />
         <param name="gravitational_acceleration" value="1.62" />
-
-        <param name="odom0" value="/capricorn/$(arg robot_name)/odom/encoder_odom" if="$(arg use_encoders)" />
+        <!-- ENCODER odom -->
+        <param name="odom0" value="/capricorn/$(arg robot_name)/joint_states)" if="$(arg use_encoders)" />
         <rosparam param="odom0_config" if="$(arg use_encoders)">
                                     [false, false, false,                          <!-- X, Y, Z-->
                                         false, false, false,                          <!-- Roll, Pitch, Yaw-->
@@ -57,8 +58,8 @@
                                         false, false, true,                           <!-- Vel[Roll, Pitch, Yaw]-->
                                         false, false, false]                          <!-- Accel[X, Y, Z]-->
         </rosparam>
-
-        <param name="odom1" value="/capricorn/$(arg robot_name)/odom/stereo_odom_out" if="$(arg use_camera)" />
+        <!-- RTABMAP output odometry topic -->
+        <param name="odom1" value="/capricorn/$(arg robot_name)/camera/odom" if="$(arg use_camera)" />
         <rosparam param="odom1_config" if="$(arg use_camera)">
                                     [true, true, true,                          <!-- X, Y, Z-->
                                         true, true, true,                          <!-- Roll, Pitch, Yaw-->
@@ -68,7 +69,7 @@
         </rosparam>
 
         <!-- NOTE: Encoders and cheat odometry are named the same (odom0) as odom1 wont run without an odom0 existing. Please don't try to run both at the same time.-->
-        <param name="odom0" value="/capricorn/$(arg robot_name)/cheat_odom" if="$(arg use_cheat)" />
+        <param name="odom0" value="/capricorn/$(arg robot_name)/camera/odom" if="$(arg use_cheat)" />
         <rosparam param="odom0_config" if="$(arg use_cheat)">
                                     [true, true, true,                          <!-- X, Y, Z-->
                                         false, false, false,                          <!-- Roll, Pitch, Yaw-->
