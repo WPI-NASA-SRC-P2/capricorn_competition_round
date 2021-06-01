@@ -159,8 +159,8 @@ void Scheduler::updateScout()
     scout_desired_task = (SCOUT_UNDOCK);
   if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
     scout_desired_task = (SCOUT_SEARCH_VOLATILE);
-  ROS_ERROR("Desired task (IN UPDATE SCOUT)): ");
-  ROS_ERROR_STREAM(scout_desired_task);
+  // ROS_ERROR("Desired task (IN UPDATE SCOUT)): ");
+  // ROS_ERROR_STREAM(scout_desired_task);
   // if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_task_completed_)
   // {
   //   ROS_ERROR("SCOUT FOUND VOLATILE");
@@ -206,7 +206,7 @@ void Scheduler::updateHauler()
     if (excavator_going || excavator_waiting)
     {
       hauler_desired_task = (HAULER_GO_TO_LOC);
-      ROS_ERROR("HAULER THINKS IT'S READY TO MOVE");
+      // ROS_ERROR("HAULER THINKS IT'S READY TO MOVE");
     }
     else if (dumping_done)
     {

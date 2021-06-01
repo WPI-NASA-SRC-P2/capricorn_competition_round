@@ -435,6 +435,51 @@ void NavigationServer::automaticDrivingCrosscheck(const operations::NavigationGo
 	{
 		automaticDriving(final_pose, action_server);
 	}
+
+	// This final logic shouldn't be run more than once, so it is outside of the get_new_trajectory_ loop.
+
+	geometry_msgs::PoseStamped current_robot_pose = *getRobotPose();
+
+	// The final pose is on top of the robot, we only care about orientation
+	final_pose.pose.position.x = current_robot_pose.pose.position.x;
+	final_pose.pose.position.y = current_robot_pose.pose.position.y;
+
+	final_pose.header.stamp = ros::Time(0);
+
+	printf("Final rotate\n");
+
+	//Turn to heading
+	bool turned_successfully = rotateRobot(final_pose);
+
+	if (!turned_successfully)
+	{
+		operations::NavigationResult res;
+
+		if (manual_driving_)
+		{
+			ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+			res.result = COMMON_RESULT::INTERRUPTED;
+		}
+		else
+		{
+			//AAAH ERROR
+			ROS_ERROR_STREAM("Final turn did not succeed. Exiting.\n");
+			res.result = COMMON_RESULT::FAILED;
+		}
+		action_server->setSucceeded(res);
+
+		return;
+	}
+
+	printf("Finished automatic goal!\n");
+
+	brakeRobot(true);
+
+	operations::NavigationResult res;
+	res.result = COMMON_RESULT::SUCCESS;
+	action_server->setSucceeded(res);
+
+	printf("setSucceeded on server_\n");
 }
 
 void NavigationServer::automaticDriving(geometry_msgs::PoseStamped goal_pose, Server *action_server)
@@ -557,51 +602,6 @@ void NavigationServer::automaticDriving(geometry_msgs::PoseStamped goal_pose, Se
 			}
 		}
 	}
-
-	// This final logic shouldn't be run more than once, so it is outside of the get_new_trajectory_ loop.
-
-	geometry_msgs::PoseStamped current_robot_pose = *getRobotPose();
-
-	// The final pose is on top of the robot, we only care about orientation
-	goal_pose.pose.position.x = current_robot_pose.pose.position.x;
-	goal_pose.pose.position.y = current_robot_pose.pose.position.y;
-
-	goal_pose.header.stamp = ros::Time(0);
-
-	printf("Final rotate\n");
-
-	//Turn to heading
-	bool turned_successfully = rotateRobot(goal_pose);
-
-	if (!turned_successfully)
-	{
-		operations::NavigationResult res;
-
-		if (manual_driving_)
-		{
-			ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
-			res.result = COMMON_RESULT::INTERRUPTED;
-		}
-		else
-		{
-			//AAAH ERROR
-			ROS_ERROR_STREAM("Final turn did not succeed. Exiting.\n");
-			res.result = COMMON_RESULT::FAILED;
-		}
-		action_server->setSucceeded(res);
-
-		return;
-	}
-
-	printf("Finished automatic goal!\n");
-
-	brakeRobot(true);
-
-	operations::NavigationResult res;
-	res.result = COMMON_RESULT::SUCCESS;
-	action_server->setSucceeded(res);
-
-	printf("setSucceeded on server_\n");
 }
 
 void NavigationServer::linearDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)

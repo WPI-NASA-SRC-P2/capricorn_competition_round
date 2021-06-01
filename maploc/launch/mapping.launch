@@ -36,9 +36,9 @@
     <node name="$(arg robot_name)_odom_reset_service_node" pkg="maploc" type="reset_odom" output="screen" />
 
     <!-- Launch the robot localization package functionality -->
-    <include file="$(find maploc)/launch/robot_localization.launch">
+    <!-- <include file="$(find maploc)/launch/robot_localization.launch">
       <arg name="robot_name" value="$(arg robot_name)"/>
-    </include>
+    </include> -->
 </launch>
     
     
