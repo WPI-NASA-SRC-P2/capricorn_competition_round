@@ -28,7 +28,7 @@ using namespace COMMON_NAMES;
 class NavigationServer
 {
 public:
-    NavigationServer(ros::NodeHandle& nh, std::string robot_name);
+    NavigationServer(ros::NodeHandle &nh, std::string robot_name);
     ~NavigationServer();
 
 private:
@@ -37,8 +37,8 @@ private:
     const float BASE_SPIN_SPEED = 0.3;
 
     // Tolerances for linear and angular moves
-    const float DIST_EPSILON = 0.05;
-    const float ANGLE_EPSILON = 0.01;
+    const float DIST_EPSILON = 0.1;
+    const float ANGLE_EPSILON = 0.2;
     const float SPIRAL_SPEED = 0.5;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
@@ -47,10 +47,10 @@ private:
     std::string robot_name_;
 
     // The actionlib server
-    Server* server_;
+    Server *server_;
 
     // Rate limiter
-    ros::Rate* update_rate_;
+    ros::Rate *update_rate_;
 
     // Publishers for each wheel velocity and steering controller
     ros::Publisher front_left_vel_pub_, front_right_vel_pub_, back_left_vel_pub_, back_right_vel_pub_;
@@ -73,14 +73,14 @@ private:
 
     // Used to perform transforms between the robot and map reference frames
     tf2_ros::Buffer buffer_;
-    tf2_ros::TransformListener* listener_;
+    tf2_ros::TransformListener *listener_;
 
     // Whether we are currently manually driving, or automatically following a trajectory
     bool manual_driving_ = false;
 
     // Continue tracing spiral until this variable is true
     bool spiral_motion_continue_ = true;
-    
+
     // How much distance the robot has traveled since the last planner call. Compared against TRAJECTORY_RESET_DIST.
     double total_distance_traveled_ = 0;
 
@@ -116,7 +116,7 @@ private:
     */
     void updateRobotPose(const nav_msgs::Odometry::ConstPtr &msg);
 
-    geometry_msgs::PoseStamped* getRobotPose();
+    geometry_msgs::PoseStamped *getRobotPose();
 
     /**
     * @brief Initialize the subscriber for robot position
@@ -180,7 +180,7 @@ private:
      * @param goal The end goal for the robot to go to
      * @return operations::TrajectoryWithVelocities* 
      */
-    operations::TrajectoryWithVelocities sendGoalToPlanner(const geometry_msgs::PoseStamped& goal);
+    operations::TrajectoryWithVelocities sendGoalToPlanner(const geometry_msgs::PoseStamped &goal);
 
     /**
      * @brief Used to transform each pose in the trajectory into the map frame.
@@ -188,7 +188,7 @@ private:
      * @param traj The trajectory to transform the poses of
      * @return operations::TrajectoryWithVelocities The resulting trajectory
      */
-    operations::TrajectoryWithVelocities getTrajInMapFrame(const operations::TrajectoryWithVelocities& traj);
+    operations::TrajectoryWithVelocities getTrajInMapFrame(const operations::TrajectoryWithVelocities &traj);
 
     /**
      * @brief Set the manual brake on the robot.
@@ -204,7 +204,7 @@ private:
      * @return true Succeeded in turning the wheels to that angle
      * @return false Failed to turn the wheels to that angle
      */
-    bool rotateWheels(const geometry_msgs::PoseStamped& target_robot_pose);
+    bool rotateWheels(const geometry_msgs::PoseStamped &target_robot_pose);
 
     /**
      * @brief Rotates the robot in place to face a target pose.
@@ -213,7 +213,7 @@ private:
      * @return true Succeeded in turning the robot in place.
      * @return false Failed to complete the turn.
      */
-    bool rotateRobot(const geometry_msgs::PoseStamped& target_robot_pose);
+    bool rotateRobot(const geometry_msgs::PoseStamped &target_robot_pose);
 
     /**
      * @brief Drives the robot a specific distance.
@@ -264,7 +264,7 @@ private:
      * @param forward_velocity   Velocity with which the center of the robot should travel
      */
     void revolveRobot(geometry_msgs::PointStamped &revolve_about, double forward_velocity);
-    
+
     /**
      * @brief Spirals the robot. Used to locate volatiles. NAV_TYPE::SPIRAL. NOT YET IMPLEMENTED
      * 
@@ -294,7 +294,6 @@ private:
      */
     void cancelGoal();
 
-
     /**
     * @brief Get the Travel Theta object
     * 	 			 The spiral motion generator requires the 'theta' covered by
@@ -312,5 +311,4 @@ private:
     * @return double 				Theta travelled
     */
     double getCumulativeTheta(double yaw, int &rotation_counter);
-    
 };
