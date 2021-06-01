@@ -125,10 +125,10 @@ void Scheduler::startScout()
   // scout_desired_task = (SCOUT_SEARCH_VOLATILE);
 
   //scout_goal_.task = SCOUT_SEARCH_VOLATILE;
-  // while (!scout_task_completed_)
-  // {
-  //   scout_task_completed_ = scout_client_->getState().isDone();
-  // }
+  while (!scout_task_completed_)
+  {
+    scout_task_completed_ = scout_client_->getState().isDone();
+  }
 
   ROS_ERROR("Current goal (IN START SCOUT): ");
   ROS_ERROR_STREAM(scout_desired_task);
