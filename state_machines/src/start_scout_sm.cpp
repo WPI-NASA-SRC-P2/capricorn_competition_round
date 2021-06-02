@@ -88,6 +88,9 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	case STATE_MACHINE_TASK::SCOUT_UNDOCK:
 		output = sm->undockRobot();
 		break;
+	case STATE_MACHINE_TASK::SCOUT_SOLAR_CHARGING:
+		output = sm->solarRecharge();
+		break;
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
 		break;

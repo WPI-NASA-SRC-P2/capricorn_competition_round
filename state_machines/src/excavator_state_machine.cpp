@@ -14,6 +14,17 @@ ExcavatorStateMachine::~ExcavatorStateMachine()
     delete navigation_vision_client_;
 }
 
+// bool ExcavatorStateMachine::solarRecharge()
+// {   
+//     // asumme that the robot isn't in a state
+//     // change the positon // rotating robot
+//     // 
+
+//     naviagtion_client_->sendGoal(  );
+//     navigation_client_->waitForResult();
+//     return (navigation_client_->getState() == actionLib::SimpleClientGoalState::SUCCEEDED);
+// }
+
 bool ExcavatorStateMachine::goToLoc(const geometry_msgs::PoseStamped &loc)
 {
     goToDefaultArmPosition();

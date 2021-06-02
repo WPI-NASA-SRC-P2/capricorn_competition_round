@@ -82,6 +82,9 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	case STATE_MACHINE_TASK::EXCAVATOR_GOTO_DEFAULT_ARM_POSE:
 		output = sm->goToDefaultArmPosition();
 		break;
+	// case STATE_MACHINE_TASK::EXCAVATOR_SOLAR_REGHARGE:
+	// 	output = sm->solarRecharge();
+	// 	break;
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
 		break;
