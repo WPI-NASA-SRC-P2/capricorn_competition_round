@@ -100,38 +100,24 @@ void Scheduler::updateRobotStatus()
 void Scheduler::startExcavator()
 {
   sendExcavatorGoal(EXCAVATOR_GOTO_DEFAULT_ARM_POSE);
-  sendExcavatorGoal(EXCAVATOR_GO_TO_REPAIR);
-  //excavator_goal_.task = EXCAVATOR_GO_TO_REPAIR;
-  //TODO: set to desired task instead of goal task and test
-  excavator_goal_.task = EXCAVATOR_GO_TO_REPAIR;
-  while (!excavator_task_completed_)
-  {
-    excavator_task_completed_ = excavator_client_->getState().isDone();
-  }
+  // sendExcavatorGoal(EXCAVATOR_GO_TO_REPAIR);
+  // //excavator_goal_.task = EXCAVATOR_GO_TO_REPAIR;
+  // //TODO: set to desired task instead of goal task and test
+  // excavator_goal_.task = EXCAVATOR_GO_TO_REPAIR;
+  // while (!excavator_task_completed_)
+  // {
+  //   excavator_task_completed_ = excavator_client_->getState().isDone();
+  // }
 }
 
 void Scheduler::startScout()
 {
-  // scout_desired_task = (SCOUT_SEARCH_VOLATILE);
-  // sendScoutGoal(scout_desired_task);
   sendScoutGoal(SCOUT_SEARCH_VOLATILE);
-
-  // scout_goal_.task = SCOUT_SEARCH_VOLATILE;
-  // scout_desired_task = (SCOUT_SEARCH_VOLATILE);
-  // scout_task_completed_ = false;
-  // sendScoutGoal(SCOUT_SYNC_ODOM);
-  // scout_goal_.task = SCOUT_SEARCH_VOLATILE;
-  // scout_task_completed_ = false;
-  // scout_desired_task = (SCOUT_SEARCH_VOLATILE);
-
-  //scout_goal_.task = SCOUT_SEARCH_VOLATILE;
   while (!scout_task_completed_)
   {
     scout_task_completed_ = scout_client_->getState().isDone();
   }
-
-  ROS_ERROR("Current goal (IN START SCOUT): ");
-  ROS_ERROR_STREAM(scout_desired_task);
+  ROS_WARN("Exiting start scout!");
 }
 
 void Scheduler::startHauler()
@@ -149,6 +135,7 @@ void Scheduler::startHauler()
   {
     hauler_task_completed_ = hauler_client_->getState().isDone();
   }
+
   sendHaulerGoal(HAULER_UNDOCK_HOPPER);
   // ROS_ERROR("Hauler has been reset!"); //Once hauler has reached the hopper, it uses its reset odom using ground truth. Make sure, inirtialize rtabmap is called with use_gt=false
 }
@@ -159,12 +146,6 @@ void Scheduler::updateScout()
     scout_desired_task = (SCOUT_UNDOCK);
   if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
     scout_desired_task = (SCOUT_SEARCH_VOLATILE);
-  // ROS_ERROR("Desired task (IN UPDATE SCOUT)): ");
-  // ROS_ERROR_STREAM(scout_desired_task);
-  // if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_task_completed_)
-  // {
-  //   ROS_ERROR("SCOUT FOUND VOLATILE");
-  // }
 }
 
 void Scheduler::updateExcavator()
