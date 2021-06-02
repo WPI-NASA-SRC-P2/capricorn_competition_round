@@ -27,7 +27,7 @@ bool ScoutStateMachine::startSearchingVolatile()
   }
 }
 
-bool ExcavatorStateMachine::solarRecharge()
+bool ScoutStateMachine::solarRecharge()
 {   
     // asumme that the robot isn't in a state
     // change the positon // rotating robot

@@ -37,6 +37,7 @@ namespace COMMON_NAMES
   /****** ACTIONLIBS ******/
   const std::string NAVIGATION_ACTIONLIB = "navigation";
   const std::string RESOURCE_LOCALISER_ACTIONLIB = "resource_localiser_actionlib";
+  const std::string SOLAR_RECHARGE_ACTIONLIB = "solar_recharge";
   const std::string HAULER_ACTIONLIB = "hauler_bin";
   const std::string EXCAVATOR_ACTIONLIB = "excavator";
   const std::string PARK_HAULER_ACTIONLIB = "park_hauler";
@@ -100,6 +101,7 @@ namespace COMMON_NAMES
   const std::string LOOKOUT_LOCATION_TOPIC = "/lookout_location";
   const std::string PARK_HAULER = "/park_hauler";
   const std::string HAULER_PARKED_TOPIC = "/hauler_parked";
+  const std::string SYSTEM_MONITOR_TOPIC = "/system_monitor";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";

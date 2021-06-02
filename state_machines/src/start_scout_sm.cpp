@@ -90,6 +90,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 		break;
 	case STATE_MACHINE_TASK::SCOUT_SOLAR_CHARGING:
 		output = sm->solarRecharge();
+		
 		break;
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
