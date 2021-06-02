@@ -96,9 +96,12 @@ class ObjectPlotter:
         obx = obx + 10
         oby = oby + 10
         # convert meters to pixels
-        obx_p = obx/self.occ_grid.info.resolution + 0.00000001
-        oby_p = oby/self.occ_grid.info.resolution + 0.00000001
-        radius_p = radius/self.occ_grid.info.resolution
+        no_zeroes_here = 0.0
+        if(self.occ_grid.info.resolution == 0):                           #HOTFIX: TO PREVENT DIVIDE-BY-ZERO-ERROR
+            no_zeroes_here = 0.05
+        obx_p = obx/(self.occ_grid.info.resolution + no_zeroes_here)
+        oby_p = oby/(self.occ_grid.info.resolution + no_zeroes_here)
+        radius_p = radius/(self.occ_grid.info.resolution + no_zeroes_here)
         # rospy.loginfo("Im here")
         # fill in obstacles found within localmaps
         for val in range(0, 901):
