@@ -36,6 +36,7 @@ std::string g_robot_name;
 geometry_msgs::PoseStamped g_robot_pose;
 
 const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
+int COUNTER = 18, STATUS = 1;
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05;
 const double NOT_AVOID_OBSTACLE_THRESHOLD = 5.0;
 std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex;
@@ -334,10 +335,15 @@ void visionNavigation()
         // object not detected, rotate on robot's axis to find the object
         lost_detection_times++;
         true_detection_times = 0;
+        COUNTER--;
         if (lost_detection_times > LOST_FRAME_THRESHOLD)
         {
             g_nav_goal.angular_velocity = revolve_direction * ANGULAR_VELOCITY;
             g_nav_goal.forward_velocity = 0;
+        }
+        if (COUNTER == 0)
+        {
+            STATUS = 0;
         }
         return;
     }
@@ -422,6 +428,12 @@ void visionNavigation()
     {
         g_nav_goal.angular_velocity = 0;
         g_nav_goal.forward_velocity = 0;
+    }
+    if (STATUS == 0)
+    {
+        g_nav_goal.angular_velocity = 0;
+        ROS_INFO_STREAM(g_robot_name << " NAV VISION: No Object Found" << g_desired_label);
+        return;
     }
 
     // maintaing previous values
