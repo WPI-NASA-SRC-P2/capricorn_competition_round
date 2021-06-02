@@ -84,30 +84,43 @@ private:
    */
   void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg);
 
-  bool resetOdometry(const geometry_msgs::PoseStamped &POSE);
-  bool resetOdometry();
   /**
    * @brief resets odometry, used after parking is done for scout, the oone withj pose signature is used when ground truth is not being used.
    * 
    * @return true : if task is successful.
    * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session for the ground truth version.
    */
+  bool resetOdometry(const geometry_msgs::PoseStamped &POSE);
+  
+  /**
+   * @brief resets odometry, used after parking is done for scout, the oone withj pose signature is used when ground truth is not being used.
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session for the ground truth version.
+   */
+  bool resetOdometry();
 
-  bool syncOdometry(const geometry_msgs::PoseStamped &POSE);
   /**
    * @brief centers scout wrt processing plant and then resets the odometry according to whatever pose we pass it.
    * 
    * @return true : if task is successful.
    * @return false : if task is failed or aborted or interrupted
    */
+  bool syncOdometry(const geometry_msgs::PoseStamped &POSE);
 
-  bool faceProcessingPlant();
   /**
    * @brief centers scout wrt processing plant.
    * 
    * @return true : if task is successful.
    * @return false : if task is failed or aborted or interrupted
    */
+  bool faceProcessingPlant();
+
+  /**
+   * @brief Wait till all the actionlib and service servers are started
+   * 
+   */
+  void waitForServerConnections();
 
 public:
   ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name);

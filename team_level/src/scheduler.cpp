@@ -25,7 +25,7 @@ void Scheduler::initTeam(const int team_number)
   scout_odom_sub_ = nh_.subscribe(SCOUT + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
   excavator_odom_sub_ = nh_.subscribe(EXCAVATOR + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
   hauler_odom_sub_ = nh_.subscribe(HAULER + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
-
+  
   initClients();
 }
 
@@ -48,21 +48,18 @@ void Scheduler::schedulerLoop()
   init();
   ROS_INFO("All State machines connected!");
 
-  // ensure that hauler pose is set before doing anything else
-  startHauler();
-  startExcavator();
   startScout();
+  startExcavator();
 
   while (ros::ok() && start_scheduler_)
   {
     updateRobotStatus();
-
+  
     updateHauler();
     updateExcavator();
     updateScout();
 
     sendScoutGoal(scout_desired_task);
-    //ROS_WARN("SCOUT SHOULD BE SCANNING FOR VOLATILES HERE");
     sendExcavatorGoal(excavator_desired_task);
     sendHaulerGoal(hauler_desired_task);
 
@@ -81,67 +78,30 @@ void Scheduler::init()
   scout_client_->waitForServer();
   excavator_client_->waitForServer();
   hauler_client_->waitForServer();
-
-  // Default value is 0, which breaks a few things
-  scout_goal_.task = -1;
-  excavator_goal_.task = -1;
-  hauler_goal_.task = -1;
 }
 
 void Scheduler::updateRobotStatus()
 {
   // THIS IS BAD, MUST BE HANDLED //
   // If the task fails, then that logic should be taken care of as well
-  scout_task_completed_ = scout_client_->getState().isDone();         // == actionlib::SimpleClientGoalState::SUCCEEDED;
-  excavator_task_completed_ = excavator_client_->getState().isDone(); // == actionlib::SimpleClientGoalState::SUCCEEDED;
-  hauler_task_completed_ = hauler_client_->getState().isDone();       // == actionlib::SimpleClientGoalState::SUCCEEDED;
+  scout_task_completed_ = scout_client_->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
+  excavator_task_completed_ = excavator_client_->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
+  hauler_task_completed_ = hauler_client_->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
 }
 
 void Scheduler::startExcavator()
 {
-  sendExcavatorGoal(EXCAVATOR_GOTO_DEFAULT_ARM_POSE);
-  // sendExcavatorGoal(EXCAVATOR_GO_TO_REPAIR);
-  // //excavator_goal_.task = EXCAVATOR_GO_TO_REPAIR;
-  // //TODO: set to desired task instead of goal task and test
-  // excavator_goal_.task = EXCAVATOR_GO_TO_REPAIR;
-  // while (!excavator_task_completed_)
-  // {
-  //   excavator_task_completed_ = excavator_client_->getState().isDone();
-  // }
+  excavator_desired_task = EXCAVATOR_GOTO_DEFAULT_ARM_POSE;
 }
 
 void Scheduler::startScout()
 {
-  sendScoutGoal(SCOUT_SEARCH_VOLATILE);
-  while (!scout_task_completed_)
-  {
-    scout_task_completed_ = scout_client_->getState().isDone();
-  }
-  ROS_WARN("Exiting start scout!");
-}
-
-void Scheduler::startHauler()
-{
-  sendHaulerGoal(HAULER_PARK_AT_HOPPER);
-  hauler_goal_.task = HAULER_PARK_AT_HOPPER;
-  while (!hauler_task_completed_)
-  {
-    hauler_task_completed_ = hauler_client_->getState().isDone();
-  }
-  hauler_task_completed_ = false;
-  sendHaulerGoal(HAULER_RESET_ODOM);
-  hauler_goal_.task = HAULER_RESET_ODOM;
-  while (!hauler_task_completed_)
-  {
-    hauler_task_completed_ = hauler_client_->getState().isDone();
-  }
-
-  sendHaulerGoal(HAULER_UNDOCK_HOPPER);
-  // ROS_ERROR("Hauler has been reset!"); //Once hauler has reached the hopper, it uses its reset odom using ground truth. Make sure, inirtialize rtabmap is called with use_gt=false
+  scout_desired_task = SCOUT_SEARCH_VOLATILE;
 }
 
 void Scheduler::updateScout()
 {
+
   if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
     scout_desired_task = (SCOUT_UNDOCK);
   if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
@@ -176,6 +136,10 @@ void Scheduler::updateExcavator()
 
 void Scheduler::updateHauler()
 {
+  ROS_INFO_STREAM("Scout Task:"<<(scout_goal_.task) << " task completed:" << scout_task_completed_);
+  ROS_INFO_STREAM("Excav Task:"<<(excavator_goal_.task) << " task completed:" << excavator_task_completed_);
+  ROS_INFO_STREAM("Hauler Task:"<<(hauler_goal_.task) << " task completed:" << hauler_task_completed_);
+
   bool dumping_done = hauler_goal_.task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_task_completed_;
   bool not_dumping = hauler_goal_.task != HAULER_DUMP_VOLATILE_TO_PROC_PLANT;
 
@@ -183,28 +147,16 @@ void Scheduler::updateHauler()
   {
     bool excavator_going = excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT || excavator_goal_.task == EXCAVATOR_GO_TO_LOC;
     bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
-
     if (excavator_going || excavator_waiting)
-    {
       hauler_desired_task = (HAULER_GO_TO_LOC);
-      // ROS_ERROR("HAULER THINKS IT'S READY TO MOVE");
-    }
-    else if (dumping_done)
-    {
-      // reset the hauler's odom at the hopper if the hauler is not moving towards the excavator
-      // -> does not matter if runs multiple times while waiting for the excavator, as hauler won't be moving anyways
-      hauler_desired_task = (HAULER_RESET_ODOM);
-    }
   }
   if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_task_completed_)
   {
     if (hauler_goal_.task == HAULER_GO_TO_LOC && hauler_task_completed_)
-      hauler_desired_task = (HAULER_PARK_AT_EXCAVATOR);
+    hauler_desired_task = (HAULER_PARK_AT_EXCAVATOR);
   }
   if (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_ && hauler_got_stuff_)
   {
-    // before going back to the processing plant, face the processing plant to reset odom with excavator
-    //if (hauler_goal_.task = HAULER_FACE_PROCESSING_PLANT)
     hauler_desired_task = (HAULER_DUMP_VOLATILE_TO_PROC_PLANT);
     hauler_got_stuff_ = false;
   }
@@ -212,16 +164,7 @@ void Scheduler::updateHauler()
 
 void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
 {
-  // Scout will reset its odom w.r.t. the excavator before undocking
-  // thus check w.r.t. excavator EXCAVATOR_GO_TO_SCOUT task completion
-  if (task == STATE_MACHINE_TASK::SCOUT_SYNC_ODOM) //Add AND case for the hauler to be parked near the scout to be completed for this task to be run.
-  {
-    sendRobotGoal(SCOUT, scout_client_, scout_goal_, task, excavator_pose_);
-  }
-  else
-  {
-    sendRobotGoal(SCOUT, scout_client_, scout_goal_, task);
-  }
+  sendRobotGoal(SCOUT, scout_client_, scout_goal_, task);
 }
 
 void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
@@ -232,21 +175,8 @@ void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
     geometry_msgs::PoseStamped excavator_goal_pose;
     excavator_goal_pose.header.frame_id = MAP;
     excavator_goal_pose.pose = NavigationAlgo::getPointCloserToOrigin(scout_pose_.pose, excavator_pose_.pose, 5.0);
-
+    
     sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, excavator_goal_pose);
-  }
-  else if (task == STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM)
-  {
-    // check based on hauler states if completed: HAULER_GO_BACK_TO_EXCAVATOR, HAULER_PARK_AT_EXCAVATOR
-    bool hauler_done_parking = (hauler_goal_.task == STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR || hauler_goal_.task == STATE_MACHINE_TASK::HAULER_PARK_AT_EXCAVATOR) && hauler_task_completed_;
-    if (hauler_done_parking)
-    {
-      sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, hauler_pose_);
-    }
-    else
-    {
-      ROS_WARN("awaiting hauler parking completion"); //Crashes when the hauler odometry is null.
-    }
   }
   else
     sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task);
@@ -264,15 +194,11 @@ void Scheduler::sendHaulerGoal(const STATE_MACHINE_TASK task)
     geometry_msgs::PoseStamped ref_pose = excavator_waiting ? excavator_pose_ : scout_pose_;
     hauler_goal_pose.header.frame_id = MAP;
     hauler_goal_pose.pose = NavigationAlgo::getPointCloserToOrigin(ref_pose.pose, hauler_pose_.pose, -5.0);
-
+    
     sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task, hauler_goal_pose);
   }
   else
-  {
     sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task);
-    // ROS_INFO("Hauler pose has been reset to:");
-    // ROS_INFO_STREAM(hauler_pose_);
-  }
 }
 
 void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task)
@@ -280,8 +206,8 @@ void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client,
   if (robot_goal.task != task)
   {
     ROS_WARN_STREAM("SCHEDULER : Setting " << robot_name << " Task: " << task);
-
-    // This is bad, should be removed //sendRobotGoal
+    
+    // This is bad, should be removed //
     if (task == EXCAVATOR_PARK_AND_PUB)
       ros::Duration(20.0f).sleep();
 
@@ -297,8 +223,6 @@ void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client,
     ROS_WARN_STREAM("SCHEDULER : Setting " << robot_name << " Task: " << task);
     robot_goal.task = task;
     robot_goal.goal_loc = goal_loc;
-    ROS_WARN("GOAL_LOC = ");
-    ROS_WARN_STREAM(goal_loc);
     robot_client->sendGoal(robot_goal);
   }
 }

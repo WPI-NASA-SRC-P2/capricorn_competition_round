@@ -47,11 +47,6 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	feedback.volatile_found = false;
 	as->publishFeedback(feedback);
 
-	// Waiting for the servers to start
-	sm->resource_localiser_client_->waitForServer();
-
-	ROS_INFO_STREAM(g_robot_name << ": Servers Connected, Executing Goal");
-
 	STATE_MACHINE_TASK robot_state = (STATE_MACHINE_TASK)goal->task;
 	geometry_msgs::PoseStamped resetPose = goal->goal_loc; //Doubtful
 
@@ -138,10 +133,12 @@ int main(int argc, char *argv[])
 	ros::NodeHandle nh;
 
 	ScoutStateMachine *sm = new ScoutStateMachine(nh, g_robot_name);
-
+	
 	SM_SERVER server(nh, g_robot_name + COMMON_NAMES::STATE_MACHINE_ACTIONLIB, boost::bind(&execute, _1, &server, sm), false);
 	server.registerPreemptCallback(boost::bind(&cancelGoal, sm));
 	server.start();
+
+	ROS_INFO_STREAM(g_robot_name << " State Machine Server started");
 
 	ROS_INFO("Started Scout State Machine Actionlib Server");
 	ros::spin();

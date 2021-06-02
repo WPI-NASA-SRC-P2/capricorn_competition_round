@@ -4,12 +4,24 @@ ScoutStateMachine::ScoutStateMachine(ros::NodeHandle nh, const std::string &robo
 {
   resource_localiser_client_ = new ResourceLocaliserClient_(RESOURCE_LOCALISER_ACTIONLIB, true);
   navigation_vision_client_ = new NavigationVisionClient(robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
+  spiralClient_ = nh_.serviceClient<operations::Spiral>(SCOUT_SEARCH_SERVICE);
+  
   volatile_sub_ = nh.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutStateMachine::volatileSensorCB, this);
+  
+  waitForServerConnections();
 }
 
 ScoutStateMachine::~ScoutStateMachine()
 {
   delete resource_localiser_client_;
+  delete navigation_vision_client_;
+}
+
+void ScoutStateMachine::waitForServerConnections()
+{
+  resource_localiser_client_->waitForServer();
+  navigation_vision_client_->waitForServer();
+  spiralClient_.waitForExistence();
 }
 
 bool ScoutStateMachine::startSearchingVolatile()
@@ -35,7 +47,6 @@ bool ScoutStateMachine::stopSearchingVolatile()
 
 bool ScoutStateMachine::resumeSearchingVolatile(const bool resume)
 {
-  spiralClient_ = nh_.serviceClient<operations::Spiral>(SCOUT_SEARCH_SERVICE);
   operations::Spiral srv;
   srv.request.resume_spiral_motion = resume;
   return spiralClient_.call(srv);
