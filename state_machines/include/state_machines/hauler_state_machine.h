@@ -41,6 +41,7 @@ const std::set<STATE_MACHINE_TASK> HAULER_TASKS = {
     STATE_MACHINE_TASK::HAULER_DUMP_VOLATILE_TO_PROC_PLANT,
     STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR,
     STATE_MACHINE_TASK::HAULER_RESET_ODOM,
+    STATE_MACHINE_TASK::HAULER_RESET_ODOM_AT_HOPPER,
     STATE_MACHINE_TASK::HAULER_FACE_PROCESSING_PLANT};
 
 class HaulerStateMachine
@@ -166,6 +167,15 @@ private:
    * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session. 
    */
   bool resetOdometry();
+
+  /**
+   * @brief Conducts a series of states, go to proc plant, park at hopper, reset odom and Undock
+   * 
+   * @return true 
+   * @return false 
+   */
+  bool resetOdometryAtHopper();
+
   bool faceProcessingPlant();
 
 public:

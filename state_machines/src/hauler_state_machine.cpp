@@ -100,7 +100,13 @@ bool HaulerStateMachine::undockHopper()
 bool HaulerStateMachine::dumpVolatileToProcPlant()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Dumping Volatile to Processing Plant (High Level Goal)");
-    return (undockExcavator() && goToProcPlant() && parkAtHopper() && dumpVolatile() && undockHopper());
+    return (undockExcavator() && goToProcPlant() && parkAtHopper() && dumpVolatile() && resetOdometry() && undockHopper());
+}
+
+bool HaulerStateMachine::resetOdometryAtHopper()
+{
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Resetting Odometry at Hopper");
+    return (undockExcavator() && goToProcPlant() && parkAtHopper() && resetOdometry() && undockHopper());
 }
 
 bool HaulerStateMachine::goBackToExcavator(const geometry_msgs::PoseStamped &loc)

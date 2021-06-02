@@ -114,6 +114,9 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
     case STATE_MACHINE_TASK::HAULER_RESET_ODOM: //Reset odometry when it goes to processing plant
         output = sm->resetOdometry();
         break;
+    case STATE_MACHINE_TASK::HAULER_RESET_ODOM_AT_HOPPER: //Reset odometry when it goes to processing plant
+        output = sm->resetOdometryAtHopper();
+        break;
     case STATE_MACHINE_TASK::HAULER_FACE_PROCESSING_PLANT:
         output = sm->faceProcessingPlant();
         break;

@@ -200,7 +200,8 @@ namespace COMMON_NAMES
     HAULER_GO_BACK_TO_EXCAVATOR = 11,        // Takes hauler from any location to excavator and parks
     HAULER_PARK_AT_EXCAVATOR = 12,           // Hauler parks at excavator
     HAULER_FOLLOW_EXCAVATOR = 13,            // Hauler follows excavator
-    HAULER_RESET_ODOM = 14,
+    HAULER_RESET_ODOM = 14,                  // Reset Odom 
+    HAULER_RESET_ODOM_AT_HOPPER = 30,        // Whole sequence of parking and resetting odom
 
     // redundant modes for hauler (everything is taken care by above modes)
     HAULER_GO_TO_PROC_PLANT = 15,     // Hauler goes to processing plant

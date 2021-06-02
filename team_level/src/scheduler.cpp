@@ -50,6 +50,7 @@ void Scheduler::schedulerLoop()
 
   startScout();
   startExcavator();
+  startHauler();
 
   while (ros::ok() && start_scheduler_)
   {
@@ -87,6 +88,11 @@ void Scheduler::updateRobotStatus()
   scout_task_completed_ = scout_client_->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
   excavator_task_completed_ = excavator_client_->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
   hauler_task_completed_ = hauler_client_->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
+}
+
+void Scheduler::startHauler()
+{
+  hauler_desired_task = HAULER_RESET_ODOM_AT_HOPPER;
 }
 
 void Scheduler::startExcavator()
@@ -141,9 +147,10 @@ void Scheduler::updateHauler()
   ROS_INFO_STREAM("Hauler Task:"<<(hauler_goal_.task) << " task completed:" << hauler_task_completed_);
 
   bool dumping_done = hauler_goal_.task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_task_completed_;
+  bool odom_reset_done = hauler_goal_.task == HAULER_RESET_ODOM_AT_HOPPER && hauler_task_completed_;
   bool not_dumping = hauler_goal_.task != HAULER_DUMP_VOLATILE_TO_PROC_PLANT;
 
-  if ((dumping_done || not_dumping) && hauler_goal_.task != HAULER_PARK_AT_EXCAVATOR)
+  if ((dumping_done || not_dumping || odom_reset_done) && hauler_goal_.task != HAULER_PARK_AT_EXCAVATOR)
   {
     bool excavator_going = excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT || excavator_goal_.task == EXCAVATOR_GO_TO_LOC;
     bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
