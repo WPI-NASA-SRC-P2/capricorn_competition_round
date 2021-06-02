@@ -140,25 +140,20 @@ void Scheduler::updateExcavator()
   }
 }
 
-/**
- * @brief RESET LOGIC
- * geometry_msgs::PoseStamped new_excav_pose;
- * new_excav_pose.header.frame_id = ref_robot_name + BASE_FOOTPRINT;
- * new_excav_pose.pose.position.x = 3;
- * new_excav_pose.pose.orientation.z = 1;
- * NavigationAlgo::transformPose(new_excav_pose, MAP, )
- */
-
 void Scheduler::updateHauler()
 {
   ROS_INFO_STREAM("Scout Task:" << (scout_goal_.task) << " task completed:" << scout_task_completed_);
   ROS_INFO_STREAM("Excav Task:" << (excavator_goal_.task) << " task completed:" << excavator_task_completed_);
   ROS_INFO_STREAM("Hauler Task:" << (hauler_goal_.task) << " task completed:" << hauler_task_completed_);
 
+  //This boolean checks IF the hauler has COMPLETED dumping volatile to processing plant.
   bool dumping_done = hauler_goal_.task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_task_completed_;
+  //This boolean checks if hauler has COMPLETED resetting its odometry at the HOPPER.
   bool odom_reset_done = hauler_goal_.task == HAULER_RESET_ODOM_AT_HOPPER && hauler_task_completed_;
+  //This boolean checks if the hauler is NOT dumping volatile, basically if its GOING TO THE LOC, PARKING AT THE EXCAVATOR or is not doing anything.
   bool not_dumping = hauler_goal_.task != HAULER_DUMP_VOLATILE_TO_PROC_PLANT;
 
+  //Conditions of excavator that should be met for the HAULER TO GO TO VOLATILE LOCATION.
   if ((dumping_done || not_dumping || odom_reset_done) && hauler_goal_.task != HAULER_PARK_AT_EXCAVATOR)
   {
     bool excavator_going = excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT || excavator_goal_.task == EXCAVATOR_GO_TO_LOC;
@@ -166,11 +161,13 @@ void Scheduler::updateHauler()
     if (excavator_going || excavator_waiting)
       hauler_desired_task = (HAULER_GO_TO_LOC);
   }
+  //Conditions of excavator that should be met for the HAULER_PARK_AT_EXCAVATOR.
   if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_task_completed_)
   {
     if (hauler_goal_.task == HAULER_GO_TO_LOC && hauler_task_completed_)
       hauler_desired_task = (HAULER_PARK_AT_EXCAVATOR);
   }
+  //Conditions of excavator that should be met for the HAULER_DUMP_VOLATILE_TO_PROC_PLANT.
   if (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_ && hauler_got_stuff_)
   {
     hauler_desired_task = (HAULER_DUMP_VOLATILE_TO_PROC_PLANT);
@@ -281,6 +278,45 @@ void Scheduler::updateHaulerPose(const nav_msgs::Odometry::ConstPtr &msg)
   hauler_pose_.pose = msg->pose.pose;
 }
 
+/**
+ * @brief Reset odometry pose conversion logic. Used to rotate the pose of a robot by 180 degrees for resetOdom
+ * 
+ * @param msg, @param theta (radians)
+ */
+geometry_msgs::PoseStamped Scheduler::rotatePose(const geometry_msgs::PoseStamped::ConstPtr &msg, double theta)
+{
+  // convert the input message's orientation quaternion into rpy for easy rotation
+  tf2::Quaternion q(msg->pose.orientation.x,
+                    msg->pose.orientation.y,
+                    msg->pose.orientation.z,
+                    msg->pose.orientation.w);
+
+  tf2::Matrix3x3 m(q);
+  double r, p, y;
+  m.getRPY(r, p, y);
+
+  // rotate the yaw by pi to have 180 degree rotation of the goal pose
+  q.setRPY(r, p, y + theta);
+
+  geometry_msgs::PoseStamped new_pose;
+  new_pose.header = msg->header;
+  //ose.pose.position.x = (msg->pose.position.x) + 3; // potential offset?
+  new_pose.pose.position = msg->pose.position;
+  //new_pose.pose.orientation.z = (msg->pose.pose.orientation.z) + 1; // potential offset?
+  new_pose.pose.orientation = tf2::toMsg(q);
+
+  return new_pose;
+
+  /**
+  * @brief RESET LOGIC reference
+  * geometry_msgs::PoseStamped new_excav_pose;
+  * new_excav_pose.header.frame_id = ref_robot_name + BASE_FOOTPRINT;
+  * new_excav_pose.pose.position.x = 3;
+  * new_excav_pose.pose.orientation.z = 1;
+  * NavigationAlgo::transformPose(new_excav_pose, MAP, )
+
+  */
+}
 /*
 // Scheduler reset odom states in order of completion
 

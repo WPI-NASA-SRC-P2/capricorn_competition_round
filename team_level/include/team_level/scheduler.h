@@ -8,6 +8,8 @@
 #include <actionlib/client/simple_action_client.h>
 #include <nav_msgs/Odometry.h>
 #include <operations/navigation_algorithm.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 using namespace COMMON_NAMES;
 
@@ -209,6 +211,13 @@ private:
  * @param msg 
  */
   void updateHaulerPose(const nav_msgs::Odometry::ConstPtr &msg);
+
+  /**
+  * @brief Reset odometry pose conversion logic. Used to rotate the pose of a robot by 180 degrees for resetOdom
+  * 
+  * @param msg, @param theta (radians)
+  */
+  geometry_msgs::PoseStamped rotatePose(const geometry_msgs::PoseStamped::ConstPtr &msg, double theta);
 
 public:
   /**
