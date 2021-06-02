@@ -231,7 +231,7 @@ private:
      *             HOTFIX: THIS MUST NOT BE A REF, AS ITS NOT CONSTANT
      * @param action_server The action server that this function is operating on.
      */
-    void automaticDriving(geometry_msgs::PoseStamped goal_pose, Server *action_server);
+    bool automaticDriving(geometry_msgs::PoseStamped goal_pose, Server *action_server);
 
     /**
      * @brief THIS IS A HOTFIX FOR THE NAVIGATION THINKING IT HAS REACHED A GOAL. MUST BE FIXED ASAP
