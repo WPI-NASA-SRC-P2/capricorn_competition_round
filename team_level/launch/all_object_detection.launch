@@ -1,0 +1,11 @@
+<launch>
+
+    <include file="$(find perception)/launch/launch_three_object_detection.launch">
+        <arg name="team_number" value="1" />
+    </include>
+
+    <!-- <include file="$(find perception)/launch/launch_three_object_detection.launch">
+        <arg name="team_number" value="2" />
+    </include> -->
+
+</launch>

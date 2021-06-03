@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>operations</name>
+  <name>state_machines</name>
   <version>0.0.0</version>
-  <description>The operations package</description>
+  <description>The state_machines package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="mahi@todo.todo">mahi</maintainer>
+  <maintainer email="mahimana@todo.todo">mahimana</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/operations</url> -->
+  <!-- <url type="website">http://wiki.ros.org/state_machines</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -61,9 +61,9 @@
   <build_depend>message_generation</build_depend>
   <build_depend>message_runtime</build_depend>
   <build_depend>utils</build_depend>
-  <build_depend>perception</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>srcp2_msgs</build_depend>
+  <build_depend>operations</build_depend>
   <build_depend>maploc</build_depend>
   
   <build_export_depend>roscpp</build_export_depend>
@@ -75,8 +75,8 @@
   <build_export_depend>message_runtime</build_export_depend>
   <build_export_depend>utils</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
-  <build_export_depend>perception</build_export_depend>
   <build_export_depend>srcp2_msgs</build_export_depend>
+  <build_export_depend>operations</build_export_depend>
   <build_export_depend>maploc</build_export_depend>
   
   <exec_depend>roscpp</exec_depend>
@@ -88,11 +88,12 @@
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>utils</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>perception</exec_depend>
   <exec_depend>srcp2_msgs</exec_depend>
+  <exec_depend>operations</exec_depend>
   <exec_depend>maploc</exec_depend>
   
   <test_depend>rosunit</test_depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

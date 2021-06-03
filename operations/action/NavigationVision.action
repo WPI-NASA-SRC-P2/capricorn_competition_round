@@ -1,5 +1,6 @@
 # Define the goal
 string desired_object_label # Object Detection Class Name
+geometry_msgs/PoseStamped goal_loc # Go to goal pose
 uint32 mode # See COMMON_NAMES::NAV_VISION_TYPE, two modes, follow and reach
 ---
 # Define the result
