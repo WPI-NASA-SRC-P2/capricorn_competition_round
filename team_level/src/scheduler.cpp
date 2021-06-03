@@ -201,6 +201,13 @@ void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
 
     sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, excavator_goal_pose);
   }
+  if (task == EXCAVATOR_DIG_AND_DUMP_VOLATILE)
+  {
+    // reset odometry during dig and dump volatile state!
+    geometry_msgs::PoseStamped excavator_goal_pose;
+    excavator_goal_pose = rotatePose(hauler_pose_, M_PI);
+    sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, excavator_goal_pose);
+  }
   //Adding what to do when excavator reset odometry is being called
 
   else

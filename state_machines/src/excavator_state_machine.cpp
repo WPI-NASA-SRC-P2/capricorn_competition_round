@@ -116,6 +116,22 @@ bool ExcavatorStateMachine::digAndDumpVolatile()
     return volatile_found;
 }
 
+// reset odom ver.
+bool ExcavatorStateMachine::digAndDumpVolatile(const geometry_msgs::PoseStamped &POSE)
+{
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Excavating Volatile");
+    bool volatile_found = false;
+    while (digVolatile())
+    {
+        volatile_found = true;
+        dumpVolatile();
+    }
+    // after DnD is done, reset odometry w.r.t. hauler 180-degree rotated pose since the two rovers are still facing each other
+    resetOdometry(POSE);
+    // goToDefaultArmPosition();
+    return volatile_found;
+}
+
 bool ExcavatorStateMachine::goToDefaultArmPosition()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Going to Default Excavator Arm Position");

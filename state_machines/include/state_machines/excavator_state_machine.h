@@ -96,6 +96,14 @@ private:
   bool digAndDumpVolatile();
 
   /**
+   * @brief Digs and dump continuously until volatile is available AND RESET ODOMETRY 
+   * 
+   * @return true 
+   * @return false 
+   */
+  bool digAndDumpVolatile(const geometry_msgs::PoseStamped &POSE);
+
+  /**
    * @brief Takes excavator arm to default arm position (used for object detection)
    * 
    * @return true 
