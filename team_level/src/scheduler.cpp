@@ -85,9 +85,9 @@ void Scheduler::updateRobotStatus()
 {
   // THIS IS BAD, MUST BE HANDLED //
   // If the task fails, then that logic should be taken care of as well
-  scout_task_completed_ = scout_client_->getState().isDone();         // == actionlib::SimpleClientGoalState::SUCCEEDED;
-  excavator_task_completed_ = excavator_client_->getState().isDone(); // == actionlib::SimpleClientGoalState::SUCCEEDED;
-  hauler_task_completed_ = hauler_client_->getState().isDone();       // == actionlib::SimpleClientGoalState::SUCCEEDED;
+  scout_task_completed_ = scout_client_->getState().isDone();         //== actionlib::SimpleClientGoalState::SUCCEEDED;
+  excavator_task_completed_ = excavator_client_->getState().isDone(); //== actionlib::SimpleClientGoalState::SUCCEEDED;
+  hauler_task_completed_ = hauler_client_->getState().isDone();       //== actionlib::SimpleClientGoalState::SUCCEEDED;
 }
 
 void Scheduler::startHauler()
@@ -317,7 +317,10 @@ geometry_msgs::PoseStamped Scheduler::rotatePose(const geometry_msgs::PoseStampe
 
   geometry_msgs::PoseStamped new_pose;
   new_pose.header = msg.header;
-  //ose.pose.position.x = (msg->pose.position.x) + 3; // potential offset?
+  //new_pose.pose.position.x = (msg.pose.position.x) + (3*(std::cos(y))); // potential offset, might need to look at which one needs cosine or sine based on wgat is observed
+  //new_pose.pose.position.y = (msg.pose.position.y) + (3*(std::sin(y))); 
+  //new_pose.pose.position.z = (msg.pose.position.z);  
+
   new_pose.pose.position = msg.pose.position;
   //new_pose.pose.orientation.z = (msg->pose.pose.orientation.z) + 1; // potential offset?
   new_pose.pose.orientation = tf2::toMsg(q);
