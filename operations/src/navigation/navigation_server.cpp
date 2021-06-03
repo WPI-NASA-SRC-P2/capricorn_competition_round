@@ -23,7 +23,7 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 	listener_ = new tf2_ros::TransformListener(buffer_);
 
 	// Initialize the rate limiter to 100 HZ
-	update_rate_ = new ros::Rate(100);
+	update_rate_ = new ros::Rate(4);
 
 	moveRobotWheels(0);
 	steerRobot(0);
@@ -247,7 +247,19 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 		ROS_INFO("Trajectory client call succeeded");
 		traj = srv.response.trajectory;
 		//TODO: Delete hotfix once planner issue with extra waypoints has been solved
-		traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 2);
+		int trajLength = traj.waypoints.size();
+		if(trajLength >= 2)
+		{
+			traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 2);
+		} 
+		else 
+		{
+			//Error catching- if trajectory doesn't have 2 items, the planner messed up. Delete the trajectory.
+			ROS_ERROR("Trajectory less than 2 items long- if we've fixed the extra traj points, this should be removed");
+			traj.waypoints.resize(0);
+			return traj;
+		}
+		
 	}
 	else
 	{
@@ -465,16 +477,42 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 	// Save the goal pose in the MAP frame, so that trajectory updates will use a goal relative to the map.
 	geometry_msgs::PoseStamped final_pose = goal->pose;
+	geometry_msgs::PoseStamped pose_wrt_robot = goal->pose;
 	NavigationAlgo::transformPose(final_pose, MAP, buffer_, 0.1);
 
 	// While we have a new trajectory. If driveDistance does not reset this, then this loop only runs once.
 	while(get_new_trajectory_)
 	{
 		// Forward goal to local planner, and save the returned trajectory
-		planning::TrajectoryWithVelocities trajectory = sendGoalToPlanner(goal->pose);
+		ROS_INFO("Requesting new trajectory...");
+		pose_wrt_robot = final_pose;
+		ROS_INFO("Z");
+		bool proceed = NavigationAlgo::transformPose(pose_wrt_robot, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
+		if(!proceed)
+		{
+			ROS_ERROR_STREAM("Failed to transform to robot frame! Exiting.\n");
+			operations::NavigationResult res;
+			res.result = COMMON_RESULT::FAILED;
+			action_server->setSucceeded(res);
+			return;
+		}
+		ROS_INFO("A");
+		planning::TrajectoryWithVelocities trajectory = sendGoalToPlanner(pose_wrt_robot);
+		ROS_INFO("B");
+
+		//Catch malformed trajectories here
+		if(trajectory.waypoints.size() <= 0)
+		{
+			ROS_ERROR_STREAM("Got 0 length trajectory! Exiting.\n");
+			operations::NavigationResult res;
+			res.result = COMMON_RESULT::FAILED;
+			action_server->setSucceeded(res);
+			return;
+		}
 
 		// We got the new trajectory, so we should reset the new trajectory flag.
 		get_new_trajectory_ = false;
+		ROS_INFO("Got new trajectory!");
 
 		// Loop over trajectory waypoints
 		for (int i = 0; i < trajectory.waypoints.size(); i++)

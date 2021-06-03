@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <operations/TrajectoryWithVelocities.h>
+#include <planning/TrajectoryWithVelocities.h>
 
 
 /**
@@ -7,7 +7,7 @@
  * 
  * @param imu_msg The message coming from the IMU topic for this robot.
  */
-void traj_callback(const operations::TrajectoryWithVelocities::ConstPtr &traj_msg)
+void traj_callback(const planning::TrajectoryWithVelocities::ConstPtr &traj_msg)
 {
     //Process the message. This function should be kept short, and ideally should not do a lot of processing.
 

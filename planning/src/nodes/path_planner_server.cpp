@@ -17,6 +17,7 @@ ros::Publisher debug_pathPublisher;
 #endif
 
 std::string robot_name_ = "";
+bool map_received_ = false;
 
 bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
@@ -53,6 +54,7 @@ void PathServer::oGridCallback(nav_msgs::OccupancyGrid oGrid)
 {
   std::lock_guard<std::mutex> lock(oGrid_mutex_);
   global_oGrid_ = oGrid;
+  map_received_ = true;
 }
 
 int main(int argc, char *argv[])
@@ -78,6 +80,12 @@ int main(int argc, char *argv[])
   debug_oGridPublisher = nh.advertise<nav_msgs::OccupancyGrid>("/galaga/debug_oGrid", 1000);
   debug_pathPublisher = nh.advertise<nav_msgs::Path>("/galaga/debug_path", 1000);
   #endif
+
+  while(!map_received_ && ros::ok())
+  {
+    ros::Duration(0.1).sleep();
+    ros::spinOnce();
+  }
 
   //Instantiating ROS server for generating trajectory
   ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &PathServer::trajectoryGeneration, &server);

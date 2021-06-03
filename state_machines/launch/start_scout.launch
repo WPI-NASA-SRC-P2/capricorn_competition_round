@@ -1,7 +1,7 @@
 <launch>
     <arg name="robot_name" default="small_scout_1" />
     <arg name="output" default="screen" />
-    <arg name="use_cheat_odom" default="true" />
+    <arg name="use_cheat_odom" default="false" />
     <arg name="use_crab_drive" default="false" />
     <arg name="get_true_pose" default="true"/>
     <arg name="node_start_delay" default="5.0" /> 
@@ -12,6 +12,10 @@
         <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
     </include>
+
+	<include file="$(find planning)/launch/planner.launch">
+			<arg name="robot_name" value="$(arg robot_name)" />
+	</include>
 
     <include unless="$(arg use_cheat_odom)" file="$(find maploc)/launch/mapping.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
