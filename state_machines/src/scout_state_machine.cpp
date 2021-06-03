@@ -5,9 +5,9 @@ ScoutStateMachine::ScoutStateMachine(ros::NodeHandle nh, const std::string &robo
   resource_localiser_client_ = new ResourceLocaliserClient_(RESOURCE_LOCALISER_ACTIONLIB, true);
   navigation_vision_client_ = new NavigationVisionClient(robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
   spiralClient_ = nh_.serviceClient<operations::Spiral>(SCOUT_SEARCH_SERVICE);
-  
+
   volatile_sub_ = nh.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutStateMachine::volatileSensorCB, this);
-  
+
   waitForServerConnections();
 }
 
@@ -68,7 +68,27 @@ bool ScoutStateMachine::undockRobot()
   navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
   navigation_vision_client_->sendGoal(navigation_vision_goal_);
   navigation_vision_client_->waitForResult();
-  return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+  return navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+}
+
+bool ScoutStateMachine::undockRobot(const geometry_msgs::PoseStamped &POSE)
+{
+  // face the excavator in preparation for resetting odometry
+  navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
+  navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
+  navigation_vision_client_->sendGoal(navigation_vision_goal_);
+  navigation_vision_client_->waitForResult();
+
+  // reset the odometry using the 180-degree rotated pose received from scheduler if facing excavator succeeds
+  if (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    resetOdometry(POSE);
+
+  // finish the undocking process
+  navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
+  navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
+  navigation_vision_client_->sendGoal(navigation_vision_goal_);
+  navigation_vision_client_->waitForResult();
+  return navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
 }
 
 /**
@@ -93,6 +113,7 @@ bool ScoutStateMachine::resetOdometry(const geometry_msgs::PoseStamped &POSE)
   return resetScoutOdometryClient_.call(srv);
 }
 
+// this should never be called ideally
 bool ScoutStateMachine::resetOdometry()
 {
   resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);

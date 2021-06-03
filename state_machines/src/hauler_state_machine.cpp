@@ -106,7 +106,7 @@ bool HaulerStateMachine::dumpVolatileToProcPlant()
 bool HaulerStateMachine::resetOdometryAtHopper()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Resetting Odometry at Hopper");
-    return (undockExcavator() && goToProcPlant() && parkAtHopper() && resetOdometry() && undockHopper());
+    return (/*undockExcavator() && */ faceProcessingPlant() && goToProcPlant() && parkAtHopper() && resetOdometry() && undockHopper());
 }
 
 bool HaulerStateMachine::goBackToExcavator(const geometry_msgs::PoseStamped &loc)

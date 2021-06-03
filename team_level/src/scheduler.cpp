@@ -177,7 +177,17 @@ void Scheduler::updateHauler()
 
 void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
 {
-  sendRobotGoal(SCOUT, scout_client_, scout_goal_, task);
+  if (task == SCOUT_UNDOCK)
+  {
+    // reset the scout's odometry when it is facing the excavator
+    geometry_msgs::PoseStamped scout_goal_pose;
+    scout_goal_pose = rotatePose(excavator_pose_, M_PI);
+    sendRobotGoal(SCOUT, scout_client_, scout_goal_, task, scout_goal_pose);
+  }
+  else
+  {
+    sendRobotGoal(SCOUT, scout_client_, scout_goal_, task);
+  }
 }
 
 void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
@@ -283,13 +293,13 @@ void Scheduler::updateHaulerPose(const nav_msgs::Odometry::ConstPtr &msg)
  * 
  * @param msg, @param theta (radians)
  */
-geometry_msgs::PoseStamped Scheduler::rotatePose(const geometry_msgs::PoseStamped::ConstPtr &msg, double theta)
+geometry_msgs::PoseStamped Scheduler::rotatePose(const geometry_msgs::PoseStamped &msg, double theta)
 {
   // convert the input message's orientation quaternion into rpy for easy rotation
-  tf2::Quaternion q(msg->pose.orientation.x,
-                    msg->pose.orientation.y,
-                    msg->pose.orientation.z,
-                    msg->pose.orientation.w);
+  tf2::Quaternion q(msg.pose.orientation.x,
+                    msg.pose.orientation.y,
+                    msg.pose.orientation.z,
+                    msg.pose.orientation.w);
 
   tf2::Matrix3x3 m(q);
   double r, p, y;
@@ -299,9 +309,9 @@ geometry_msgs::PoseStamped Scheduler::rotatePose(const geometry_msgs::PoseStampe
   q.setRPY(r, p, y + theta);
 
   geometry_msgs::PoseStamped new_pose;
-  new_pose.header = msg->header;
+  new_pose.header = msg.header;
   //ose.pose.position.x = (msg->pose.position.x) + 3; // potential offset?
-  new_pose.pose.position = msg->pose.position;
+  new_pose.pose.position = msg.pose.position;
   //new_pose.pose.orientation.z = (msg->pose.pose.orientation.z) + 1; // potential offset?
   new_pose.pose.orientation = tf2::toMsg(q);
 

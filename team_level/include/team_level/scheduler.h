@@ -217,7 +217,7 @@ private:
   * 
   * @param msg, @param theta (radians)
   */
-  geometry_msgs::PoseStamped rotatePose(const geometry_msgs::PoseStamped::ConstPtr &msg, double theta);
+  geometry_msgs::PoseStamped rotatePose(const geometry_msgs::PoseStamped &msg, double theta);
 
 public:
   /**

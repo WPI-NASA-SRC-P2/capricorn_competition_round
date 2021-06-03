@@ -77,11 +77,14 @@ private:
    */
   bool undockRobot();
 
+  bool undockRobot(const geometry_msgs::PoseStamped &POSE);
+
   /**
    * @brief Volatile sensor callback
    * 
    * @param msg 
    */
+
   void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg);
 
   /**
@@ -91,7 +94,7 @@ private:
    * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session for the ground truth version.
    */
   bool resetOdometry(const geometry_msgs::PoseStamped &POSE);
-  
+
   /**
    * @brief resets odometry, used after parking is done for scout, the oone withj pose signature is used when ground truth is not being used.
    * 
