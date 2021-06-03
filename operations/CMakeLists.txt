@@ -17,11 +17,12 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   utils
   geometry_msgs
+  perception
+  planning
   gazebo_msgs
   srcp2_msgs
   tf2
   tf2_ros
-  perception
   maploc
 )
 
@@ -59,10 +60,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  TrajectoryWithVelocities.msg
-)
+# add_message_files(
+#   FILES
+#   #TrajectoryWithVelocities.msg
+# )
 
 ## Generate services in the 'srv' folder
 add_service_files(
@@ -129,7 +130,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs perception maploc
+ CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs perception maploc planning
  #  DEPENDS system_lib
 )
 
