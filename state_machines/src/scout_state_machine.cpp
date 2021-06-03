@@ -80,8 +80,8 @@ bool ScoutStateMachine::undockRobot(const geometry_msgs::PoseStamped &POSE)
   navigation_vision_client_->waitForResult();
 
   // reset the odometry using the 180-degree rotated pose received from scheduler if facing excavator succeeds
-  if (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-    resetOdometry(POSE);
+  // if (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+  resetOdometry(POSE);
 
   // finish the undocking process
   navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;

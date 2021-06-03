@@ -39,6 +39,13 @@ bool HaulerStateMachine::followExcavator()
 
 bool HaulerStateMachine::parkAtExcavator(std::string excavator_name)
 {
+    // try to face excavator first: Just a HOTFIX, might need to remove it later as it doesnt take care of the fact that the excavator could be in a crater
+    navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+    // do we need a duration check?
+
     ROS_INFO_STREAM(robot_name_ << " State Machine: Parking at Excavator");
     park_robot_goal_.hopper_or_excavator = excavator_name;
     park_robot_client_->sendGoal(park_robot_goal_);
