@@ -18,6 +18,8 @@
     <!--Use true arg wisely, as you will need to restart the simulation if you have used the true pose-->
     <arg name="get_true_pose" default="true"/>
 
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /odom /map 100" />
+
     <!-- Launch the unified coordinates rtabmap (copied from compare_rtab_odom.launch)-->
     <include file="$(find maploc)/launch/rtabmap.launch">
       <arg name="robot_name" value="$(arg robot_name)"/>
