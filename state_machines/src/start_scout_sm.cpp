@@ -27,18 +27,30 @@ int main(int argc, char *argv[])
 	ros::init(argc, argv, g_robot_name + "_sm");
 	ros::NodeHandle nh;
 
-	ScoutBaseState base_state(nh, g_robot_name);
-	Undock undock(nh, g_robot_name);
-	bool undock_entry = undock.entryPoint();
-	if (undock_entry)
+	// ScoutBaseState base_state(nh, g_robot_name);
+	// Undock undock(nh, g_robot_name);
+	// bool undock_entry = undock.entryPoint();
+	// if (undock_entry)
+	// {
+	// 	ROS_INFO("Undocking!");
+	// 	undock.exec();
+	// 	ROS_INFO_STREAM("exitPoint: "<<undock.exitPoint());
+	// }
+	// else
+	// {
+	// 	ROS_INFO("Not Undocking");
+	// }
+	Locate locate(nh, g_robot_name);
+	if(locate.entryPoint())
 	{
-		ROS_INFO("Undocking!");
-		undock.exec();
-		ROS_INFO_STREAM("exitPoint: "<<undock.exitPoint());
+		ROS_INFO("Lcoating");
+		locate.exec();
+		ros::Duration(10).sleep();
+		locate.exitPoint();
 	}
 	else
 	{
-		ROS_INFO("Not Undocking");
+		ROS_INFO("Not Near Volatile, not locating");
 	}
 	return 0;
 }

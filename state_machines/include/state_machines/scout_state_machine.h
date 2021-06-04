@@ -2,9 +2,7 @@
 
 #include <iostream>
 #include <actionlib/client/simple_action_client.h>
-#include <actionlib/server/simple_action_server.h>
 #include <utils/common_names.h>
-#include <state_machines/RobotStateMachineTaskAction.h>
 #include <operations/NavigationVisionAction.h>
 #include <operations/Spiral.h>
 #include <operations/ResourceLocaliserAction.h>
@@ -12,15 +10,6 @@
 #include <operations/obstacle_avoidance.h>
 
 using namespace COMMON_NAMES;
-
-typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
-
-const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
-    STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE,
-    STATE_MACHINE_TASK::SCOUT_STOP_SEARCH,
-    STATE_MACHINE_TASK::SCOUT_LOCATE_VOLATILE,
-    STATE_MACHINE_TASK::SCOUT_UNDOCK,
-};
 
 class ScoutBaseState
 {
@@ -36,6 +25,7 @@ protected:
   ros::ServiceClient spiralClient_;
 
   bool near_volatile_ = false;
+  bool new_volatile_msg_ = false;
 
   std::mutex objects_mutex_;
   perception::ObjectArray::ConstPtr vision_objects_;
@@ -77,14 +67,17 @@ public:
 class Search: public ScoutBaseState
 {
 public:
+  Search(ros::NodeHandle nh, const std::string &robot_name);
   bool entryPoint();
   bool exec();
   bool exitPoint();
+  bool resumeSearchingVolatile(bool resume);
 };
 
 class Locate: public ScoutBaseState
 {
 public:
+  Locate(ros::NodeHandle nh, const std::string &robot_name);
   bool entryPoint();
   bool exec();
   bool exitPoint();
