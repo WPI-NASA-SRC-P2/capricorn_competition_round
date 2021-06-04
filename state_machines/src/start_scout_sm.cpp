@@ -29,8 +29,16 @@ int main(int argc, char *argv[])
 
 	ScoutBaseState base_state(nh, g_robot_name);
 	Undock undock(nh, g_robot_name);
-	ROS_INFO_STREAM("entryPoint: "<<undock.entryPoint());
-	ROS_INFO_STREAM("exec: "<<undock.exec());
-	ROS_INFO_STREAM("exitPoint: "<<undock.exitPoint());
+	bool undock_entry = undock.entryPoint();
+	if (undock_entry)
+	{
+		ROS_INFO("Undocking!");
+		undock.exec();
+		ROS_INFO_STREAM("exitPoint: "<<undock.exitPoint());
+	}
+	else
+	{
+		ROS_INFO("Not Undocking");
+	}
 	return 0;
 }

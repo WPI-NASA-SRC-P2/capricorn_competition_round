@@ -35,8 +35,7 @@ void ScoutBaseState::objectsCallback(const perception::ObjectArray::ConstPtr obj
   const std::lock_guard<std::mutex> lock(objects_mutex_);
   vision_objects_ = objs;
   ROS_INFO("YAAYYYYY");
-  if(!objects_msg_received_)
-    objects_msg_received_ = true;
+  objects_msg_received_ = true;
 }
 
 bool ScoutBaseState::entryPoint()
@@ -60,28 +59,24 @@ bool ScoutBaseState::exitPoint()
 
 Undock::Undock(ros::NodeHandle nh, const std::string &robot_name):ScoutBaseState(nh,robot_name)
 {
-  
 }
 
 bool Undock::entryPoint()
 {
-  ROS_INFO("Undock Entry Point");
-  const std::lock_guard<std::mutex> lock(objects_mutex_);
-  ROS_INFO("Unlocked");
   bool result = false;
-  ros::Duration(0.5).sleep();
-  ROS_INFO("Okay");
-  ros::spinOnce();
-  ROS_INFO("Super Okay");
-  // while(!objects_msg_received_ && ros::ok())
-  //   ros::Duration(0.5).sleep();
-  ROS_INFO_STREAM("YOLOLOLO"<<(vision_objects_->number_of_objects > 0));
-  // if (vision_objects_->number_of_objects > 0)
-  // {
-  //   ROS_INFO("Checking Obstacles");
-  //   float direction = checkObstacle(vision_objects_->obj);
-  //   result = (abs(direction) > 0.0);
-  // }
+  while(!objects_msg_received_ && ros::ok())
+  {
+    ROS_INFO("Waiting to receive image");
+    ros::Duration(0.1).sleep();
+    ros::spinOnce();
+  }
+  if (vision_objects_->number_of_objects > 0)
+  {
+    const std::lock_guard<std::mutex> lock(objects_mutex_);
+    ROS_INFO("Checking Obstacles");
+    float direction = checkObstacle(vision_objects_->obj);
+    result = (abs(direction) > 0.0);
+  }
   return result;
 }
 
