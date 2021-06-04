@@ -1,0 +1,3 @@
+bool solar_charge_status
+---
+std_msgs/String result

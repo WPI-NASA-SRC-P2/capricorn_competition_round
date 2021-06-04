@@ -1,4 +1,4 @@
-#include "path_planner_server.h"
+#include "path_server.h"
 
 #include <cspace.h>
 #include <astar.h>

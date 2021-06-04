@@ -28,7 +28,7 @@ int FLIP_ROTATION_COUNT_MAX = 2;
 int REPEAT_COUNT_MAX = 2;
 bool near_volatile_ = false;
 bool new_message_received = false;
-bool g_robot_solar_okay = false;
+
 double volatile_distance_;
 std::string robot_name_;
 
@@ -55,7 +55,7 @@ enum DrivingMode
  * 
  * @param rotate_direction   direction of rotation
  */
-void rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier)
+void SolarChargingServer::rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier)
 {
   operations::NavigationGoal goal;
 
@@ -74,7 +74,7 @@ void rotateRobot(const DrivingDirection rotate_direction, const float rotational
  * 
  *
  */
-void stopRobot()
+void SolarChargingServer::stopRobot(void)
 {
   operations::NavigationGoal goal;
 
@@ -95,64 +95,92 @@ void stopRobot()
  * @param goal 
  * @param server 
  */
-void solarRecharge(const operations::SolarRechargeGoalConstPtr &goal, SolarRechargeServer *server)
+void SolarChargingServer::solarChargeInitiate(void)
 {
   DrivingDirection driving_direction = POSITIVE;
 
   ROS_INFO("Starting transitiong to solar recharge");
 
   rotateRobot(driving_direction, 1.0);
-  while(!g_robot_solar_ok && ros::ok()){} // while there is no solar keep rotating 
+
+  while(!solar_ok && ros::ok()) // while there is no solar keep rotating 
+  {
+    ROS_INFO("Rotating the robot");
+  } 
+
   stopRobot();
-
+  res.result.data = "The Robot is in Solar Charging Mode";
   ROS_INFO("Now Solar Recharging");
-
-  server->setSucceeded();
+  
 }
 
-/**
- * @brief updates the Status of solar_ok
- * 
- * @param msg msg from system monitor
- */
-void updateRobotSolarOk(const srcp2_msgs::SystemMonitorMsg &msg)
-{
-  g_robot_solar_okay = msg->sensor_ok;
+void SolarChargeingServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg){
+  solar_ok = req;
 }
 
-int main(int argc, char **argv)
+
+// int main(int argc, char **argv)
+// {
+//   // Ensure the robot name is passed in
+//   if (argc != 2 && argc != 4)
+//   {
+//     // Displaying an error message for correct usage of the script, and returning error.
+//     ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
+//     return -1;
+//   }
+//   else
+//   {
+//     // Robot Name from argument
+//     robot_name_ = std::string(argv[1]);
+//     std::string node_name = robot_name_ + "_solar_recharge_action_server";
+//     ros::init(argc, argv, node_name);
+//     ros::NodeHandle nh;
+
+//     ros::Subscriber subscriber = nh.subscribe("/" + robot_name_ + SYSTEM_MONITOR_TOPIC, 1000, updateRobotSolarOk);
+
+//     SolarRechargeServer solar_recharge_server(nh, SOLAR_RECHARGE_ACTIONLIB, boost::bind(&solarRecharge, _1, &solar_recharge_server), false);
+//     solar_recharge_server.start();
+
+//     ROS_INFO("Connecting to nav server...");
+
+//     navigation_client_ = new NavigationClient_(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB, true);
+//     navigation_client_->waitForServer();
+
+//     ROS_INFO("Connected. Waiting for a solar recharge request.");
+
+//     ros::spin();
+
+//     delete navigation_client_;
+
+//     return 0;
+//   }
+// }
+
+int main(int argc, char *argv[])
 {
-  // Ensure the robot name is passed in
-  if (argc != 2 && argc != 4)
-  {
-    // Displaying an error message for correct usage of the script, and returning error.
-    ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
-    return -1;
-  }
-  else
-  {
-    // Robot Name from argument
-    robot_name_ = std::string(argv[1]);
-    std::string node_name = robot_name_ + "_solar_recharge_action_server";
-    ros::init(argc, argv, node_name);
-    ros::NodeHandle nh;
+  //initialize node
+  ros::init(argc, argv, "solar_charging_server");
 
-    ros::Subscriber subscriber = nh.subscribe("/" + robot_name_ + SYSTEM_MONITOR_TOPIC, 1000, updateRobotSolarOk);
+  std::string robot_name(argv[1]);   
 
-    SolarRechargeServer solar_recharge_server(nh, SOLAR_RECHARGE_ACTIONLIB, boost::bind(&solarRecharge, _1, &solar_recharge_server), false);
-    solar_recharge_server.start();
+  //ROS Topic names
+  std::string system_monitor_topic_ = "/capricorn/" + robot_name + "/system_monitor";
 
-    ROS_INFO("Connecting to nav server...");
+  //create a nodehandle
+  ros::NodeHandle nh;
 
-    navigation_client_ = new NavigationClient_(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB, true);
-    navigation_client_->waitForServer();
+  SolarChargingServer server;
 
-    ROS_INFO("Connected. Waiting for a solar recharge request.");
+  server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::SystemMonitorCB, &server);
 
-    ros::spin();
+  
+  //srv result
+  debug_solar_charging_mode = nh.advertise<std_msgs::String>("/galaga/debug_solar_charging_status", 1000);
+  
+  //Instantiating ROS server for generating trajectory
+  ros::ServiceServer service = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
 
-    delete navigation_client_;
+  ros::spin();
 
-    return 0;
-  }
+  return 0;
 }

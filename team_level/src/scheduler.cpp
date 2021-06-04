@@ -131,6 +131,7 @@ void Scheduler::updateExcavator()
     excavator_desired_task = (EXCAVATOR_DIG_AND_DUMP_VOLATILE);
     hauler_got_stuff_ = true;
   }
+  
 }
 
 void Scheduler::updateHauler()
