@@ -39,7 +39,7 @@ bool checkTask(STATE_MACHINE_TASK task)
 }
 
 template <class T>
-bool execState(T state_class_obj)
+bool executeStates(T state_class_obj)
 {
 	bool output = false;
 	bool entry_point = state_class_obj->entryPoint();
@@ -48,6 +48,37 @@ bool execState(T state_class_obj)
 	else 
 		ROS_ERROR_STREAM("Scout State failed in entryPoint");
 	return output;
+}
+
+
+void executeStates(STATE_MACHINE_TASK robot_state)
+{
+	switch (robot_state)
+	{
+		case STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE:
+			executeStates<Search*>(search_state);
+			break;
+		case STATE_MACHINE_TASK::SCOUT_LOCATE_VOLATILE:
+			executeStates<Locate*>(locate_state);
+			break;
+		case STATE_MACHINE_TASK::SCOUT_UNDOCK:
+			executeStates<Undock*>(undock_state);
+			break;
+		default:
+			ROS_ERROR_STREAM(g_robot_name + " state machine encountered unhandled state!");
+			break;
+	}
+}
+
+void checkTransition(STATE_MACHINE_TASK robot_state)
+{
+	static STATE_MACHINE_TASK curr_task;
+	if (curr_task)
+	{
+		
+	}
+	curr_task = robot_state;
+	
 }
 
 /**
@@ -73,25 +104,10 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 		return;
 	}
 
-	static STATE_MACHINE_TASK curr_state;
-	curr_state = robot_state;
 	bool output = false;
 
-	switch (robot_state)
-	{
-		case STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE:
-			execState<Search*>(search_state);
-			break;
-		case STATE_MACHINE_TASK::SCOUT_LOCATE_VOLATILE:
-			execState<Locate*>(locate_state);
-			break;
-		case STATE_MACHINE_TASK::SCOUT_UNDOCK:
-			execState<Undock*>(undock_state);
-			break;
-		default:
-			ROS_ERROR_STREAM(g_robot_name + " state machine encountered unhandled state!");
-			break;
-	}
+	checkTransition(robot_state);
+	executeStates(robot_state);
 
 	result.result = output ? COMMON_NAMES::COMMON_RESULT::SUCCESS : COMMON_NAMES::COMMON_RESULT::FAILED;
 	as->setSucceeded(result);
