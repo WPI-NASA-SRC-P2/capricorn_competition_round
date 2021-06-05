@@ -26,26 +26,16 @@ class ObjectPlotter:
         # pose subscriber updates robot pose as it moves
         self.robot_name = str(sys.argv[1])
         # robot_name+'_base_footprint', robot_name+"_left_camera_optical"
-        self.robot_pos_sub = rospy.Subscriber(
-            "/" + self.robot_name + "/camera/odom", Odometry, self.robotCb
-        )
-        self.robot_pose = (
-            PoseWithCovariance()
-        )  # value indicates the robot base frame pose
-        self.occ_grid = OccupancyGrid()
+        self.robot_pos_sub = rospy.Subscriber("/" + self.robot_name + "/camera/odom", Odometry, self.robotCb)
+        # value indicates the robot base frame pose
+        self.robot_pose = PoseWithCovariance()
+        # actual map stored in memory for updating
+        self.occ_grid = OccupancyGrid()        
         # object detection data and subscriber
         self.obj_list = ObjectArray()
-        self.object_sub = rospy.Subscriber(
-            "/capricorn/" + self.robot_name + "/object_detection/objects",
-            ObjectArray,
-            self.objectCb,
-        )
+        self.object_sub = rospy.Subscriber("/capricorn/" + self.robot_name + "/object_detection/objects", ObjectArray, self.objectCb)
         # occupancy grid publisher
-        self.occGridPub = rospy.Publisher(
-            "/capricorn/" + self.robot_name + "/object_detection_map",
-            OccupancyGrid,
-            queue_size=1,
-        )
+        self.occGridPub = rospy.Publisher("/capricorn/" + self.robot_name + "/object_detection_map", OccupancyGrid, queue_size=1)
 
     # subscriber callback to robot pose, updates robot pose as it moves
     def robotCb(self, odom):
@@ -66,10 +56,10 @@ class ObjectPlotter:
     def resetOccGrid(self):
         metadata = MapMetaData()
         # define dimensions of blank occupancy grid
-        metadata.resolution = 0.05  # (m/pixel) 0.05 matches rtabmap resolution
-        metadata.width = int(
-            20 / metadata.resolution
-        )  # sets the map to be 20m x 20m regardless of resolution
+        # resolution units are (m/pixel), value of 0.05 matches rtabmap resolution
+        metadata.resolution = 0.05  
+        # sets the map to be 20m x 20m regardless of resolution
+        metadata.width = int(20 / metadata.resolution)  
         metadata.height = int(20 / metadata.resolution)
 
         origin_pose = self.robot_pose.pose
@@ -84,9 +74,7 @@ class ObjectPlotter:
         self.occ_grid.info = metadata
         # initialize map data as all zeros
         UNOCCUPIED = 0
-        self.occ_grid.data = (
-            [UNOCCUPIED] * self.occ_grid.info.width * self.occ_grid.info.height
-        )
+        self.occ_grid.data = ([UNOCCUPIED] * self.occ_grid.info.width * self.occ_grid.info.height)
         # self.occ_grid.header.frame_id = self.robot_name + "_base_footprint"
         self.occ_grid.header.frame_id = "map"
 
@@ -103,7 +91,8 @@ class ObjectPlotter:
         trans = tf_buffer.lookup_transform(
             robotname + "_base_footprint",
             robotname + "_left_camera_optical",
-            rospy.Time(),
+            # grabs most recent transform
+            rospy.Time(0),
         )
         new_x = trans.transform.translation.x + old_x
         new_y = trans.transform.translation.y + old_y
@@ -142,9 +131,7 @@ class ObjectPlotter:
             if circX not in range(0, self.occ_grid.info.width):
                 continue
             # second case is if x values gotten from pos_theta and neg_theta are out of the grid
-            if up_bound not in range(
-                0, self.occ_grid.info.height
-            ) and down_bound not in range(0, self.occ_grid.info.height):
+            if up_bound not in range(0, self.occ_grid.info.height) and down_bound not in range(0, self.occ_grid.info.height):
                 continue
             if up_bound not in range(0, self.occ_grid.info.height):
                 up_bound = 0
@@ -157,9 +144,7 @@ class ObjectPlotter:
             while pos < down_bound:
                 OCCUPIED = 100
                 # rospy.loginfo("printing within map")
-                self.occ_grid.data[
-                    int(pos * (self.occ_grid.info.width) + circX)
-                ] = OCCUPIED
+                self.occ_grid.data[int(pos * (self.occ_grid.info.width) + circX)] = OCCUPIED
                 pos += 1
 
     # plot all objects in object list
