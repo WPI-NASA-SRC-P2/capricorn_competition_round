@@ -13,44 +13,127 @@
 
 #include <ros/ros.h>
 #include <state_machines/scout_state_machine.h>
+#include <state_machines/RobotStateMachineTaskAction.h>
+#include <actionlib/server/simple_action_server.h>
+
+std::string g_robot_name;
+
+typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
+
+template <class T>
+std::map<STATE_MACHINE_TASK, T> states_map_;
+
+/**
+ * @brief Checking if the input task is in the task list of the scout,
+ * if any new task is added, it should be added in common names and then to SCOUT_TASKS
+ * in operation/scout_state_machine.h
+ * 
+ * @param task COMMON_NAMES::STATE_MACHINE_TASK
+ * @return true 
+ * @return false 
+ */
+bool checkTask(STATE_MACHINE_TASK task)
+{
+	return SCOUT_TASKS.find(task) != SCOUT_TASKS.end();
+}
+
+bool execState(STATE_MACHINE_TASK req_task)
+{
+	bool output = false;
+	// bool entry_point = states_map_[req_task]->entryPoint();
+	// if(entry_point)
+	// 	output = states_map_[req_task]->exec();
+	// else 
+	// 	ROS_ERROR("Searching failed in entryPoint");
+	return output;
+}
+
+/**
+ * @brief Function which gets executed when any goal is received to actionlib
+ * 
+ * @param goal for action lib
+ * @param as variable to send feedback
+ * @param sm ScoutStateMachine object
+ */
+void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as)
+{
+	ROS_INFO_STREAM("Received " << g_robot_name << "  State Machine Goal: " << goal->task);
+
+	state_machines::RobotStateMachineTaskResult result;
+	STATE_MACHINE_TASK robot_state = (STATE_MACHINE_TASK)goal->task;
+
+	if (!checkTask(robot_state))
+	{
+		// the class is not valid, send the appropriate result
+		result.result = COMMON_NAMES::COMMON_RESULT::INVALID_GOAL;
+		as->setAborted(result, "Invalid Task");
+		ROS_ERROR_STREAM("Invalid Task - " << g_robot_name << " State Machine");
+		return;
+	}
+
+	static STATE_MACHINE_TASK curr_state;
+	curr_state = robot_state;
+	bool output = false;
+
+	switch (robot_state)
+	{
+	// case STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE:
+	// 	execState(SCOUT_SEARCH_VOLATILE, search_state);
+	// 	break;
+	// case STATE_MACHINE_TASK::SCOUT_LOCATE_VOLATILE:
+	// 	execState(SCOUT_LOCATE_VOLATILE, locate_state);
+	// 	break;
+	// case STATE_MACHINE_TASK::SCOUT_UNDOCK:
+	// 	execState(SCOUT_UNDOCK, undock_state);
+	// 	break;
+	default:
+		ROS_ERROR_STREAM(g_robot_name + " state machine encountered unhandled state!");
+		break;
+	}
+	result.result = output ? COMMON_NAMES::COMMON_RESULT::SUCCESS : COMMON_NAMES::COMMON_RESULT::FAILED;
+	as->setSucceeded(result);
+
+	ROS_INFO_STREAM(g_robot_name << "Goal Finished "<< output);
+
+	return;
+}
+
+void initStates(const ros::NodeHandle& nh, const std::string& robot_name)
+{
+	Undock undock_state(nh, robot_name);
+	Search search_state(nh, robot_name);
+	Locate locate_state(nh, robot_name);
+
+	// states_map_.insert(std::pair<STATE_MACHINE_TASK, Undock>(SCOUT_UNDOCK, undock_state));
+	// states_map_[SCOUT_UNDOCK] = undock_state;
+	// states_map_[SCOUT_SEARCH_VOLATILE] = search_state;
+	// states_map_[SCOUT_LOCATE_VOLATILE] = locate_state;
+}
 
 int main(int argc, char *argv[])
 {
-	// if (argc != 2 && argc != 4)
-	// {
-	// 	ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
-	// 	return -1;
-	// }
+	if (argc != 2 && argc != 4)
+	{
+		ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
+		return -1;
+	}
 
-	std::string g_robot_name = argv[1];
+	g_robot_name = argv[1];
 
 	ros::init(argc, argv, g_robot_name + "_sm");
 	ros::NodeHandle nh;
 
-	// ScoutBaseState base_state(nh, g_robot_name);
-	// Undock undock(nh, g_robot_name);
-	// bool undock_entry = undock.entryPoint();
-	// if (undock_entry)
-	// {
-	// 	ROS_INFO("Undocking!");
-	// 	undock.exec();
-	// 	ROS_INFO_STREAM("exitPoint: "<<undock.exitPoint());
-	// }
-	// else
-	// {
-	// 	ROS_INFO("Not Undocking");
-	// }
-	Locate locate(nh, g_robot_name);
-	if(locate.entryPoint())
-	{
-		ROS_INFO("Lcoating");
-		locate.exec();
-		ros::Duration(10).sleep();
-		locate.exitPoint();
-	}
-	else
-	{
-		ROS_INFO("Not Near Volatile, not locating");
-	}
+	// ScoutStateMachine *sm = new ScoutStateMachine(nh, g_robot_name);
+	initStates(nh, g_robot_name);
+
+	SM_SERVER server(nh, g_robot_name + COMMON_NAMES::STATE_MACHINE_ACTIONLIB, boost::bind(&execute, _1, &server), false);
+	// server.registerPreemptCallback(boost::bind(&cancelGoal, sm));
+	server.start();
+
+	ROS_INFO("Started Scout State Machine Actionlib Server");
+	ros::spin();
+
+	ROS_WARN("Scout state machine died!\n");
+
 	return 0;
 }
