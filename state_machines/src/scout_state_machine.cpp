@@ -41,6 +41,7 @@ void ScoutBaseState::objectsCallback(const perception::ObjectArray::ConstPtr obj
 
 bool ScoutBaseState::entryPoint()
 {
+  ROS_INFO("NNNNNNNOOOOOOOOOOOOOOOOO");
   return true;
 }
 
