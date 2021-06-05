@@ -53,7 +53,8 @@ bool ScoutStateMachine::solarRecharge()
 
     naviagtion_client_->sendGoal(  );
     navigation_client_->waitForResult();
-    return (navigation_client_->getState() == actionLib::SimpleClientGoalState::SUCCEEDED);
+    //return (navigation_client_->getState() == actionLib::SimpleClientGoalState::SUCCEEDED);
+    return true;
 }
 
 bool ScoutStateMachine::stopSearchingVolatile()
