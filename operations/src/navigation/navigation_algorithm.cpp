@@ -222,6 +222,13 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 
 	// Get the next waypoint in the robot's frame
 	geometry_msgs::PoseStamped waypoint_relative_to_robot = current_waypoint;
+  //// CHANGE BY ASHAY ////
+  //  This will only provide the 'latest' trnasform irrespective of
+  // the timestamp requested. I don't see a case in which we would need
+  // to inquire the past transform, so this can leave be. But we must know
+  // that currently we cannot fetch the past transform, and will only get 
+  // the latest one. 
+  waypoint_relative_to_robot.header.stamp = ros::Time(0);
   transformPose(waypoint_relative_to_robot, robot_name + ROBOT_CHASSIS, tf_buffer, 0.1);
 
   //Get the change in yaw between the two poses with atan2
@@ -260,7 +267,7 @@ double NavigationAlgo::changeInOrientation(const geometry_msgs::PoseStamped& des
 bool NavigationAlgo::transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries)
 {
   int count = 0;
-  while(count < tries)
+  while(count++ < tries)
   {
     try
     {
@@ -270,6 +277,7 @@ bool NavigationAlgo::transformPose(geometry_msgs::PoseStamped& pose, const std::
     catch(tf2::ExtrapolationException e)
     {
       // do nothing, this is fine if count < tries
+      ros::Duration(0.1).sleep();
       ros::spinOnce();
     }
   }

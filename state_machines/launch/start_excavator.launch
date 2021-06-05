@@ -13,6 +13,10 @@
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
     </include>
 
+	<include file="$(find planning)/launch/planner.launch">
+			<arg name="robot_name" value="$(arg robot_name)" />
+	</include>
+
     <include unless="$(arg use_cheat_odom)" file="$(find maploc)/launch/mapping.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
         <arg name="output" value="log" />
