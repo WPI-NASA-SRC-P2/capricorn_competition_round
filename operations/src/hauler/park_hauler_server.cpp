@@ -47,8 +47,8 @@ std::mutex g_hauler_objects_mutex, g_excavator_objects_mutex, g_cancel_goal_mute
 bool g_hauler_message_received = false, g_excavator_message_received = false;
 
 // global variables for park excavator
-const int ROBOT_ANTENNA_HEIGHT_THRESH = 110, HAULER_HEIGHT_THRESH = 180, ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESH_WIDE = 100, EXCAVATOR_TIMES_DETECT_TIMES = 10, EXCAVATOR_HEIGHT_THRESH = 300;
-const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0;
+const int HAULER_HEIGHT_THRESH = 130, ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESH_WIDE = 100, EXCAVATOR_TIMES_DETECT_TIMES = 10, EXCAVATOR_HEIGHT_THRESH = 300;
+const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0, ROBOT_ANTENNA_DEPTH_THRESH = 1.8;
 bool g_parked = false, g_found_orientation = false, g_cancel_called = false, g_revolve_direction_set = false;
 float g_revolve_direction = EXC_FORWARD_VELOCITY;
 int g_times_excavator = 0;
@@ -296,7 +296,7 @@ void setRevolveDirection(float hauler_center, float exc_center, float exc_arm_ce
         g_revolve_direction = (hauler_center > center_img) ? EXC_FORWARD_VELOCITY : -EXC_FORWARD_VELOCITY;
         g_revolve_direction_set = true;
     }
-    if (!g_revolve_direction_set)
+    else if (!g_revolve_direction_set)
     {
         // this would only run once when the hauler reaches the excavator, not to change the revolve direction when excavator arm's direction changes wrt to excavator
         if (exc_center > -1 && exc_arm_center > -1)
@@ -323,7 +323,7 @@ void parkWrtExcavator()
 
     getObjects(hauler_objects, exc_objects);
 
-    float center_exc = INIT_VALUE, height_exc = INIT_VALUE, z_exc = INIT_VALUE, height_hauler_ra = INIT_VALUE, center_exc_arm = INIT_VALUE, center_hauler = INIT_VALUE;
+    float center_exc = INIT_VALUE, height_exc = INIT_VALUE, z_exc = INIT_VALUE, depth_hauler_ra = INIT_VALUE, center_exc_arm = INIT_VALUE, center_hauler = INIT_VALUE;
 
     static bool prev_centered = false;
 
@@ -354,7 +354,7 @@ void parkWrtExcavator()
             float center_img = (WIDTH_IMAGE / 2.0);
             float error_angle = center_img - center_hauler;
 
-            if (abs(error_angle) < ANGLE_THRESHOLD_NARROW)
+            if (error_angle > 0 && error_angle < ANGLE_THRESHOLD_NARROW)
             {
                 ROS_INFO("HAULER's ORIENTATION CORRECT");
                 g_found_orientation = true;
@@ -364,14 +364,16 @@ void parkWrtExcavator()
         bool is_robot_antenna = (object.label == COMMON_NAMES::OBJECT_DETECTION_ROBOT_ANTENNA_CLASS);
         if (is_robot_antenna)
         {
-            height_hauler_ra = object.size_y;
+            depth_hauler_ra = object.point.pose.position.z;
         }
     }
+
+    setRevolveDirection(center_hauler, center_exc, center_exc_arm);
 
     if (g_found_orientation)
     {
         // if the required orientation is found, drive forward till hauler's robot antenna's height (in pixels) exceeds a minimum threshold
-        if (height_hauler_ra > ROBOT_ANTENNA_HEIGHT_THRESH)
+        if (depth_hauler_ra < ROBOT_ANTENNA_DEPTH_THRESH && depth_hauler_ra > INIT_VALUE)
         {
             g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = 0;
@@ -381,7 +383,6 @@ void parkWrtExcavator()
             return;
         }
 
-        ROS_INFO("Moving Straight");
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = EXC_FORWARD_VELOCITY;
         g_nav_goal.angular_velocity = 0;
@@ -408,7 +409,6 @@ void parkWrtExcavator()
         findExcavator();
     }
 
-    setRevolveDirection(center_hauler, center_exc, center_exc_arm);
     // rotate robot around excavator
     geometry_msgs::PointStamped pt;
     pt.point.x = (center_exc > 0) ? ROBOT_RADIUS + z_exc : DEFAULT_RADIUS;
