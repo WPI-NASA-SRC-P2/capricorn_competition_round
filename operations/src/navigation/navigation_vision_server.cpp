@@ -462,7 +462,7 @@ void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
     {
         g_nav_goal.drive_mode = NAV_TYPE::GOAL;
         g_nav_goal.pose = goal_loc;
-        ROS_INFO_STREAM(g_robot_name<<" Outgoing nav vision goal"<<goal_loc);
+        ROS_INFO_STREAM(g_robot_name << " Outgoing nav vision goal" << goal_loc);
         if (g_previous_state_is_go_to)
         {
             g_send_nav_goal = false;
@@ -489,30 +489,25 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     static int object_found_frames = 0;
 
-    if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    if (object_found_frames > 10)
     {
-        ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached GoTo Goal");
-        g_reached_goal = true;
-    }
-
-    if(object_found_frames > 10)
-    {
-        ROS_INFO("Going to vision navigation");
+        // ROS_INFO("Going to vision navigation");
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
         visionNavigation();
-        if(g_reached_goal)
+        if (g_reached_goal)
         {
             object_found_frames = 0;
         }
         return;
     }
 
-    if(g_send_nav_goal)
+    if (g_send_nav_goal)
     {
         object_found_frames = 0;
         g_nav_goal.drive_mode = NAV_TYPE::GOAL;
-        g_nav_goal.pose = goal_loc;        
+        g_nav_goal.pose = goal_loc;
+        g_client->sendGoal(g_nav_goal);
         if (g_previous_state_is_go_to)
         {
             g_send_nav_goal = false;
@@ -520,15 +515,23 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         g_previous_state_is_go_to = true;
     }
 
+    if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        // ROS_INFO("Going to vision navigation");
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_send_nav_goal = true;
+        visionNavigation();
+    }
+
     const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
     double distance = NavigationAlgo::changeInPosition(g_robot_pose, goal_loc);
 
-    if(distance > 20)
+    if (distance > 20)
     {
         return;
     }
 
-    ROS_INFO("Looking for object");
+    // ROS_INFO("Looking for object");
 
     bool object_found = false;
 
@@ -542,7 +545,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         perception::Object object = objects.obj.at(i);
         if (object.label == g_desired_label)
         {
-            ROS_INFO("Found object");
+            // ROS_INFO("Found object");
             // Store the object's center
             object_found = true;
         }
@@ -686,9 +689,9 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
  */
 void odomCallback(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  const std::lock_guard<std::mutex> lock(g_odom_mutex);
-  g_robot_pose.header = msg->header;
-  g_robot_pose.pose = msg->pose.pose;
+    const std::lock_guard<std::mutex> lock(g_odom_mutex);
+    g_robot_pose.header = msg->header;
+    g_robot_pose.pose = msg->pose.pose;
 }
 
 int main(int argc, char **argv)
