@@ -188,13 +188,6 @@ target_link_libraries(start_nav_server ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
-
-add_executable(trajectory_processor src/clients/trajectory_processor.cpp)
-add_dependencies(trajectory_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(trajectory_processor
-  ${catkin_LIBRARIES}
-)
-
 add_executable(wheel_speed_processing src/navigation/wheel_speed_processing.cpp)
 add_dependencies(wheel_speed_processing ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(wheel_speed_processing
@@ -317,7 +310,7 @@ ${catkin_LIBRARIES}
 ## in contrast to setup.py, you can choose the destination
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS navigation_client trajectory_processor wheel_speed_processing
+install(TARGETS navigation_client wheel_speed_processing
                 excavator_actionlib_client hauler_actionlib_server #excavator_actionlib_server
                 hauler_actionlib_client resource_localiser resource_localiser_tester
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
