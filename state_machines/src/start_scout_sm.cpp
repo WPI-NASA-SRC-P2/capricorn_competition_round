@@ -20,7 +20,9 @@ std::string g_robot_name;
 
 typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
 
-std::map<STATE_MACHINE_TASK, ScoutBaseState*> states_map_;
+Undock* undock_state;
+Search* search_state;
+Locate* locate_state;
 
 /**
  * @brief Checking if the input task is in the task list of the scout,
@@ -36,18 +38,17 @@ bool checkTask(STATE_MACHINE_TASK task)
 	return SCOUT_TASKS.find(task) != SCOUT_TASKS.end();
 }
 
-// template<class T>
-// bool execState(T state_class)
-// {
-// 	bool output = false;
-// 	bool entry_point = state_class->entryPoint();
-// 	ROS_INFO("Okay....");
-// 	if(entry_point)
-// 		output = state_class->exec();
-// 	else 
-// 		ROS_ERROR("Searching failed in entryPoint");
-// 	return output;
-// }
+template <class T>
+bool execState(T state_class_obj)
+{
+	bool output = false;
+	bool entry_point = state_class_obj->entryPoint();
+	if(entry_point)
+		output = state_class_obj->exec();
+	else 
+		ROS_ERROR_STREAM("Scout State failed in entryPoint");
+	return output;
+}
 
 /**
  * @brief Function which gets executed when any goal is received to actionlib
@@ -75,16 +76,22 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	static STATE_MACHINE_TASK curr_state;
 	curr_state = robot_state;
 	bool output = false;
-	// output = execState<ScoutBaseState*>(states_map_<ScoutBaseState*>[robot_state]);
-	states_map_[robot_state]->entryPoint();
-	ROS_INFO_STREAM("Output:"<<output);
-	
-	// bool entry_point = states_map_[req_task]->entryPoint();
-	// if(entry_point)
-	// 	output = states_map_[req_task]->exec();
-	// else 
-	// 	ROS_ERROR("Searching failed in entryPoint");
-	
+
+	switch (robot_state)
+	{
+		case STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE:
+			execState<Search*>(search_state);
+			break;
+		case STATE_MACHINE_TASK::SCOUT_LOCATE_VOLATILE:
+			execState<Locate*>(locate_state);
+			break;
+		case STATE_MACHINE_TASK::SCOUT_UNDOCK:
+			execState<Undock*>(undock_state);
+			break;
+		default:
+			ROS_ERROR_STREAM(g_robot_name + " state machine encountered unhandled state!");
+			break;
+	}
 
 	result.result = output ? COMMON_NAMES::COMMON_RESULT::SUCCESS : COMMON_NAMES::COMMON_RESULT::FAILED;
 	as->setSucceeded(result);
@@ -96,9 +103,9 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 
 void initStates(const ros::NodeHandle& nh, const std::string& robot_name)
 {
-	states_map_.insert(std::make_pair<STATE_MACHINE_TASK, Undock*>(SCOUT_UNDOCK, new Undock(nh, robot_name)));
-	states_map_.insert(std::make_pair<STATE_MACHINE_TASK, Search*>(SCOUT_SEARCH_VOLATILE, new Search(nh, robot_name)));
-	states_map_.insert(std::make_pair<STATE_MACHINE_TASK, Locate*>(SCOUT_LOCATE_VOLATILE, new Locate(nh, robot_name)));
+	undock_state = new Undock(nh, robot_name);
+	search_state = new Search(nh, robot_name);
+	locate_state = new Locate(nh, robot_name);
 }
 
 int main(int argc, char *argv[])
