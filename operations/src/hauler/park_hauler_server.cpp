@@ -390,7 +390,7 @@ void parkWrtExcavator()
             times_depth_crossed = 0;
         }
 
-        if (times_depth_crossed > 1 || g_lost > 10)
+        if (times_depth_crossed > 2 || g_lost > 10)
         {
             g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = 0;
