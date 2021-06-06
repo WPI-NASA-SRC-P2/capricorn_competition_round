@@ -39,7 +39,7 @@ private:
 
     // Tolerances for linear and angular moves
     const float DIST_EPSILON = 0.1;
-    const float ANGLE_EPSILON = 0.2;
+    const float ANGLE_EPSILON = 0.1;
     const float SPIRAL_SPEED = 0.5;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
