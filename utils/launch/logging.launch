@@ -1,0 +1,10 @@
+<!--
+  Author: Mahimana Bhatt
+  Email: mbhatt@wpi.edu
+
+  Team Capricorn
+  NASA SPACE ROBOTICS CHALLENGE -->
+
+<launch>
+    <node name="logger" pkg="utils" type="logger" output="log" />
+</launch>
