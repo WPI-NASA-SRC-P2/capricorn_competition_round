@@ -65,36 +65,36 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 
 	switch (robot_state)
 	{
-	case STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOC:
+	case STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOC:            //Not here (The new nav+nav_vision mode)
 		ros::Duration(20).sleep();
 		output = sm->goToLoc(goal->goal_loc);
 		break;
-	case STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT:
-		output = sm->goToScout();
+	case STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT:           //Here
+		output = sm->goToLocObject(goal->goal_loc, COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS);
 		break;
-	case STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB:
+	case STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB:          //Not here
 		output = sm->parkExcavator();
 		break;
-	case STATE_MACHINE_TASK::EXCAVATOR_DIG_AND_DUMP_VOLATILE:
+	case STATE_MACHINE_TASK::EXCAVATOR_DIG_AND_DUMP_VOLATILE:  //Not here
 		output = sm->digAndDumpVolatile();
 		break;
-	case STATE_MACHINE_TASK::EXCAVATOR_GOTO_DEFAULT_ARM_POSE:
+	case STATE_MACHINE_TASK::EXCAVATOR_GOTO_DEFAULT_ARM_POSE: //Not here
 		output = sm->goToDefaultArmPosition();
 		break;
-	case STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM_GROUND_TRUTH:
+	case STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM_GROUND_TRUTH://Not here
 		output = sm->resetOdometry();
 		break;
-	case STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM:
+	case STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM:             //Not here
 		output = sm->resetOdometry(resetPose);
 		break;
-	case STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM:
+	case STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM:               //Not here
 		output = sm->syncOdometry(resetPose);
 		break;
-	case STATE_MACHINE_TASK::EXCAVATOR_FACE_PROCESSING_PLANT:
+	case STATE_MACHINE_TASK::EXCAVATOR_FACE_PROCESSING_PLANT:   //Not here
 		output = sm->faceProcessingPlant();
 		break;
-	case STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR:
-		output = sm->goToRepairStation();
+	case STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR:             //Here
+		output = sm->goToLocObject(goal->goal_loc, COMMON_NAMES::OBJECT_DETECTION_REPAIR_STATION_CLASS);
 		break;
 	default:
 		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");

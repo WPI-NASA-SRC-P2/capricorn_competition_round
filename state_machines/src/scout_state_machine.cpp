@@ -101,6 +101,21 @@ void ScoutStateMachine::volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPt
   near_volatile_ = !(msg->distance_to == -1);
 }
 
+/**
+ * @brief Used for sending scout to a specific location using both 3D location and visual navigation (helper function for other states)
+ * 
+ * @param target_loc @param target_object
+ */
+bool ScoutStateMachine::goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object)
+{
+  navigation_vision_goal_.desired_object_label = target_object;
+  navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_NAV_AND_NAV_VISION;
+  navigation_vision_goal_.goal_loc = target_loc;
+  navigation_vision_client_->sendGoal(navigation_vision_goal_);
+  navigation_vision_client_->waitForResult();
+  return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}
+
 bool ScoutStateMachine::resetOdometry(const geometry_msgs::PoseStamped &POSE)
 {
   resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);

@@ -128,7 +128,7 @@ bool HaulerStateMachine::goBackToExcavator(const geometry_msgs::PoseStamped &loc
 
 bool HaulerStateMachine::resetOdometry()
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Ressting odom with GT");
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Reseting odom with GT");
     resetHaulerOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
     maploc::ResetOdom srv;
     // srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
@@ -146,4 +146,14 @@ bool HaulerStateMachine::faceProcessingPlant()
     navigation_vision_client_->waitForResult();
 
     return navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+}
+
+bool HaulerStateMachine::goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object)
+{
+    navigation_vision_goal_.desired_object_label = target_object;
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_NAV_AND_NAV_VISION;
+    navigation_vision_goal_.goal_loc = target_loc;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }

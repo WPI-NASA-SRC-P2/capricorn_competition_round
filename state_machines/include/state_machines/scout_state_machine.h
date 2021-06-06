@@ -125,6 +125,14 @@ private:
    */
   void waitForServerConnections();
 
+  bool goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object);
+  /**
+   * @brief Goes to location with a combination of navigation and navigation vision 
+   * 
+   * @return true 
+   * @return false 
+   */
+
 public:
   ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name);
 
