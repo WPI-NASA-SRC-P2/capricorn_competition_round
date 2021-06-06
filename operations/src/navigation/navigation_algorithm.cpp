@@ -271,9 +271,7 @@ bool NavigationAlgo::transformPose(geometry_msgs::PoseStamped& pose, const std::
   {
     try
     {
-      //ROS_INFO("Didn't crash");
       pose = tf_buffer.transform(pose, frame, ros::Duration(duration));
-      //ROS_INFO("Still didn't crash!");
       return true;
     }
     catch(tf2::ExtrapolationException e)
