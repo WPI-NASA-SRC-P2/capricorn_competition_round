@@ -376,15 +376,7 @@ void parkWrtExcavator()
         static int times_depth_crossed = 0, g_lost = 0;
         static float last_depth = INIT_VALUE;
 
-        g_lost = ()
-        if(depth_hauler_ra == INIT_VALUE)
-        {
-
-        }
-        else
-        {
-            
-        }
+        g_lost = (depth_hauler_ra == INIT_VALUE) ? g_lost + 1 : 0;
 
         if (depth_hauler_ra < ROBOT_ANTENNA_DEPTH_THRESH && depth_hauler_ra != INIT_VALUE)
         {
@@ -398,7 +390,7 @@ void parkWrtExcavator()
             times_depth_crossed = 0;
         }
 
-        if (times_depth_crossed > 2 || g_lost > 10)
+        if (times_depth_crossed > 1 || g_lost > 10)
         {
             g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = 0;
