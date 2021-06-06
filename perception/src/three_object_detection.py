@@ -17,6 +17,13 @@ and then published in perception/Objects message
 
 from object_detection_cap_lib import *
 
+g_scout_image = None
+g_scout_disparity = None
+g_excavator_image = None
+g_excavator_disparity = None
+g_hauler_image = None
+g_hauler_disparity = None
+
 
 def detectionCallback(
     scout_image,
