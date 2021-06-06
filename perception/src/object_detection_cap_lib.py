@@ -25,10 +25,10 @@ from object_detection.utils import visualization_utils as vis_util
 
 physical_devices = tf.config.list_physical_devices("GPU")
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
-tf.config.experimental.set_virtual_device_configuration(
-    physical_devices[0],
-    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=800)],
-)
+# tf.config.experimental.set_virtual_device_configuration(
+#     physical_devices[0],
+#     [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=800)],
+# )
 
 K = [381.36246688113556, 0.0, 320.5, 0.0, 381.36246688113556, 240.5, 0.0, 0.0, 1.0]
 Fx = K[0]
@@ -253,7 +253,6 @@ def overlayInfoImage(result, image_np):
 def detectionAlgorithm(
     category_index, model_fn, image, disparity, img_pub, disp_pub, robot_name
 ):
-    rospy.loginfo_once("Object Detection Algorithm Working")
 
     # getting buffered global image and disparity from callback
     image_np = image.copy()
@@ -265,7 +264,7 @@ def detectionAlgorithm(
 
     # run object detection on input image
     output_dict = model_fn(input_tensor)
-    rospy.logwarn_once("Started Object Detection Finally")
+    rospy.loginfo_once("Started Object Detection Finally")
 
     # processing object detected data
     num_detections = int(output_dict.pop("num_detections"))
