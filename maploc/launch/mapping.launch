@@ -18,6 +18,9 @@
     <!--Use true arg wisely, as you will need to restart the simulation if you have used the true pose-->
     <arg name="get_true_pose" default="true"/>
 
+    <!-- COMMENT THIS PART OUT FOR PR, FOR TESTING ONLY -->
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /odom /map 100" />
+
     <!-- Launch the unified coordinates rtabmap (copied from compare_rtab_odom.launch)-->
     <include file="$(find maploc)/launch/rtabmap.launch">
       <arg name="robot_name" value="$(arg robot_name)"/>
@@ -28,6 +31,9 @@
     
     <!-- The node "initialize_rtabmap" is launhed with a delay of $node_start_delay, as it takes some time for the client to become available, without delay the execution sometimes get stuck at "Rtabmap client loaded" -->
     <node name="$(arg robot_name)_initialize_rtabmap" pkg="maploc" type="initialize_rtabmap" output="screen" args="$(arg robot_name) $(arg get_true_pose)" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "/>
+
+    <!-- Launch the mapfix new frame -->
+    <!-- <node name="$(arg robot_name)_map_centering_frame" pkg="maploc" type="map_centering_frame.py" output="screen" /> -->
 
     <!-- Launch the 20x20 object detection map-->
     <node name="$(arg robot_name)_localmap" pkg="maploc" type="obstacle_localmaps.py" output="screen" args="$(arg robot_name)" />

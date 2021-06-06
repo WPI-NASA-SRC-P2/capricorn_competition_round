@@ -18,6 +18,10 @@ from perception.msg import ObjectArray
 # tf2 req
 import tf_conversions
 import tf2_ros
+import tf2_msgs.msg
+# from geometry_msgs.msg import TransformStamped
+import geometry_msgs.msg
+import tf2_geometry_msgs
 
 
 class ObjectPlotter:
@@ -36,6 +40,8 @@ class ObjectPlotter:
         self.object_sub = rospy.Subscriber("/capricorn/" + self.robot_name + "/object_detection/objects", ObjectArray, self.objectCb)
         # occupancy grid publisher
         self.occGridPub = rospy.Publisher("/capricorn/" + self.robot_name + "/object_detection_map", OccupancyGrid, queue_size=1)
+        #publisher for transformed frame
+        # self.pub_tf = rospy.Publisher("/tf", tf2_msgs.msg.TFMessage, queue_size=1)
 
     # subscriber callback to robot pose, updates robot pose as it moves
     def robotCb(self, odom):
@@ -43,6 +49,7 @@ class ObjectPlotter:
         # print(f'Robot Pose Received: {self.robot_pose}')
         # TODO: FOR TESTING PURPOSES ONLY:
         # rospy.loginfo("Robot Pose Received")
+        # self.new_frame()
         self.updateMap()
 
     # subscriber callback to object detection, updates detected obstacle list
@@ -53,21 +60,61 @@ class ObjectPlotter:
         # rospy.loginfo(f'Map has updated: First object at {self.obj_list.obj[0].center}, No. of objects: {len(self.obj_list.obj)}')
 
     # initialize/refresh the blank 20x20 map centered on the robot
+    
+    # set up new frame for bottom corner of map, to publish map w.r.t. robot center
+    # def new_frame(self):
+    #   t = geometry_msgs.msg.TransformStamped()
+    #   t.header.frame_id = self.robot_name + "_base_footprint"
+    #   t.header.stamp = rospy.Time.now()
+    #   t.child_frame_id = self.robot_name + "_map_center"
+    #   t.transform.translation.x = -10.0
+    #   t.transform.translation.y = -10.0
+    #   t.transform.translation.z = 0.0
+
+    #   t.transform.rotation.x = 0.0
+    #   t.transform.rotation.y = 0.0
+    #   t.transform.rotation.z = 0.0
+    #   t.transform.rotation.w = 1.0
+
+    #   tfm = tf2_msgs.msg.TFMessage([t])
+    #   self.pub_tf.publish(tfm)
+      
     def resetOccGrid(self):
         metadata = MapMetaData()
         # define dimensions of blank occupancy grid
         # resolution units are (m/pixel), value of 0.05 matches rtabmap resolution
         metadata.resolution = 0.05  
         # sets the map to be 20m x 20m regardless of resolution
-        metadata.width = int(20 / metadata.resolution)  
+        metadata.width = int(40 / metadata.resolution)  
         metadata.height = int(20 / metadata.resolution)
 
-        origin_pose = self.robot_pose.pose
+        #Listening to transform between 
+        tf_buffer = tf2_ros.Buffer()
+        listener = tf2_ros.TransformListener(tf_buffer)
+        count = 0
+        rate = rospy.Rate(10.0)
+        while count < 5:
+            try:
+                trans_map = tf_buffer.lookup_transform(
+                self.robot_name + "_base_footprint",
+                self.robot_name + "_map_center",
+                # grabs most recent transform
+                rospy.Time(0),
+                )
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                rate.sleep()
+                continue
+            count += 1
+          
+        # origin_pose = self.robot_pose.pose         
+        origin_pose = tf2_geometry_msgs.do_transform_pose(self.robot_pose, trans_map)
         # offset the map such that the bottom left of the map is -10m x -10m to the bottom left of the robot
         # thus making the robot pose be the center of the map
-        origin_pose.position.x -= 10
-        origin_pose.position.y -= 10
-        metadata.origin = origin_pose
+        # origin_pose.position.x = (self.robot_pose.pose.position.x - 10)*np.cos(self.robot_pose.pose.orientation.w)
+        # origin_pose.position.y = (self.robot_pose.pose.position.y - 10)*np.sin(self.robot_pose.pose.orientation.w)
+        # origin_pose.position.x = self.robot_pose.pose.position.x - 10
+        # origin_pose.position.y = self.robot_pose.pose.position.y - 10
+        metadata.origin = origin_pose.pose
 
         # set up the 2D OccupancyGrid with robot base frame as origin
         # - the origin is at bottom left. The origin will be translated to the center of the map in plotting function and publishing
@@ -75,8 +122,9 @@ class ObjectPlotter:
         # initialize map data as all zeros
         UNOCCUPIED = 0
         self.occ_grid.data = ([UNOCCUPIED] * self.occ_grid.info.width * self.occ_grid.info.height)
-        # self.occ_grid.header.frame_id = self.robot_name + "_base_footprint"
-        self.occ_grid.header.frame_id = "map"
+        self.occ_grid.header.frame_id = self.robot_name + "_base_footprint"
+        # self.occ_grid.header.frame_id = "map"
+        # self.occ_grid.header.frame_id = self.robot_name + "_map_center"
 
     # transform the object list from camera frame to base frame
     # TODO: This function is in progress, it is not called in the code at the moment so it should not impact the launch
@@ -105,8 +153,8 @@ class ObjectPlotter:
     # 100 = obstacle, -1 = unexplored, 0 = free
     def addObstacle(self, obx, oby, radius):
         # plot everything w.r.t. center of the grid
-        obx = obx + 10
-        oby = oby + 10
+        # obx = obx + 10
+        # oby = oby + 10
         # convert meters to pixels
         obx_p = obx / self.occ_grid.info.resolution
         oby_p = oby / self.occ_grid.info.resolution
