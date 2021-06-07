@@ -60,25 +60,6 @@ class ObjectPlotter:
         # rospy.loginfo(f'Map has updated: First object at {self.obj_list.obj[0].center}, No. of objects: {len(self.obj_list.obj)}')
 
     # initialize/refresh the blank 20x20 map centered on the robot
-    
-    # set up new frame for bottom corner of map, to publish map w.r.t. robot center
-    # def new_frame(self):
-    #   t = geometry_msgs.msg.TransformStamped()
-    #   t.header.frame_id = self.robot_name + "_base_footprint"
-    #   t.header.stamp = rospy.Time.now()
-    #   t.child_frame_id = self.robot_name + "_map_center"
-    #   t.transform.translation.x = -10.0
-    #   t.transform.translation.y = -10.0
-    #   t.transform.translation.z = 0.0
-
-    #   t.transform.rotation.x = 0.0
-    #   t.transform.rotation.y = 0.0
-    #   t.transform.rotation.z = 0.0
-    #   t.transform.rotation.w = 1.0
-
-    #   tfm = tf2_msgs.msg.TFMessage([t])
-    #   self.pub_tf.publish(tfm)
-      
     def resetOccGrid(self):
         metadata = MapMetaData()
         # define dimensions of blank occupancy grid
@@ -88,6 +69,8 @@ class ObjectPlotter:
         metadata.width = int(40 / metadata.resolution)  
         metadata.height = int(20 / metadata.resolution)
 
+        # offset the map such that the bottom left of the map is -10m x -10m to the bottom left of the robot
+        # thus making the robot pose be the center of the map
         #Listening to transform between 
         tf_buffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tf_buffer)
@@ -106,14 +89,9 @@ class ObjectPlotter:
                 continue
             count += 1
           
-        # origin_pose = self.robot_pose.pose         
+        # complete the offset using the transform  
         origin_pose = tf2_geometry_msgs.do_transform_pose(self.robot_pose, trans_map)
-        # offset the map such that the bottom left of the map is -10m x -10m to the bottom left of the robot
-        # thus making the robot pose be the center of the map
-        # origin_pose.position.x = (self.robot_pose.pose.position.x - 10)*np.cos(self.robot_pose.pose.orientation.w)
-        # origin_pose.position.y = (self.robot_pose.pose.position.y - 10)*np.sin(self.robot_pose.pose.orientation.w)
-        # origin_pose.position.x = self.robot_pose.pose.position.x - 10
-        # origin_pose.position.y = self.robot_pose.pose.position.y - 10
+        # set the origin such that the center of the map correspond the robot base_footprint frame
         metadata.origin = origin_pose.pose
 
         # set up the 2D OccupancyGrid with robot base frame as origin

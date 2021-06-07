@@ -3,11 +3,13 @@ import rospy
 import tf2_ros
 import tf2_msgs.msg
 import geometry_msgs.msg
+import sys
 
 
 class FixedTFBroadcaster:
 
     def __init__(self):
+        self.robot_name = str(sys.argv[1])
         self.pub_tf = rospy.Publisher("/tf", tf2_msgs.msg.TFMessage, queue_size=1)
 
         while not rospy.is_shutdown():
@@ -15,9 +17,9 @@ class FixedTFBroadcaster:
             rospy.sleep(0.1)
 
             t = geometry_msgs.msg.TransformStamped()
-            t.header.frame_id = "small_scout_1_base_footprint"
+            t.header.frame_id = self.robot_name + "_base_footprint"
             t.header.stamp = rospy.Time.now()
-            t.child_frame_id = "small_scout_1_map_origin"
+            t.child_frame_id = self.robot_name + "_map_origin"
             t.transform.translation.x = -10.0
             t.transform.translation.y = -10.0
             t.transform.translation.z = 0.0
