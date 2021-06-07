@@ -40,6 +40,8 @@ int main(int argc, char **argv)
     goal.desired_object_label = std::string(argv[2]);
     goal.mode = std::stoi(argv[3]);
     geometry_msgs::PoseStamped zero_point;
+    zero_point.pose.position.x = std::stoi(argv[4]);
+    zero_point.pose.position.y = std::stoi(argv[5]);
     zero_point.header.frame_id = "map";
     goal.goal_loc = zero_point;
     client.sendGoal(goal);

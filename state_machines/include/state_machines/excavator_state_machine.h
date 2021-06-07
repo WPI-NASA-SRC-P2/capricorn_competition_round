@@ -136,6 +136,13 @@ private:
    * @return true : if task is successful.
    * @return false : if task is failed or aborted or interrupted
    */
+  bool goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object);
+  /**
+   * @brief Goes to location with a combination of navigation and navigation vision 
+   * 
+   * @return true 
+   * @return false 
+   */
 
 public:
   ExcavatorStateMachine(ros::NodeHandle nh, const std::string &robot_name);

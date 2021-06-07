@@ -91,7 +91,8 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
         output = sm->parkAtExcavator();
         break;
     case STATE_MACHINE_TASK::HAULER_GO_TO_PROC_PLANT:
-        output = sm->goToProcPlant();
+        output = sm->goToLocObject(goal->goal_loc, COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
+        // output = sm->goToProcPlant();
         break;
     case STATE_MACHINE_TASK::HAULER_PARK_AT_HOPPER:
         output = sm->parkAtHopper();
@@ -109,7 +110,8 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
         output = sm->dumpVolatileToProcPlant();
         break;
     case STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR:
-        output = sm->goBackToExcavator(goal->goal_loc);
+        output = sm->goToLocObject(goal->goal_loc, COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS);
+        // output = sm->goBackToExcavator(goal->goal_loc);
         break;
     case STATE_MACHINE_TASK::HAULER_RESET_ODOM: //Reset odometry when it goes to processing plant
         output = sm->resetOdometry();

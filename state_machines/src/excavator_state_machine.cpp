@@ -26,6 +26,16 @@ bool ExcavatorStateMachine::goToLoc(const geometry_msgs::PoseStamped &loc)
     return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
+bool ExcavatorStateMachine::goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object)
+{
+    navigation_vision_goal_.desired_object_label = target_object;
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_NAV_AND_NAV_VISION;
+    navigation_vision_goal_.goal_loc = target_loc;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}
+
 bool ExcavatorStateMachine::goToScout()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Going to Scout");
