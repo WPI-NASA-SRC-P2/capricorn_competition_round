@@ -71,7 +71,7 @@ void NavigationServer::initSteerPublisher(ros::NodeHandle& nh, const std::string
  */
 void NavigationServer::initDebugPublishers(ros::NodeHandle& nh, const std::string& robot_name)
 {
-	waypoint_pub_ = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + robot_name + "/current_waypoint", 1000);
+	waypoint_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/vis_poses", 1000);
 }
 
 /**
@@ -102,6 +102,22 @@ geometry_msgs::PoseStamped* NavigationServer::getRobotPose()
 {
 	std::lock_guard<std::mutex> pose_lock(pose_mutex_);
 	return &robot_pose_;
+}
+
+// TODO: Move to not here
+void NavigationServer::publishWaypoints(std::vector<geometry_msgs::PoseStamped> waypoints)
+{
+	visualization_msgs::MarkerArray markers;
+
+	for(auto pose : waypoints)
+	{
+		visualization_msgs::Marker marker;
+
+		marker.pose = pose.pose;
+		markers.markers.push_back(marker);
+	}
+
+	waypoint_pub_.publish(markers);
 }
 
 /**
