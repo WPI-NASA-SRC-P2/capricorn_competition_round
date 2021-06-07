@@ -97,7 +97,7 @@ class ObjectPlotter:
             try:
                 trans_map = tf_buffer.lookup_transform(
                 self.robot_name + "_base_footprint",
-                self.robot_name + "_map_center",
+                self.robot_name + "_map_origin",
                 # grabs most recent transform
                 rospy.Time(0),
                 )
@@ -128,26 +128,37 @@ class ObjectPlotter:
 
     # transform the object list from camera frame to base frame
     # TODO: This function is in progress, it is not called in the code at the moment so it should not impact the launch
-    def transform(self, old_x, old_y, robotname):
+    def transform(self, old_x, old_y):
         # rate = rospy.Rate(10)
+        old_pose = PoseStamped()
+        old_pose.pose.position.x = old_x
+        old_pose.pose.position.y = old_y
+        old_pose.pose.orientation.w = 1.0
+        old_pose.header.frame_id = self.robot_name + "_map_origin"
+        old_pose.header.stamp = rospy.Time(0)
+
+        #Listening to transform between 
         tf_buffer = tf2_ros.Buffer()
         listener = tf2_ros.TransformListener(tf_buffer)
-        new_x = old_x
-        new_y = old_y
-        print("inside transform function")
-        # try:
-        trans = tf_buffer.lookup_transform(
-            robotname + "_base_footprint",
-            robotname + "_left_camera_optical",
-            # grabs most recent transform
-            rospy.Time(0),
-        )
-        new_x = trans.transform.translation.x + old_x
-        new_y = trans.transform.translation.y + old_y
-        print("Transform works")
-        # except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-        #    rospy.sleep(0.1)
-        return new_x, new_y
+        count = 0
+        rate = rospy.Rate(10.0)
+        while count < 5:
+            try:
+                trans_obj = tf_buffer.lookup_transform(
+                self.robot_name + "_map_origin",
+                self.robot_name + "_base_footprint",
+                # grabs most recent transform
+                rospy.Time(0),
+                )
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                rate.sleep()
+                continue
+            count += 1
+          
+        # origin_pose = self.robot_pose.pose         
+        centered_obj = tf2_geometry_msgs.do_transform_pose(old_pose, trans_obj)
+        
+        return centered_obj.pose.position.x, centered_obj.pose.position.y
 
     # plot single object on the occupancy grid
     # 100 = obstacle, -1 = unexplored, 0 = free
@@ -215,7 +226,7 @@ class ObjectPlotter:
                 oby = -obj.point.pose.position.x
 
                 # placeholder for transform method again
-                # obx, oby = self.transform(obx, oby, self.robot_name)
+                obx, oby = self.transform(obx, oby)
 
                 # set radius of object to be plotted based on the width of the bounding box observed
                 radius = (obj.width) / 2

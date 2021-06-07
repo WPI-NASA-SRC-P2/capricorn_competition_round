@@ -17,7 +17,7 @@ class FixedTFBroadcaster:
             t = geometry_msgs.msg.TransformStamped()
             t.header.frame_id = "small_scout_1_base_footprint"
             t.header.stamp = rospy.Time.now()
-            t.child_frame_id = "small_scout_1_map_center"
+            t.child_frame_id = "small_scout_1_map_origin"
             t.transform.translation.x = -10.0
             t.transform.translation.y = -10.0
             t.transform.translation.z = 0.0
