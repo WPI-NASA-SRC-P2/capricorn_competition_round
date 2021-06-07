@@ -474,7 +474,7 @@ void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
     {
         g_nav_goal.drive_mode = NAV_TYPE::GOAL;
         g_nav_goal.pose = goal_loc;
-        ROS_INFO_STREAM(g_robot_name << " Outgoing nav vision goal" << goal_loc);
+        // ROS_INFO_STREAM(g_robot_name << " Outgoing nav vision goal" << goal_loc);
         if (g_previous_state_is_go_to)
         {
             g_send_nav_goal = false;
