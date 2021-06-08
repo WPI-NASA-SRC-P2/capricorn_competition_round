@@ -38,8 +38,14 @@ def render_poses(pose_list):
 			model_xml=open(rospack.get_path("utils") + '/urdf/sphere.urdf', 'r').read(),
 			robot_namespace="sphere_" + str(idx),
 			initial_pose=model.pose,
-			reference_frame="heightmap"
+			reference_frame="heightmap"	
 		)
+
+		X = model.pose.position.x
+		Y = model.pose.position.y
+
+		print(f"X {X} position")
+		print(f"Y {Y} position")
 
 		models.append(["sphere_" + str(idx), model.pose])
 

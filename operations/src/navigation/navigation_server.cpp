@@ -109,14 +109,17 @@ void NavigationServer::publishWaypoints(std::vector<geometry_msgs::PoseStamped> 
 {
 	visualization_msgs::MarkerArray markers;
 
+
 	for(auto pose : waypoints)
 	{
 		visualization_msgs::Marker marker;
-
 		marker.pose = pose.pose;
+
 		markers.markers.push_back(marker);
+
 	}
 
+	ROS_INFO("About to publish markers");
 	waypoint_pub_.publish(markers);
 }
 
@@ -381,7 +384,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 		geometry_msgs::PoseStamped target_in_robot_frame = target_robot_pose;
 		NavigationAlgo::transformPose(target_in_robot_frame, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
 		
-		waypoint_pub_.publish(target_in_robot_frame);
+		//waypoint_pub_.publish(target_in_robot_frame);
 
 		if(manual_driving_)
 		{
@@ -514,6 +517,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 		}
 		ROS_INFO("A");
 		planning::TrajectoryWithVelocities trajectory = sendGoalToPlanner(pose_wrt_robot);
+
 		ROS_INFO("B");
 
 		//Catch malformed trajectories here
@@ -529,6 +533,22 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 		// We got the new trajectory, so we should reset the new trajectory flag.
 		get_new_trajectory_ = false;
 		ROS_INFO("Got new trajectory!");
+
+		//Print out waypoints
+		for(int i = 0; i < trajectory.waypoints.size(); i++)
+		{
+			geometry_msgs::PoseStamped point = trajectory.waypoints[i];
+			float x = point.pose.position.x;
+			float y = point.pose.position.y;
+			printf("X position: %f point\n", x);
+			printf("Y position: %f point\n", y);
+		}
+
+		//Visualize waypoints in Gazebo
+
+		std::vector<geometry_msgs::PoseStamped> trajectory_waypoints_vector;
+    	trajectory_waypoints_vector.insert(trajectory_waypoints_vector.begin(), std::begin(trajectory.waypoints), std::end(trajectory.waypoints));
+		NavigationServer::publishWaypoints(trajectory_waypoints_vector);
 
 		// Loop over trajectory waypoints
 		for (int i = 0; i < trajectory.waypoints.size(); i++)
@@ -549,7 +569,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			geometry_msgs::PoseStamped current_waypoint = trajectory.waypoints[i];
 			float current_velocity = trajectory.velocities[i].data;
 
-			waypoint_pub_.publish(current_waypoint);
+			//waypoint_pub_.publish(current_waypoint);
 
 			// Get the current waypoint in the map frame, based on the most recent transforms.
 			current_waypoint.header.stamp = ros::Time(0);
