@@ -25,9 +25,10 @@ int main(int argc, char **argv)
 
   //probably needs to not use argument
   geometry_msgs::PoseStamped pose;
+  ROS_WARN("New Changes");
   pose.header.frame_id = robot_name + "_small_chassis";
-  pose.pose.position.x = 1;
-  pose.pose.position.y = 0;
+  pose.pose.position.x = std::stof(argv[2]);
+  pose.pose.position.y = std::stof(argv[3]);
   pose.pose.position.z = 0;
   pose.pose.orientation.x = 0;
   pose.pose.orientation.y = 0;

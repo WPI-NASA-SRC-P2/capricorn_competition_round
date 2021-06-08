@@ -42,7 +42,7 @@ private:
     const float BASE_SPIN_SPEED = 0.3;
 
     // Tolerances for linear and angular moves
-    const float DIST_EPSILON = 0.1;
+    const float DIST_EPSILON = 1;
     const float ANGLE_EPSILON = 0.1;
     const float SPIRAL_SPEED = 0.5;
 

@@ -260,6 +260,7 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	// Use the service call to get a trajectory
 	planning::trajectory srv;
 	srv.request.targetPose = goal;
+	ROS_WARN_STREAM("Service Call from Navigation"<<srv.request);
 
 	if (trajectory_client_.call(srv))
 	{
@@ -318,6 +319,7 @@ planning::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const pla
 		in_map_frame.velocities.push_back(temp_vel);
 		//ROS_INFO("After push back");
 	}
+	std::reverse(in_map_frame.waypoints.begin(), in_map_frame.waypoints.end());
 	return in_map_frame;
 }
 
@@ -379,7 +381,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	while (abs(delta_heading) > ANGLE_EPSILON && ros::ok())
 	{
 		delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), target_robot_pose, robot_name_, buffer_);
-		printf("Current delta heading: %frad\n", delta_heading);
+		// printf("Current delta heading: %frad\n", delta_heading);
 
 		// target_robot_pose in the robot's frame of reference
 		geometry_msgs::PoseStamped target_in_robot_frame = target_robot_pose;
@@ -496,16 +498,19 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 	get_new_trajectory_ = true;
 
 	// Save the goal pose in the MAP frame, so that trajectory updates will use a goal relative to the map.
-	geometry_msgs::PoseStamped final_pose = goal->pose;
-	geometry_msgs::PoseStamped pose_wrt_robot = goal->pose;
-	NavigationAlgo::transformPose(final_pose, MAP, buffer_, 0.1);
 
+	geometry_msgs::PoseStamped final_pose = goal->pose;
+	NavigationAlgo::transformPose(final_pose, MAP, buffer_, 0.1);
+	
 	// While we have a new trajectory. If driveDistance does not reset this, then this loop only runs once.
+	ROS_ERROR("################################################################");
 	while(get_new_trajectory_)
 	{
+		geometry_msgs::PoseStamped pose_wrt_robot = final_pose;
+
 		// Forward goal to local planner, and save the returned trajectory
 		ROS_INFO("Requesting new trajectory...");
-		pose_wrt_robot = final_pose;
+		// pose_wrt_robot = final_pose;
 		ROS_INFO("Z");
 		bool proceed = NavigationAlgo::transformPose(pose_wrt_robot, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
 		if(!proceed)
@@ -520,7 +525,10 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 		planning::TrajectoryWithVelocities trajectory = sendGoalToPlanner(pose_wrt_robot);
 
 		for(int i = 0; i<trajectory.waypoints.size(); i++)
-			ROS_INFO_STREAM("Last waypoint of trajectory " << trajectory.waypoints.at(i));
+			ROS_INFO_STREAM("waypoint "<< i << " of trajectory " << trajectory.waypoints.at(i));
+		for(int i = 0; i<trajectory.velocities.size(); i++)
+			ROS_INFO_STREAM("velocities "<< i << " of trajectory " << trajectory.velocities.at(i));
+
 		ROS_INFO_STREAM("Final pose " << final_pose);
 
 		//Catch malformed trajectories here
