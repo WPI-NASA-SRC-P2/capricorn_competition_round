@@ -267,6 +267,7 @@ double NavigationAlgo::changeInOrientation(const geometry_msgs::PoseStamped& des
 bool NavigationAlgo::transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries)
 {
   int count = 0;
+  pose.header.stamp = ros::Time(0);    // @FIX:Fixes the extrapolation problem. 
   while(count++ < tries)
   {
     try
@@ -279,7 +280,7 @@ bool NavigationAlgo::transformPose(geometry_msgs::PoseStamped& pose, const std::
       // do nothing, this is fine if count < tries
       //// CHANGE BY ASHAY ////
       // Current hz of tf is 4. So, we must wait 
-      // for a long time to check for the update again
+      // for a long time to check for the update again 
       ros::Duration(0.2).sleep();
       ros::spinOnce();
     }
