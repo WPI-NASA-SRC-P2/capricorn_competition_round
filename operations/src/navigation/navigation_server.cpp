@@ -515,10 +515,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			action_server->setSucceeded(res);
 			return;
 		}
-		ROS_INFO("A");
+		ROS_INFO_STREAM("Requested goal " << pose_wrt_robot);
 		planning::TrajectoryWithVelocities trajectory = sendGoalToPlanner(pose_wrt_robot);
 
-		ROS_INFO("B");
+
+		ROS_INFO_STREAM("Last waypoint of trajectory " << trajectory.waypoints.back());
+		ROS_INFO_STREAM("Final pose " << final_pose);
 
 		//Catch malformed trajectories here
 		if(trajectory.waypoints.size() <= 0)
