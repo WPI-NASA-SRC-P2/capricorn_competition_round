@@ -192,19 +192,17 @@ void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
 
 void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
 {
-  if (task == EXCAVATOR_GO_TO_LOC)
+  if (task == EXCAVATOR_GO_TO_LOC || task == EXCAVATOR_GO_TO_SCOUT)
   {
     std::lock_guard<std::mutex> lock(scout_pose_mutex);
     geometry_msgs::PoseStamped excavator_goal_pose;
     excavator_goal_pose.header.frame_id = MAP;
-    excavator_goal_pose.pose = NavigationAlgo::getPointCloserToOrigin(scout_pose_.pose, excavator_pose_.pose, 5.0);
-
-    sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, excavator_goal_pose);
+    sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, scout_pose_);
   }
-  if (task == EXCAVATOR_GO_TO_SCOUT)
-  {
-    sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, scout_pose_); 
-  }
+  // if (task == EXCAVATOR_GO_TO_SCOUT)
+  // {
+  //   sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, scout_pose_); 
+  // }
   if (task == EXCAVATOR_DIG_AND_DUMP_VOLATILE)
   {
     // reset odometry during dig and dump volatile state!

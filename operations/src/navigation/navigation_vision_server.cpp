@@ -343,7 +343,7 @@ void visionNavigation()
         }
         if (COUNTER == 0)
         {
-            STATUS = 0;
+            // STATUS = 0;
         }
         return;
     }
@@ -501,9 +501,9 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     static int object_found_frames = 0;
 
-    if (object_found_frames > 10)
+    if (object_found_frames > 10) // MUST BE A VARIABLE
     {
-        // ROS_INFO("Going to vision navigation");
+        ROS_WARN("Going to vision navigation");   //Change back to INFO later
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
         visionNavigation();
@@ -516,6 +516,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     if (g_send_nav_goal)
     {
+        ROS_INFO("Still in automatic navigation");
         object_found_frames = 0;
         g_nav_goal.drive_mode = NAV_TYPE::GOAL;
         g_nav_goal.pose = goal_loc;
@@ -529,7 +530,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-        // ROS_INFO("Going to vision navigation");
+        ROS_INFO("Going to vision navigation");
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
         visionNavigation();
@@ -538,7 +539,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
     const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
     double distance = NavigationAlgo::changeInPosition(g_robot_pose, goal_loc);
 
-    if (distance > 20)
+    if (distance > 20) // MUST BE A VARIABLE, NOT A VALUE HERE
     {
         return;
     }
@@ -557,7 +558,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         perception::Object object = objects.obj.at(i);
         if (object.label == g_desired_label)
         {
-            // ROS_INFO("Found object");
+            ROS_INFO("Found object");
             // Store the object's center
             object_found = true;
         }
