@@ -109,7 +109,7 @@ void NavigationServer::publishWaypoints(std::vector<geometry_msgs::PoseStamped> 
 {
 	visualization_msgs::MarkerArray markers;
 
-
+	markers.markers.resize(0);
 	for(auto pose : waypoints)
 	{
 		visualization_msgs::Marker marker;
@@ -286,6 +286,8 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	}
 
 	// Make sure that all trajectory waypoints are in the map frame before returning it
+	for(int i = 0; i<traj.waypoints.size(); i++)
+		ROS_INFO_STREAM("Planner Output " << traj.waypoints.at(i));
 	return getTrajInMapFrame(traj);
 }
 
@@ -316,7 +318,6 @@ planning::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const pla
 		in_map_frame.velocities.push_back(temp_vel);
 		//ROS_INFO("After push back");
 	}
-
 	return in_map_frame;
 }
 
@@ -518,8 +519,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 		ROS_INFO_STREAM("Requested goal " << pose_wrt_robot);
 		planning::TrajectoryWithVelocities trajectory = sendGoalToPlanner(pose_wrt_robot);
 
-
-		ROS_INFO_STREAM("Last waypoint of trajectory " << trajectory.waypoints.back());
+		for(int i = 0; i<trajectory.waypoints.size(); i++)
+			ROS_INFO_STREAM("Last waypoint of trajectory " << trajectory.waypoints.at(i));
 		ROS_INFO_STREAM("Final pose " << final_pose);
 
 		//Catch malformed trajectories here
