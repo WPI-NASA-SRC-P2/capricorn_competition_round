@@ -6,7 +6,7 @@
     <arg name="get_true_pose" default="true"/>             <!--Doubtful-->
     <arg name="node_start_delay" default="5.0" /> 
 
-    <include file="$(find operations)/launch/navigation.launch">
+    <include file="$(find operations)/launch/nav_planner.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
         <arg name="output" value="log" />
         <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
