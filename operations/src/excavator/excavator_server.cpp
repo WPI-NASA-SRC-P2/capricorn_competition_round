@@ -8,6 +8,7 @@
 #include <geometry_msgs/Point.h> // To get target point in order to orient shoulder joint
 #include <math.h>                // used in findShoulderAngle() for atan2()
 #include <mutex>
+#include <vector>
 
 #include <perception/ObjectArray.h>
 #include <perception/Object.h>
@@ -138,13 +139,34 @@ geometry_msgs::PoseStamped getHaulerPose(geometry_msgs::PointStamped stamped_poi
       count++;
   }
 
-  currentHaulerPoseStamped.pose.position.x += 0.31;
-  currentHaulerPoseStamped.pose.position.z -= 0.37; 
+  currentHaulerPoseStamped.pose.position.x += 0.5;
+  currentHaulerPoseStamped.pose.position.z -= 0.4;
 
   if (!pointDetected)
     ROS_INFO_STREAM("Hauler antenna not detected, using default hauler position in left camera optical frame");
     
   return currentHaulerPoseStamped;
+}
+
+std::vector<float> getDepthHeight(geometry_msgs::Point hauler_center)
+{
+  float l1 = 0.8; // shoulder link lenght
+  float l2 = 0.8; // elbow link length
+  std::vector<float> thetas;
+  float D = hauler_center.x;
+  float H = hauler_center.z+0.5;
+  float d = (pow(D,2) + pow(H,2) - pow(l1,2) - pow(l2,2))/(2*l1*l2);
+  float theta3 = atan2(d, -sqrt(1-pow(d,2)));
+  float theta2 = atan2(D,H) - atan2((l1+l2*cos(theta3)), l2*sin(theta3));
+
+  thetas.push_back(-theta2);
+  thetas.push_back(-theta3);
+  printf("%f", -theta2);
+  printf("%f", -theta3);
+  //thetas.push_back(-acos((pow(D,2) + pow(H,2) - pow(l1,2) - pow(l2,2))/(2*l1*l2)));
+  //thetas.push_back(-(atan2(H, D)-atan2(l2*sin(thetas[1]),(l1 + l2*cos(thetas[1])))));
+
+  return thetas;
 }
 
 /**
@@ -153,7 +175,7 @@ geometry_msgs::PoseStamped getHaulerPose(geometry_msgs::PointStamped stamped_poi
  * @param tries Number of times transform should be attempted
  * @return geometry_msgs::Point The dumping point loaction in base footprint frame
  */
-float getDumpAngleInBase(int tries)
+std::vector<float> getDumpAngleInBase(int tries)
 {
   tf::TransformListener tf_listener_; // For transformation from camera frame to shoulder frame
   
@@ -168,9 +190,10 @@ float getDumpAngleInBase(int tries)
 
   printPoint("Default point in left camera frame", initial_point_stamped.point);
 
-  initial_point_stamped.point = getHaulerPose(initial_point_stamped).pose.position; // try to get hauler location from object detection
-
+  initial_point_stamped.point = getHaulerPose(initial_point_stamped).pose.position; // try to get hauler location from object detection  
   printPoint("Detected point in left camera frame", initial_point_stamped.point);
+
+  ROS_INFO_STREAM("Initialized angle array");
 
   geometry_msgs::PointStamped final_point_stamped; // point stamped object to store transformation of point from camera frame to base frame
 
@@ -183,6 +206,7 @@ float getDumpAngleInBase(int tries)
   while(countTries<tries && !transformSet) {
         try{
             tf_listener_.transformPoint(base_frame, initial_point_stamped, final_point_stamped);
+            ros::Duration(5).sleep();
             transformSet = true;
         }
         catch (tf::TransformException &ex) {
@@ -193,12 +217,25 @@ float getDumpAngleInBase(int tries)
         }
         countTries++;
     }
+  
+  printPoint("Detected point in excavator base frame", final_point_stamped.point);
+
+  // This part returns the point in excavator shoulder frame
+  geometry_msgs::Point final_wrt_shoulder;
+  final_wrt_shoulder.x = final_point_stamped.point.x - 0.7;
+  final_wrt_shoulder.y = final_point_stamped.point.y - 0.000001;
+  final_wrt_shoulder.z = final_point_stamped.point.z - 0.100000;
+
+  printPoint("Detected point in excavator shoulder frame", final_wrt_shoulder);
+
+
+  std::vector<float> thetas = getDepthHeight(final_wrt_shoulder);
 
   printPoint("Transformed point in base frame", final_point_stamped.point);
 
-  return findShoulderAngle(final_point_stamped.point);
+  thetas.insert(thetas.begin(), findShoulderAngle(final_point_stamped.point));
+  return thetas;
 }
-
 
 /**
  * @brief This function publishes the joint angles to the publishers
@@ -237,7 +274,7 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
  */
 bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
 {
-  float dumpAngle = getDumpAngleInBase(3); // Get dumping angle based on hauler position from object detection using three tries for transformation
+  std::vector<float> thetas = getDumpAngleInBase(3); // Get dumping angle based on hauler position from object detection using three tries for transformation
 
   float theta = -1.57; // Rightmost arm position
   static float last_vol_loc_angle = -1.57; // variable for storing last volatile location angle
@@ -255,7 +292,7 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     publishAngles(last_vol_loc_angle, 1, 1, -2); // This set of values move the scoop under the surface
     ros::Duration(5).sleep();
 
-    dumpAngle = getDumpAngleInBase(3);
+    thetas = getDumpAngleInBase(3);
 
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
     ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
@@ -308,11 +345,11 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
   else if (task == START_UNLOADING) // dumping angles
   {
     // previous shoulder yaw was 0.15
-    publishAngles(dumpAngle, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
+    publishAngles(thetas[0], -2, 1, 0.4); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(dumpAngle, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
-    ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(dumpAngle, -2, 1, -0.7786); // This set of values moves the scoop to the front center
+    publishAngles(thetas[0], thetas[1], thetas[2], (thetas[1]-thetas[2]+0.5)); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    ros::Duration(5).sleep();
+    publishAngles(thetas[0], -2, 1, -0.7786); // This set of values moves the scoop to the front center
     ros::Duration(3).sleep();
   }
   else if (task == GO_TO_DEFAULT) // dumping angles

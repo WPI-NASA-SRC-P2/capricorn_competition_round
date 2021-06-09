@@ -23,18 +23,18 @@ int main(int argc, char** argv)
   client.waitForServer();
 
   operations::ExcavatorGoal goal;
-  goal.task = START_DIGGING; // START_DIGGING = 1
-  //goal.target.x = 0.7; // set of target digging values to the left of the excavator
-  goal.target.x = 0;
-  goal.target.y = 2;
-  goal.target.z = 0;
-  client.sendGoal(goal);
+  // goal.task = START_DIGGING; // START_DIGGING = 1
+  // //goal.target.x = 0.7; // set of target digging values to the left of the excavator
+  // goal.target.x = 0;
+  // goal.target.y = 2;
+  // goal.target.z = 0;
+  // client.sendGoal(goal);
 
-  std::string message1(client.getState().toString().c_str());
-  ROS_INFO_STREAM("Current State: " + message1);
-  client.waitForResult(ros::Duration(SLEEP_DURATION));
-  if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-    ROS_INFO_STREAM("Yay! The scoop is now full");
+  // std::string message1(client.getState().toString().c_str());
+  // ROS_INFO_STREAM("Current State: " + message1);
+  // client.waitForResult(ros::Duration(SLEEP_DURATION));
+  // if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+  //   ROS_INFO_STREAM("Yay! The scoop is now full");
 
   ros::Duration(SLEEP_DURATION).sleep(); // Delay between digging and unloading tasks
 
