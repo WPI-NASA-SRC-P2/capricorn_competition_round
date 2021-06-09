@@ -93,15 +93,26 @@ bool HaulerStateMachine::undockExcavator()
 
 bool HaulerStateMachine::undockHopper()
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from Hopper");
-    geometry_msgs::PoseStamped pt;
-    pt.header.frame_id = robot_name_ + ROBOT_BASE;
-    pt.pose.position.x = -5;
-    pt.pose.orientation.w = 1;
-    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-    navigation_action_goal_.pose = pt;
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = -0.6;
+    navigation_action_goal_.angular_velocity = 0;
     navigation_client_->sendGoal(navigation_action_goal_);
-    navigation_client_->waitForResult();
+    ros::Duration(3.5).sleep();
+    // navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    // navigation_action_goal_.forward_velocity = 0;
+    // navigation_action_goal_.angular_velocity = 0.5;
+    // navigation_client_->sendGoal(navigation_action_goal_);
+    // ros::Duration(2.5).sleep();
+    // navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    // navigation_action_goal_.forward_velocity = 0.6;
+    // navigation_action_goal_.angular_velocity = 0;
+    // navigation_client_->sendGoal(navigation_action_goal_);
+    // ros::Duration(2.5).sleep();
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = 0.0;
+    navigation_action_goal_.angular_velocity = 0;
+    navigation_client_->sendGoal(navigation_action_goal_);
+    ros::Duration(2.5).sleep();
 }
 
 bool HaulerStateMachine::dumpVolatileToProcPlant()
