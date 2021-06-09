@@ -17,14 +17,12 @@ ros::Publisher debug_pathPublisher;
 #endif
 
 std::string robot_name_ = "";
+bool map_received_ = false;
 
 bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
-  std::unique_lock<std::mutex> locationLock(oGrid_mutex_);
-  auto global_oGrid_CPY = global_oGrid_;
-  locationLock.unlock();
-
-  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 8);
+  std::lock_guard<std::mutex> lock(oGrid_mutex_);
+  auto paddedGrid = CSpace::getCSpace(global_oGrid_, 50, 10);
 
   #ifdef DEBUG_INSTRUMENTATION
   debug_oGridPublisher.publish(paddedGrid);
@@ -42,17 +40,19 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
     trajectory.waypoints = path.poses;
 
     res.trajectory = trajectory;
+
+    return true;
   } else {
     ROS_WARN("No Poses Set.");
   }
-
-  return true;
+  return false;
 }
 
-void PathServer::oGridCallback(nav_msgs::OccupancyGrid oGrid)
+void PathServer::oGridCallback(nav_msgs::OccupancyGrid::ConstPtr oGrid)
 {
   std::lock_guard<std::mutex> lock(oGrid_mutex_);
-  global_oGrid_ = oGrid;
+  global_oGrid_ = *oGrid;
+  map_received_ = true;
 }
 
 int main(int argc, char *argv[])
@@ -78,6 +78,12 @@ int main(int argc, char *argv[])
   debug_oGridPublisher = nh.advertise<nav_msgs::OccupancyGrid>("/galaga/debug_oGrid", 1000);
   debug_pathPublisher = nh.advertise<nav_msgs::Path>("/galaga/debug_path", 1000);
   #endif
+
+  while(!map_received_ && ros::ok())
+  {
+    ros::Duration(0.1).sleep();
+    ros::spinOnce();
+  }
 
   //Instantiating ROS server for generating trajectory
   ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &PathServer::trajectoryGeneration, &server);
