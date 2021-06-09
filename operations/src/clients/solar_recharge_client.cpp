@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
   NavigationClient_ navigation_client_(robot_name + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
 
     // wait for the server to run
-    navigation_client_.waitForServer();
+  navigation_client_.waitForServer();
 
   ros::Subscriber systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, solarChargeInitiate_2);
   

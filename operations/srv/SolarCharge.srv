@@ -1,3 +1,6 @@
-bool solar_charge_status
+# true  start solar charging mode 
+# false stop solar charging mode
+bool solar_charge_status  
 ---
-std_msgs/String result
+# returns the power_rate of the robot when charging
+std_msgs/String result       

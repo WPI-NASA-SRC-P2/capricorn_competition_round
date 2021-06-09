@@ -10,11 +10,12 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Float64.h>
-#include <srcp2_msgs/VolSensorMsg.h>   //need help
+#include <srcp2_msgs/VolSensorMsg.h>   
 #include <utils/common_names.h>
+#include "operations/SolarCharge.h"
 
 // typedef for the Action Server and Client
-typedef actionlib::SimpleActionServer<operations::SolarRechargeAction> SolarRechargeServer;
+//typedef actionlib::SimpleActionServer<operations::SolarRechargeAction> SolarRechargeServer;
 typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient_;
 NavigationClient_ *navigation_client_;
 
@@ -59,13 +60,14 @@ void SolarChargingServer::rotateRobot(const DrivingDirection rotate_direction, c
 {
   operations::NavigationGoal goal;
 
-  // Manual driving
+ // Manual driving  
   goal.drive_mode = NAV_TYPE::MANUAL;
 
   goal.forward_velocity = 0;
   goal.angular_velocity = rotate_direction * ROTATION_VELOCITY * rotational_velocity_multiplier;
 
   navigation_client_->sendGoal(goal);
+  ROS_INFO("Send Nav Goal to Turn");
   ros::Duration(0.1).sleep();
 }
 
@@ -85,37 +87,63 @@ void SolarChargingServer::stopRobot(void)
   goal.angular_velocity = 0;
 
   navigation_client_->sendGoal(goal);
+  ROS_INFO("Send Nav Goal to Stop");
   ros::Duration(0.5).sleep();
+}
+
+void SolarChargingServer::setPowerSaveMode(bool on){
+  //call the server "small_scout_1/system_monitor/power_saver"
+  //set the request.power_save
+    // true: Power Save will be active
+    // false:: power Save will be deactivated
 }
 
 
 /**
- * @brief Actionlib callback to rotate the robot until indicating that there was solar charge
+ * @brief based on the request, either Acitivates Solar_Charge_Mode, or diactives it
  * 
- * @param goal 
- * @param server 
+ * @param request solarChargeRequest 
+ * @param repomse solarChargeResponse
  */
-void SolarChargingServer::solarChargeInitiate(void)
+bool SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &request, operations::SolarChargeResponse &Response)
 {
+  if(request.solar_charging_status)
+  {
+    ROS_INFO("Solar_Charging_Mode: ON: Starting");
+      rotateRobot(driving_direction, 1.0);
+      while(!solar_ok && ros::ok()) // while there is no solar keep rotating 
+      {
+        ROS_INFO("Solar_Charging_Mode: ON: Rotate Into Position");
+      }
+      stopRobot();
+      setPowerSaveMode(true);
+      ROS_INFO("Solar_Charging_Mode: ON: Charging");
+      response.result = "Solar_Charging_Mode: ON: Power_rate:" + power_rate;
+  }
+  else
+  {
+    stopRobot();
+    setPowerSaveMode(false);
+    ROS_INFO("Solar_Charging_Mode: OFF: Ending");
+    response.result = "Solar_Charging_Mode: OFF: Ending";
+  }
+
+
   DrivingDirection driving_direction = POSITIVE;
 
   ROS_INFO("Starting transitiong to solar recharge");
 
-  rotateRobot(driving_direction, 1.0);
-
-  while(!solar_ok && ros::ok()) // while there is no solar keep rotating 
-  {
-    ROS_INFO("Rotating the robot");
-  } 
-
-  stopRobot();
   res.result.data = "The Robot is in Solar Charging Mode";
   ROS_INFO("Now Solar Recharging");
   
 }
 
+
+
 void SolarChargeingServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg){
-  solar_ok = req;
+  solar_ok = msg.solar_ok;
+  power_rate = msg.power_rate;
+  power_saver = msg.power_saver;   //i assume to check of we are in or out of power save mode
 }
 
 
@@ -173,7 +201,6 @@ int main(int argc, char *argv[])
 
   server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::SystemMonitorCB, &server);
 
-  
   //srv result
   debug_solar_charging_mode = nh.advertise<std_msgs::String>("/galaga/debug_solar_charging_status", 1000);
   
