@@ -491,7 +491,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     if (object_found_frames > 10)
     {
-        ROS_INFO("Going to vision navigation");
+        // ROS_INFO("Going to vision navigation");
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
         visionNavigation();
@@ -517,7 +517,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-        ROS_INFO("Going to vision navigation");
+        // ROS_INFO("Going to vision navigation");
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
         visionNavigation();
@@ -525,15 +525,13 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
     double distance = NavigationAlgo::changeInPosition(g_robot_pose, goal_loc);
-    ROS_WARN_STREAM("Robot pose and goal_loc = " << g_robot_pose << goal_loc);
 
     if (distance > 20)
     {
-        ROS_INFO_STREAM("Distance = " << distance);
         return;
     }
 
-    ROS_INFO("Looking for object");
+    // ROS_INFO("Looking for object");
 
     bool object_found = false;
 
@@ -547,7 +545,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         perception::Object object = objects.obj.at(i);
         if (object.label == g_desired_label)
         {
-            ROS_INFO("Found object");
+            // ROS_INFO("Found object");
             // Store the object's center
             object_found = true;
         }
@@ -692,7 +690,6 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
  */
 void odomCallback(const nav_msgs::Odometry::ConstPtr &msg)
 {
-    ROS_INFO_ONCE("ODOM WORKING");
     const std::lock_guard<std::mutex> lock(g_odom_mutex);
     g_robot_pose.header = msg->header;
     g_robot_pose.pose = msg->pose.pose;
