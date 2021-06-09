@@ -715,7 +715,8 @@ int main(int argc, char **argv)
 
     ros::Subscriber objects_sub = nh.subscribe(CAPRICORN_TOPIC + g_robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
 
-    ros::Subscriber robot_odom_sub = nh.subscribe("/small_excavator_1/camera/odom", 1000, &odomCallback);
+    // example of intended subscriber-> ros::Subscriber robot_odom_sub = nh.subscribe("/small_excavator_1/camera/odom", 1000, &odomCallback);
+    ros::Subscriber robot_odom_sub = nh.subscribe("/" + g_robot_name + RTAB_ODOM_TOPIC, 1000, &odomCallback);
 
     Server server(nh, g_robot_name + NAVIGATION_VISION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.registerPreemptCallback(&cancelGoal);
