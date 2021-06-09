@@ -4,13 +4,15 @@
     <arg name="use_cheat_odom" default="false" />
     <arg name="use_crab_drive" default="false" />
     <arg name="get_true_pose" default="true"/>        <!--Doubtful-->
-    <arg name="node_start_delay" default="5.0" /> 
+    <arg name="node_start_delay" default="5.0" />
+    <arg name="use_robot_localization" default="false"/>
 
     <include unless="$(arg use_cheat_odom)" file="$(find maploc)/launch/mapping.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
         <arg name="output" value="log" />
         <arg name="get_true_pose" value="$(arg get_true_pose)" />
         <arg name="node_start_delay" value="$(arg node_start_delay)" />
+        <arg name="use_robot_localization" value="$(arg use_robot_localization)"/>
     </include>
 
     <group ns="/capricorn/$(arg robot_name)">      
