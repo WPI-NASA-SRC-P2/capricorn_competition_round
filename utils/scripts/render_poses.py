@@ -41,12 +41,6 @@ def render_poses(pose_list):
 			reference_frame="heightmap"	
 		)
 
-		X = model.pose.position.x
-		Y = model.pose.position.y
-
-		print(f"X {X} position")
-		print(f"Y {Y} position")
-
 		models.append(["sphere_" + str(idx), model.pose])
 
 	print("Models added.")

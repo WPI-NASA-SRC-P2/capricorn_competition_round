@@ -4,7 +4,7 @@
     <arg name="use_cheat_odom" default="false" />
     <arg name="use_crab_drive" default="false" />
 
-    <!-- <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /odom /map 100" /> -->
+    <!-- node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /odom /map 100" / -->
 
     <group ns="/capricorn/$(arg robot_name)">
         <!-- Whether to use cheat odom or rtabmap. Utilized by navigation server. -->

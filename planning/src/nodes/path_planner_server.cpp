@@ -27,7 +27,6 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   #ifdef DEBUG_INSTRUMENTATION
   debug_oGridPublisher.publish(paddedGrid);
   #endif
-  ROS_WARN_STREAM("Planner Input Pose:" << req.targetPose.pose);
 
   auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, 50, robot_name_);
 
@@ -41,8 +40,7 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
     trajectory.waypoints = path.poses;
 
     res.trajectory = trajectory;
-    for(int i = 0; i<path.poses.size(); i++)
-		  ROS_INFO_STREAM("Waypoint  "<< i<< ": " << path.poses.at(i));
+
     return true;
   } else {
     ROS_WARN("No Poses Set.");

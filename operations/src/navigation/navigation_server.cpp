@@ -109,14 +109,15 @@ void NavigationServer::publishWaypoints(std::vector<geometry_msgs::PoseStamped> 
 {
 	visualization_msgs::MarkerArray markers;
 
+	// Empty vector before adding new markers
 	markers.markers.resize(0);
+
 	for(auto pose : waypoints)
 	{
 		visualization_msgs::Marker marker;
 		marker.pose = pose.pose;
 
 		markers.markers.push_back(marker);
-
 	}
 
 	ROS_INFO("About to publish markers");
@@ -260,7 +261,6 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	// Use the service call to get a trajectory
 	planning::trajectory srv;
 	srv.request.targetPose = goal;
-	ROS_WARN_STREAM("Service Call from Navigation"<<srv.request);
 
 	if (trajectory_client_.call(srv))
 	{
@@ -287,8 +287,6 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	}
 
 	// Make sure that all trajectory waypoints are in the map frame before returning it
-	for(int i = 0; i<traj.waypoints.size(); i++)
-		ROS_INFO_STREAM("Planner Output " << traj.waypoints.at(i));
 	return getTrajInMapFrame(traj);
 }
 
@@ -302,23 +300,21 @@ planning::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const pla
 	// For each waypoint in the trajectories message
 	for(int pt = 0; pt < traj.waypoints.size(); pt++)
 	{
-		ROS_INFO("Transforming %d\n", pt);
+		//ROS_INFO("Transforming %d\n", pt);
 		geometry_msgs::PoseStamped map_pose = traj.waypoints[pt];
 
 		// Transform that waypoint into the map frame
 		NavigationAlgo::transformPose(map_pose, MAP, buffer_);
 
 		// Push this waypoint and its velocity to the trajectory message to return
-		//ROS_INFO("Before push back");
 		in_map_frame.waypoints.push_back(map_pose);
-		//ROS_INFO("Middle of push back");
-		//printf("Traj velocities %f", traj.velocities[pt]);
-		//in_map_frame.velocities.push_back(traj.velocities[pt]);
 		std_msgs::Float64 temp_vel;
 		temp_vel.data = 0;
 		in_map_frame.velocities.push_back(temp_vel);
-		//ROS_INFO("After push back");
+
 	}
+
+	//Reverse trajectory waypoints from planner
 	std::reverse(in_map_frame.waypoints.begin(), in_map_frame.waypoints.end());
 	return in_map_frame;
 }
@@ -503,15 +499,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 	NavigationAlgo::transformPose(final_pose, MAP, buffer_, 0.1);
 	
 	// While we have a new trajectory. If driveDistance does not reset this, then this loop only runs once.
-	ROS_ERROR("################################################################");
 	while(get_new_trajectory_)
 	{
 		geometry_msgs::PoseStamped pose_wrt_robot = final_pose;
 
 		// Forward goal to local planner, and save the returned trajectory
 		ROS_INFO("Requesting new trajectory...");
-		// pose_wrt_robot = final_pose;
-		ROS_INFO("Z");
 		bool proceed = NavigationAlgo::transformPose(pose_wrt_robot, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
 		if(!proceed)
 		{
@@ -521,15 +514,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			action_server->setSucceeded(res);
 			return;
 		}
-		ROS_INFO_STREAM("Requested goal " << pose_wrt_robot);
+
 		planning::TrajectoryWithVelocities trajectory = sendGoalToPlanner(pose_wrt_robot);
-
-		for(int i = 0; i<trajectory.waypoints.size(); i++)
-			ROS_INFO_STREAM("waypoint "<< i << " of trajectory " << trajectory.waypoints.at(i));
-		for(int i = 0; i<trajectory.velocities.size(); i++)
-			ROS_INFO_STREAM("velocities "<< i << " of trajectory " << trajectory.velocities.at(i));
-
-		ROS_INFO_STREAM("Final pose " << final_pose);
 
 		//Catch malformed trajectories here
 		if(trajectory.waypoints.size() <= 0)
@@ -545,21 +531,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 		get_new_trajectory_ = false;
 		ROS_INFO("Got new trajectory!");
 
-		//Print out waypoints
-		for(int i = 0; i < trajectory.waypoints.size(); i++)
-		{
-			geometry_msgs::PoseStamped point = trajectory.waypoints[i];
-			float x = point.pose.position.x;
-			float y = point.pose.position.y;
-			printf("X position: %f point\n", x);
-			printf("Y position: %f point\n", y);
-		}
-
 		//Visualize waypoints in Gazebo
-
-		std::vector<geometry_msgs::PoseStamped> trajectory_waypoints_vector;
-    	trajectory_waypoints_vector.insert(trajectory_waypoints_vector.begin(), std::begin(trajectory.waypoints), std::end(trajectory.waypoints));
-		NavigationServer::publishWaypoints(trajectory_waypoints_vector);
+		NavigationServer::publishWaypoints(trajectory.waypoints);
 
 		// Loop over trajectory waypoints
 		for (int i = 0; i < trajectory.waypoints.size(); i++)
