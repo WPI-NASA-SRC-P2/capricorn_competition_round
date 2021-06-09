@@ -4,6 +4,7 @@
     <arg name="output" default="screen" />
     <arg name="use_cheat_odom" default="false" />
     <arg name="use_crab_drive" default="false" />
+    <arg name="rviz" default="true" />
 
     <include file="$(find team_level)/launch/all_object_detection.launch"/> 
 
@@ -14,5 +15,6 @@
     </include>
 
     <!-- <node pkg="team_level" type="start_scheduler" name="scheduler"/> -->
+    <include file="$(find maploc)/launch/odom_comparison.launch"/> 
 
 </launch>
