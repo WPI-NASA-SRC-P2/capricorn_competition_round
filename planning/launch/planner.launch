@@ -4,7 +4,7 @@
 
 
   <group ns="/capricorn/$(arg robot_name)">
-        <node name="$(arg robot_name)_path_planner_server" pkg="planning" type="planning_node" args="$(arg robot_name)" output="$(arg output)" />
+        <node name="$path_planner_server" pkg="planning" type="planning_node" args="$(arg robot_name)" output="$(arg output)" />
   </group>
 
 </launch>
