@@ -91,6 +91,7 @@ void SolarChargingServer::stopRobot(void)
   ros::Duration(0.5).sleep();
 }
 
+// #TODO
 void SolarChargingServer::setPowerSaveMode(bool on){
   //call the server "small_scout_1/system_monitor/power_saver"
   //set the request.power_save
@@ -118,7 +119,7 @@ bool SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &re
       stopRobot();
       setPowerSaveMode(true);
       ROS_INFO("Solar_Charging_Mode: ON: Charging");
-      response.result = "Solar_Charging_Mode: ON: Power_rate:" + power_rate;
+      response.result = "Solar_Charging_Mode: ON: Power_rate:" + power_rate.c_str();
   }
   else
   {
