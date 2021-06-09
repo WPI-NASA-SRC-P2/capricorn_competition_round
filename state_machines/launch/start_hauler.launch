@@ -3,15 +3,9 @@
     <arg name="output" default="screen" />
     <arg name="use_cheat_odom" default="true" />
     <arg name="use_crab_drive" default="false" />
-    <arg name="get_true_pose" default="true"/> <!-- should ultimately be false -->
+    <arg name="get_true_pose" default="false"/> <!-- should ultimately be false -->
     <arg name="node_start_delay" default="5.0" /> 
 
-    <include file="$(find operations)/launch/nav_planner.launch">
-        <arg name="robot_name" value="$(arg robot_name)" />
-        <arg name="output" value="log" />
-        <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
-        <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
-    </include>
 
     <include unless="$(arg use_cheat_odom)" file="$(find maploc)/launch/mapping.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
@@ -21,6 +15,17 @@
     </include>
 
     <group ns="/capricorn/$(arg robot_name)">        
+        <include file="$(find planning)/launch/planner.launch">
+			<arg name="robot_name" value="$(arg robot_name)" />
+	    </include>
+
+        <include file="$(find operations)/launch/navigation.launch">
+            <arg name="robot_name" value="$(arg robot_name)" />
+            <arg name="output" value="log" />
+            <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
+            <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
+        </include>
+        
         <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
         <node name="park_hauler_server" pkg="operations" type="park_hauler_server" args="$(arg robot_name)" output="screen"/>
         <node pkg="operations" type="hauler_actionlib_server" name="hauler_actionlib_server" args="$(arg robot_name)" output="log" />

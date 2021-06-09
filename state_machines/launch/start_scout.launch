@@ -6,13 +6,6 @@
     <arg name="get_true_pose" default="true"/>        <!--Doubtful-->
     <arg name="node_start_delay" default="5.0" /> 
 
-    <!-- <include file="$(find operations)/launch/nav_planner.launch">
-        <arg name="robot_name" value="$(arg robot_name)" />
-        <arg name="output" value="log" />
-        <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
-        <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
-    </include> -->
-
     <include unless="$(arg use_cheat_odom)" file="$(find maploc)/launch/mapping.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
         <arg name="output" value="log" />
@@ -23,6 +16,17 @@
     <group ns="/capricorn/$(arg robot_name)">      
         <param name="cheat_odom" value="$(arg use_cheat_odom)"/>
           
+        <include file="$(find planning)/launch/planner.launch">
+			<arg name="robot_name" value="$(arg robot_name)" />
+	    </include>
+
+        <include file="$(find operations)/launch/navigation.launch">
+            <arg name="robot_name" value="$(arg robot_name)" />
+            <arg name="output" value="log" />
+            <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
+            <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
+        </include> 
+
         <node pkg="state_machines" type="start_scout_sm" name="scout_1_sm" args="$(arg robot_name)" output="screen" />
         <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
         <node pkg="operations" type="resource_localiser" name="scout_1_localiser" args="$(arg robot_name)" output="screen" />
