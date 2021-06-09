@@ -10,6 +10,7 @@
     <arg name="use_rtabmap" default="false" />
     <arg name="rtabmapviz" default="false" />    
     <arg name="rviz" default="false" />
+    <arg name="use_robot_localization" default="false"/>
     <param name="use_sim_time" type="bool" value="true"/>
 
     <!-- RTABMAP NOW OUTPUTS TO /capricorn/robotname/camera/odom -->
@@ -37,7 +38,8 @@
 			<param name="Odom/ResetCountdown" value="1"/>
 	
 			<!-- <remap from="/odom" to="capricorn/$(arg robot_name)/odom/stereo_odom"/> -->
-   	<!--    <remap from="odom" to="/$(arg robot_name)/stereo_odom" /> -->
+   	        <!--    <remap from="odom" to="/$(arg robot_name)/stereo_odom" /> -->
+            <remap from="odom" to="/$(arg robot_name)/camera/odom/localization" if="$(arg use_robot_localization)"/>
         </node>     
 
         <!-- Visual SLAM: args: "delete_db_on_start" and "udebug" -->
