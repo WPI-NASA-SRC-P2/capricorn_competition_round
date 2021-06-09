@@ -6,16 +6,12 @@
     <arg name="get_true_pose" default="true"/>
     <arg name="node_start_delay" default="5.0" /> 
 
-    <include file="$(find operations)/launch/nav_planner.launch">
+    <!-- <include file="$(find operations)/launch/nav_planner.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
         <arg name="output" value="log" />
         <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
-    </include>
-
-	<include file="$(find planning)/launch/planner.launch">
-			<arg name="robot_name" value="$(arg robot_name)" />
-	</include>
+    </include> -->
 
     <include unless="$(arg use_cheat_odom)" file="$(find maploc)/launch/mapping.launch">
         <arg name="robot_name" value="$(arg robot_name)" />

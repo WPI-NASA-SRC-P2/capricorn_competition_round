@@ -69,11 +69,10 @@ PoseStamped AStar::poseStampedFromIndex(int ind, const nav_msgs::OccupancyGrid &
   // Helper function to turn a grid index into a posedstamped point.
   double indx = ind % oGrid.info.width;
   double indy = floor(ind / oGrid.info.width);
-
   PoseStamped ps;
 
-  ps.pose.position.x = (indx - oGrid.info.width / 2) * oGrid.info.resolution;
-  ps.pose.position.y = (indy - oGrid.info.height / 2) * oGrid.info.resolution;
+  ps.pose.position.x = (double)((indx - oGrid.info.width / 2) * oGrid.info.resolution);
+  ps.pose.position.y = (double)((indy - oGrid.info.height / 2) * oGrid.info.resolution);
   ps.pose.orientation.w = 1.0;
 
   ps.header = oGrid.header;
@@ -126,8 +125,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
 {
   // Convert meters -> grid units
   target.x = target.x/oGrid.info.resolution;
-  target.y = target.y/oGrid.info.resolution;
-
+  target.y = std::round(target.y/oGrid.info.resolution); //ROUNDING OPERATION NECESSARY - DO NOT CHANGE
 
   if (oGrid.data.size() == 0)
   {
@@ -160,7 +158,6 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
         minDist = distGridToPoint(i, target, oGrid.info.width, oGrid.info.height);
         bestIndex = i;
       }
-
       // Loop through the right edge
       if ((distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
@@ -168,7 +165,6 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
         minDist = distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height);
         bestIndex = oGrid.info.width * i;
       }
-
       // Loop through the left edge
       if ((distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
@@ -176,7 +172,6 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
         minDist = distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height);
         bestIndex = (oGrid.info.width * (i + 1)) - 1;
       }
-
       // Loop through the top
       if ((distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
@@ -185,7 +180,6 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
         bestIndex = oGrid.data.size() - 1 - i;
       }
     }
-
     // Set end to the new closest point
     endIndex = bestIndex;
   }
@@ -195,7 +189,6 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
     endIndex = (target.y + (oGrid.info.height / 2)) * oGrid.info.width + (target.x + (oGrid.info.width / 2));
     ROS_WARN("Calculated Index: %d", endIndex);
   }
-
   // Check if the final destination is occupied.
   if (oGrid.data[endIndex] > threshold)
   {
@@ -235,7 +228,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
         continue;
 
       double tentative_gscore = gScores[current.second] + distance(current.second, neighbor, oGrid.info.width);
-      if (collinear(neighbor, current.second, came_from[current.second], oGrid.info.width)) tentative_gscore -= .95; // bias towards straight lines
+      if (collinear(neighbor, current.second, came_from[current.second], oGrid.info.width)) tentative_gscore -= .5; // bias towards straight lines init value = 0.95
       if (tentative_gscore < gScores[neighbor])
       {
         gScores[neighbor] = tentative_gscore;

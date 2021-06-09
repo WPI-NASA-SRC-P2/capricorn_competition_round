@@ -23,7 +23,7 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 	listener_ = new tf2_ros::TransformListener(buffer_);
 
 	// Initialize the rate limiter to 100 HZ
-	update_rate_ = new ros::Rate(4);
+	update_rate_ = new ros::Rate(10);
 
 	moveRobotWheels(0);
 	steerRobot(0);
@@ -71,7 +71,7 @@ void NavigationServer::initSteerPublisher(ros::NodeHandle& nh, const std::string
  */
 void NavigationServer::initDebugPublishers(ros::NodeHandle& nh, const std::string& robot_name)
 {
-	waypoint_pub_ = nh.advertise<geometry_msgs::PoseStamped>(CAPRICORN_TOPIC + robot_name + "/current_waypoint", 1000);
+	waypoint_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/vis_poses", 1000);
 }
 
 /**
@@ -102,6 +102,26 @@ geometry_msgs::PoseStamped* NavigationServer::getRobotPose()
 {
 	std::lock_guard<std::mutex> pose_lock(pose_mutex_);
 	return &robot_pose_;
+}
+
+// TODO: Move to not here
+void NavigationServer::publishWaypoints(std::vector<geometry_msgs::PoseStamped> waypoints)
+{
+	visualization_msgs::MarkerArray markers;
+
+	// Empty vector before adding new markers
+	markers.markers.resize(0);
+
+	for(auto pose : waypoints)
+	{
+		visualization_msgs::Marker marker;
+		marker.pose = pose.pose;
+
+		markers.markers.push_back(marker);
+	}
+
+	ROS_INFO("About to publish markers");
+	waypoint_pub_.publish(markers);
 }
 
 /**
@@ -280,24 +300,22 @@ planning::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const pla
 	// For each waypoint in the trajectories message
 	for(int pt = 0; pt < traj.waypoints.size(); pt++)
 	{
-		ROS_INFO("Transforming %d\n", pt);
+		//ROS_INFO("Transforming %d\n", pt);
 		geometry_msgs::PoseStamped map_pose = traj.waypoints[pt];
 
 		// Transform that waypoint into the map frame
 		NavigationAlgo::transformPose(map_pose, MAP, buffer_);
 
 		// Push this waypoint and its velocity to the trajectory message to return
-		//ROS_INFO("Before push back");
 		in_map_frame.waypoints.push_back(map_pose);
-		//ROS_INFO("Middle of push back");
-		//printf("Traj velocities %f", traj.velocities[pt]);
-		//in_map_frame.velocities.push_back(traj.velocities[pt]);
 		std_msgs::Float64 temp_vel;
 		temp_vel.data = 0;
 		in_map_frame.velocities.push_back(temp_vel);
-		//ROS_INFO("After push back");
+
 	}
 
+	//Reverse trajectory waypoints from planner
+	std::reverse(in_map_frame.waypoints.begin(), in_map_frame.waypoints.end());
 	return in_map_frame;
 }
 
@@ -359,13 +377,13 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	while (abs(delta_heading) > ANGLE_EPSILON && ros::ok())
 	{
 		delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), target_robot_pose, robot_name_, buffer_);
-		printf("Current delta heading: %frad\n", delta_heading);
+		// printf("Current delta heading: %frad\n", delta_heading);
 
 		// target_robot_pose in the robot's frame of reference
 		geometry_msgs::PoseStamped target_in_robot_frame = target_robot_pose;
 		NavigationAlgo::transformPose(target_in_robot_frame, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
 		
-		waypoint_pub_.publish(target_in_robot_frame);
+		//waypoint_pub_.publish(target_in_robot_frame);
 
 		if(manual_driving_)
 		{
@@ -476,17 +494,17 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 	get_new_trajectory_ = true;
 
 	// Save the goal pose in the MAP frame, so that trajectory updates will use a goal relative to the map.
-	geometry_msgs::PoseStamped final_pose = goal->pose;
-	geometry_msgs::PoseStamped pose_wrt_robot = goal->pose;
-	NavigationAlgo::transformPose(final_pose, MAP, buffer_, 0.1);
 
+	geometry_msgs::PoseStamped final_pose = goal->pose;
+	NavigationAlgo::transformPose(final_pose, MAP, buffer_, 0.1);
+	
 	// While we have a new trajectory. If driveDistance does not reset this, then this loop only runs once.
 	while(get_new_trajectory_)
 	{
+		geometry_msgs::PoseStamped pose_wrt_robot = final_pose;
+
 		// Forward goal to local planner, and save the returned trajectory
 		ROS_INFO("Requesting new trajectory...");
-		pose_wrt_robot = final_pose;
-		ROS_INFO("Z");
 		bool proceed = NavigationAlgo::transformPose(pose_wrt_robot, robot_name_ + ROBOT_CHASSIS, buffer_, 0.1);
 		if(!proceed)
 		{
@@ -496,9 +514,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			action_server->setSucceeded(res);
 			return;
 		}
-		ROS_INFO("A");
+
 		planning::TrajectoryWithVelocities trajectory = sendGoalToPlanner(pose_wrt_robot);
-		ROS_INFO("B");
 
 		//Catch malformed trajectories here
 		if(trajectory.waypoints.size() <= 0)
@@ -513,6 +530,9 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 		// We got the new trajectory, so we should reset the new trajectory flag.
 		get_new_trajectory_ = false;
 		ROS_INFO("Got new trajectory!");
+
+		//Visualize waypoints in Gazebo
+		NavigationServer::publishWaypoints(trajectory.waypoints);
 
 		// Loop over trajectory waypoints
 		for (int i = 0; i < trajectory.waypoints.size(); i++)
@@ -533,7 +553,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			geometry_msgs::PoseStamped current_waypoint = trajectory.waypoints[i];
 			float current_velocity = trajectory.velocities[i].data;
 
-			waypoint_pub_.publish(current_waypoint);
+			//waypoint_pub_.publish(current_waypoint);
 
 			// Get the current waypoint in the map frame, based on the most recent transforms.
 			current_waypoint.header.stamp = ros::Time(0);

@@ -4,13 +4,17 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Imu.h>
 #include <planning/TrajectoryWithVelocities.h>
-#include "planning/trajectory.h"
+#include <planning/trajectory.h>
 #include <nav_msgs/Odometry.h>
 #include <srcp2_msgs/BrakeRoverSrv.h>
 
 #include <operations/navigation_algorithm.h>
 #include <operations/NavigationAction.h> // Note: "Action" is appended
 #include <actionlib/server/simple_action_server.h>
+
+// Used to visualize poses in an array
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
 
 #include <math.h>
 #include <string>
@@ -38,8 +42,8 @@ private:
     const float BASE_SPIN_SPEED = 0.3;
 
     // Tolerances for linear and angular moves
-    const float DIST_EPSILON = 0.1;
-    const float ANGLE_EPSILON = 0.2;
+    const float DIST_EPSILON = 1;
+    const float ANGLE_EPSILON = 0.1;
     const float SPIRAL_SPEED = 0.5;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
@@ -57,7 +61,7 @@ private:
     ros::Publisher front_left_vel_pub_, front_right_vel_pub_, back_left_vel_pub_, back_right_vel_pub_;
     ros::Publisher front_left_steer_pub_, front_right_steer_pub_, back_left_steer_pub_, back_right_steer_pub_;
 
-    // Debug publisher. Can be used to publish any PoseStamped. Used to visualize in RViz
+    // Debug publisher. Used to visualize poses in gazebo with utils/render_poses.py
     ros::Publisher waypoint_pub_;
 
     // Used to get the current robot pose
@@ -88,6 +92,13 @@ private:
 
     // Whether we should get a new trajectory from the planner. Set by driveDistance in automaticDriving.
     bool get_new_trajectory_ = false;
+
+    /**
+     * @brief Uses waypoint_pub_ to publish poses to be visualized in Gazebo.
+     * 
+     * @param waypoints 
+     */
+    void publishWaypoints(std::vector<geometry_msgs::PoseStamped> waypoints);
 
     /**
      * @brief Initialize the publishers for wheel speeds
