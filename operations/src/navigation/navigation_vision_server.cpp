@@ -255,12 +255,26 @@ void undock()
         }
         if (g_send_nav_goal)
         {
-            geometry_msgs::PoseStamped pt;
-            pt.header.frame_id = g_robot_name + ROBOT_BASE;
-            pt.pose.position.y = -5;
-            g_nav_goal.drive_mode = NAV_TYPE::GOAL;
-            g_nav_goal.pose = pt;
+            g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = -0.6;
+            g_nav_goal.angular_velocity = 0;
             g_client->sendGoal(g_nav_goal);
+            ros::Duration(2.5).sleep();
+            g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = 0;
+            g_nav_goal.angular_velocity = 0.6;
+            g_client->sendGoal(g_nav_goal);
+            ros::Duration(2.5).sleep();
+            g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = 0.6;
+            g_nav_goal.angular_velocity = 0;
+            g_client->sendGoal(g_nav_goal);
+            ros::Duration(2.5).sleep();
+            g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = 0.;
+            g_nav_goal.angular_velocity = 0;
+            g_client->sendGoal(g_nav_goal);
+            ros::Duration(2.5).sleep();
             g_send_nav_goal = false;
         }
     }
@@ -392,7 +406,7 @@ void visionNavigation()
                 g_nav_goal.forward_velocity = 0;
                 g_reached_goal = true;
                 centered = false;
-                ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached Goal - " << g_desired_label);
+                // ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached Goal - " << g_desired_label);
                 return;
             }
             else
@@ -462,7 +476,7 @@ void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
     {
         g_nav_goal.drive_mode = NAV_TYPE::GOAL;
         g_nav_goal.pose = goal_loc;
-        ROS_INFO_STREAM(g_robot_name << " Outgoing nav vision goal" << goal_loc);
+        // ROS_INFO_STREAM(g_robot_name << " Outgoing nav vision goal" << goal_loc);
         if (g_previous_state_is_go_to)
         {
             g_send_nav_goal = false;
