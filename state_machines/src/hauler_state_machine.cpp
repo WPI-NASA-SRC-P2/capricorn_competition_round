@@ -33,7 +33,7 @@ bool HaulerStateMachine::followExcavator()
     navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
     navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_FOLLOW;
     navigation_vision_client_->sendGoal(navigation_vision_goal_);
-    navigation_vision_client_->waitForResult();
+    // navigation_vision_client_->waitForResult();
     return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
@@ -93,26 +93,12 @@ bool HaulerStateMachine::undockExcavator()
 
 bool HaulerStateMachine::undockHopper()
 {
-    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-    navigation_action_goal_.forward_velocity = -0.6;
-    navigation_action_goal_.angular_velocity = 0;
-    navigation_client_->sendGoal(navigation_action_goal_);
-    ros::Duration(3.5).sleep();
-    // navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-    // navigation_action_goal_.forward_velocity = 0;
-    // navigation_action_goal_.angular_velocity = 0.5;
-    // navigation_client_->sendGoal(navigation_action_goal_);
-    // ros::Duration(2.5).sleep();
-    // navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-    // navigation_action_goal_.forward_velocity = 0.6;
-    // navigation_action_goal_.angular_velocity = 0;
-    // navigation_client_->sendGoal(navigation_action_goal_);
-    // ros::Duration(2.5).sleep();
-    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-    navigation_action_goal_.forward_velocity = 0.0;
-    navigation_action_goal_.angular_velocity = 0;
-    navigation_client_->sendGoal(navigation_action_goal_);
-    ros::Duration(2.5).sleep();
+    ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from Excavator");
+    navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_HOPPER_CLASS;
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    navigation_vision_client_->waitForResult();
+    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool HaulerStateMachine::dumpVolatileToProcPlant()
