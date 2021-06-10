@@ -215,7 +215,7 @@ public:
    * @return true Transform succeeded
    * @return false Transform failed
    */
-  static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration = 0.1, int tries = 1);
+  static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration = 0.1, int tries = 10);
 
   /**
    * @brief Same as transformPose, but for a point. Passes through to transformPose.
@@ -228,7 +228,7 @@ public:
    * @return true See transformPose
    * @return false See transformPose
    */
-  static bool transformPoint(geometry_msgs::PointStamped& point, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries = 1);
+  static bool transformPoint(geometry_msgs::PointStamped& point, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration, int tries = 10);
 
   /**
    * @brief Returns the radius formed by three points formed in the X-Y plane
