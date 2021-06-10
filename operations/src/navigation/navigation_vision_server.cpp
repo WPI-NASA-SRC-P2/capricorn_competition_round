@@ -462,7 +462,7 @@ void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
     {
         g_nav_goal.drive_mode = NAV_TYPE::GOAL;
         g_nav_goal.pose = goal_loc;
-        ROS_INFO_STREAM(g_robot_name<<" Outgoing nav vision goal"<<goal_loc);
+        ROS_INFO_STREAM(g_robot_name << " Outgoing nav vision goal" << goal_loc);
         if (g_previous_state_is_go_to)
         {
             g_send_nav_goal = false;
@@ -473,6 +473,91 @@ void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
             }
         }
         g_previous_state_is_go_to = true;
+    }
+}
+
+/**
+ * @brief Function handling mode: NAV_AND_NAV_VISION which does the following thing:
+ * 1. Sends navigation goal for target location
+ * 2. As soon as the robot is near the target location (10 meter in radius), starts looking for the target label, as soon as it finds the target label, 
+ * switches to navigation vision
+ * 
+ * @param goal_loc 
+ */
+void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
+{
+
+    static int object_found_frames = 0;
+
+    if (object_found_frames > 10)
+    {
+        // ROS_INFO("Going to vision navigation");
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_send_nav_goal = true;
+        visionNavigation();
+        if (g_reached_goal)
+        {
+            object_found_frames = 0;
+        }
+        return;
+    }
+
+    if (g_send_nav_goal)
+    {
+        object_found_frames = 0;
+        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+        g_nav_goal.pose = goal_loc;
+        g_client->sendGoal(g_nav_goal);
+        if (g_previous_state_is_go_to)
+        {
+            g_send_nav_goal = false;
+        }
+        g_previous_state_is_go_to = true;
+    }
+
+    if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        // ROS_INFO("Going to vision navigation");
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_send_nav_goal = true;
+        visionNavigation();
+    }
+
+    const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
+    double distance = NavigationAlgo::changeInPosition(g_robot_pose, goal_loc);
+
+    if (distance > 20)
+    {
+        return;
+    }
+
+    // ROS_INFO("Looking for object");
+
+    bool object_found = false;
+
+    std::unique_lock<std::mutex> obj_lock(g_objects_mutex);
+    perception::ObjectArray objects = g_objects;
+    obj_lock.unlock();
+
+    // Find the desired objects
+    for (int i = 0; i < objects.number_of_objects; i++)
+    {
+        perception::Object object = objects.obj.at(i);
+        if (object.label == g_desired_label)
+        {
+            // ROS_INFO("Found object");
+            // Store the object's center
+            object_found = true;
+        }
+    }
+
+    if (object_found)
+    {
+        object_found_frames++;
+    }
+    else
+    {
+        object_found_frames = 0;
     }
 }
 
@@ -505,7 +590,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     NAV_VISION_TYPE mode = (NAV_VISION_TYPE)goal->mode;
     ROS_INFO_STREAM(g_robot_name << " NAV VISION : Goal Received - " << mode);
 
-    if (mode == NAV_VISION_TYPE::V_FOLLOW || mode == NAV_VISION_TYPE::V_REACH || mode == NAV_VISION_TYPE::V_UNDOCK || mode == NAV_VISION_TYPE::V_CENTER)
+    if (mode == NAV_VISION_TYPE::V_FOLLOW || mode == NAV_VISION_TYPE::V_REACH || mode == NAV_VISION_TYPE::V_UNDOCK || mode == NAV_VISION_TYPE::V_CENTER || mode == NAV_VISION_TYPE::V_NAV_AND_NAV_VISION)
     {
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_desired_label = goal->desired_object_label;
@@ -521,7 +606,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
         // Set the desired bounding box target height according to the desired target class
         setDesiredLabelHeightThreshold();
     }
-    else if (mode == NAV_VISION_TYPE::V_OBS_GOTO_GOAL)
+    else if (mode == NAV_VISION_TYPE::V_OBS_GOTO_GOAL || mode == NAV_VISION_TYPE::V_NAV_AND_NAV_VISION)
     {
         g_previous_state_is_go_to = false;
     }
@@ -566,6 +651,13 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
                 g_client->sendGoal(g_nav_goal);
             }
             break;
+        case NAV_VISION_TYPE::V_NAV_AND_NAV_VISION:
+            goToLocationAndObject(goal->goal_loc);
+            if (g_send_nav_goal)
+            {
+                g_client->sendGoal(g_nav_goal);
+            }
+            break;
         default:
             ROS_ERROR_STREAM(g_robot_name + " NAV VISION: Encountered Unhandled State!");
             result.result = COMMON_RESULT::INVALID_GOAL;
@@ -597,9 +689,9 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
  */
 void odomCallback(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  const std::lock_guard<std::mutex> lock(g_odom_mutex);
-  g_robot_pose.header = msg->header;
-  g_robot_pose.pose = msg->pose.pose;
+    const std::lock_guard<std::mutex> lock(g_odom_mutex);
+    g_robot_pose.header = msg->header;
+    g_robot_pose.pose = msg->pose.pose;
 }
 
 int main(int argc, char **argv)

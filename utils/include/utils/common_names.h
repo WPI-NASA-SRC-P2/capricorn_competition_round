@@ -115,6 +115,7 @@ namespace COMMON_NAMES
   const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";
   const std::string OBJECT_DETECTION_OBJECTS_TOPIC = "/object_detection/objects";
   const std::string VOLATILE_SENSOR_TOPIC = "/volatile_sensor";
+  const std::string SCOUT_LOC_TOPIC = "/scout_loc";
 
   // Used to communicate between excavators and scouts when the excavator is ready to move in to pick up a volatile
   // TODO: Choose a real message type for this topic, instead of std_msgs::Empty
@@ -142,6 +143,7 @@ namespace COMMON_NAMES
     V_CENTER = 2,        // Centers the robot to a given class
     V_UNDOCK = 3,        // Undocks from given class
     V_OBS_GOTO_GOAL = 4, // Uses go to goal with obstacle avoidance
+    V_NAV_AND_NAV_VISION = 5, // Navigation which switches to vision based navigation when robot can see target and target location is near the robot
   };
 
   /****** NAVIGATION ENUMS ******/
