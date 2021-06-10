@@ -94,12 +94,32 @@ bool HaulerStateMachine::undockExcavator()
 bool HaulerStateMachine::undockHopper()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from Hopper");
-    navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_HOPPER_CLASS;
-    // navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS; //because for some reason the hopper isn't detected
-    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
-    navigation_vision_client_->sendGoal(navigation_vision_goal_);
-    navigation_vision_client_->waitForResult();
-    return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+    int nav_duration = 5.0;
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = -0.6;   
+    navigation_action_goal_.angular_velocity = 0;
+    ROS_INFO("UNDOCKING: backing up beep beep beep");
+    navigation_client_->sendGoal(navigation_action_goal_);
+    ros::Duration(nav_duration).sleep();
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = 0;
+    navigation_action_goal_.angular_velocity = 0.6;
+    ROS_INFO("UNDOCKING: turning during backup");
+    navigation_client_->sendGoal(navigation_action_goal_);
+    ros::Duration(nav_duration).sleep();
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = 0.6;
+    navigation_action_goal_.angular_velocity = 0;
+    ROS_INFO("UNDOCKING: moving forward");
+    navigation_client_->sendGoal(navigation_action_goal_);
+    ros::Duration(nav_duration).sleep();
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = 0.;
+    navigation_action_goal_.angular_velocity = 0;
+    ROS_INFO("UNDOCKING: breaking");
+    navigation_client_->sendGoal(navigation_action_goal_);
+    ros::Duration(nav_duration).sleep();
+    return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool HaulerStateMachine::dumpVolatileToProcPlant()

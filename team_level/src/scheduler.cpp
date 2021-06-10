@@ -48,7 +48,7 @@ void Scheduler::schedulerLoop()
   init();
   ROS_INFO("All State machines connected!");
 
-  //startScout();
+  startScout();
   startExcavator();
   startHauler();
 
