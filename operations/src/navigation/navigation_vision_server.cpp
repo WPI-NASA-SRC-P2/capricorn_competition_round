@@ -106,7 +106,8 @@ bool check_class()
         g_desired_label == OBJECT_DETECTION_EXCAVATOR_CLASS ||
         g_desired_label == OBJECT_DETECTION_SCOUT_CLASS ||
         g_desired_label == OBJECT_DETECTION_FURNACE_CLASS ||
-        g_desired_label == OBJECT_DETECTION_HAULER_CLASS)
+        g_desired_label == OBJECT_DETECTION_HAULER_CLASS ||
+        g_desired_label == OBJECT_DETECTION_HOPPER_CLASS)
         return true;
     return false;
 }
@@ -246,6 +247,7 @@ void undock()
 
     if (centered)
     {
+        ROS_INFO("CENTERED");
         if (!g_send_nav_goal && g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         {
             ROS_INFO_STREAM(g_robot_name << " NAV VISION: Undocked Successfully");
@@ -255,26 +257,31 @@ void undock()
         }
         if (g_send_nav_goal)
         {
+            int nav_duration = 5.0;
             g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
-            g_nav_goal.forward_velocity = -0.6;
+            g_nav_goal.forward_velocity = -0.6;   
             g_nav_goal.angular_velocity = 0;
+            ROS_INFO("UNDOCKING: backing up beep beep beep");
             g_client->sendGoal(g_nav_goal);
-            ros::Duration(2.5).sleep();
+            ros::Duration(nav_duration).sleep();
             g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = 0;
             g_nav_goal.angular_velocity = 0.6;
+            ROS_INFO("UNDOCKING: turning during backup");
             g_client->sendGoal(g_nav_goal);
-            ros::Duration(2.5).sleep();
+            ros::Duration(nav_duration).sleep();
             g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = 0.6;
             g_nav_goal.angular_velocity = 0;
+            ROS_INFO("UNDOCKING: moving forward");
             g_client->sendGoal(g_nav_goal);
-            ros::Duration(2.5).sleep();
+            ros::Duration(nav_duration).sleep();
             g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = 0.;
             g_nav_goal.angular_velocity = 0;
+            ROS_INFO("UNDOCKING: breaking");
             g_client->sendGoal(g_nav_goal);
-            ros::Duration(2.5).sleep();
+            ros::Duration(nav_duration).sleep();
             g_send_nav_goal = false;
         }
     }
