@@ -48,7 +48,7 @@ void Scheduler::schedulerLoop()
   init();
   ROS_INFO("All State machines connected!");
 
-  startScout();
+  //startScout();
   startExcavator();
   startHauler();
 
@@ -218,6 +218,24 @@ void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
 
 void Scheduler::sendHaulerGoal(const STATE_MACHINE_TASK task)
 {
+  // if (task == HAULER_GO_TO_LOC)
+  // {
+  //   std::lock_guard<std::mutex> lock(excavator_pose_mutex);
+
+  //   bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
+
+  //   geometry_msgs::PoseStamped hauler_goal_pose;
+  //   geometry_msgs::PoseStamped ref_pose = excavator_waiting ? excavator_pose_ : scout_pose_;
+  //   hauler_goal_pose.header.frame_id = MAP;
+  //   hauler_goal_pose.pose = NavigationAlgo::getPointCloserToOrigin(ref_pose.pose, hauler_pose_.pose, -5.0);
+
+  //   sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task, hauler_goal_pose);
+  // }
+  // if (task == HAULER_GO_BACK_TO_EXCAVATOR)
+  // {
+  //   sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task, excavator_pose_);
+  // }
+  // else
     sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task);
 }
 
