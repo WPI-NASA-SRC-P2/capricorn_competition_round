@@ -247,7 +247,6 @@ void undock()
 
     if (centered)
     {
-        ROS_INFO("CENTERED");
         if (!g_send_nav_goal && g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         {
             ROS_INFO_STREAM(g_robot_name << " NAV VISION: Undocked Successfully");
@@ -257,6 +256,8 @@ void undock()
         }
         if (g_send_nav_goal)
         {
+            // int nav_duration = 2.5;
+            // if(g_desired_label == OBJECT_DETECTION_HOPPER_CLASS)
             int nav_duration = 5.0;
             g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = -0.6;   
@@ -269,7 +270,7 @@ void undock()
             g_nav_goal.angular_velocity = 0.6;
             ROS_INFO("UNDOCKING: turning during backup");
             g_client->sendGoal(g_nav_goal);
-            ros::Duration(nav_duration).sleep();
+            ros::Duration(2.5).sleep();
             g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = 0.6;
             g_nav_goal.angular_velocity = 0;

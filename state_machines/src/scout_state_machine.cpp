@@ -120,6 +120,7 @@ bool ScoutStateMachine::resetOdometry(const geometry_msgs::PoseStamped &POSE)
 {
   resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
   maploc::ResetOdom srv;
+  ROS_WARN("Scout odometry has been reset");
   srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
   srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
   srv.request.use_ground_truth = false;
@@ -133,6 +134,7 @@ bool ScoutStateMachine::resetOdometry()
 {
   resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
   maploc::ResetOdom srv;
+  ROS_WARN("Scout odometry has been reset");
   srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
   srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
   srv.request.use_ground_truth = true;

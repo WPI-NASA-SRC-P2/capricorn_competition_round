@@ -48,7 +48,7 @@ void Scheduler::schedulerLoop()
   init();
   ROS_INFO("All State machines connected!");
 
-  //startScout();
+  startScout();
   startExcavator();
   startHauler();
 
@@ -123,14 +123,14 @@ void Scheduler::updateExcavator()
   {
     if ((excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_) || first_task)
     {
-      excavator_desired_task = (EXCAVATOR_GO_TO_LOC);
+      excavator_desired_task = (EXCAVATOR_GO_TO_SCOUT);
       first_task = false;
     }
   }
-  if (excavator_goal_.task == EXCAVATOR_GO_TO_LOC && excavator_task_completed_)
-  {
-    excavator_desired_task = (EXCAVATOR_GO_TO_SCOUT);
-  }
+  // if (excavator_goal_.task == EXCAVATOR_GO_TO_LOC && excavator_task_completed_)
+  // {
+  //   excavator_desired_task = (EXCAVATOR_GO_TO_SCOUT);
+  // }
   if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
     excavator_desired_task = (EXCAVATOR_PARK_AND_PUB);
   if (hauler_goal_.task == HAULER_PARK_AT_EXCAVATOR && hauler_task_completed_)
@@ -159,12 +159,12 @@ void Scheduler::updateHauler()
     bool excavator_going = excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT || excavator_goal_.task == EXCAVATOR_GO_TO_LOC;
     bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
     if (excavator_going || excavator_waiting)
-      hauler_desired_task = (HAULER_FOLLOW_EXCAVATOR);
+      hauler_desired_task = (HAULER_GO_BACK_TO_EXCAVATOR);
   }
   //Conditions of excavator that should be met for the HAULER_PARK_AT_EXCAVATOR.
   if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_task_completed_)
   {
-    if (hauler_goal_.task == HAULER_FOLLOW_EXCAVATOR && hauler_task_completed_)
+    if (hauler_goal_.task == HAULER_GO_BACK_TO_EXCAVATOR && hauler_task_completed_)
       hauler_desired_task = (HAULER_PARK_AT_EXCAVATOR);
   }
   //Conditions of excavator that should be met for the HAULER_DUMP_VOLATILE_TO_PROC_PLANT.

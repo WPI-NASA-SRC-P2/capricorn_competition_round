@@ -127,13 +127,13 @@ void driveSprial()
 
     if (g_going_to_goal && !done_driving)
     {
-      ROS_INFO("oKAY");
+      // ROS_INFO("oKAY");
       g_last_dist = dist;
       ros::Duration(0.1).sleep();
       g_going_to_goal = true;
       if(failed_driving)
       {
-        ROS_INFO("o");
+        // ROS_INFO("o");a
         g_spiral_points.erase(g_spiral_points.begin());
         was_driving = true;
       }
