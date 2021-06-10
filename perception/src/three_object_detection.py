@@ -17,33 +17,47 @@ and then published in perception/Objects message
 
 from object_detection_cap_lib import *
 
+g_scout_image = None
+g_scout_disparity = None
+g_excavator_image = None
+g_excavator_disparity = None
+g_hauler_image = None
+g_hauler_disparity = None
 
-def detectionCallback(
-    scout_image,
-    scout_disparity,
-    excavator_image,
-    excavator_disparity,
-    hauler_image,
-    hauler_disparity,
-):
-    """
-    Camera image and disparity combined callback
-    """
-    rospy.logwarn_once("Callback Working")
 
+def scoutImageCallback(scout_image):
+    rospy.loginfo_once("Scout Image Callback Working")
     global g_scout_image
-    global g_scout_disparity
-    global g_excavator_image
-    global g_excavator_disparity
-    global g_hauler_image
-    global g_hauler_disparity
-
-    # set global image and disparity
     g_scout_image = g_bridge.imgmsg_to_cv2(scout_image, "bgr8")
-    g_excavator_image = g_bridge.imgmsg_to_cv2(excavator_image, "bgr8")
-    g_hauler_image = g_bridge.imgmsg_to_cv2(hauler_image, "bgr8")
+
+
+def scoutDisparityCallback(scout_disparity):
+    rospy.loginfo_once("Scout Disparity Callback Working")
+    global g_scout_disparity
     g_scout_disparity = g_bridge.imgmsg_to_cv2(scout_disparity.image, "32FC1")
+
+
+def excavatorImageCallback(excavator_image):
+    rospy.loginfo_once("Excavator Image Callback Working")
+    global g_excavator_image
+    g_excavator_image = g_bridge.imgmsg_to_cv2(excavator_image, "bgr8")
+
+
+def excavatorDisparityCallback(excavator_disparity):
+    rospy.loginfo_once("Excavator Disparity Callback Working")
+    global g_excavator_disparity
     g_excavator_disparity = g_bridge.imgmsg_to_cv2(excavator_disparity.image, "32FC1")
+
+
+def haulerImageCallback(hauler_image):
+    rospy.loginfo_once("Hauler Image Callback Working")
+    global g_hauler_image
+    g_hauler_image = g_bridge.imgmsg_to_cv2(hauler_image, "bgr8")
+
+
+def haulerDisparityCallback(hauler_disparity):
+    rospy.loginfo_once("Hauler Disparity Callback Working")
+    global g_hauler_disparity
     g_hauler_disparity = g_bridge.imgmsg_to_cv2(hauler_disparity.image, "32FC1")
 
 
@@ -54,39 +68,26 @@ def initObjectDetection(path_to_model, path_to_label_map):
     update_rate = rospy.Rate(UPDATE_HZ)
 
     # Initialize subscriber for scout, excavator and hauler (image and disparity)
-    scout_image_sub_left = message_filters.Subscriber(
-        "/" + scout_name + "/camera/left/image_raw", Image
+    scout_image_sub_left = rospy.Subscriber(
+        "/" + scout_name + "/camera/left/image_raw", Image, scoutImageCallback
     )
-    scout_disp_sub = message_filters.Subscriber(
-        "/" + scout_name + "/camera/disparity", DisparityImage
+    scout_disp_sub = rospy.Subscriber(
+        "/" + scout_name + "/camera/disparity", DisparityImage, scoutDisparityCallback
     )
-    excavator_image_sub_left = message_filters.Subscriber(
-        "/" + excavator_name + "/camera/left/image_raw", Image
+    excavator_image_sub_left = rospy.Subscriber(
+        "/" + excavator_name + "/camera/left/image_raw", Image, excavatorImageCallback
     )
-    excavator_disp_sub = message_filters.Subscriber(
-        "/" + excavator_name + "/camera/disparity", DisparityImage
+    excavator_disp_sub = rospy.Subscriber(
+        "/" + excavator_name + "/camera/disparity",
+        DisparityImage,
+        excavatorDisparityCallback,
     )
-    hauler_image_sub_left = message_filters.Subscriber(
-        "/" + hauler_name + "/camera/left/image_raw", Image
+    hauler_image_sub_left = rospy.Subscriber(
+        "/" + hauler_name + "/camera/left/image_raw", Image, haulerImageCallback
     )
-    hauler_disp_sub = message_filters.Subscriber(
-        "/" + hauler_name + "/camera/disparity", DisparityImage
+    hauler_disp_sub = rospy.Subscriber(
+        "/" + hauler_name + "/camera/disparity", DisparityImage, haulerDisparityCallback
     )
-    ts = message_filters.ApproximateTimeSynchronizer(
-        [
-            scout_image_sub_left,
-            scout_disp_sub,
-            excavator_image_sub_left,
-            excavator_disp_sub,
-            hauler_image_sub_left,
-            hauler_disp_sub,
-        ],
-        1,
-        1,
-        allow_headerless=True,
-    )
-
-    ts.registerCallback(detectionCallback)
 
     # initialize publisher for scout, excavator and hauler (image and disparity)
     scout_img_pub = rospy.Publisher(
@@ -117,6 +118,7 @@ def initObjectDetection(path_to_model, path_to_label_map):
     category_index = label_map_util.create_category_index_from_labelmap(
         str.format(path_to_label_map), use_display_name=True
     )
+
     tf.keras.backend.clear_session()
     model = tf.saved_model.load(str.format(path_to_model))
     model_fn = model.signatures["serving_default"]
@@ -131,14 +133,7 @@ def initObjectDetection(path_to_model, path_to_label_map):
     global g_hauler_disparity
 
     while not rospy.is_shutdown():
-        if (
-            g_scout_disparity is not None
-            and g_scout_image is not None
-            and g_excavator_disparity is not None
-            and g_excavator_image is not None
-            and g_hauler_disparity is not None
-            and g_hauler_image is not None
-        ):
+        if g_scout_disparity is not None and g_scout_image is not None:
             detectionAlgorithm(
                 category_index,
                 model_fn,
@@ -148,6 +143,7 @@ def initObjectDetection(path_to_model, path_to_label_map):
                 scout_objects_pub,
                 scout_name,
             )
+        if g_excavator_disparity is not None and g_excavator_image is not None:
             detectionAlgorithm(
                 category_index,
                 model_fn,
@@ -157,6 +153,7 @@ def initObjectDetection(path_to_model, path_to_label_map):
                 excavator_objects_pub,
                 excavator_name,
             )
+        if g_hauler_disparity is not None and g_hauler_image is not None:
             detectionAlgorithm(
                 category_index,
                 model_fn,
