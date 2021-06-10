@@ -511,7 +511,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			ROS_ERROR_STREAM("Failed to transform to robot frame! Exiting.\n");
 			operations::NavigationResult res;
 			res.result = COMMON_RESULT::FAILED;
-			action_server->setSucceeded(res);
+			action_server->setAborted(res);
 			return;
 		}
 
@@ -523,7 +523,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			ROS_ERROR_STREAM("Got 0 length trajectory! Exiting.\n");
 			operations::NavigationResult res;
 			res.result = COMMON_RESULT::FAILED;
-			action_server->setSucceeded(res);
+			action_server->setAborted(res);
 			return;
 		}
 
@@ -595,7 +595,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 					res.result = COMMON_RESULT::FAILED;
 					
 				}
-				action_server->setSucceeded(res);
+				action_server->setAborted(res);
 
 				return;
 			}
@@ -632,7 +632,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 					ROS_ERROR_STREAM("Drive to waypoint " << i << " did not succeed.\n");
 					res.result = COMMON_RESULT::FAILED;
 				}
-				action_server->setSucceeded(res);
+				action_server->setAborted(res);
 
 				return;
 			}
@@ -670,7 +670,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			res.result = COMMON_RESULT::FAILED;
 			
 		}
-		action_server->setSucceeded(res);
+		action_server->setAborted(res);
 
 		return;
 	}
