@@ -65,16 +65,20 @@ bool ExcavatorStateMachine::parkExcavator()
     //// Hardcoded straigh walk for 1.5 meters ////
     /////////////////////////////////////////////
 
-    geometry_msgs::PoseStamped hard_coded_pose;
-    hard_coded_pose.header.frame_id = robot_name_ + ROBOT_BASE;
-    hard_coded_pose.pose.position.x = 1.5;
-    navigation_action_goal_.pose = hard_coded_pose; // Position estimation is not perfect
-    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-
-    new_vol_loc_flag_ = 1; // Flag set to 1 when excavator parks to a new volatile location
-
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = 0.6;   
+    navigation_action_goal_.angular_velocity = 0;
+    ROS_INFO("UNDOCKING: backing up beep beep beep");
     navigation_client_->sendGoal(navigation_action_goal_);
-    navigation_client_->waitForResult();
+    ros::Duration(4).sleep();
+
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = 0.0;   
+    navigation_action_goal_.angular_velocity = 0;
+    ROS_INFO("UNDOCKING: backing up beep beep beep");
+    navigation_client_->sendGoal(navigation_action_goal_);
+    ros::Duration(0.5).sleep();
+
     return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 

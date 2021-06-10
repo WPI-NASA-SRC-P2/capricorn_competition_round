@@ -312,7 +312,7 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     ros::Duration(SLEEP_DURATION).sleep();
     publishAngles(dumpAngle, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(dumpAngle, -2, 1, -0.7786); // This set of values moves the scoop to the front center
+    publishAngles(dumpAngle, -2, 1, -1.5); // This set of values moves the scoop to the front center
     ros::Duration(3).sleep();
   }
   else if (task == GO_TO_DEFAULT) // dumping angles

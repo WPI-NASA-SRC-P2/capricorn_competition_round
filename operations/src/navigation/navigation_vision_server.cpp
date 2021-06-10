@@ -548,7 +548,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
     const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
     double distance = NavigationAlgo::changeInPosition(g_robot_pose, goal_loc);
 
-    if (distance > 20)
+    if (distance > 10)
     {
         return;
     }
