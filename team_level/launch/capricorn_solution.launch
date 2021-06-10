@@ -13,6 +13,6 @@
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
     </include>
 
-    <!-- <node pkg="team_level" type="start_scheduler" name="scheduler"/> -->
+    <node pkg="team_level" type="start_scheduler" name="scheduler"/>
 
 </launch>
