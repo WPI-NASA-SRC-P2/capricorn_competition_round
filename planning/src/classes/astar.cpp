@@ -142,15 +142,18 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   int centerIndex = (oGrid.info.height / 2) * oGrid.info.width + oGrid.info.width / 2;
 
 
+  ROS_WARN("centerIndex calculated");
+
   if(oGrid.data[centerIndex] > threshold)
   {
+    ROS_WARN("Start pose in the padding...");
     PoseStamped firstPoint;
-    point.pose.position.x = 0.0;
-    point.pose.position.y = 0.0;
+    firstPoint.pose.position.x = 0.0;
+    firstPoint.pose.position.y = 0.0;
     
     PoseStamped secondPoint;
-    point.pose.position.x = 2.0;
-    point.pose.position.y  = 0;
+    secondPoint.pose.position.x = 2.0;
+    secondPoint.pose.position.y  = 0;
 
     //new path if the robot's index in
     Path path;
