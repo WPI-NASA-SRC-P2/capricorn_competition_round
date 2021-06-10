@@ -317,7 +317,7 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
   }
   else if (task == GO_TO_DEFAULT) // dumping angles
   {
-    publishAngles(-1, -1, 1.5792, -0.7786);
+    publishAngles(-1, -1, 1.5792, -1.2);
   }
   else
   {
