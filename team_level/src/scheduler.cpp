@@ -48,7 +48,7 @@ void Scheduler::schedulerLoop()
   init();
   ROS_INFO("All State machines connected!");
 
-  //startScout();
+  startScout();
   startExcavator();
   startHauler();
 
@@ -159,16 +159,12 @@ void Scheduler::updateHauler()
     bool excavator_going = excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT || excavator_goal_.task == EXCAVATOR_GO_TO_LOC;
     bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
     if (excavator_going || excavator_waiting)
-    {
-      hauler_desired_task = (HAULER_GO_TO_LOC);
-      // hauler_desired_task = (HAULER_GO_BACK_TO_EXCAVATOR);
-    }
-      
+      hauler_desired_task = (HAULER_FOLLOW_EXCAVATOR);
   }
   //Conditions of excavator that should be met for the HAULER_PARK_AT_EXCAVATOR.
   if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_task_completed_)
   {
-    if (hauler_goal_.task == HAULER_GO_TO_LOC && hauler_task_completed_)
+    if (hauler_goal_.task == HAULER_FOLLOW_EXCAVATOR && hauler_task_completed_)
       hauler_desired_task = (HAULER_PARK_AT_EXCAVATOR);
   }
   //Conditions of excavator that should be met for the HAULER_DUMP_VOLATILE_TO_PROC_PLANT.
@@ -181,17 +177,17 @@ void Scheduler::updateHauler()
 
 void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
 {
-  if (task == SCOUT_UNDOCK)
-  {
-    // reset the scout's odometry when it is facing the excavator
-    geometry_msgs::PoseStamped scout_goal_pose;
-    scout_goal_pose = rotatePose(excavator_pose_, M_PI);
-    sendRobotGoal(SCOUT, scout_client_, scout_goal_, task, scout_goal_pose);
-  }
-  else
-  {
+  // if (task == SCOUT_UNDOCK)
+  // {
+  //   // reset the scout's odometry when it is facing the excavator
+  //   geometry_msgs::PoseStamped scout_goal_pose;
+  //   scout_goal_pose = rotatePose(excavator_pose_, M_PI);
+  //   sendRobotGoal(SCOUT, scout_client_, scout_goal_, task, scout_goal_pose);
+  // }
+  // else
+  // {
     sendRobotGoal(SCOUT, scout_client_, scout_goal_, task);
-  }
+  // }
 }
 
 void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
@@ -207,13 +203,13 @@ void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
   // {
   //   sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, scout_pose_); 
   // }
-  if (task == EXCAVATOR_DIG_AND_DUMP_VOLATILE)
-  {
-    // reset odometry during dig and dump volatile state!
-    geometry_msgs::PoseStamped excavator_goal_pose;
-    excavator_goal_pose = rotatePose(hauler_pose_, M_PI);
-    sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, excavator_goal_pose);
-  }
+  // if (task == EXCAVATOR_DIG_AND_DUMP_VOLATILE)
+  // {
+  //   // reset odometry during dig and dump volatile state!
+  //   geometry_msgs::PoseStamped excavator_goal_pose;
+  //   excavator_goal_pose = rotatePose(hauler_pose_, M_PI);
+  //   sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, excavator_goal_pose);
+  // }
   //Adding what to do when excavator reset odometry is being called
 
   else
@@ -222,24 +218,6 @@ void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
 
 void Scheduler::sendHaulerGoal(const STATE_MACHINE_TASK task)
 {
-  if (task == HAULER_GO_TO_LOC)
-  {
-    std::lock_guard<std::mutex> lock(excavator_pose_mutex);
-
-    bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
-
-    geometry_msgs::PoseStamped hauler_goal_pose;
-    geometry_msgs::PoseStamped ref_pose = excavator_waiting ? excavator_pose_ : scout_pose_;
-    hauler_goal_pose.header.frame_id = MAP;
-    hauler_goal_pose.pose = NavigationAlgo::getPointCloserToOrigin(ref_pose.pose, hauler_pose_.pose, -5.0);
-
-    sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task, hauler_goal_pose);
-  }
-  if (task == HAULER_GO_BACK_TO_EXCAVATOR)
-  {
-    sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task, excavator_pose_);
-  }
-  else
     sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task);
 }
 
