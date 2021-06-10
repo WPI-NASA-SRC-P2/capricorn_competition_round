@@ -61,6 +61,8 @@ private:
    */
   static geometry_msgs::PoseStamped poseStampedFromIndex(int ind, nav_msgs::OccupancyGrid const &oGrid, std::string & robot_name);
 
+
+  
   /**
    * @brief Reconstructs the path from map of least costly nodes
    * @param current The node to start the reverse list of
