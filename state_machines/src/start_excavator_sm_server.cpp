@@ -93,7 +93,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	case STATE_MACHINE_TASK::EXCAVATOR_FACE_PROCESSING_PLANT:   //Not here
 		output = sm->faceProcessingPlant();
 		break;
-	case STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR:             //Here
+	case STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR:             //Here, Not in use currently
 		output = sm->goToLocObject(goal->goal_loc, COMMON_NAMES::OBJECT_DETECTION_REPAIR_STATION_CLASS);
 		break;
 	default:

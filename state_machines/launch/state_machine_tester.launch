@@ -1,8 +1,9 @@
 <launch>
     <arg name="robot_name" default="small_hauler_1" />
     <arg name="task" default="0" />
+    <arg name="target_object" default= "0" />
 
     <group ns="/capricorn/$(arg robot_name)">
-        <node pkg="state_machines" type="state_machine_tester" name="state_machine_tester" args="$(arg robot_name) $(arg task)" output="screen" />
+        <node pkg="state_machines" type="state_machine_tester" name="state_machine_tester" args="$(arg robot_name) $(arg task) $(arg target_object)" output="screen" />
     </group>
 </launch>

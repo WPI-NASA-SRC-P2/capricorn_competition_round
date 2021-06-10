@@ -36,7 +36,6 @@ std::string g_robot_name;
 geometry_msgs::PoseStamped g_robot_pose;
 
 const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
-int COUNTER = 18, STATUS = 1;
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05;
 const double NOT_AVOID_OBSTACLE_THRESHOLD = 5.0;
 std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex;
@@ -335,15 +334,10 @@ void visionNavigation()
         // object not detected, rotate on robot's axis to find the object
         lost_detection_times++;
         true_detection_times = 0;
-        COUNTER--;
         if (lost_detection_times > LOST_FRAME_THRESHOLD)
         {
             g_nav_goal.angular_velocity = revolve_direction * ANGULAR_VELOCITY;
             g_nav_goal.forward_velocity = 0;
-        }
-        if (COUNTER == 0)
-        {
-            STATUS = 0;
         }
         return;
     }
@@ -429,12 +423,6 @@ void visionNavigation()
         g_nav_goal.angular_velocity = 0;
         g_nav_goal.forward_velocity = 0;
     }
-    if (STATUS == 0)
-    {
-        g_nav_goal.angular_velocity = 0;
-        ROS_INFO_STREAM(g_robot_name << " NAV VISION: No Object Found" << g_desired_label);
-        return;
-    }
 
     // maintaing previous values
     prev_angular_velocity = g_nav_goal.angular_velocity;
@@ -480,7 +468,7 @@ void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
             g_send_nav_goal = false;
             if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
             {
-                // ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached GoTo Goal");
+                ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached GoTo Goal");
                 g_reached_goal = true;
             }
         }
@@ -503,7 +491,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     if (object_found_frames > 10)
     {
-        // ROS_INFO("Going to vision navigation");
+        ROS_INFO("Going to vision navigation");
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
         visionNavigation();
@@ -529,7 +517,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-        // ROS_INFO("Going to vision navigation");
+        ROS_INFO("Going to vision navigation");
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
         visionNavigation();
@@ -537,13 +525,15 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
     double distance = NavigationAlgo::changeInPosition(g_robot_pose, goal_loc);
+    ROS_WARN_STREAM("Robot pose and goal_loc = " << g_robot_pose << goal_loc);
 
     if (distance > 20)
     {
+        ROS_INFO_STREAM("Distance = " << distance);
         return;
     }
 
-    // ROS_INFO("Looking for object");
+    ROS_INFO("Looking for object");
 
     bool object_found = false;
 
@@ -557,7 +547,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         perception::Object object = objects.obj.at(i);
         if (object.label == g_desired_label)
         {
-            // ROS_INFO("Found object");
+            ROS_INFO("Found object");
             // Store the object's center
             object_found = true;
         }
@@ -606,6 +596,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     {
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_desired_label = goal->desired_object_label;
+        ROS_INFO_STREAM("Desired label =" << g_desired_label);
         if (!check_class())
         {
             // the class is not valid, send the appropriate result
@@ -701,6 +692,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
  */
 void odomCallback(const nav_msgs::Odometry::ConstPtr &msg)
 {
+    ROS_INFO_ONCE("ODOM WORKING");
     const std::lock_guard<std::mutex> lock(g_odom_mutex);
     g_robot_pose.header = msg->header;
     g_robot_pose.pose = msg->pose.pose;
@@ -723,7 +715,8 @@ int main(int argc, char **argv)
 
     ros::Subscriber objects_sub = nh.subscribe(CAPRICORN_TOPIC + g_robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
 
-    ros::Subscriber robot_odom_sub = nh.subscribe(CAPRICORN_TOPIC + g_robot_name + CHEAT_ODOM_TOPIC, 1, &odomCallback);
+    // example of intended subscriber-> ros::Subscriber robot_odom_sub = nh.subscribe("/small_excavator_1/camera/odom", 1000, &odomCallback);
+    ros::Subscriber robot_odom_sub = nh.subscribe("/" + g_robot_name + RTAB_ODOM_TOPIC, 1000, &odomCallback);
 
     Server server(nh, g_robot_name + NAVIGATION_VISION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.registerPreemptCallback(&cancelGoal);
