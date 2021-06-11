@@ -8,22 +8,60 @@
 #include <operations/ResourceLocaliserAction.h>
 #include <srcp2_msgs/VolSensorMsg.h>
 #include <operations/obstacle_avoidance.h>
+#include <state_machines/common_robot_state_machine.h>
 
 using namespace COMMON_NAMES;
 
-const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
-    STATE_MACHINE_TASK::SCOUT_UNDOCK,
-    STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE,
-    STATE_MACHINE_TASK::SCOUT_LOCATE_VOLATILE,
-};
+/****************************************/
+/****************************************/
 
-class ScoutBaseState
-{
+
+class ScoutState : public State {
+   
 private:
   ros::Subscriber volatile_sub_;
   ros::Subscriber objects_sub_;
 
+  /**
+   * @brief Volatile sensor callback
+   * 
+   * @param msg 
+   */
+  void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg);
+
+  /**
+   * @brief Object detection objects callback
+   * 
+   * @param objs 
+   */
+  void objectsCallback(const perception::ObjectArray::ConstPtr objs);
+
+public:
+   
+   ScoutState(uint32_t un_id,
+           uint32_t un_max_count);
+   
+   ~ScoutState();
+
+   void entryPoint() override {
+      m_unCount = 0;
+      ROS_INFO_STREAM("  [" << getName() << "] - entry point");
+   }
+
+   void exitPoint() override {
+      ROS_INFO_STREAM("  [" << getName() << "] - exit point");
+   }
+
+   void step() override {
+      ++m_unCount;
+      ROS_INFO_STREAM("  [" << getName() << "] - count = " << m_unCount);
+   }
+   
 protected:
+
+  uint32_t m_unMaxCount;
+  uint32_t m_unCount;
+
   ros::NodeHandle nh_;
 
   std::string robot_name_;
@@ -43,72 +81,70 @@ protected:
   typedef actionlib::SimpleActionClient<operations::ResourceLocaliserAction> ResourceLocaliserClient_;
   ResourceLocaliserClient_ *resource_localiser_client_;
 
-  /**
-   * @brief Volatile sensor callback
-   * 
-   * @param msg 
-   */
-  void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg);
-
-  void objectsCallback(const perception::ObjectArray::ConstPtr objs);
-
-public:
-  ScoutBaseState(ros::NodeHandle nh, const std::string &robot_name);
-  ~ScoutBaseState();
-
-  bool entryPoint();
-  bool exec();
-  bool exitPoint();
 };
 
-class Undock: public ScoutBaseState
-{
-public:
-  Undock(ros::NodeHandle nh, const std::string &robot_name);
-  bool entryPoint();
-  bool exec();
-  bool exitPoint();
+class Undock : public ScoutState {
+public:   
+   Undock() : ScoutState(SCOUT_UNDOCK, 3) {}
+
+  //  void entryPoint() override;
+   State& transition() override {
+      if(m_unCount < m_unMaxCount) {
+         return *this;
+      }
+      return getState(SCOUT_UNDOCK);
+   }
+   
 };
 
-class Search: public ScoutBaseState
-{
-public:
-  Search(ros::NodeHandle nh, const std::string &robot_name);
-  bool entryPoint();
-  bool exec();
-  bool exitPoint();
-  bool resumeSearchingVolatile(bool resume);
-};
+// class Undock: public ScoutState
+// {
+// public:
+//   Undock();
+//   bool entryPoint();
+//   bool exec();
+//   bool exitPoint();
+// };
 
-class Locate: public ScoutBaseState
-{
-public:
-  Locate(ros::NodeHandle nh, const std::string &robot_name);
-  bool entryPoint();
-  bool exec();
-  bool exitPoint();
-};
+// class Search: public ScoutState
+// {
+// public:
+//   Search();
+//   bool entryPoint();
+//   bool exec();
+//   bool exitPoint();
+//   bool resumeSearchingVolatile(bool resume);
+// };
 
-class SolarCharge: public ScoutBaseState
-{
-public:
-  bool entryPoint();
-  bool exec();
-  bool exitPoint();
-};
+// class Locate: public ScoutState
+// {
+// public:
+//   Locate();
+//   bool entryPoint();
+//   bool exec();
+//   bool exitPoint();
+// };
 
-class RepairRobot: public ScoutBaseState
-{
-public:
-  bool entryPoint();
-  bool exec();
-  bool exitPoint();
-};
+// class SolarCharge: public ScoutState
+// {
+// public:
+//   bool entryPoint();
+//   bool exec();
+//   bool exitPoint();
+// };
 
-class ResetOdom: public ScoutBaseState
-{
-public:
-  bool entryPoint();
-  bool exec();
-  bool exitPoint();
-};
+// class RepairRobot: public ScoutState
+// {
+// public:
+//   bool entryPoint();
+//   bool exec();
+//   bool exitPoint();
+// };
+
+// class ResetOdom: public ScoutState
+// {
+// public:
+//   bool entryPoint();
+//   bool exec();
+//   bool exitPoint();
+// };
