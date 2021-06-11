@@ -166,6 +166,8 @@ private:
     */
     void steerRobot(const std::vector<double> &angles);
 
+    void steerRobotAckerman(const std::vector<double>& angles);
+
     /**
     * @brief Steers the robot wheels for the angles
     * 
@@ -250,7 +252,7 @@ private:
      * @param delta_heading The difference in heading needed to point the robot at the desired waypoint.
      * @return double The radius the robot should turn on to get to the waypoint.
      */
-    double headingToRadius(double delta_heading);
+    std::vector<double> headingToRadius(double delta_heading);
 
     /**
      * @brief Execute a smooth drive to a waypoint. WARNING: Will keep moving after termination.

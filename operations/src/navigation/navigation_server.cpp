@@ -194,6 +194,14 @@ void NavigationServer::steerRobot(const std::vector<double>& angles)
 	publishMessage(back_left_steer_pub_, angles.at(3));
 }
 
+void NavigationServer::steerRobotAckerman(const std::vector<double>& angles)
+{
+	publishMessage(front_left_steer_pub_, angles.at(0));
+	publishMessage(front_right_steer_pub_, angles.at(1));
+	publishMessage(back_right_steer_pub_, 0);
+	publishMessage(back_left_steer_pub_, 0);
+}
+
 /**
  * @brief Steers the robot wheels for the angles
  * 
@@ -289,7 +297,7 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 
 	// don't we love bad code?
 	geometry_msgs::PoseStamped w1;
-	w1.pose.position.x = 2;
+	w1.pose.position.x = -2;
 	w1.header.frame_id = robot_name_ + "_small_chassis";
 
 	geometry_msgs::PoseStamped w2;
@@ -508,7 +516,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 	return true;
 }
 
-double NavigationServer::headingToRadius(double delta_heading)
+std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 {
 	// Map object delta_heading (radians) to a radius used to change the robot's ICC
 	//Y = (X-A)/(B-A) * (D-C) + C
@@ -516,14 +524,35 @@ double NavigationServer::headingToRadius(double delta_heading)
 	//TODO: find MIN_DELTA_HEADING/MAX_DELTA_HEADING vals ---MAKE SURE ALL VALS HERE ARE DOUBLES
 	// MAX_TURNING_RAD = 60 deg = pi/3
 	// MIN_TURNING_RAD = -60 deg = -pi/3
-	if (abs(delta_heading) < ANGLE_EPSILON)
+	// if (abs(delta_heading) < ANGLE_EPSILON)
+	// {
+	// 	return DBL_MAX;
+	// }
+
+	ROS_INFO("Delta Heading: %f", delta_heading);
+
+	double center_radius = NavigationAlgo::wheel_sep_length_/tan(delta_heading);
+
+	double left_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius - NavigationAlgo::wheel_sep_width_/2);
+
+	double right_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius + NavigationAlgo::wheel_sep_width_/2);
+
+	//double desired_radius = 1.0/((delta_heading - MIN_DELTA_HEADING)/(MAX_DELTA_HEADING - MIN_DELTA_HEADING) * (MAX_TURNING_RAD - MIN_TURNING_RAD) + MIN_TURNING_RAD);
+
+	if(delta_heading < 0)
 	{
-		return DBL_MAX;
+		left_wheel_angle = -left_wheel_angle;
+		right_wheel_angle = -right_wheel_angle;
 	}
 
-	double desired_radius = 1.0/((delta_heading - MIN_DELTA_HEADING)/(MAX_DELTA_HEADING - MIN_DELTA_HEADING) * (MAX_TURNING_RAD - MIN_TURNING_RAD) + MIN_TURNING_RAD);
+	ROS_INFO("Desired left wheel angle: %f", left_wheel_angle);
 
-	return desired_radius;
+	ROS_INFO("Desired right wheel angle: %f", right_wheel_angle);
+
+	ROS_INFO("before pushing elements in vector");
+	std::vector<double> wheel_angles{left_wheel_angle, right_wheel_angle};
+
+	return wheel_angles;
 }
 
 bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint)
@@ -546,22 +575,22 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint)
 		// Calculate the delta heading
 		double delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
 
-		ROS_INFO("Heading: %f", delta_heading);
-
 		// Use transfer function for delta heading -> ICC radius
 		// Positive is towards the left, negative is towards the right
-		double icc_radius = headingToRadius(delta_heading);
+		//double icc_radius = headingToRadius(delta_heading);
+
+		std::vector<double> wheel_angles = headingToRadius(delta_heading);
 
 		// Find wheel angles for that ICC
-		geometry_msgs::Point icc;
-		icc.x = 0;
-		icc.y = icc_radius;
-		icc.z = 0;
+		// geometry_msgs::Point icc;
+		// icc.x = 0;
+		// icc.y = icc_radius;
+		// icc.z = 0;
 		
-		std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesRadialTurn(icc);
+		//std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesRadialTurn(icc);
 
 		// Set wheels to that angle
-		steerRobot(wheel_angles);
+		steerRobotAckerman(wheel_angles);
 
 		// Set wheels at speed
 		moveRobotWheels(BASE_DRIVE_SPEED);
