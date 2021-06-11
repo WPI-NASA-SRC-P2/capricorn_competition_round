@@ -270,51 +270,51 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	planning::trajectory srv;
 	srv.request.targetPose = goal;
 
-	// TODO TODO TODO Don't commit or merge or approve a PR with this in it
-	// if (trajectory_client_.call(srv))
-	// {
-	// 	ROS_INFO("Trajectory client call succeeded");
-	// 	traj = srv.response.trajectory;
-	// 	//TODO: Delete hotfix once planner issue with extra waypoints has been solved
-	// 	int trajLength = traj.waypoints.size();
-	// 	if(trajLength >= 2)
-	// 	{
-	// 		traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 2);
-	// 	} 
-	// 	else 
-	// 	{
-	// 		//Error catching- if trajectory doesn't have 2 items, the planner messed up. Delete the trajectory.
-	// 		ROS_ERROR("Trajectory less than 2 items long- if we've fixed the extra traj points, this should be removed");
-	// 		traj.waypoints.resize(0);
-	// 		return traj;
-	// 	}
+	//TODO TODO TODO Don't commit or merge or approve a PR with this in it
+	if (trajectory_client_.call(srv))
+	{
+		ROS_INFO("Trajectory client call succeeded");
+		traj = srv.response.trajectory;
+		//TODO: Delete hotfix once planner issue with extra waypoints has been solved
+		int trajLength = traj.waypoints.size();
+		if(trajLength >= 2)
+		{
+			traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 2);
+		} 
+		else 
+		{
+			//Error catching- if trajectory doesn't have 2 items, the planner messed up. Delete the trajectory.
+			ROS_ERROR("Trajectory less than 2 items long- if we've fixed the extra traj points, this should be removed");
+			traj.waypoints.resize(0);
+			return traj;
+		}
 		
-	// }
-	// else
-	// {
-	// 	ROS_ERROR("Failed to call service trajectory generator");
-	// }
+	}
+	else
+	{
+		ROS_ERROR("Failed to call service trajectory generator");
+	}
 
 	// don't we love bad code?
-	geometry_msgs::PoseStamped w1;
-	w1.pose.position.x = -2;
-	w1.header.frame_id = robot_name_ + "_small_chassis";
+	// geometry_msgs::PoseStamped w1;
+	// w1.pose.position.x = -2;
+	// w1.header.frame_id = robot_name_ + "_small_chassis";
 
-	geometry_msgs::PoseStamped w2;
-	w2.pose.position.x = 5;
-	w2.pose.position.y = 3;
+	// geometry_msgs::PoseStamped w2;
+	// w2.pose.position.x = 5;
+	// w2.pose.position.y = 3;
 	
-	w2.header.frame_id = robot_name_ + "_small_chassis";
+	// w2.header.frame_id = robot_name_ + "_small_chassis";
 
-	// planning::TrajectoryWithVelocities traj;
+	// // planning::TrajectoryWithVelocities traj;
 
-	std_msgs::Float64 vel;
-	vel.data = 0.6;
+	// std_msgs::Float64 vel;
+	// vel.data = 0.6;
 
-	traj.waypoints.push_back(w1);
-	traj.waypoints.push_back(w2);
-	traj.velocities.push_back(vel);
-	traj.velocities.push_back(vel);
+	// traj.waypoints.push_back(w1);
+	// traj.waypoints.push_back(w2);
+	// traj.velocities.push_back(vel);
+	// traj.velocities.push_back(vel);
 
 	// Make sure that all trajectory waypoints are in the map frame before returning it
 	return getTrajInMapFrame(traj);
@@ -549,7 +549,6 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 
 	ROS_INFO("Desired right wheel angle: %f", right_wheel_angle);
 
-	ROS_INFO("before pushing elements in vector");
 	std::vector<double> wheel_angles{left_wheel_angle, right_wheel_angle};
 
 	return wheel_angles;
