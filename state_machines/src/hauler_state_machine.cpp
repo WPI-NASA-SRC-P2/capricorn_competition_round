@@ -33,17 +33,17 @@ bool HaulerStateMachine::followExcavator()
     navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
     navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_FOLLOW;
     navigation_vision_client_->sendGoal(navigation_vision_goal_);
-    navigation_vision_client_->waitForResult();
+    // navigation_vision_client_->waitForResult();
     return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool HaulerStateMachine::parkAtExcavator(std::string excavator_name)
 {
     // try to face excavator first: Just a HOTFIX, might need to remove it later as it doesnt take care of the fact that the excavator could be in a crater
-    navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
-    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
-    navigation_vision_client_->sendGoal(navigation_vision_goal_);
-    navigation_vision_client_->waitForResult();
+    // navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
+    // navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
+    // navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    // navigation_vision_client_->waitForResult();
     // do we need a duration check?
 
     ROS_INFO_STREAM(robot_name_ << " State Machine: Parking at Excavator");
@@ -94,14 +94,32 @@ bool HaulerStateMachine::undockExcavator()
 bool HaulerStateMachine::undockHopper()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from Hopper");
-    geometry_msgs::PoseStamped pt;
-    pt.header.frame_id = robot_name_ + ROBOT_BASE;
-    pt.pose.position.x = -5;
-    pt.pose.orientation.w = 1;
-    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-    navigation_action_goal_.pose = pt;
+    int nav_duration = 5.0;
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = -0.6;   
+    navigation_action_goal_.angular_velocity = 0;
+    ROS_INFO("UNDOCKING: backing up beep beep beep");
     navigation_client_->sendGoal(navigation_action_goal_);
-    navigation_client_->waitForResult();
+    ros::Duration(nav_duration).sleep();
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = 0;
+    navigation_action_goal_.angular_velocity = 0.6;
+    ROS_INFO("UNDOCKING: turning during backup");
+    navigation_client_->sendGoal(navigation_action_goal_);
+    ros::Duration(nav_duration).sleep();
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = 0.6;
+    navigation_action_goal_.angular_velocity = 0;
+    ROS_INFO("UNDOCKING: moving forward");
+    navigation_client_->sendGoal(navigation_action_goal_);
+    ros::Duration(nav_duration).sleep();
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = 0.;
+    navigation_action_goal_.angular_velocity = 0;
+    ROS_INFO("UNDOCKING: breaking");
+    navigation_client_->sendGoal(navigation_action_goal_);
+    ros::Duration(nav_duration).sleep();
+    return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool HaulerStateMachine::dumpVolatileToProcPlant()
@@ -131,6 +149,7 @@ bool HaulerStateMachine::resetOdometry()
     ROS_INFO_STREAM(robot_name_ << " State Machine: Reseting odom with GT");
     resetHaulerOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
     maploc::ResetOdom srv;
+    ROS_WARN("Hauler odometry has been reset");
     // srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
     // srv.request.ref_pose.pose.orientation.w = 1; //Need to check this out, but included this because having 'w' as non-zero gives a NAN value somewhere in some processing and odometry reset fails somehwere in the source files of rtabmap
     srv.request.target_robot_name = COMMON_NAMES::HAULER_1;

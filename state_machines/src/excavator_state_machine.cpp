@@ -65,16 +65,20 @@ bool ExcavatorStateMachine::parkExcavator()
     //// Hardcoded straigh walk for 1.5 meters ////
     /////////////////////////////////////////////
 
-    geometry_msgs::PoseStamped hard_coded_pose;
-    hard_coded_pose.header.frame_id = robot_name_ + ROBOT_BASE;
-    hard_coded_pose.pose.position.x = 1.5;
-    navigation_action_goal_.pose = hard_coded_pose; // Position estimation is not perfect
-    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-
-    new_vol_loc_flag_ = 1; // Flag set to 1 when excavator parks to a new volatile location
-
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = 0.6;   
+    navigation_action_goal_.angular_velocity = 0;
+    ROS_INFO("UNDOCKING: backing up beep beep beep");
     navigation_client_->sendGoal(navigation_action_goal_);
-    navigation_client_->waitForResult();
+    ros::Duration(4).sleep();
+
+    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+    navigation_action_goal_.forward_velocity = 0.0;   
+    navigation_action_goal_.angular_velocity = 0;
+    ROS_INFO("UNDOCKING: backing up beep beep beep");
+    navigation_client_->sendGoal(navigation_action_goal_);
+    ros::Duration(0.5).sleep();
+
     return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
@@ -164,6 +168,7 @@ bool ExcavatorStateMachine::resetOdometry()
 {
     resetExcavatorOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
     maploc::ResetOdom srv;
+    ROS_WARN("Excavator odometry has been reset");
     srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
     srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1;
     srv.request.use_ground_truth = false; //If launching get_true_pose=true, always keep this as false. Ditto for scout.
@@ -175,6 +180,7 @@ bool ExcavatorStateMachine::resetOdometry(const geometry_msgs::PoseStamped &POSE
 {
     resetExcavatorOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
     maploc::ResetOdom srv;
+    ROS_WARN("Excavator odometry has been reset");
     srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
     srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1;
     srv.request.ref_pose = POSE;

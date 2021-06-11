@@ -91,7 +91,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
         output = sm->parkAtExcavator();
         break;
     case STATE_MACHINE_TASK::HAULER_GO_TO_PROC_PLANT:
-        // TODO: have to account for start of simulation not having access to odometry of processing plant
+        // need to account for no access to pose of processing plant at start of simulation
         // output = sm->goToLocObject(goal->goal_loc, COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
         output = sm->goToProcPlant();
         break;

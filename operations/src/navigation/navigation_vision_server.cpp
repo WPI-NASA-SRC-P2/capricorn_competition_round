@@ -106,7 +106,8 @@ bool check_class()
         g_desired_label == OBJECT_DETECTION_EXCAVATOR_CLASS ||
         g_desired_label == OBJECT_DETECTION_SCOUT_CLASS ||
         g_desired_label == OBJECT_DETECTION_FURNACE_CLASS ||
-        g_desired_label == OBJECT_DETECTION_HAULER_CLASS)
+        g_desired_label == OBJECT_DETECTION_HAULER_CLASS ||
+        g_desired_label == OBJECT_DETECTION_HOPPER_CLASS)
         return true;
     return false;
 }
@@ -255,12 +256,33 @@ void undock()
         }
         if (g_send_nav_goal)
         {
-            geometry_msgs::PoseStamped pt;
-            pt.header.frame_id = g_robot_name + ROBOT_BASE;
-            pt.pose.position.y = -5;
-            g_nav_goal.drive_mode = NAV_TYPE::GOAL;
-            g_nav_goal.pose = pt;
+            // int nav_duration = 2.5;
+            // if(g_desired_label == OBJECT_DETECTION_HOPPER_CLASS)
+            int nav_duration = 5.0;
+            g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = -0.6;   
+            g_nav_goal.angular_velocity = 0;
+            ROS_INFO("UNDOCKING: backing up beep beep beep");
             g_client->sendGoal(g_nav_goal);
+            ros::Duration(nav_duration).sleep();
+            g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = 0;
+            g_nav_goal.angular_velocity = 0.6;
+            ROS_INFO("UNDOCKING: turning during backup");
+            g_client->sendGoal(g_nav_goal);
+            ros::Duration(2.5).sleep();
+            g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = 0.6;
+            g_nav_goal.angular_velocity = 0;
+            ROS_INFO("UNDOCKING: moving forward");
+            g_client->sendGoal(g_nav_goal);
+            ros::Duration(nav_duration).sleep();
+            g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = 0.;
+            g_nav_goal.angular_velocity = 0;
+            ROS_INFO("UNDOCKING: breaking");
+            g_client->sendGoal(g_nav_goal);
+            ros::Duration(nav_duration).sleep();
             g_send_nav_goal = false;
         }
     }
@@ -392,7 +414,7 @@ void visionNavigation()
                 g_nav_goal.forward_velocity = 0;
                 g_reached_goal = true;
                 centered = false;
-                ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached Goal - " << g_desired_label);
+                // ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached Goal - " << g_desired_label);
                 return;
             }
             else
@@ -462,7 +484,7 @@ void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
     {
         g_nav_goal.drive_mode = NAV_TYPE::GOAL;
         g_nav_goal.pose = goal_loc;
-        ROS_INFO_STREAM(g_robot_name << " Outgoing nav vision goal" << goal_loc);
+        // ROS_INFO_STREAM(g_robot_name << " Outgoing nav vision goal" << goal_loc);
         if (g_previous_state_is_go_to)
         {
             g_send_nav_goal = false;
@@ -525,15 +547,13 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
     double distance = NavigationAlgo::changeInPosition(g_robot_pose, goal_loc);
-    ROS_WARN_STREAM("Robot pose and goal_loc = " << g_robot_pose << goal_loc);
 
-    if (distance > 20)
+    if (distance > 10)
     {
-        ROS_INFO_STREAM("Distance = " << distance);
         return;
     }
 
-    ROS_INFO("Looking for object");
+    // ROS_INFO("Looking for object");
 
     bool object_found = false;
 

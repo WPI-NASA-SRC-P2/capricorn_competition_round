@@ -74,10 +74,10 @@ bool ScoutStateMachine::undockRobot()
 bool ScoutStateMachine::undockRobot(const geometry_msgs::PoseStamped &POSE)
 {
   // face the excavator in preparation for resetting odometry
-  navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
-  navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
-  navigation_vision_client_->sendGoal(navigation_vision_goal_);
-  navigation_vision_client_->waitForResult();
+  // navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
+  // navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
+  // navigation_vision_client_->sendGoal(navigation_vision_goal_);
+  // navigation_vision_client_->waitForResult();
 
   // reset the odometry using the 180-degree rotated pose received from scheduler if facing excavator succeeds
   // if (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
@@ -120,6 +120,7 @@ bool ScoutStateMachine::resetOdometry(const geometry_msgs::PoseStamped &POSE)
 {
   resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
   maploc::ResetOdom srv;
+  ROS_WARN("Scout odometry has been reset");
   srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
   srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
   srv.request.use_ground_truth = false;
@@ -133,6 +134,7 @@ bool ScoutStateMachine::resetOdometry()
 {
   resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
   maploc::ResetOdom srv;
+  ROS_WARN("Scout odometry has been reset");
   srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
   srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
   srv.request.use_ground_truth = true;
