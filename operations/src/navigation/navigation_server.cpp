@@ -153,7 +153,7 @@ void NavigationServer::initSubscribers(ros::NodeHandle& nh, std::string& robot_n
 	trajectory_client_ = nh.serviceClient<planning::trajectory>("/capricorn/" + robot_name + "/trajectoryGenerator");
 	
 	// Make sure things get launched in the right order
-	trajectory_client_.waitForExistence();
+	// trajectory_client_.waitForExistence();
 }
 
 /*********************************************************************/
@@ -262,29 +262,51 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	planning::trajectory srv;
 	srv.request.targetPose = goal;
 
-	if (trajectory_client_.call(srv))
-	{
-		ROS_INFO("Trajectory client call succeeded");
-		traj = srv.response.trajectory;
-		//TODO: Delete hotfix once planner issue with extra waypoints has been solved
-		int trajLength = traj.waypoints.size();
-		if(trajLength >= 2)
-		{
-			traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 2);
-		} 
-		else 
-		{
-			//Error catching- if trajectory doesn't have 2 items, the planner messed up. Delete the trajectory.
-			ROS_ERROR("Trajectory less than 2 items long- if we've fixed the extra traj points, this should be removed");
-			traj.waypoints.resize(0);
-			return traj;
-		}
+	// TODO TODO TODO Don't commit or merge or approve a PR with this in it
+	// if (trajectory_client_.call(srv))
+	// {
+	// 	ROS_INFO("Trajectory client call succeeded");
+	// 	traj = srv.response.trajectory;
+	// 	//TODO: Delete hotfix once planner issue with extra waypoints has been solved
+	// 	int trajLength = traj.waypoints.size();
+	// 	if(trajLength >= 2)
+	// 	{
+	// 		traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 2);
+	// 	} 
+	// 	else 
+	// 	{
+	// 		//Error catching- if trajectory doesn't have 2 items, the planner messed up. Delete the trajectory.
+	// 		ROS_ERROR("Trajectory less than 2 items long- if we've fixed the extra traj points, this should be removed");
+	// 		traj.waypoints.resize(0);
+	// 		return traj;
+	// 	}
 		
-	}
-	else
-	{
-		ROS_ERROR("Failed to call service trajectory generator");
-	}
+	// }
+	// else
+	// {
+	// 	ROS_ERROR("Failed to call service trajectory generator");
+	// }
+
+	// don't we love bad code?
+	geometry_msgs::PoseStamped w1;
+	w1.pose.position.x = 2;
+	w1.header.frame_id = robot_name_ + "_small_chassis";
+
+	geometry_msgs::PoseStamped w2;
+	w2.pose.position.x = 5;
+	w2.pose.position.y = 3;
+	
+	w2.header.frame_id = robot_name_ + "_small_chassis";
+
+	// planning::TrajectoryWithVelocities traj;
+
+	std_msgs::Float64 vel;
+	vel.data = 0.6;
+
+	traj.waypoints.push_back(w1);
+	traj.waypoints.push_back(w2);
+	traj.velocities.push_back(vel);
+	traj.velocities.push_back(vel);
 
 	// Make sure that all trajectory waypoints are in the map frame before returning it
 	return getTrajInMapFrame(traj);
@@ -486,7 +508,74 @@ bool NavigationServer::driveDistance(double delta_distance)
 	return true;
 }
 
-void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
+double NavigationServer::headingToRadius(double delta_heading)
+{
+	// Map object delta_heading (radians) to a radius used to change the robot's ICC
+	//Y = (X-A)/(B-A) * (D-C) + C
+
+	//TODO: find MIN_DELTA_HEADING/MAX_DELTA_HEADING vals ---MAKE SURE ALL VALS HERE ARE DOUBLES
+	// MAX_TURNING_RAD = 60 deg = pi/3
+	// MIN_TURNING_RAD = -60 deg = -pi/3
+	if (abs(delta_heading) < ANGLE_EPSILON)
+	{
+		return DBL_MAX;
+	}
+
+	double desired_radius = 1.0/((delta_heading - MIN_DELTA_HEADING)/(MAX_DELTA_HEADING - MIN_DELTA_HEADING) * (MAX_TURNING_RAD - MIN_TURNING_RAD) + MIN_TURNING_RAD);
+
+	return desired_radius;
+}
+
+bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint)
+{
+	double distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());
+
+	// While we're not at the waypoint
+	while(distance_to_waypoint > DIST_EPSILON)
+	{
+		// If we are interrupted, stop.
+		if(manual_driving_)
+		{	
+			// Stop moving the robot, as we were interrupted.
+			moveRobotWheels(0);
+			brakeRobot(true);
+
+			return false;
+		}
+
+		// Calculate the delta heading
+		double delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
+
+		ROS_INFO("Heading: %f", delta_heading);
+
+		// Use transfer function for delta heading -> ICC radius
+		// Positive is towards the left, negative is towards the right
+		double icc_radius = headingToRadius(delta_heading);
+
+		// Find wheel angles for that ICC
+		geometry_msgs::Point icc;
+		icc.x = 0;
+		icc.y = icc_radius;
+		icc.z = 0;
+		
+		std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesRadialTurn(icc);
+
+		// Set wheels to that angle
+		steerRobot(wheel_angles);
+
+		// Set wheels at speed
+		moveRobotWheels(BASE_DRIVE_SPEED);
+
+		// Update distance to waypoint
+		distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());
+
+		update_rate_->sleep();
+	}
+
+	return true;
+}
+
+void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server, bool smooth)
 {
 	ROS_INFO("Beginning auto drive\n");
 
@@ -532,7 +621,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 		ROS_INFO("Got new trajectory!");
 
 		//Visualize waypoints in Gazebo
-		NavigationServer::publishWaypoints(trajectory.waypoints);
+		//NavigationServer::publishWaypoints(trajectory.waypoints);
 
 		// Loop over trajectory waypoints
 		for (int i = 0; i < trajectory.waypoints.size(); i++)
@@ -561,80 +650,105 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 			// Needed, otherwise we get extrapolation into the past
 			// current_waypoint.header.stamp = ros::Time(0);
-
-			bool turned_successfully;
-
-			// Based on the parameter in this server's constructor, either do crab drive or rotate in place drive.
-			if(CRAB_DRIVE_)
+			if(smooth)
 			{
-				// Turn wheels to heading
-				ROS_INFO("Rotating wheels\n");
-				turned_successfully = rotateWheels(current_waypoint);
+				bool drove_successfully = smoothDriving(trajectory.waypoints[i]);
+
+				if (!drove_successfully)
+				{
+					operations::NavigationResult res;
+					if(manual_driving_)
+					{
+						ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+						res.result = COMMON_RESULT::INTERRUPTED;
+					} else 
+					{
+						//AAAH ERROR
+						ROS_ERROR_STREAM("Drive to waypoint " << i << " did not succeed.\n");
+						res.result = COMMON_RESULT::FAILED;
+					}
+					action_server->setSucceeded(res);
+
+					return;
+				}
 			}
 			else
 			{
-				ROS_INFO("Rotating robot\n");
-				turned_successfully = rotateRobot(current_waypoint);
-			}
+				bool turned_successfully;
 
-			ros::Duration(1.0).sleep();
-
-			if (!turned_successfully)
-			{
-				operations::NavigationResult res;
-
-				if(manual_driving_)
+				// Based on the parameter in this server's constructor, either do crab drive or rotate in place drive.
+				if(CRAB_DRIVE_)
 				{
-					ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
-					res.result = COMMON_RESULT::INTERRUPTED;
+					// Turn wheels to heading
+					ROS_INFO("Rotating wheels\n");
+					turned_successfully = rotateWheels(current_waypoint);
 				}
 				else
 				{
-					//AAAH ERROR
-					ROS_ERROR_STREAM("Turn to waypoint " << i << " did not succeed. Exiting.\n");
-					res.result = COMMON_RESULT::FAILED;
-					
+					ROS_INFO("Rotating robot\n");
+					turned_successfully = rotateRobot(current_waypoint);
 				}
-				action_server->setSucceeded(res);
 
-				return;
-			}
+				ros::Duration(1.0).sleep();
 
-			//Get current pose + position from odometry
-			geometry_msgs::PoseStamped current_robot_pose = *getRobotPose();
-
-			//Calculate delta distance
-			float delta_distance = NavigationAlgo::changeInPosition(current_robot_pose, current_waypoint);
-
-			//Drive to goal
-			ROS_INFO("Going the distance, going for speed\n");
-			bool drove_successfully = driveDistance(delta_distance);
-
-			// If driveDistance set the get_new_trajectory_ flag, we should quit out of the for loop, which will get a new trajectory.
-			if(get_new_trajectory_)
-			{
-				ROS_INFO("Distance planner interrupt. Getting new trajectory.\n");
-
-				// Setting i to the length of the trajectory will terminate the for loop.
-				i = trajectory.waypoints.size();
-			}
-
-			if (!drove_successfully)
-			{
-				operations::NavigationResult res;
-				if(manual_driving_)
+				if (!turned_successfully)
 				{
-					ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
-					res.result = COMMON_RESULT::INTERRUPTED;
-				} else 
-				{
-					//AAAH ERROR
-					ROS_ERROR_STREAM("Drive to waypoint " << i << " did not succeed.\n");
-					res.result = COMMON_RESULT::FAILED;
+					operations::NavigationResult res;
+
+					if(manual_driving_)
+					{
+						ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+						res.result = COMMON_RESULT::INTERRUPTED;
+					}
+					else
+					{
+						//AAAH ERROR
+						ROS_ERROR_STREAM("Turn to waypoint " << i << " did not succeed. Exiting.\n");
+						res.result = COMMON_RESULT::FAILED;
+						
+					}
+					action_server->setSucceeded(res);
+
+					return;
 				}
-				action_server->setSucceeded(res);
 
-				return;
+				//Get current pose + position from odometry
+				geometry_msgs::PoseStamped current_robot_pose = *getRobotPose();
+
+				//Calculate delta distance
+				float delta_distance = NavigationAlgo::changeInPosition(current_robot_pose, current_waypoint);
+
+				//Drive to goal
+				ROS_INFO("Going the distance, going for speed\n");
+				bool drove_successfully = driveDistance(delta_distance);
+
+				// If driveDistance set the get_new_trajectory_ flag, we should quit out of the for loop, which will get a new trajectory.
+				if(get_new_trajectory_)
+				{
+					ROS_INFO("Distance planner interrupt. Getting new trajectory.\n");
+
+					// Setting i to the length of the trajectory will terminate the for loop.
+					i = trajectory.waypoints.size();
+					continue;
+				}
+
+				if (!drove_successfully)
+				{
+					operations::NavigationResult res;
+					if(manual_driving_)
+					{
+						ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+						res.result = COMMON_RESULT::INTERRUPTED;
+					} else 
+					{
+						//AAAH ERROR
+						ROS_ERROR_STREAM("Drive to waypoint " << i << " did not succeed.\n");
+						res.result = COMMON_RESULT::FAILED;
+					}
+					action_server->setSucceeded(res);
+
+					return;
+				}
 			}
 		}
 	}
@@ -861,9 +975,14 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 		case NAV_TYPE::GOAL:
 
 			manual_driving_ = false;
-			automaticDriving(goal, server_);
+			automaticDriving(goal, server_, false);
 
 			break;
+
+		case NAV_TYPE::GOAL_SMOOTH:
+
+			manual_driving_ = false;
+			automaticDriving(goal, server_, true);
 
 		case NAV_TYPE::REVOLVE:
 			manual_driving_ = true;

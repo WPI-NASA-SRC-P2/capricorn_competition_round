@@ -149,11 +149,12 @@ namespace COMMON_NAMES
   /****** NAVIGATION ENUMS ******/
   enum NAV_TYPE
   {
-    MANUAL,  // Manual driving
-    GOAL,    // Trajectory generation with the planner from a goal
-    REVOLVE, // Revolve the robot around a fixed point
-    SPIRAL,  // Archimedean spiral (scout finding volatiles)
-    FOLLOW,  // Follow an object in frame
+    MANUAL,      // Manual driving
+    GOAL,        // Trajectory generation with the planner from a goal
+    GOAL_SMOOTH, // Follow a path, but do it smoothly instead of turn-in-place
+    REVOLVE,     // Revolve the robot around a fixed point
+    SPIRAL,      // Archimedean spiral (scout finding volatiles)
+    FOLLOW,      // Follow an object in frame
   };
 
   /****** COMMON RESULTS ENUMS (This is used by every actionlibrary)******/
