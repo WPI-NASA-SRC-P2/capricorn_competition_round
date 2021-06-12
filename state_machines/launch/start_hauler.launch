@@ -7,7 +7,6 @@
     <arg name="node_start_delay" default="5.0" /> 
     <arg name="use_robot_localization" default="true" />
 
-
     <include unless="$(arg use_cheat_odom)" file="$(find maploc)/launch/mapping.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
         <arg name="output" value="log" />

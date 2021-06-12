@@ -294,8 +294,8 @@ class ObjectPlotter:
 if __name__=="__main__":
     # initialize node
     rospy.init_node("Ground_Truth_Localmaps")
-    rospy.loginfo("ground_truth_localmaps node, online")
     # instantiate the object plotter to begin mapping
+    rospy.loginfo("[MAPLOC | obstacle_localmaps.py | " + str(sys.argv[1]) + "]: ground_truth_localmaps node, online") 
     ObstacleMap = ObjectPlotter()
     rospy.sleep(5.)
     # this node works entirely based on the callback functions, thus just need to spin in main loop after creating the plotter object    

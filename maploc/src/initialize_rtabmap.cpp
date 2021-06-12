@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     // std::string robot_name;
     // bool get_true_pose;
     if(argc != 4 && argc != 6){
-        ROS_ERROR("This node must be launched with the robot name and booleans for using true pose and robot localization as command line arguments!");
+        ROS_ERROR("[MAPLOC | intialize_rtabmap.cpp]: This node must be launched with the robot name and booleans for using true pose and robot localization as command line arguments!");
 
         return -1;
     }
@@ -60,10 +60,10 @@ int main(int argc, char **argv)
     if(robot_localization == "true") {use_robot_localization = true;}
     else {use_robot_localization = false; }
 
-    ROS_INFO("GET TRUE POSE = ");
-    ROS_INFO_STREAM(get_true_pose);
-    ROS_INFO("USE ROBOT LOCALIZATION = ");
-    ROS_INFO_STREAM(use_robot_localization);
+    ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: GET TRUE POSE = " + get_true_pose);
+    // ROS_INFO_STREAM(get_true_pose);
+    ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: [MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: USE ROBOT LOCALIZATION = " + use_robot_localization);
+    // ROS_INFO_STREAM(use_robot_localization);
 
     //Startup ROS
     ros::init(argc, argv, robot_name + COMMON_NAMES::INITALIZE_ODOM_NODE_NAME);
@@ -73,9 +73,9 @@ int main(int argc, char **argv)
 
     // initialize the rtabmap with the true pose to have unified coordinates
     if(get_true_pose){
-        ROS_INFO("Initializing odom with get_true_pose service");
+        ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: Initializing odom with get_true_pose service");
         if(use_robot_localization)
-            ROS_INFO("and use_robot_localization");
+            ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: and use_robot_localization");
         // service client for calling the LocalizationSrv service for each rover
         ros::ServiceClient get_true_pose_client;
 
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
         if(get_true_pose_client.call(loc_pose))
         {
             pose_wrt_heightmap = loc_pose.response.pose;
-            ROS_INFO("True Pose Obtained");
+            ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: True Pose Obtained");
         }
 
         // end get_true_pose
@@ -123,19 +123,19 @@ int main(int argc, char **argv)
         pose.request.pitch = p;
         pose.request.yaw = y;
 
-        ROS_INFO("Waiting for rtabmap client");
+        ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: Waiting for rtabmap client");
         
         rtabmap_client.waitForExistence();
 
-        ROS_INFO("Rtabmap client loaded");
+        ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: Rtabmap client loaded");
 
         if(rtabmap_client.call(pose))
         {
-            ROS_INFO("Pose initialized for rtabmap");
+            ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: Pose initialized for rtabmap");
         }
         else
         {
-            ROS_INFO("RTabMap initialize pose failed.");
+            ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: RTabMap initialize pose failed.");
         }
         
         if(use_robot_localization)
@@ -154,17 +154,17 @@ int main(int argc, char **argv)
 
             if(robot_localization_client.call(localization_pose))
             {
-                ROS_INFO("Robot_localization initialize pose succeeded");
+                ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: Robot_localization initialize pose succeeded");
             }
             else
             {
-                ROS_INFO("Robot_localization initialize pose failed.");
+                ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: Robot_localization initialize pose failed.");
             }
         }
  
     }
     // initialize the rtabmap without get true pose, such that true pose can be obtained with reset pose service after reaching a location instead
     else{
-        ROS_INFO("Initializing odom wihout get_true_pose service");
+        ROS_INFO_STREAM("[MAPLOC | intialize_rtabmap.cpp | " <<argv[1] <<"]: Initializing odom wihout get_true_pose service");
     }
 }

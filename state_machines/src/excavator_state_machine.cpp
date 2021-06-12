@@ -18,7 +18,7 @@ bool ExcavatorStateMachine::goToLoc(const geometry_msgs::PoseStamped &loc)
 {
     goToDefaultArmPosition();
 
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Going Back to Goal (High Level Vision Goal)");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Going Back to Goal (High Level Vision Goal)");
     navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_OBS_GOTO_GOAL;
     navigation_vision_goal_.goal_loc = loc;
     navigation_vision_client_->sendGoal(navigation_vision_goal_);
@@ -38,7 +38,7 @@ bool ExcavatorStateMachine::goToLocObject(const geometry_msgs::PoseStamped &targ
 
 bool ExcavatorStateMachine::goToScout()
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Going to Scout");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Going to Scout");
     geometry_msgs::PoseStamped temp_msg;
     navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_SCOUT_CLASS;
     navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_REACH;
@@ -49,7 +49,7 @@ bool ExcavatorStateMachine::goToScout()
 
 bool ExcavatorStateMachine::goToRepairStation()
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Going to Scout");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Going to Scout");
     geometry_msgs::PoseStamped temp_msg;
     navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
     navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_REACH;
@@ -60,7 +60,7 @@ bool ExcavatorStateMachine::goToRepairStation()
 
 bool ExcavatorStateMachine::parkExcavator()
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Parking to Excavator");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Parking to Excavator");
     /////////////////////////////////////////////
     //// Hardcoded straigh walk for 1.5 meters ////
     /////////////////////////////////////////////
@@ -68,14 +68,14 @@ bool ExcavatorStateMachine::parkExcavator()
     navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
     navigation_action_goal_.forward_velocity = 0.6;   
     navigation_action_goal_.angular_velocity = 0;
-    ROS_INFO("UNDOCKING: backing up beep beep beep");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
     navigation_client_->sendGoal(navigation_action_goal_);
     ros::Duration(4).sleep();
 
     navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
     navigation_action_goal_.forward_velocity = 0.0;   
     navigation_action_goal_.angular_velocity = 0;
-    ROS_INFO("UNDOCKING: backing up beep beep beep");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
     navigation_client_->sendGoal(navigation_action_goal_);
     ros::Duration(0.5).sleep();
 
@@ -84,7 +84,7 @@ bool ExcavatorStateMachine::parkExcavator()
 
 bool ExcavatorStateMachine::digVolatile()
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Digging Volatile");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Digging Volatile");
     bool volatile_found = false;
 
     operations::ExcavatorGoal goal;
@@ -109,7 +109,7 @@ bool ExcavatorStateMachine::digVolatile()
 
 bool ExcavatorStateMachine::dumpVolatile()
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Dumping Volatile");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Dumping Volatile");
     operations::ExcavatorGoal goal;
     goal.task = START_UNLOADING;
 
@@ -126,7 +126,7 @@ bool ExcavatorStateMachine::dumpVolatile()
 
 bool ExcavatorStateMachine::digAndDumpVolatile()
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Excavating Volatile");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Excavating Volatile");
     bool volatile_found = false;
     while (digVolatile())
     {
@@ -140,7 +140,7 @@ bool ExcavatorStateMachine::digAndDumpVolatile()
 // reset odom ver.
 bool ExcavatorStateMachine::digAndDumpVolatile(const geometry_msgs::PoseStamped &POSE)
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Excavating Volatile");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Excavating Volatile");
     bool volatile_found = false;
     while (digVolatile())
     {
@@ -155,7 +155,7 @@ bool ExcavatorStateMachine::digAndDumpVolatile(const geometry_msgs::PoseStamped 
 
 bool ExcavatorStateMachine::goToDefaultArmPosition()
 {
-    ROS_INFO_STREAM(robot_name_ << " State Machine: Going to Default Excavator Arm Position");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Going to Default Excavator Arm Position");
     operations::ExcavatorGoal goal;
     goal.task = GO_TO_DEFAULT;
 
@@ -168,7 +168,7 @@ bool ExcavatorStateMachine::resetOdometry()
 {
     resetExcavatorOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
     maploc::ResetOdom srv;
-    ROS_WARN("Excavator odometry has been reset");
+    ROS_WARN_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "Excavator odometry has been reset");
     srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
     srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1;
     srv.request.use_ground_truth = false; //If launching get_true_pose=true, always keep this as false. Ditto for scout.
@@ -180,7 +180,7 @@ bool ExcavatorStateMachine::resetOdometry(const geometry_msgs::PoseStamped &POSE
 {
     resetExcavatorOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
     maploc::ResetOdom srv;
-    ROS_WARN("Excavator odometry has been reset");
+    ROS_WARN_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "Excavator odometry has been reset");
     srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
     srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1;
     srv.request.ref_pose = POSE;
@@ -200,7 +200,7 @@ bool ExcavatorStateMachine::faceProcessingPlant()
 
 bool ExcavatorStateMachine::syncOdometry(const geometry_msgs::PoseStamped &POSE)
 {
-    ROS_INFO("Syncing Excavator Odom");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "Syncing Excavator Odom");
     if (faceProcessingPlant())
     {
         return resetOdometry(POSE);
@@ -208,6 +208,6 @@ bool ExcavatorStateMachine::syncOdometry(const geometry_msgs::PoseStamped &POSE)
     else
     {
         return false;
-        ROS_INFO("Did not face processing plant yet!");
+        ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "Did not face processing plant yet!");
     }
 }
