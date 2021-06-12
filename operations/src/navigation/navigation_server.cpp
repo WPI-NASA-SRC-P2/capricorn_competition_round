@@ -543,6 +543,9 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 
 		double center_radius = NavigationAlgo::wheel_sep_length_/tan(delta_heading);
 
+		if (delta_heading < 0)
+			center_radius = -center_radius;
+
 		left_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius - (NavigationAlgo::wheel_sep_width_/2));
 
 		right_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius + (NavigationAlgo::wheel_sep_width_/2));
@@ -551,8 +554,8 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 
 		if(delta_heading < 0)
 		{
-			left_wheel_angle = -(left_wheel_angle + M_PI)/M_PI;
-			right_wheel_angle = -(right_wheel_angle + M_PI)/M_PI;
+			left_wheel_angle = -left_wheel_angle;
+			right_wheel_angle = -right_wheel_angle;
 		}
 	}
 
