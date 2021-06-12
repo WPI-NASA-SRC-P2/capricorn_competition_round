@@ -249,12 +249,15 @@ void NavigationServer::moveRobotWheels(const std::vector<double> velocity)
  */
 void NavigationServer::moveRobotWheels(const double velocity)
 {
+	ROS_INFO("Driving wheels");
 	double angular_velocity = NavigationAlgo::linearToAngularVelocity(velocity);
 
 	publishMessage(front_left_vel_pub_, angular_velocity);
 	publishMessage(front_right_vel_pub_, angular_velocity);
 	publishMessage(back_left_vel_pub_, angular_velocity);
 	publishMessage(back_right_vel_pub_, angular_velocity);
+
+	ROS_INFO("Publishing wheel speed of: %f", velocity);
 }
 
 /*******************************************************************/
@@ -539,6 +542,16 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 
 		right_wheel_angle = 0.0;
 	}
+	else if(delta_heading > MAX_DELTA_HEADING)
+	{
+		left_wheel_angle = MAX_DELTA_HEADING;
+		right_wheel_angle = MAX_DELTA_HEADING;
+	}
+	else if(delta_heading < MIN_DELTA_HEADING)
+	{
+		left_wheel_angle = MIN_DELTA_HEADING;
+		right_wheel_angle = MIN_DELTA_HEADING;
+	}
 	else{
 
 		double center_radius = NavigationAlgo::wheel_sep_length_/tan(delta_heading);
@@ -571,6 +584,8 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 
 bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint)
 {
+	brakeRobot(false);
+	
 	double distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());
 
 	// While we're not at the waypoint
@@ -695,7 +710,53 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			// current_waypoint.header.stamp = ros::Time(0);
 			if(smooth)
 			{
-				bool drove_successfully = smoothDriving(trajectory.waypoints[i]);
+				// Initial check for delta heading in case it is above the max turning limit for ackermann steering
+				double delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), current_waypoint, robot_name_, buffer_);
+
+				if (delta_heading > MAX_TURNING_RAD || delta_heading < MIN_TURNING_RAD)
+				{
+					bool turned_successfully;
+
+					// Based on the parameter in this server's constructor, either do crab drive or rotate in place drive.
+					if(CRAB_DRIVE_)
+					{
+						// Turn wheels to heading
+						ROS_INFO("Rotating wheels\n");
+						turned_successfully = rotateWheels(current_waypoint);
+					}
+					else
+					{
+						ROS_INFO("Rotating robot\n");
+						turned_successfully = rotateRobot(current_waypoint);
+					}
+
+					ros::Duration(1.0).sleep();
+
+					if (!turned_successfully)
+					{
+						operations::NavigationResult res;
+
+						if(manual_driving_)
+						{
+							ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+							res.result = COMMON_RESULT::INTERRUPTED;
+						}
+						else
+						{
+							//AAAH ERROR
+							ROS_ERROR_STREAM("Turn to waypoint " << i << " did not succeed. Exiting.\n");
+							res.result = COMMON_RESULT::FAILED;
+							
+						}
+						action_server->setSucceeded(res);
+
+						return;
+					}
+
+					delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), current_waypoint, robot_name_, buffer_);
+				}
+
+				bool drove_successfully = smoothDriving(current_waypoint);
 
 				if (!drove_successfully)
 				{
@@ -704,7 +765,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 					{
 						ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
 						res.result = COMMON_RESULT::INTERRUPTED;
-					} else 
+					}
+					else 
 					{
 						//AAAH ERROR
 						ROS_ERROR_STREAM("Drive to waypoint " << i << " did not succeed.\n");
@@ -714,6 +776,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 					return;
 				}
+				
 			}
 			else
 			{

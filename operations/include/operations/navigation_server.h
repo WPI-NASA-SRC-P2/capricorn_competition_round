@@ -38,11 +38,16 @@ public:
 
 private:
     // Mins/Maxes for delta_heading to radius ICC conversion
-    const float MAX_TURNING_RAD = M_PI/3;
-    const float MIN_TURNING_RAD = -M_PI/3;
+    const float MAX_TURNING_RAD = M_PI/2;
+    const float MIN_TURNING_RAD = -M_PI/2;
 
-    const float MAX_DELTA_HEADING = M_PI/2;
-    const float MIN_DELTA_HEADING = -M_PI/2;
+    // const float MAX_DELTA_HEADING = M_PI/2;
+    // const float MIN_DELTA_HEADING = -M_PI/2;
+
+    
+
+    const float MAX_DELTA_HEADING = M_PI/4;
+    const float MIN_DELTA_HEADING = -M_PI/4;
 
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
     const float BASE_DRIVE_SPEED = 0.6;
