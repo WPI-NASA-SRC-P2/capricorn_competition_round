@@ -15,7 +15,7 @@
     </include>
 
     <node pkg="team_level" type="start_scheduler" name="scheduler"/>
-    <!-- <node pkg="team_level" type="start_scheduler" name="scheduler"/> -->
+    
     <include file="$(find maploc)/launch/odom_comparison.launch"/> 
 
 </launch>
