@@ -11,9 +11,9 @@
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
 	</include>
 
-	<!-- <include file="$(find planning)/launch/planner.launch">
+	<include file="$(find planning)/launch/planner.launch">
 			<arg name="robot_name" value="$(arg robot_name)" />
-	</include> -->
+	</include>
 
 	<!-- <include file="$(find maploc)/launch/compare_rtab_odom.launch" output="log" >
 			<arg name="robot_name" value="$(arg robot_name)" />
