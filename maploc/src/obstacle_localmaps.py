@@ -39,12 +39,12 @@ class ObjectPlotter:
         # print(f'Robot Pose Received: {self.robot_pose}')
         # TODO: FOR TESTING PURPOSES ONLY:
         # rospy.loginfo("Robot Pose Received")
-        self.updateMap()
+        # self.updateMap()
 
     # subscriber callback to object detection, updates detected obstacle list
     def objectCb(self, objlist):
         self.obj_list = objlist
-        # self.updateMap()
+        self.updateMap()
         # useful for debugging any issues with object detection
         #rospy.loginfo(f'Map has updated: First object at {self.obj_list.obj[0].center}, No. of objects: {len(self.obj_list.obj)}')
     
@@ -297,5 +297,6 @@ if __name__=="__main__":
     rospy.loginfo("ground_truth_localmaps node, online")
     # instantiate the object plotter to begin mapping
     ObstacleMap = ObjectPlotter()
+    rospy.sleep(5.)
     # this node works entirely based on the callback functions, thus just need to spin in main loop after creating the plotter object    
     rospy.spin()

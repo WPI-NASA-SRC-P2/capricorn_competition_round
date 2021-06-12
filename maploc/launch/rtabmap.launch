@@ -29,7 +29,7 @@
             <param name="approx_sync" type="bool" value="true"/>
             <param name="queue_size" type="int" value="5"/>
 	    	<param name="odom_frame_id" type="string" value="odom"/>
-            <param name="publish_tf"  type="bool"   value="true"/>
+            <param name="publish_tf"  type="bool"   value="$(eval not arg('use_robot_localization'))"/>
         
             <param name="Vis/MinInliers" value="12"/>
             <param name="Vis/RoiRatios"  value="0.03 0.03 0.04 0.04"/> 

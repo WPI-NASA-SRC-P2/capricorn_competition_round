@@ -29,7 +29,7 @@
         <!-- frequency directly tied to all_robots.launch! -->
         <param name="frequency" value="100." /> 
         <param name="sensor_timeout" value="0.2" />
-        <param name="publish_tf" value="false" />
+        <param name="publish_tf" value="true" />
         <param name="map_frame" value="map" />
         <!-- <param name="odom_frame" value="$(arg robot_name)_odom" /> -->
         <param name="odom_frame" value="odom" />

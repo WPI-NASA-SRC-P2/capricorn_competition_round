@@ -8,12 +8,12 @@
     <arg name="use_robot_localization" default="true"/>
 
     <!-- UNNECESSARY BECAUSE PLANNER.LAUNCH AND NAVIGATION.LAUNCH ARE LAUNCHED ALREADY AT BOTTOM -->
-    <include file="$(find operations)/launch/nav_planner.launch">
+    <!-- <include file="$(find operations)/launch/nav_planner.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
         <arg name="output" value="log" />
         <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
-    </include>
+    </include> -->
 
     <!-- <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /map /odom 100" /> -->
 
@@ -28,16 +28,16 @@
     <group ns="/capricorn/$(arg robot_name)">      
         <param name="cheat_odom" value="$(arg use_cheat_odom)"/>
           
-        <!-- <include file="$(find planning)/launch/planner.launch">
+        <include file="$(find planning)/launch/planner.launch">
 			<arg name="robot_name" value="$(arg robot_name)" />
-	    </include> -->
+	    </include>
 
-        <!-- <include file="$(find operations)/launch/navigation.launch">
+        <include file="$(find operations)/launch/navigation.launch">
             <arg name="robot_name" value="$(arg robot_name)" />
             <arg name="output" value="log" />
             <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
             <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
-        </include>  -->
+        </include> 
 
         <node pkg="state_machines" type="start_scout_sm" name="scout_1_sm" args="$(arg robot_name)" output="screen" />
         <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>

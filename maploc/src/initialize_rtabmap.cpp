@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     ros::ServiceClient nasa_client;
 
     // initialize the rtabmap with the true pose to have unified coordinates
-    if(get_true_pose || use_robot_localization){
+    if(get_true_pose){
         ROS_INFO("Initializing odom with get_true_pose service");
         if(use_robot_localization)
             ROS_INFO("and use_robot_localization");

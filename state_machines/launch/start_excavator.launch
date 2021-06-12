@@ -28,7 +28,7 @@
             <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
         </include>
 
-        <node pkg="state_machines" type="start_excavator_sm_server" name="scout_1_sm" args="$(arg robot_name)" output="screen" />
+        <node pkg="state_machines" type="start_excavator_sm_server" name="excavator_1_sm" args="$(arg robot_name)" output="screen" />
         <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
         <node pkg="operations" type="excavator_pid_node" name="excavator_pid_node" args="$(arg robot_name)" output="screen" />
         <node pkg="operations" type="excavator_actionlib_server" name="excavator_actionlib_server" args="$(arg robot_name)" output="screen" />
