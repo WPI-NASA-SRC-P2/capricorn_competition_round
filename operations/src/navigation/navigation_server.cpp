@@ -529,25 +529,37 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 	// 	return DBL_MAX;
 	// }
 
+	double left_wheel_angle, right_wheel_angle;
+
 	ROS_INFO("Delta Heading: %f", delta_heading);
 
-	double center_radius = NavigationAlgo::wheel_sep_length_/tan(delta_heading);
+	// Check delta heading in case it equals to 0 (aka turning radius is infinite = no angular velocity)
+	if (delta_heading == 0){
+		left_wheel_angle = 0.0;
 
-	double left_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius - NavigationAlgo::wheel_sep_width_/2);
+		right_wheel_angle = 0.0;
+	}
+	else{
 
-	double right_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius + NavigationAlgo::wheel_sep_width_/2);
+		double center_radius = NavigationAlgo::wheel_sep_length_/tan(delta_heading);
 
-	//double desired_radius = 1.0/((delta_heading - MIN_DELTA_HEADING)/(MAX_DELTA_HEADING - MIN_DELTA_HEADING) * (MAX_TURNING_RAD - MIN_TURNING_RAD) + MIN_TURNING_RAD);
+		left_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius - (NavigationAlgo::wheel_sep_width_/2));
 
-	if(delta_heading < 0)
-	{
-		left_wheel_angle = -left_wheel_angle;
-		right_wheel_angle = -right_wheel_angle;
+		right_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius + (NavigationAlgo::wheel_sep_width_/2));
+
+		//double desired_radius = 1.0/((delta_heading - MIN_DELTA_HEADING)/(MAX_DELTA_HEADING - MIN_DELTA_HEADING) * (MAX_TURNING_RAD - MIN_TURNING_RAD) + MIN_TURNING_RAD);
+
+		if(delta_heading < 0)
+		{
+			left_wheel_angle = -(left_wheel_angle + M_PI)/M_PI;
+			right_wheel_angle = -(right_wheel_angle + M_PI)/M_PI;
+		}
 	}
 
 	ROS_INFO("Desired left wheel angle: %f", left_wheel_angle);
 
 	ROS_INFO("Desired right wheel angle: %f", right_wheel_angle);
+
 
 	std::vector<double> wheel_angles{left_wheel_angle, right_wheel_angle};
 
