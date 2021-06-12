@@ -585,7 +585,7 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint)
 {
 	brakeRobot(false);
-	
+
 	double distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());
 
 	// While we're not at the waypoint
@@ -1089,6 +1089,8 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 
 			manual_driving_ = false;
 			automaticDriving(goal, server_, true);
+
+			break;
 
 		case NAV_TYPE::REVOLVE:
 			manual_driving_ = true;
