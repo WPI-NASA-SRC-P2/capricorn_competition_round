@@ -1,6 +1,7 @@
 #include "utils/battery_level_server.h"
 #include "utils/battery_level.h"
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Pose.h>
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Float64MultiArray.h>
 
@@ -11,7 +12,7 @@
 
 void poseCallback(nav_msgs::Odometry odom){
 
-    geometry_msgs::PoseStamped current_location_ = odom.pose.pose;
+    geometry_msgs::Pose current_location_ = odom.pose.pose;
     
     geometry_msgs::PoseStamped target_location_;
     target_location_.pose.position.x = -6.0;
