@@ -1,5 +1,19 @@
 #include <iostream>
 #include "battery_level.h"
+#include <bits/stdc++.h>
+/**
+ * @brief 
+ * 
+ * @param target_x 
+ * @param target_y 
+ * @param current_x 
+ * @param current_y 
+ * @return float 
+ */
+float calc_distance(float target_x, float target_y, float current_x, float current_y){
+    return sqrt(pow(target_x - current_x, 2) + pow(target_y - current_y, 2));
+}
+
 
 /**
  * @brief 
