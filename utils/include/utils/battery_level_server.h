@@ -5,7 +5,6 @@ class  BatteryLevelServer{
 private:
 
 public:
-float distance_;
 float soft_deadline_;
 float hard_deadline_;
 

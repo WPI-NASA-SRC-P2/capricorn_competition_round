@@ -24,7 +24,7 @@ void poseCallback(nav_msgs::Odometry odom){
     target_location_.pose.orientation.w = 1;
 
     // calculate the distance between the robot's current location and charging station
-    distance_ = battery_level::calc_distance(target_location_.pose.position.x, target_location_.pose.position.y, current_location_.pose.position.x, current_location_.pose.position.y)        //needs to be calculated using a distance formula
+     float distance_ = battery_level::calc_distance(target_location_.pose.position.x, target_location_.pose.position.y, current_location_.position.x, current_location_.position.y);       //needs to be calculated using a distance formula
 }
 
 void deadlinesCalculator(){
