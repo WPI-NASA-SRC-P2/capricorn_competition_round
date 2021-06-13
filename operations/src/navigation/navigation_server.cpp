@@ -567,8 +567,6 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 
 	double total_eucledian_distance_to_waypoint = calcEuclideanDist(*getRobotPose(), waypoint);
 
-	ROS_INFO("TOTAL Eucledian distance between current pose and future wts: %f", total_eucledian_distance_to_waypoint);
-
 	// While we're not at the waypoint
 	while(distance_to_waypoint > DIST_EPSILON)
 	{
@@ -584,13 +582,16 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 
 		// Calculate the percentage driven of the current trajectory
 		double current_eucledian_distance_to_waypoint = calcEuclideanDist(*getRobotPose(), waypoint);
+
+		// NOTE: Add DIST_EPSILON to calculation if we want to start turning torwards the next heading sooner
 		double percentage_wpt_completed = 1 - (current_eucledian_distance_to_waypoint/total_eucledian_distance_to_waypoint);
 
-		ROS_INFO("Percentage of path completed: %f", percentage_wpt_completed);
+		//ROS_INFO("Percentage of path completed: %f", percentage_wpt_completed);
 
 		// Calculate the delta heading
 		double delta_heading;
 
+		// Start steering towards the next waypoint's heading if we have completed more than 70% of the current path
 		if (percentage_wpt_completed > PERCENTAGE_TURN_LOOK_AHEAD)
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), future_waypoint, robot_name_, buffer_);
 		else
@@ -691,17 +692,16 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 			// Extract the future waypoint in trajectory
 			geometry_msgs::PoseStamped future_waypoint;
+
+			// Error checking to prevent out of bounds indexing
 			if(i + 1 < trajectory.waypoints.size())
 			{
-				//ROS_INFO("Size of vector: %d\n", trajectory.waypoints.size());
-				//ROS_INFO("Current index i: %d\n", i);
 				future_waypoint = trajectory.waypoints[i + 1];
 			}
 			else
 			{
-				//ROS_INFO("Before setting last waypoint");
+				// If at the end of vector then we want the final pose of the current trajectory
 				future_waypoint = final_pose;
-				//ROS_INFO("After setting last waypoint");
 			}
 				
 
