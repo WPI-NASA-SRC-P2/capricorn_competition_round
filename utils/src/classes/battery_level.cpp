@@ -18,7 +18,7 @@ float calc_distance(float target_x, float target_y, float current_x, float curre
 /**
  * @brief 
  * 
- * @param discharge_rate 
+ * @param discharge_rate The rate at which the battery level is drained
  * @param distance 
  * @param speed 
  * @return float 
