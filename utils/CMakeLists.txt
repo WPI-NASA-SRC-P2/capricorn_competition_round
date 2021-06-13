@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   sensor_msgs
   geometry_msgs
+  nav_msgs
   message_filters
 )
 
@@ -109,7 +110,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES utils
- CATKIN_DEPENDS std_msgs roscpp rospy message_filters sensor_msgs geometry_msgs
+ CATKIN_DEPENDS std_msgs roscpp rospy message_filters sensor_msgs geometry_msgs nav_msgs
 #  DEPENDS system_lib
 )
 
