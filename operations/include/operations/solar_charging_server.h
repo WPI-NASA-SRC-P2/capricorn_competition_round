@@ -24,4 +24,5 @@ public:
     void systemMonitorCB(nav_msgs::OccupancyGrid oGrid);
     void setPowerSaveMode(bool on);
     ros::Subscriber systemMonitor_subscriber;
+    ros::ServiceClient powerMode_client; 
 };

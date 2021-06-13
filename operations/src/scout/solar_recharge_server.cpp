@@ -98,6 +98,10 @@ void SolarChargingServer::setPowerSaveMode(bool on){
   //set the request.power_save
     // true: Power Save will be active
     // false:: power Save will be deactivated
+
+  src2_msgs::SystemPowerSaveRequest.power_save = on;
+  src2_msgs::SystemPowerSaveResponse;
+  powerMode_client.call(req, res);
 }
 
 
@@ -213,6 +217,14 @@ int main(int argc, char *argv[])
   //srv result
   debug_solar_charging_mode = nh.advertise<std_msgs::String>("/galaga/debug_solar_charging_status", 1000);
   
+  //client for power saving mode
+  server.powerMode_client = nh.serviceClient<srcp2_msgs::SystemPowerSave>("power_mode");
+
+  // operations::SolarChargeRequest req = true;
+  // operations::SolarChargeResponse res;
+  // client.call(req, res);
+
+
   //Instantiating ROS server for generating trajectory
   ros::ServiceServer service = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
 
