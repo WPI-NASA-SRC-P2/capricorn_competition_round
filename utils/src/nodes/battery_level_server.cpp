@@ -1,7 +1,6 @@
 #include "battery_level_server.h"
 
 #include <cspace.h>
-#include <astar.h>
 #include "planning/TrajectoryWithVelocities.h"
 #include <geometry_msgs/Point.h>
 
