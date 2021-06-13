@@ -12,6 +12,9 @@ private:
     bool solar_ok = false;
     float32 power_rate;
     power_saver: false;
+    bool should_turn = false;
+    bool is_turning = false;
+    bool turnRobot()
 
     
 public:

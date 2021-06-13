@@ -2,6 +2,7 @@
 #include <operations/SolarRechargeAction.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
+#include <future>
 
 #include <tf2/utils.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -10,7 +11,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Float64.h>
-#include <srcp2_msgs/VolSensorMsg.h>   
+#include <srcp2_msgs/SystemMonitorMsg.h>   
 #include <utils/common_names.h>
 #include "operations/SolarCharge.h"
 
@@ -108,21 +109,17 @@ void SolarChargingServer::setPowerSaveMode(bool on){
  */
 bool SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &request, operations::SolarChargeResponse &Response)
 {
-  if(request.solar_charging_status)
+  should_turn = request.solar_charging_status;
+  if(should_turn)
   {
-    ROS_INFO("Solar_Charging_Mode: ON: Starting");
-      rotateRobot(driving_direction, 1.0);
-      while(!solar_ok && ros::ok()) // while there is no solar keep rotating 
-      {
-        ROS_INFO("Solar_Charging_Mode: ON: Rotate Into Position");
-      }
-      stopRobot();
-      setPowerSaveMode(true);
-      ROS_INFO("Solar_Charging_Mode: ON: Charging");
-      response.result = "Solar_Charging_Mode: ON: Power_rate:" + power_rate.c_str();
+    if(!is_turning) {
+      std::async(std::launch::async, turnRobot());
+      is_turning = true;
+    }
   }
   else
   {
+    is_turning = false;
     stopRobot();
     setPowerSaveMode(false);
     ROS_INFO("Solar_Charging_Mode: OFF: Ending");
@@ -136,9 +133,20 @@ bool SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &re
 
   res.result.data = "The Robot is in Solar Charging Mode";
   ROS_INFO("Now Solar Recharging");
-  
 }
 
+bool SolarChargingServer::turnRobot() {
+  ROS_INFO("Solar_Charging_Mode: ON: Starting");
+  rotateRobot(driving_direction, 1.0);
+  while(!solar_ok && ros::ok() && should_turn) // while there is no solar keep rotating 
+  {
+    ROS_INFO("Solar_Charging_Mode: ON: Rotate Into Position");
+  }
+  stopRobot();
+  setPowerSaveMode(true);
+  ROS_INFO("Solar_Charging_Mode: ON: Charging");
+  response.result = "Solar_Charging_Mode: ON: Power_rate:" + power_rate.c_str();
+}
 
 
 void SolarChargeingServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg){
