@@ -56,10 +56,8 @@ int main(int argc, char *argv[])
 
   debug_deadlinesPublisher = nh.advertise<std_msgs::Float64MultiArray>("/galaga/batteryLevelDeadlines", 1000);
 
-
   //Instantiating ROS server for calculating deadlines
   ros::ServiceServer service = nh.advertiseService("deadlines_server", &BatteryLevelServer::deadlinesCalculator, &server);
-
   ros::spin();
 
   return 0;
