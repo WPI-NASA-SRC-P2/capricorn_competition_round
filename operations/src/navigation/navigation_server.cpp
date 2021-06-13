@@ -386,7 +386,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 		return true;
 	}
 
-	printf("Turning %frad\n", delta_heading);
+	ROS_INFO("[operations | nav_server | %s]: Turning %frad", robot_name_.c_str(), delta_heading);
 	steerRobot(wheel_angles);
 
 	// While we have not turned the desired amount
@@ -423,8 +423,6 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 		// Slow this loop down a bit
 		update_rate_->sleep();
 	}
-
-	printf("Done rotating\n");
 
 	// Stop moving the robot after we are done moving
 	moveRobotWheels(0);
@@ -734,6 +732,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				}
 
 				bool drove_successfully = smoothDriving(current_waypoint, future_waypoint);
+
+				//ROS_INFO("Eucledian dist after driving to waypoint: %f", calcEuclideanDist(*getRobotPose(), current_waypoint));
 
 				if (!drove_successfully)
 				{
