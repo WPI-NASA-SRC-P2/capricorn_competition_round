@@ -269,7 +269,7 @@ target_link_libraries(spiral_points_publisher ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
-add_executable(solar_recharge_server src/clients/solar_recharge_server.cpp)
+add_executable(solar_recharge_server src/scout/solar_recharge_server.cpp)
 add_dependencies(solar_recharge_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(solar_recharge_server ${PROJECT_NAME}
   ${catkin_LIBRARIES}
