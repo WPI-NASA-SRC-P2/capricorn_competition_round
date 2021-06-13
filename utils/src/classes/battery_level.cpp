@@ -30,7 +30,7 @@ float base_battery_level(const float discharge_rate, float distance, const float
 /**
  * @brief 
  * 
- * @param percentage_needed 
+ * @param percentage_needed The percetnage needed to drive to task
  * @return float 
  */
 float calc_soft_deadline(float percentage_needed){
