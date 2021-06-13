@@ -8,11 +8,12 @@ project(utils)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-roscpp
+  roscpp
   std_msgs
   rospy
   cv_bridge
   sensor_msgs
+  geometry_msgs
   message_filters
 )
 
@@ -108,7 +109,7 @@ roscpp
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES utils
- CATKIN_DEPENDS std_msgs roscpp rospy message_filters sensor_msgs
+ CATKIN_DEPENDS std_msgs roscpp rospy message_filters sensor_msgs geometry_msgs
 #  DEPENDS system_lib
 )
 
