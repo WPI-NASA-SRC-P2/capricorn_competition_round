@@ -5,8 +5,8 @@ class  BatteryLevelServer{
 private:
 
 public:
-float soft_deadline_;
-float hard_deadline_;
+static float soft_deadline_;
+static float hard_deadline_;
 
 void poseCallback(nav_msgs::Odometry odom);
 void deadlinesCalculator();

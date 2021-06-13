@@ -5,8 +5,8 @@ class battery_level
 {
 private:
 public:
-    float discharge_rate = 0.01; // -1.0%/10 seconds
-    float speed = 0.6;
+    static const float discharge_rate = 0.01; // -1.0%/10 seconds
+    static const float speed = 0.6;
     battery_level(/* args */);
     ~battery_level();
     static float calc_distance(float target_x, float target_y, float current_x, float current_y);
