@@ -194,7 +194,7 @@ void NavigationServer::steerRobot(const std::vector<double>& angles)
 	publishMessage(back_left_steer_pub_, angles.at(3));
 }
 
-void NavigationServer::steerRobotAckerman(const std::vector<double>& angles)
+void NavigationServer::steerRobotAckermann(const std::vector<double>& angles)
 {
 	publishMessage(front_left_steer_pub_, angles.at(0));
 	publishMessage(front_right_steer_pub_, angles.at(1));
@@ -249,15 +249,24 @@ void NavigationServer::moveRobotWheels(const std::vector<double> velocity)
  */
 void NavigationServer::moveRobotWheels(const double velocity)
 {
-	ROS_INFO("Driving wheels");
 	double angular_velocity = NavigationAlgo::linearToAngularVelocity(velocity);
 
 	publishMessage(front_left_vel_pub_, angular_velocity);
 	publishMessage(front_right_vel_pub_, angular_velocity);
 	publishMessage(back_left_vel_pub_, angular_velocity);
 	publishMessage(back_right_vel_pub_, angular_velocity);
+}
 
-	ROS_INFO("Publishing wheel speed of: %f", velocity);
+float NavigationServer::calcEuclideanDist(const geometry_msgs::PoseStamped& current_pose, const geometry_msgs::PoseStamped& goal)
+{
+	double x = current_pose.pose.position.x - goal.pose.position.x;
+	double y = current_pose.pose.position.y - goal.pose.position.y;
+
+	double dist;
+	dist = pow(x, 2) + pow(y, 2);
+	dist = sqrt(dist);
+
+	return dist;
 }
 
 /*******************************************************************/
@@ -273,7 +282,7 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	planning::trajectory srv;
 	srv.request.targetPose = goal;
 
-	//TODO TODO TODO Don't commit or merge or approve a PR with this in it
+	//TODO: Waiting for galaga's fix on 0 wpts at beginning of trajectory
 	if (trajectory_client_.call(srv))
 	{
 		ROS_INFO("Trajectory client call succeeded");
@@ -297,27 +306,6 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	{
 		ROS_ERROR("Failed to call service trajectory generator");
 	}
-
-	// don't we love bad code?
-	// geometry_msgs::PoseStamped w1;
-	// w1.pose.position.x = -2;
-	// w1.header.frame_id = robot_name_ + "_small_chassis";
-
-	// geometry_msgs::PoseStamped w2;
-	// w2.pose.position.x = 5;
-	// w2.pose.position.y = 3;
-	
-	// w2.header.frame_id = robot_name_ + "_small_chassis";
-
-	// // planning::TrajectoryWithVelocities traj;
-
-	// std_msgs::Float64 vel;
-	// vel.data = 0.6;
-
-	// traj.waypoints.push_back(w1);
-	// traj.waypoints.push_back(w2);
-	// traj.velocities.push_back(vel);
-	// traj.velocities.push_back(vel);
 
 	// Make sure that all trajectory waypoints are in the map frame before returning it
 	return getTrajInMapFrame(traj);
@@ -521,20 +509,9 @@ bool NavigationServer::driveDistance(double delta_distance)
 
 std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 {
-	// Map object delta_heading (radians) to a radius used to change the robot's ICC
-	//Y = (X-A)/(B-A) * (D-C) + C
-
-	//TODO: find MIN_DELTA_HEADING/MAX_DELTA_HEADING vals ---MAKE SURE ALL VALS HERE ARE DOUBLES
-	// MAX_TURNING_RAD = 60 deg = pi/3
-	// MIN_TURNING_RAD = -60 deg = -pi/3
-	// if (abs(delta_heading) < ANGLE_EPSILON)
-	// {
-	// 	return DBL_MAX;
-	// }
-
 	double left_wheel_angle, right_wheel_angle;
 
-	ROS_INFO("Delta Heading: %f", delta_heading);
+	//ROS_INFO("Delta Heading: %f", delta_heading);
 
 	// Check delta heading in case it equals to 0 (aka turning radius is infinite = no angular velocity)
 	if (delta_heading == 0){
@@ -572,9 +549,9 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 		}
 	}
 
-	ROS_INFO("Desired left wheel angle: %f", left_wheel_angle);
+	//ROS_INFO("Desired left wheel angle: %f", left_wheel_angle);
 
-	ROS_INFO("Desired right wheel angle: %f", right_wheel_angle);
+	//ROS_INFO("Desired right wheel angle: %f", right_wheel_angle);
 
 
 	std::vector<double> wheel_angles{left_wheel_angle, right_wheel_angle};
@@ -582,11 +559,15 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 	return wheel_angles;
 }
 
-bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint)
+bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint)
 {
 	brakeRobot(false);
 
 	double distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());
+
+	double total_eucledian_distance_to_waypoint = calcEuclideanDist(*getRobotPose(), waypoint);
+
+	ROS_INFO("TOTAL Eucledian distance between current pose and future wts: %f", total_eucledian_distance_to_waypoint);
 
 	// While we're not at the waypoint
 	while(distance_to_waypoint > DIST_EPSILON)
@@ -601,25 +582,24 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint)
 			return false;
 		}
 
-		// Calculate the delta heading
-		double delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
+		// Calculate the percentage driven of the current trajectory
+		double current_eucledian_distance_to_waypoint = calcEuclideanDist(*getRobotPose(), waypoint);
+		double percentage_wpt_completed = 1 - (current_eucledian_distance_to_waypoint/total_eucledian_distance_to_waypoint);
 
-		// Use transfer function for delta heading -> ICC radius
-		// Positive is towards the left, negative is towards the right
-		//double icc_radius = headingToRadius(delta_heading);
+		ROS_INFO("Percentage of path completed: %f", percentage_wpt_completed);
+
+		// Calculate the delta heading
+		double delta_heading;
+
+		if (percentage_wpt_completed > PERCENTAGE_TURN_LOOK_AHEAD)
+			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), future_waypoint, robot_name_, buffer_);
+		else
+			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
 
 		std::vector<double> wheel_angles = headingToRadius(delta_heading);
 
-		// Find wheel angles for that ICC
-		// geometry_msgs::Point icc;
-		// icc.x = 0;
-		// icc.y = icc_radius;
-		// icc.z = 0;
-		
-		//std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesRadialTurn(icc);
-
 		// Set wheels to that angle
-		steerRobotAckerman(wheel_angles);
+		steerRobotAckermann(wheel_angles);
 
 		// Set wheels at speed
 		moveRobotWheels(BASE_DRIVE_SPEED);
@@ -708,6 +688,26 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 			// Needed, otherwise we get extrapolation into the past
 			// current_waypoint.header.stamp = ros::Time(0);
+
+			// Extract the future waypoint in trajectory
+			geometry_msgs::PoseStamped future_waypoint;
+			if(i + 1 < trajectory.waypoints.size())
+			{
+				//ROS_INFO("Size of vector: %d\n", trajectory.waypoints.size());
+				//ROS_INFO("Current index i: %d\n", i);
+				future_waypoint = trajectory.waypoints[i + 1];
+			}
+			else
+			{
+				//ROS_INFO("Before setting last waypoint");
+				future_waypoint = final_pose;
+				//ROS_INFO("After setting last waypoint");
+			}
+				
+
+			future_waypoint.header.stamp = ros::Time(0);
+			NavigationAlgo::transformPose(future_waypoint, MAP, buffer_, 0.1);
+
 			if(smooth)
 			{
 				// Initial check for delta heading in case it is above the max turning limit for ackermann steering
@@ -752,11 +752,9 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 						return;
 					}
-
-					delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), current_waypoint, robot_name_, buffer_);
 				}
 
-				bool drove_successfully = smoothDriving(current_waypoint);
+				bool drove_successfully = smoothDriving(current_waypoint, future_waypoint);
 
 				if (!drove_successfully)
 				{
