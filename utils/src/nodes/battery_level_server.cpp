@@ -7,10 +7,10 @@
 //Setting the node's update rate
 #define UPDATE_HZ 10
 
-void BatteryLevelServer::poseCallback(nav_msgs::Odometry odom){
+void poseCallback(nav_msgs::Odometry odom){
 
     current_location_ = odom.pose.pose;
-    
+
     target_location_.pose.position.x = -6.0;
     target_location_.pose.position.y = -6.0;  
     target_location_.pose.position.z = 0.65;
@@ -23,7 +23,7 @@ void BatteryLevelServer::poseCallback(nav_msgs::Odometry odom){
     distance_ = battery_level::calc_distance(target_location_.pose.position.x, target_location_.pose.position.y, current_location_.pose.position.x, current_location_.pose.position.y)        //needs to be calculated using a distance formula
 }
 
-void BatteryLevelServer::deadlinesCalculator(){
+void deadlinesCalculator(){
     std_msgs::Float64MultiArray deadlines;
 
     // publish the soft and hard deadlines to a topic
