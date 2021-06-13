@@ -14,7 +14,7 @@ geometry_msgs::PoseStamped target_location_;
 
 
 geometry_msgs::PoseStamped current_location_;
-void BatteryLevelServer::poseCallback(geometry_msgs::PoseStamped pose);
-void BatteryLevelServer::deadlinesCalculator();
+void poseCallback(geometry_msgs::PoseStamped pose);
+void deadlinesCalculator();
 
 };
