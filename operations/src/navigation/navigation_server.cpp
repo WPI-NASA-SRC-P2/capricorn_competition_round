@@ -31,13 +31,9 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 
 NavigationServer::~NavigationServer()
 {
-	// Cleanup the TransformListener
+	// Cleanup all pointers
 	delete listener_;
-
-	// Cleanup the actionlib server
 	delete server_;
-
-	// Cleanup the rate limiter
 	delete update_rate_;
 }
 
@@ -153,7 +149,7 @@ void NavigationServer::initSubscribers(ros::NodeHandle& nh, std::string& robot_n
 	trajectory_client_ = nh.serviceClient<planning::trajectory>("/capricorn/" + robot_name + "/trajectoryGenerator");
 	
 	// Make sure things get launched in the right order
-	// trajectory_client_.waitForExistence();
+	trajectory_client_.waitForExistence();
 }
 
 /*********************************************************************/
@@ -321,7 +317,6 @@ planning::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const pla
 	// For each waypoint in the trajectories message
 	for(int pt = 0; pt < traj.waypoints.size(); pt++)
 	{
-		//ROS_INFO("Transforming %d\n", pt);
 		geometry_msgs::PoseStamped map_pose = traj.waypoints[pt];
 
 		// Transform that waypoint into the map frame
@@ -343,7 +338,9 @@ planning::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const pla
 void NavigationServer::brakeRobot(bool brake)
 {
 	srcp2_msgs::BrakeRoverSrv srv;
-	moveRobotWheels(0); // Its better to stop wheels from rotating if we are braking
+
+	// Its better to stop wheels from rotating if we are braking
+	moveRobotWheels(0);
 
 	if(brake)
 		srv.request.brake_force = 1000;
@@ -383,8 +380,6 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 
 	double delta_heading = NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_);
 	
-	 
-
 	if (abs(delta_heading) <= ANGLE_EPSILON)
 	{
 		ROS_INFO("[operations | nav_server | %s]: Delta heading not greater than epsilon threshold, done rotating...", robot_name_.c_str());
@@ -410,8 +405,6 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 		{
 			return false;
 		}
-
-		//printf("Heading remaining: %frad\n", abs(NavigationAlgo::changeInHeading(&starting_pose, target_robot_pose, robot_name, &buffer)));
 
 		if (delta_heading < 0)
 		{
@@ -511,8 +504,6 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 {
 	double left_wheel_angle, right_wheel_angle;
 
-	//ROS_INFO("Delta Heading: %f", delta_heading);
-
 	// Check delta heading in case it equals to 0 (aka turning radius is infinite = no angular velocity)
 	if (delta_heading == 0){
 		left_wheel_angle = 0.0;
@@ -537,10 +528,7 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 			center_radius = -center_radius;
 
 		left_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius - (NavigationAlgo::wheel_sep_width_/2));
-
 		right_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius + (NavigationAlgo::wheel_sep_width_/2));
-
-		//double desired_radius = 1.0/((delta_heading - MIN_DELTA_HEADING)/(MAX_DELTA_HEADING - MIN_DELTA_HEADING) * (MAX_TURNING_RAD - MIN_TURNING_RAD) + MIN_TURNING_RAD);
 
 		if(delta_heading < 0)
 		{
@@ -548,10 +536,6 @@ std::vector<double> NavigationServer::headingToRadius(double delta_heading)
 			right_wheel_angle = -right_wheel_angle;
 		}
 	}
-
-	//ROS_INFO("Desired left wheel angle: %f", left_wheel_angle);
-
-	//ROS_INFO("Desired right wheel angle: %f", right_wheel_angle);
 
 
 	std::vector<double> wheel_angles{left_wheel_angle, right_wheel_angle};
@@ -585,8 +569,6 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 
 		// NOTE: Add DIST_EPSILON to calculation if we want to start turning torwards the next heading sooner
 		double percentage_wpt_completed = 1 - (current_eucledian_distance_to_waypoint/total_eucledian_distance_to_waypoint);
-
-		//ROS_INFO("Percentage of path completed: %f", percentage_wpt_completed);
 
 		// Calculate the delta heading
 		double delta_heading;
@@ -659,8 +641,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 		get_new_trajectory_ = false;
 		ROS_INFO("[operations | nav_server | %s]: Got new trajectory!", robot_name_.c_str());
 
-		//Visualize waypoints in Gazebo
-		//NavigationServer::publishWaypoints(trajectory.waypoints);
+		// Visualize waypoints in Gazebo
+		// NavigationServer::publishWaypoints(trajectory.waypoints);
 
 		// Loop over trajectory waypoints
 		for (int i = 0; i < trajectory.waypoints.size(); i++)
@@ -686,9 +668,6 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			// Get the current waypoint in the map frame, based on the most recent transforms.
 			current_waypoint.header.stamp = ros::Time(0);
 			NavigationAlgo::transformPose(current_waypoint, MAP, buffer_, 0.1);
-
-			// Needed, otherwise we get extrapolation into the past
-			// current_waypoint.header.stamp = ros::Time(0);
 
 			// Extract the future waypoint in trajectory
 			geometry_msgs::PoseStamped future_waypoint;
@@ -977,7 +956,9 @@ double NavigationServer::getCumulativeTheta(double yaw, int &rotation_counter)
   // If yaw if positive, then consider actual value of yaw (first two quads)
   // Else consider 2PI plus yaw, becaues its the third and fourth quadrants
   yaw = yaw >= 0 ? yaw : 2 * M_PI + yaw;
-  yaw /= 2; // Not sure why, but this is needed for theta calculation.
+
+	// Not sure why, but this is needed for theta calculation.
+  yaw /= 2;
 
   if ((last_yaw > M_PI_2 && yaw < M_PI_2))
   {
