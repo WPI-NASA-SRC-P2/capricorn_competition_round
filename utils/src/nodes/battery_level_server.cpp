@@ -11,8 +11,9 @@
 
 void poseCallback(nav_msgs::Odometry odom){
 
-    current_location_ = odom.pose.pose;
-
+    geometry_msgs::PoseStamped current_location_ = odom.pose.pose;
+    
+    geometry_msgs::PoseStamped target_location_;
     target_location_.pose.position.x = -6.0;
     target_location_.pose.position.y = -6.0;  
     target_location_.pose.position.z = 0.65;
