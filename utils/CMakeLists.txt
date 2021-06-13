@@ -160,6 +160,13 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
+add_executable(battery_level_server src/nodes/battery_level_server.cpp)
+add_dependencies(battery_level_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(battery_level_server
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
+
 #############
 ## Install ##
 #############
