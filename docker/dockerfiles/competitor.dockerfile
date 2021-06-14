@@ -36,7 +36,6 @@ RUN chmod +x ${HOME}/ros_workspace/install/share/srcp2_launch/scripts/team_spawn
 COPY docker/scripts/container/common-entrypoint.bash ${HOME}/scripts
 COPY docker/scripts/container/competitor-entrypoint.bash ${HOME}/scripts
 
-VOLUME "${HOME}/cmp_workspace"
 # starting conditions (note: CMD not ENTRYPOINT for --interactive override)
 ENV COMPETITOR_ENTRYPOINT="${HOME}/scripts/competitor-entrypoint.bash"
 CMD ${COMPETITOR_ENTRYPOINT}

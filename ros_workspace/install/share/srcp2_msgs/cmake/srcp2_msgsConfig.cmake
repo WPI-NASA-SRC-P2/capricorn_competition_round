@@ -211,7 +211,7 @@ foreach(depend ${depends})
   _unpack_libraries_with_build_configuration(srcp2_msgs_LIBRARIES ${srcp2_msgs_LIBRARIES})
 
   _list_append_unique(srcp2_msgs_LIBRARY_DIRS ${${srcp2_msgs_dep}_LIBRARY_DIRS})
-  list(APPEND srcp2_msgs_EXPORTED_TARGETS ${${srcp2_msgs_dep}_EXPORTED_TARGETS})
+  _list_append_deduplicate(srcp2_msgs_EXPORTED_TARGETS ${${srcp2_msgs_dep}_EXPORTED_TARGETS})
 endforeach()
 
 set(pkg_cfg_extras "srcp2_msgs-msg-extras.cmake")

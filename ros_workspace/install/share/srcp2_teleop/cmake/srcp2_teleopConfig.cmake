@@ -211,7 +211,7 @@ foreach(depend ${depends})
   _unpack_libraries_with_build_configuration(srcp2_teleop_LIBRARIES ${srcp2_teleop_LIBRARIES})
 
   _list_append_unique(srcp2_teleop_LIBRARY_DIRS ${${srcp2_teleop_dep}_LIBRARY_DIRS})
-  list(APPEND srcp2_teleop_EXPORTED_TARGETS ${${srcp2_teleop_dep}_EXPORTED_TARGETS})
+  _list_append_deduplicate(srcp2_teleop_EXPORTED_TARGETS ${${srcp2_teleop_dep}_EXPORTED_TARGETS})
 endforeach()
 
 set(pkg_cfg_extras "")

@@ -211,7 +211,7 @@ foreach(depend ${depends})
   _unpack_libraries_with_build_configuration(srcp2_gazebo_LIBRARIES ${srcp2_gazebo_LIBRARIES})
 
   _list_append_unique(srcp2_gazebo_LIBRARY_DIRS ${${srcp2_gazebo_dep}_LIBRARY_DIRS})
-  list(APPEND srcp2_gazebo_EXPORTED_TARGETS ${${srcp2_gazebo_dep}_EXPORTED_TARGETS})
+  _list_append_deduplicate(srcp2_gazebo_EXPORTED_TARGETS ${${srcp2_gazebo_dep}_EXPORTED_TARGETS})
 endforeach()
 
 set(pkg_cfg_extras "")

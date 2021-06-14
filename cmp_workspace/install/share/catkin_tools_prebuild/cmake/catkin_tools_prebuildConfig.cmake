@@ -211,7 +211,7 @@ foreach(depend ${depends})
   _unpack_libraries_with_build_configuration(catkin_tools_prebuild_LIBRARIES ${catkin_tools_prebuild_LIBRARIES})
 
   _list_append_unique(catkin_tools_prebuild_LIBRARY_DIRS ${${catkin_tools_prebuild_dep}_LIBRARY_DIRS})
-  list(APPEND catkin_tools_prebuild_EXPORTED_TARGETS ${${catkin_tools_prebuild_dep}_EXPORTED_TARGETS})
+  _list_append_deduplicate(catkin_tools_prebuild_EXPORTED_TARGETS ${${catkin_tools_prebuild_dep}_EXPORTED_TARGETS})
 endforeach()
 
 set(pkg_cfg_extras "")

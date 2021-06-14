@@ -14,7 +14,11 @@ cd $_this_dir
 source "srcp2_setup.bash"
 source "gpu_and_x.bash"
 
-image_tag="scheducation/srcp2_comp:final_competitor"
+image_repo="scheducation/srcp2_comp"
+image_tag="final_competitor"
+
+run_image_repo="scheducation/srcp2_comp_solutions"
+run_image_tag="team_omega"
 
 sim_container_name="srcp2-final"
 cmp_container_name="competitor-final"
@@ -57,6 +61,9 @@ ${B}General Options:${rs}
         Simply launch as normal, but override all runtime args with
         interactive BASH shell
 
+   ${B}-t | --team${rs}
+        The Team Name Tag in the submision docker hub repo
+
    ${B}-c | --cpus${rs}
         Set number of CPUs available to this container. Default is ${cpus}
 
@@ -83,7 +90,7 @@ for arg in "$@"; do
     "--local-docker") set -- "$@" "-L" ;;
     "--interactive")  set -- "$@" "-i" ;;
     "--developer")  set -- "$@" "-d" ;;
-    #
+    "--team")  set -- "$@" "-t" ;;
     "--cpus") set -- "$@" "-c";;
     "--mem")  set -- "$@" "-m";;
     *) set -- "$@" "$arg"
@@ -91,7 +98,7 @@ for arg in "$@"; do
 done
 
 OPTIND=1
-while getopts hC:dl:nd:Lic:m: arg; do
+while getopts hLdit:c:m: arg; do
     case $arg in
 
         h)
@@ -107,6 +114,16 @@ while getopts hC:dl:nd:Lic:m: arg; do
         i)
             interactive="-it"
             override_command="/bin/bash"
+            ;;
+        t)
+            image_repo=$run_image_repo
+            image_tag=$run_image_tag
+            interactive="-it"
+            if [ -z ${OPTARG} ]; then
+                image_tag=$image_tag
+            else 
+                image_tag=$OPTARG
+            fi
             ;;
         c)
             cpus=$OPTARG
@@ -125,7 +142,7 @@ done
 
 # update docker images
 if [[ "$use_local" == "false" ]]; then
-    if ! docker pull $image_tag; then
+    if ! docker pull "${image_repo}:${image_tag}"; then
         echo -e "$echo_error Docker pull failed"
         exit 1
     fi
@@ -138,9 +155,10 @@ fi
 
 # Display run state information to user (dev and comp)
 echo
-echo -e "$echo_info running image    : ${b}$image_tag${rs}"
+echo -e "$echo_info running image    : ${b}${image_repo}:${image_tag}${rs}"
 echo -e "$echo_info container name   : ${b}$cmp_container_name${rs}"
 echo -e "$echo_info volumes from name: ${b}$sim_container_name${rs}"
+echo -e "$echo_info scripts folder   : ${b}$_this_dir${rs}"
 
 
 if [ -z $interactive ]; then
@@ -154,7 +172,7 @@ fi
 
 echo
 
-# Setup the Host Volume 
+# Setup the Host for Development or Run Team
 echo
 if [[ $cmp_volumes =~ "developer" ]]; then
     cmp_host_path=$(cd ../../cmp_workspace && pwd)
@@ -163,6 +181,11 @@ if [[ $cmp_volumes =~ "developer" ]]; then
         exit 1
     fi
     cmp_volumes="--volume=${cmp_host_path}:/home/srcp2/cmp_workspace:rw"
+else
+    image_repo=$run_image_repo
+    image_tag=$run_image_tag
+    interactive="-it"
+    echo -e "$echo_info Running the Built Solution in the the Submittion Image : ${b} ${run_image_repo} ${rs} Teame Tag : ${b} ${run_image_tag} ${rs}..."
 fi
 echo
 
@@ -215,7 +238,8 @@ docker run --rm  \
     --env=ROS_MASTER_URI="http://${simalias_name}:11311" \
     --cpus=$cpus \
     --memory=$mem \
+    --pull="never" \
     $cmp_volumes \
-    $image_tag  $override_command
+    "${image_repo}:${image_tag}"  $override_command
 
 exit $?
