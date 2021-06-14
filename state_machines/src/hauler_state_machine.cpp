@@ -94,32 +94,14 @@ bool HaulerStateMachine::undockExcavator()
 bool HaulerStateMachine::undockHopper()
 {
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Undocking from Hopper");
-    int nav_duration = 5.0;
-    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-    navigation_action_goal_.forward_velocity = -0.6;   
-    navigation_action_goal_.angular_velocity = 0;
-    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
+    geometry_msgs::PoseStamped pt;
+    pt.header.frame_id = robot_name_ + ROBOT_BASE;
+    pt.pose.position.x = -5;
+    pt.pose.orientation.w = 1;
+    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+    navigation_action_goal_.pose = pt;
     navigation_client_->sendGoal(navigation_action_goal_);
-    ros::Duration(nav_duration).sleep();
-    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-    navigation_action_goal_.forward_velocity = 0;
-    navigation_action_goal_.angular_velocity = 0.6;
-    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: turning during backup");
-    navigation_client_->sendGoal(navigation_action_goal_);
-    ros::Duration(nav_duration).sleep();
-    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-    navigation_action_goal_.forward_velocity = 0.6;
-    navigation_action_goal_.angular_velocity = 0;
-    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: moving forward");
-    navigation_client_->sendGoal(navigation_action_goal_);
-    ros::Duration(nav_duration).sleep();
-    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-    navigation_action_goal_.forward_velocity = 0.;
-    navigation_action_goal_.angular_velocity = 0;
-    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: breaking");
-    navigation_client_->sendGoal(navigation_action_goal_);
-    ros::Duration(nav_duration).sleep();
-    return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+    navigation_client_->waitForResult();
 }
 
 bool HaulerStateMachine::dumpVolatileToProcPlant()

@@ -94,14 +94,12 @@ void getOnTopOfVolatile()
   goal.drive_mode = NAV_TYPE::MANUAL;
   goal.forward_velocity = 0.6;   
   goal.angular_velocity = 0;
-  ROS_INFO("UNDOCKING: backing up beep beep beep");
   navigation_client_->sendGoal(goal);
   ros::Duration(2).sleep();
 
   goal.drive_mode = NAV_TYPE::MANUAL;
   goal.forward_velocity = 0.0;   
   goal.angular_velocity = 0;
-  ROS_INFO("UNDOCKING: backing up beep beep beep");
   navigation_client_->sendGoal(goal);
   ros::Duration(0.5).sleep();
 }
