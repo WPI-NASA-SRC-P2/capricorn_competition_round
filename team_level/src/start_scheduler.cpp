@@ -9,5 +9,5 @@ int main(int argc, char* argv[])
 
     sm->startScheduler();
 
-    ROS_INFO("Hauler state machine died!\n");
+    ROS_INFO("[SCHEDULER | start_scheduler.cpp | scheduler]: Hauler state machine died!\n");
 }

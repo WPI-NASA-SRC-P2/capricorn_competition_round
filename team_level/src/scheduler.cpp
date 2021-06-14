@@ -46,7 +46,7 @@ void Scheduler::startScheduler()
 void Scheduler::schedulerLoop()
 {
   init();
-  ROS_INFO("All State machines connected!");
+  ROS_INFO("[SCHEDULER | scheduler.cpp | scheduler]: All State machines connected!");
 
   startScout();
   startExcavator();
@@ -142,9 +142,9 @@ void Scheduler::updateExcavator()
 
 void Scheduler::updateHauler()
 {
-  ROS_INFO_STREAM("Scout Task:" << (scout_goal_.task) << " task completed:" << scout_task_completed_);
-  ROS_INFO_STREAM("Excav Task:" << (excavator_goal_.task) << " task completed:" << excavator_task_completed_);
-  ROS_INFO_STREAM("Hauler Task:" << (hauler_goal_.task) << " task completed:" << hauler_task_completed_);
+  ROS_INFO_STREAM("[SCHEDULER | scheduler.cpp | " + SCOUT + "]: " + "Scout Task:" << (scout_goal_.task) << " task completed:" << scout_task_completed_);
+  ROS_INFO_STREAM("[SCHEDULER | scheduler.cpp | " + EXCAVATOR + "]: " + "Excav Task:" << (excavator_goal_.task) << " task completed:" << excavator_task_completed_);
+  ROS_INFO_STREAM("[SCHEDULER | scheduler.cpp | " + HAULER + "]: " + "Hauler Task:" << (hauler_goal_.task) << " task completed:" << hauler_task_completed_);
 
   //This boolean checks IF the hauler has COMPLETED dumping volatile to processing plant.
   bool dumping_done = hauler_goal_.task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_task_completed_;
@@ -243,7 +243,7 @@ void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client,
 {
   if (robot_goal.task != task)
   {
-    ROS_WARN_STREAM("SCHEDULER : Setting " << robot_name << " Task: " << task);
+    ROS_WARN_STREAM("[SCHEDULER | scheduler.cpp | " + robot_name + "]: " + "SCHEDULER : Setting " << robot_name << " Task: " << task);
 
     // This is bad, should be removed //
     if (task == EXCAVATOR_PARK_AND_PUB)
@@ -258,7 +258,7 @@ void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client,
 {
   if (robot_goal.task != task)
   {
-    ROS_WARN_STREAM("SCHEDULER : Setting " << robot_name << " Task: " << task);
+    ROS_WARN_STREAM("[SCHEDULER | scheduler.cpp | " + robot_name + "]: " + "SCHEDULER : Setting " << robot_name << " Task: " << task);
     robot_goal.task = task;
     robot_goal.goal_loc = goal_loc;
     robot_client->sendGoal(robot_goal);
