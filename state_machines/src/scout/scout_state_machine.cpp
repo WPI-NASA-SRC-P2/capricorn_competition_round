@@ -6,7 +6,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    
 ScoutState::ScoutState(uint32_t un_id, uint32_t un_max_count) :
-    State(un_id, ToString("mystate_", un_max_count)),
+    State(un_id, ToString("mystate_", un_id)),
     m_unMaxCount(un_max_count)
 {
   robot_name_ = COMMON_NAMES::SCOUT_1;
@@ -101,6 +101,7 @@ public:
       RobotScheduler::step();
    }
 
+//UNDERSTANDING: This function is checked in exec() and if its true, exec executes the step() 
    bool done() override {
       return m_unT >= m_unMaxT;
    }
