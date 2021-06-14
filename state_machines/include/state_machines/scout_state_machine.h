@@ -92,14 +92,14 @@ public:
       if(m_unCount < m_unMaxCount) {
          return *this;
       }
-      return getState(SCOUT_UNDOCK);
+      return getState(SCOUT_SEARCH_VOLATILE);
    }
    
 };
 
 class Search : public ScoutState {
 public:   
-   Search() : ScoutState(SCOUT_SEARCH_VOLATILE, 1) {}
+   Search() : ScoutState(SCOUT_SEARCH_VOLATILE, 3) {}
 
   //  void entryPoint() override;
    State& transition() override {
