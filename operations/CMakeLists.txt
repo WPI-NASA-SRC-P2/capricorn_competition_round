@@ -17,11 +17,12 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   utils
   geometry_msgs
+  perception
+  planning
   gazebo_msgs
   srcp2_msgs
   tf2
   tf2_ros
-  perception
   maploc
 )
 
@@ -59,10 +60,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  TrajectoryWithVelocities.msg
-)
+# add_message_files(
+#   FILES
+#   #TrajectoryWithVelocities.msg
+# )
 
 ## Generate services in the 'srv' folder
 add_service_files(
@@ -129,7 +130,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES operations
- CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs perception maploc
+ CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs perception maploc planning
  #  DEPENDS system_lib
 )
 
@@ -184,13 +185,6 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_executable(start_nav_server src/navigation/start_nav_server.cpp)
 add_dependencies(start_nav_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(start_nav_server ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-
-
-add_executable(trajectory_processor src/clients/trajectory_processor.cpp)
-add_dependencies(trajectory_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(trajectory_processor
   ${catkin_LIBRARIES}
 )
 
@@ -316,7 +310,7 @@ ${catkin_LIBRARIES}
 ## in contrast to setup.py, you can choose the destination
 
 # All the cpp executable nodes should be listed here as well
-install(TARGETS navigation_client trajectory_processor wheel_speed_processing
+install(TARGETS navigation_client wheel_speed_processing
                 excavator_actionlib_client hauler_actionlib_server #excavator_actionlib_server
                 hauler_actionlib_client resource_localiser resource_localiser_tester
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

@@ -50,6 +50,8 @@ bool ExcavatorStateMachine::parkExcavator()
     navigation_action_goal_.pose = hard_coded_pose; // Position estimation is not perfect
     navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
 
+    new_vol_loc_flag_ = 1; // Flag set to 1 when excavator parks to a new volatile location
+
     navigation_client_->sendGoal(navigation_action_goal_);
     navigation_client_->waitForResult();
     return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
@@ -65,9 +67,14 @@ bool ExcavatorStateMachine::digVolatile()
 
     // These are the testing values, can be chagned
     // They start digging from the left of the robot
-    goal.target.x = 1;
+    if (new_vol_loc_flag_ == 1)
+        goal.target.x = 1;
+    else
+        goal.target.x = 0;
     goal.target.y = 0;
     goal.target.z = 0;
+
+    new_vol_loc_flag_ = 0; // Flag set to zero when excavator continues at a volatile location
 
     excavator_arm_client_->sendGoal(goal);
     digging_attempt_++;

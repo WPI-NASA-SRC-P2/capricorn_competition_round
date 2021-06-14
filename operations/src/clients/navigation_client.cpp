@@ -73,16 +73,16 @@ void navigationCB(const geometry_msgs::Point::ConstPtr& goal_point)
     
     //Simple waypoint x meters in front of the robot
     geometry_msgs::PoseStamped t1;
-    t1.header.frame_id = robot_name + "_small_chassis";
+    t1.header.frame_id = "map";
     t1.header.stamp = ros::Time::now();
     t1.pose.position.x = goal_point->x;
     t1.pose.position.y = goal_point->y;
     t1.pose.position.z = 0;
 
-    t1.pose.orientation.w = 0.707;
+    t1.pose.orientation.w = 1;
     t1.pose.orientation.x = 0;
     t1.pose.orientation.y = 0;
-    t1.pose.orientation.z = 0.707;
+    t1.pose.orientation.z = 0;
 
     goal.pose = t1;
 
@@ -129,6 +129,7 @@ int main(int argc, char** argv)
 
     // initialize client
     client = new Client(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
+
     printf("Waiting for server...\n");
     
     bool serverExists = client->waitForServer(ros::Duration(5.0));
