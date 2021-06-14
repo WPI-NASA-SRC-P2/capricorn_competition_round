@@ -122,9 +122,10 @@ int main(int argc, char** argv)
    try {
       MyScheduler cSchd(70);
       cSchd.addState(new Undock());
-    //   cSchd.AddState(new MyState10());
+      cSchd.addState(new Search());
+    //   cSchd.addState(new Search());
     //   cSchd.AddState(new MyState20());
-      cSchd.setInitialState(SCOUT_UNDOCK);
+      cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
       cSchd.exec();
       return 0;
    }

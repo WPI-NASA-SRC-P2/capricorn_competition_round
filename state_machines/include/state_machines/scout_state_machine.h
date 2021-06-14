@@ -97,6 +97,20 @@ public:
    
 };
 
+class Search : public ScoutState {
+public:   
+   Search() : ScoutState(SCOUT_SEARCH_VOLATILE, 1) {}
+
+  //  void entryPoint() override;
+   State& transition() override {
+      if(m_unCount < m_unMaxCount) {
+         return *this;
+      }
+      return getState(SCOUT_UNDOCK);
+   }
+   
+};
+
 // class Undock: public ScoutState
 // {
 // public:
