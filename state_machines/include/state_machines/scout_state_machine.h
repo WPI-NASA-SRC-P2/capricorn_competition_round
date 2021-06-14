@@ -42,6 +42,12 @@ private:
   typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> NavigationVisionClient;
   NavigationVisionClient *navigation_vision_client_;
   operations::NavigationVisionGoal navigation_vision_goal_;
+  /**
+   * @brief Goes to location with a combination of navigation and navigation vision 
+   * 
+   * @return true 
+   * @return false 
+   */
 
   typedef actionlib::SimpleActionClient<operations::ResourceLocaliserAction> ResourceLocaliserClient_;
   ResourceLocaliserClient_ *resource_localiser_client_;
@@ -76,6 +82,12 @@ private:
    * 
    */
   bool undockRobot();
+
+  /**
+   * @brief Move away from the excavator to continue on the trajectory, but before that reset the odometry as well, which is why it needs a pose as well.
+   * The scout will receive this pose from the excavator and it will flip and translate accordingly and reset its odometry. 
+   * 
+   */
 
   bool undockRobot(const geometry_msgs::PoseStamped &POSE);
 
@@ -125,13 +137,15 @@ private:
    */
   void waitForServerConnections();
 
-  bool goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object);
-  /**
+    /**
    * @brief Goes to location with a combination of navigation and navigation vision 
    * 
    * @return true 
    * @return false 
    */
+
+  bool goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object);
+
 
 public:
   ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name);
