@@ -86,6 +86,25 @@ void Search::step()
    ROS_INFO_STREAM("Searching Step Function!");
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// S E A R C H   L O C A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+State& Locate::transition()
+{
+   // if no transition, stay in current state
+   if(m_unCount < m_unMaxCount) {
+      return *this;
+   }
+   return getState(SCOUT_LOCATE_VOLATILE);
+}
+
+void Locate::step()
+{
+   ++m_unCount;
+   ROS_INFO_STREAM("Searching Step Function!");
+}
+
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -100,8 +119,8 @@ int main(int argc, char** argv)
 
    try {
       ScoutScheduler cSchd(70);
-      cSchd.addState(new Undock());
       cSchd.addState(new Search());
+      cSchd.addState(new Locate());
       cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
       cSchd.exec();
       return 0;
