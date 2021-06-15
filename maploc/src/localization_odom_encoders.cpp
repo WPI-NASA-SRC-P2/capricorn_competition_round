@@ -309,11 +309,11 @@ class EncoderOdom
         ros::NodeHandle nh_;
         std::string robot_name_;
         ros::Rate update_rate(UPDATE_HZ);
-        ros::Subscriber joint_sub_ = nh.subscribe("/" + robot_name + "/joint_states", 1000, joint_state_callback);
-        
+        ros::Subscriber joint_sub_ = nh.subscribe("/" + robot_name_ + "/joint_states", 1000, joint_state_callback);
+        ros::Subscriber nav_type_sub_ = nh.subscribe("/" + robot_name_ + COMMON_NAMES::NAV_TYPE_TOPIC)
         // Header
         std_msgs::Header header;
-        // Nav type (defined in common_names under the NAV_TYPE::NAVNAME enum)
+        // Nav type (defined in common_names under the enum NAV_TYPE::NAVNAME)
         int nav_type; 
         // positions
         float bl_wheel_joint_pos{0.0};
