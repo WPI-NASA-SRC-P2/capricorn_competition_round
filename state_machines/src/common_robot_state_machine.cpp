@@ -24,6 +24,7 @@ State& State::getState(uint32_t un_state) {
 /****************************************/
 /****************************************/
 
+//UNDERSTANDING: When we add states in addState(state), the state is assigned to a scheduler. 
 void State::setRobotScheduler(RobotScheduler& c_robot_scheduler) {
    m_pcRobotScheduler = &c_robot_scheduler;
 }
@@ -42,6 +43,8 @@ RobotScheduler::~RobotScheduler() {
 
 /****************************************/
 /****************************************/
+
+//UNDERSTANDING: Adding states to an unordered map (map of states declared in the header).
 
 void RobotScheduler::addState(State* pc_state) {
    if(m_mapStates.find(pc_state->getId()) == m_mapStates.end()) {
@@ -69,10 +72,15 @@ State& RobotScheduler::getState(uint32_t un_id) {
 /****************************************/
 /****************************************/
 
+//UNDERSTANDING: First finds the state in the map and then sets the entry point of the current state.
+
 void RobotScheduler::setInitialState(uint32_t un_state) {
    auto pcState = m_mapStates.find(un_state);
+   // if state exists in map, then set it to the initial state of the scheduler
    if(pcState != m_mapStates.end()) {
+      // acquire value of the state (every map has a key(first) and a value(second))
       m_pcCurrent = pcState->second;
+      // completes entry point of the initial state
       m_pcCurrent->entryPoint();
    }
    else {
@@ -86,7 +94,7 @@ void RobotScheduler::setInitialState(uint32_t un_state) {
 void RobotScheduler::step() {
    /* Only execute if 'current' was initialized */
    if(m_pcCurrent) {
-      /* Attempt a transition */
+      /* Attempt a transition, every state of every rover has its own transition() */
       State& cNewState = m_pcCurrent->transition();
       if(&cNewState != m_pcCurrent) {
          /* Perform transition */
@@ -105,6 +113,7 @@ void RobotScheduler::step() {
 /****************************************/
 /****************************************/
 
+//UNDERSTANDING: Each robot has its own done() and this is what is checked to perform step()
 void RobotScheduler::exec() {
    while(!done()) step();
 }

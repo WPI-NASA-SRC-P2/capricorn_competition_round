@@ -43,11 +43,12 @@ public:
    
    ~ScoutState();
 
+   //UNDERSTANDING: Trigerred in the setInitialState()
    void entryPoint() override {
       m_unCount = 0;
       ROS_INFO_STREAM("  [" << getName() << "] - entry point");
    }
-
+   //UNDERSTANDING: Every state might HAVE its own exitpoint. 
    void exitPoint() override {
       ROS_INFO_STREAM("  [" << getName() << "] - exit point");
    }
@@ -116,7 +117,7 @@ class Undock : public ScoutState {
 public:   
    Undock() : ScoutState(SCOUT_UNDOCK, 3) {}
 
-  //  void entryPoint() override;
+   // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
    
    void step() override;
@@ -126,12 +127,14 @@ class Search : public ScoutState {
 public:   
    Search() : ScoutState(SCOUT_SEARCH_VOLATILE, 3) {}
 
-  //  void entryPoint() override;
+   // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override;
 
    void step() override;
    
 };
+
+
 
 // class Undock: public ScoutState
 // {
