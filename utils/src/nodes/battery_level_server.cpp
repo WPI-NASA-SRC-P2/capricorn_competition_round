@@ -2,15 +2,15 @@
 #include "utils/battery_level.h"
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose.h>
-#include <nav_msgs/Odometry.h>
+
 #include <std_msgs/Float64MultiArray.h>
 
-
+ros::Publisher debug_deadlinesPublisher;
 
 //Setting the node's update rate
 #define UPDATE_HZ 10
 
-void poseCallback(nav_msgs::Odometry odom){
+void BatteryLevelServer::poseCallback(nav_msgs::Odometry odom){
 
     geometry_msgs::Pose current_location_ = odom.pose.pose;
     
@@ -24,26 +24,26 @@ void poseCallback(nav_msgs::Odometry odom){
     target_location_.pose.orientation.w = 1;
 
     // calculate the distance between the robot's current location and charging station
-     float distance_ = battery_level::calc_distance(target_location_.pose.position.x, target_location_.pose.position.y, current_location_.position.x, current_location_.position.y);       //needs to be calculated using a distance formula
+    distance_ = battery_level::calc_distance(target_location_.pose.position.x, target_location_.pose.position.y, current_location_.position.x, current_location_.position.y);       //needs to be calculated using a distance formula
 }
 
-void deadlinesCalculator(){
+void BatteryLevelServer::deadlinesCallback(){
     std_msgs::Float64MultiArray deadlines;
 
     // publish the soft and hard deadlines to a topic
-    float percentage_needed = battery_level::base_battery_level(battery_level::discharge_rate, BatteryLevelServer::distance_, battery_level::speed);
+    float percentage_needed = battery_level::base_battery_level(battery_level::discharge_rate, distance_, battery_level::speed);
     soft_deadline_ = battery_level::calc_soft_deadline(percentage_needed);
     hard_deadline_ = battery_level::calc_hard_deadline(percentage_needed);
     
 
-   deadlines.dim[0].label  = "soft deadline";
-   deadlines.dim[0].size   = 1;
-   deadlines.dim[1].label  = "hard deadline";
-   deadlines.dim[1].size   = 1;
+   deadlines.layout.dim[0].label  = "height";
+   deadlines.layout.dim[0].size   = 2;
+   deadlines.layout.dim[1].label  = "width";
+   deadlines.layout.dim[1].size   = 1;
    deadlines.data[0] = soft_deadline_;
    deadlines.data[1] = hard_deadline_;
     //publish the dealines
-    debug_deadlinesPublisher.pub(deadlines); 
+  debug_deadlinesPublisher.publish(deadlines); 
 }
 
 
