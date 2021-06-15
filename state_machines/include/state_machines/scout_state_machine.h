@@ -95,7 +95,6 @@ public:
          // if no transition, stay in current state
          return *this;
       }
-      // if transition condition is met, move to next state
       return getState(SCOUT_SEARCH_VOLATILE);
    }
    
@@ -103,7 +102,7 @@ public:
 
 class Search : public ScoutState {
 public:   
-   Search() : ScoutState(SCOUT_SEARCH_VOLATILE, 7) {}
+   Search() : ScoutState(SCOUT_SEARCH_VOLATILE, 3) {}
 
   //  void entryPoint() override;
    State& transition() override {
