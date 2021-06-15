@@ -35,8 +35,9 @@ private:
 public:
     void stopRobot(void);
     void solarChargeInitiate(operations::SolarChargeRequest &request, operations::SolarChargeResponse &response);
-    void systemMonitorCB(srcp2_msgs::SystemMonitorMsg msg);
+    void systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg);
     void setPowerSaveMode(bool on);
     ros::Subscriber systemMonitor_subscriber;
     ros::ServiceClient powerMode_client; 
+    ros::ServiceServer solarChargerService;
 };

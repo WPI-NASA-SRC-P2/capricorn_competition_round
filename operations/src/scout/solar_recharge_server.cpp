@@ -115,15 +115,18 @@ void SolarChargingServer::setPowerSaveMode(bool state){
  * @param request solarChargeRequest 
  * @param reponse solarChargeResponse
  */
-bool SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &request, operations::SolarChargeResponse &response)
+static void SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &request, operations::SolarChargeResponse &response)
 {
-  should_turn = request.solar_charging_status;
+  should_turn = request.solar_charge_status;
   if(should_turn)
   {
     if(!is_turning) {
-      std::async(std::launch::async, turnRobot());
+      // std::async(std::launch::async, turnRobot());
+      turnRobot();
       is_turning = true;
     }
+    ROS_INFO("Solar_Charging_Mode: ON: STARTING");
+    response.result.data = "Solar_Charging_Mode: ON: STARTING";
   }
   else
   {
@@ -131,16 +134,14 @@ bool SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &re
     stopRobot();
     setPowerSaveMode(false);
     ROS_INFO("Solar_Charging_Mode: OFF: Ending");
-    response.result = "Solar_Charging_Mode: OFF: Ending";
+    response.result.data = "Solar_Charging_Mode: OFF: Ending";
   }
 
+  //ROS_INFO("Starting transitiong to solar recharge");
 
   
-
-  ROS_INFO("Starting transitiong to solar recharge");
-
-  res.result.data = "The Robot is in Solar Charging Mode";
-  ROS_INFO("Now Solar Recharging");
+  //ROS_INFO("Now Solar Recharging");
+  //response.result.data = "Solar_Charging_Mode: ON: Power_rate:" + power_rate.c_str();
 }
 
 bool SolarChargingServer::turnRobot() {
@@ -154,11 +155,11 @@ bool SolarChargingServer::turnRobot() {
   stopRobot();
   setPowerSaveMode(true);
   ROS_INFO("Solar_Charging_Mode: ON: Charging");
-  //response.result = "Solar_Charging_Mode: ON: Power_rate:" + power_rate.c_str();
+  return true;
 }
 
 
-void SolarChargeingServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg){
+void SolarChargingServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg){
   solar_ok = msg.solar_ok;
   power_rate = msg.power_rate;
   power_saver = msg.power_saver;   //i assume to check of we are in or out of power save mode
@@ -217,13 +218,13 @@ int main(int argc, char *argv[])
   //create a nodehandle
   ros::NodeHandle nh;
 
-  server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::SystemMonitorCB, &server);
+  server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::systemMonitorCB, &server);
 
   //srv result
-  debug_solar_charging_mode = nh.advertise<std_msgs::String>("/galaga/debug_solar_charging_status", 1000);
+  //debug_solar_charging_mode = nh.advertise<std_msgs::String>("/galaga/debug_solar_charging_status", 1000);
   
   //client for power saving mode
-  server.powerMode_client = nh.serviceClient<srcp2_msgs::SystemPowerSave>("power_mode");
+  server.powerMode_client = nh.serviceClient<srcp2_msgs::SystemPowerSaveSrv>("power_mode");
 
   // operations::SolarChargeRequest req = true;
   // operations::SolarChargeResponse res;
@@ -231,7 +232,7 @@ int main(int argc, char *argv[])
 
 
   //Instantiating ROS server for generating trajectory
-  ros::ServiceServer service = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
+  ros::ServiceServer server.advertiseService("solar_charger", SolarChargingServer::solarChargeInitiate);
 
   ros::spin();
 
