@@ -25,6 +25,7 @@ float battery_level::calc_distance(float target_x, float target_y, float current
  */
 float battery_level::base_battery_level(const float discharge_rate, float distance, const float speed){
     float percentage_needed = discharge_rate * (distance / speed);
+    return percentage_needed;
 }
 
 /**

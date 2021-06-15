@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   nav_msgs
   message_filters
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -64,6 +65,10 @@ find_package(catkin REQUIRED COMPONENTS
 #   Service1.srv
 #   Service2.srv
 # )
+add_service_files(
+   FILES
+   battery_deadlines.srv
+ )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -72,11 +77,13 @@ find_package(catkin REQUIRED COMPONENTS
 #   Action2.action
 # )
 
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+# Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+  nav_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -110,7 +117,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES utils
- CATKIN_DEPENDS std_msgs roscpp rospy message_filters sensor_msgs geometry_msgs nav_msgs
+ CATKIN_DEPENDS std_msgs roscpp rospy message_filters sensor_msgs geometry_msgs nav_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -129,7 +136,10 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/utils.cpp
 # )
-
+# Declare a C++ library
+add_library(${PROJECT_NAME}
+  src/classes/battery_level.cpp
+)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -165,7 +175,7 @@ include_directories(
 add_executable(battery_level_server src/nodes/battery_level_server.cpp)
 add_dependencies(battery_level_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(battery_level_server
-  ${catkin_LIBRARIES} ${PROJECT_NAME}
+  ${catkin_LIBRARIES} 
 )
 
 

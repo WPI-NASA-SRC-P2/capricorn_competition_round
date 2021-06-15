@@ -1,6 +1,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
+#include "utils/battery_deadlines.h"
 
 class  BatteryLevelServer{
 private:
@@ -10,11 +11,6 @@ private:
 
 public:
     ros::Subscriber pose_subscriber;
-
-
     void poseCallback(nav_msgs::Odometry odom);
-    void deadlinesCallback();
-
-
-
+    bool deadlinesCallback(utils::battery_deadlines::Request &req, utils::battery_deadlines::Response &res);
 };

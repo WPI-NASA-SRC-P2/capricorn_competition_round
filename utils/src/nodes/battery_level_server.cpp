@@ -2,8 +2,8 @@
 #include "utils/battery_level.h"
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose.h>
-
 #include <std_msgs/Float64MultiArray.h>
+#include "ros/ros.h"
 
 ros::Publisher debug_deadlinesPublisher;
 
@@ -27,13 +27,13 @@ void BatteryLevelServer::poseCallback(nav_msgs::Odometry odom){
     distance_ = battery_level::calc_distance(target_location_.pose.position.x, target_location_.pose.position.y, current_location_.position.x, current_location_.position.y);       //needs to be calculated using a distance formula
 }
 
-void BatteryLevelServer::deadlinesCallback(){
+bool BatteryLevelServer::deadlinesCallback(utils::battery_deadlines::Request &req, utils::battery_deadlines::Response &res){
     std_msgs::Float64MultiArray deadlines;
 
     // publish the soft and hard deadlines to a topic
-    float percentage_needed = battery_level::base_battery_level(battery_level::discharge_rate, distance_, battery_level::speed);
-    soft_deadline_ = battery_level::calc_soft_deadline(percentage_needed);
-    hard_deadline_ = battery_level::calc_hard_deadline(percentage_needed);
+    float percentage_needed = 0; //battery_level::base_battery_level(battery_level::discharge_rate, distance_, battery_level::speed);
+    hard_deadline_ = 0;//battery_level::calc_hard_deadline(percentage_needed);
+    soft_deadline_ = 0; //battery_level::calc_soft_deadline(percentage_needed);
     
 
    deadlines.layout.dim[0].label  = "height";
@@ -44,6 +44,8 @@ void BatteryLevelServer::deadlinesCallback(){
    deadlines.data[1] = hard_deadline_;
     //publish the dealines
   debug_deadlinesPublisher.publish(deadlines); 
+
+  return true;
 }
 
 
@@ -69,7 +71,7 @@ int main(int argc, char *argv[])
   debug_deadlinesPublisher = nh.advertise<std_msgs::Float64MultiArray>("/galaga/batteryLevelDeadlines", 1000);
 
   //Instantiating ROS server for calculating deadlines
-  ros::ServiceServer service = nh.advertiseService("deadlines_server", &BatteryLevelServer::deadlinesCalculator, &server);
+  ros::ServiceServer service = nh.advertiseService("deadlines_server", &BatteryLevelServer::deadlinesCallback, &server);
   ros::spin();
 
   return 0;
