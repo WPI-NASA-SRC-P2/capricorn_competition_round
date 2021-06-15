@@ -41,7 +41,7 @@ float calc_soft_deadline(float percentage_needed){
 }
 
 /**
- * @brief 
+ * @brief calculates the hard deadline for the battery level 
  * 
  * @param percentage_needed 
  * @return float 
