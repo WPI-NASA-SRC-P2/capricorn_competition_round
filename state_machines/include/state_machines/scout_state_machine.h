@@ -99,6 +99,12 @@ public:
       /* Increase time counter */
       ++m_unT;
       std::cout << "t = " << m_unT << std::endl;
+      interrupt = false;
+      if(m_unT % 10 == 0)
+      {
+         ROS_WARN("Resetting it to Undock");
+         interrupt = true;
+      }
       /* Call parent class step */
       RobotScheduler::step();
    }

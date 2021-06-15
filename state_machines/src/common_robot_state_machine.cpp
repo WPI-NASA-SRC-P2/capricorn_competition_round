@@ -95,12 +95,17 @@ void RobotScheduler::step() {
    /* Only execute if 'current' was initialized */
    if(m_pcCurrent) {
       /* Attempt a transition, every state of every rover has its own transition() */
-      State& cNewState = m_pcCurrent->transition();
-      if(&cNewState != m_pcCurrent) {
+      State* cNewState = &m_pcCurrent->transition();
+      if (interrupt)
+      {
+         cNewState = &getState(SCOUT_UNDOCK);
+      }
+
+      if(cNewState != m_pcCurrent) {
          /* Perform transition */
          m_pcCurrent->exitPoint();
-         cNewState.entryPoint();
-         m_pcCurrent = &cNewState;
+         cNewState->entryPoint();
+         m_pcCurrent = cNewState;
       }
       /* Execute current state */
       m_pcCurrent->step();

@@ -8,6 +8,8 @@
 #include <utils/common_names.h>
 #include "ros/ros.h"
 
+using namespace COMMON_NAMES;
+
 // class MacroState;
 class State;
 class RobotScheduler;
@@ -64,6 +66,10 @@ private:
 
    State* m_pcCurrent;
    std::unordered_map<uint32_t, State*> m_mapStates;
+
+protected:
+   bool interrupt = false;
+   STATE_MACHINE_TASK interrupt_state = SCOUT_UNDOCK;
 };
 
 /****************************************/
