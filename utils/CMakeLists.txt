@@ -140,6 +140,10 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/classes/battery_level.cpp
 )
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES} 
+)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -174,7 +178,7 @@ add_library(${PROJECT_NAME}
 
 add_executable(battery_level_server src/nodes/battery_level_server.cpp)
 add_dependencies(battery_level_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(battery_level_server
+target_link_libraries(battery_level_server ${PROJECT_NAME}
   ${catkin_LIBRARIES} 
 )
 
