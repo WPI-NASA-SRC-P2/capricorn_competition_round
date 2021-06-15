@@ -12,6 +12,8 @@
 
 // #include <capricorn_common/robot_description.h>
 
+#include <utils/common_names.h>
+
 #include <math.h>
 
 #define UPDATE_HZ 20
@@ -311,6 +313,8 @@ class EncoderOdom
         
         // Header
         std_msgs::Header header;
+        // Nav type (defined in common_names under the NAV_TYPE::NAVNAME enum)
+        int nav_type; 
         // positions
         float bl_wheel_joint_pos{0.0};
         float br_wheel_joint_pos{0.0};
