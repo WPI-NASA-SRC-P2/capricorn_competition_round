@@ -4,7 +4,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// S C O U T   B A S E   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   
+
 ScoutState::ScoutState(uint32_t un_id, uint32_t un_max_count) :
     State(un_id, ToString("mystate_", un_id)),
     m_unMaxCount(un_max_count)
@@ -46,73 +46,51 @@ void ScoutState::objectsCallback(const perception::ObjectArray::ConstPtr objs)
 /****************************************/
 /****************************************/
 
-// /****************************************/
-// /****************************************/
 
-// class MyState10 : public ScoutState {
-   
-// public:
-   
-//    MyState10() : ScoutState(STATE_10, 10) {}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// U N D O C K   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//    State& Transition() override {
-//       if(m_unCount < m_unMaxCount) {
-//          return *this;
-//       }
-//       return GetState(STATE_20);
-//    }
-   
-// };
 
-// /****************************************/
-// /****************************************/
-
-// class MyState20 : public ScoutState {
-   
-// public:
-   
-//    MyState20() : ScoutState(STATE_20, 20) {}
-
-//    State& Transition() override {
-//       if(m_unCount < m_unMaxCount) {
-//          return *this;
-//       }
-//       return GetState(STATE_5);
-//    }
-   
-// };
-
-/****************************************/
-/****************************************/
-
-class MyScheduler : public RobotScheduler {
-   
-public:
-
-   MyScheduler(uint32_t un_max_t) :
-      m_unT(0),
-      m_unMaxT(un_max_t) {}
-
-   void step() override {
-      /* Increase time counter */
-      ++m_unT;
-      std::cout << "t = " << m_unT << std::endl;
-      /* Call parent class step */
-      RobotScheduler::step();
+State& Undock::transition()
+{
+   if(m_unCount < m_unMaxCount) {
+      return *this;
    }
+   return getState(SCOUT_SEARCH_VOLATILE);
+}
 
-   bool done() override {
-      return m_unT >= m_unMaxT;
+void Undock::step()
+{
+   ++m_unCount;
+   ROS_INFO_STREAM("Undock Step Function!");
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// S E A R C H   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+State& Search::transition()
+{
+   if(m_unCount < m_unMaxCount) {
+      return *this;
    }
+   return getState(SCOUT_UNDOCK);
+}
 
-private:
+void Search::step()
+{
+   ++m_unCount;
+   ROS_INFO_STREAM("Searching Step Function!");
+}
 
-   uint32_t m_unT;
-   uint32_t m_unMaxT;
-};
 
-/****************************************/
-/****************************************/
+
+//////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// M A I N ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+
 
 int main(int argc, char** argv)
 {
@@ -120,11 +98,9 @@ int main(int argc, char** argv)
    ros::NodeHandle nh;
 
    try {
-      MyScheduler cSchd(70);
+      ScoutScheduler cSchd(70);
       cSchd.addState(new Undock());
       cSchd.addState(new Search());
-    //   cSchd.addState(new Search());
-    //   cSchd.AddState(new MyState20());
       cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
       cSchd.exec();
       return 0;

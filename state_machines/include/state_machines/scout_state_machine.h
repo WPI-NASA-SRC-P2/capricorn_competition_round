@@ -83,18 +83,43 @@ protected:
 
 };
 
+/****************************************/
+/****************************************/
+
+class ScoutScheduler : public RobotScheduler {
+   
+public:
+
+   ScoutScheduler(uint32_t un_max_t) :
+      m_unT(0),
+      m_unMaxT(un_max_t) {}
+
+   void step() override {
+      /* Increase time counter */
+      ++m_unT;
+      std::cout << "t = " << m_unT << std::endl;
+      /* Call parent class step */
+      RobotScheduler::step();
+   }
+
+   bool done() override {
+      return m_unT >= m_unMaxT;
+   }
+
+private:
+
+   uint32_t m_unT;
+   uint32_t m_unMaxT;
+};
+
 class Undock : public ScoutState {
 public:   
    Undock() : ScoutState(SCOUT_UNDOCK, 3) {}
 
   //  void entryPoint() override;
-   State& transition() override {
-      if(m_unCount < m_unMaxCount) {
-         return *this;
-      }
-      return getState(SCOUT_SEARCH_VOLATILE);
-   }
+   State& transition() override ;
    
+   void step() override;
 };
 
 class Search : public ScoutState {
@@ -102,12 +127,9 @@ public:
    Search() : ScoutState(SCOUT_SEARCH_VOLATILE, 3) {}
 
   //  void entryPoint() override;
-   State& transition() override {
-      if(m_unCount < m_unMaxCount) {
-         return *this;
-      }
-      return getState(SCOUT_UNDOCK);
-   }
+   State& transition() override;
+
+   void step() override;
    
 };
 
