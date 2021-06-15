@@ -1,5 +1,4 @@
 #include <operations/NavigationAction.h> // Note: "Action" is appended
-#include <operations/SolarRechargeAction.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
 #include <future>
@@ -11,9 +10,12 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Float64.h>
-#include <srcp2_msgs/SystemMonitorMsg.h>   
+#include <srcp2_msgs/SystemMonitorMsg.h>
+#include <srcp2_msgs/SystemPowerSaveSrv.h>
 #include <utils/common_names.h>
+
 #include "operations/SolarCharge.h"
+#include "operations/solar_charging_server.h"
 
 // typedef for the Action Server and Client
 //typedef actionlib::SimpleActionServer<operations::SolarRechargeAction> SolarRechargeServer;
@@ -40,11 +42,11 @@ std::string robot_name_;
           When Anticlockwise, flip the direction with -1
  * 
  */
-enum DrivingDirection
-{
-  POSITIVE = 1,
-  NEGATIVE = -1
-};
+// enum DrivingDirection
+// {
+//   POSITIVE = 1,
+//   NEGATIVE = -1
+// };
 
 enum DrivingMode
 {
@@ -93,15 +95,17 @@ void SolarChargingServer::stopRobot(void)
 }
 
 // #TODO
-void SolarChargingServer::setPowerSaveMode(bool on){
+void SolarChargingServer::setPowerSaveMode(bool state){
   //call the server "small_scout_1/system_monitor/power_saver"
   //set the request.power_save
     // true: Power Save will be active
     // false:: power Save will be deactivated
 
-  src2_msgs::SystemPowerSaveRequest.power_save = on;
-  src2_msgs::SystemPowerSaveResponse;
-  powerMode_client.call(req, res);
+  srcp2_msgs::SystemPowerSaveSrv srv;
+
+  srv.request.power_save = state;
+
+  powerMode_client.call(srv);
 }
 
 
@@ -109,9 +113,9 @@ void SolarChargingServer::setPowerSaveMode(bool on){
  * @brief based on the request, either Acitivates Solar_Charge_Mode, or diactives it
  * 
  * @param request solarChargeRequest 
- * @param repomse solarChargeResponse
+ * @param reponse solarChargeResponse
  */
-bool SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &request, operations::SolarChargeResponse &Response)
+bool SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &request, operations::SolarChargeResponse &response)
 {
   should_turn = request.solar_charging_status;
   if(should_turn)
@@ -131,7 +135,7 @@ bool SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &re
   }
 
 
-  DrivingDirection driving_direction = POSITIVE;
+  
 
   ROS_INFO("Starting transitiong to solar recharge");
 
@@ -141,6 +145,7 @@ bool SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &re
 
 bool SolarChargingServer::turnRobot() {
   ROS_INFO("Solar_Charging_Mode: ON: Starting");
+  DrivingDirection driving_direction = POSITIVE;
   rotateRobot(driving_direction, 1.0);
   while(!solar_ok && ros::ok() && should_turn) // while there is no solar keep rotating 
   {
@@ -149,7 +154,7 @@ bool SolarChargingServer::turnRobot() {
   stopRobot();
   setPowerSaveMode(true);
   ROS_INFO("Solar_Charging_Mode: ON: Charging");
-  response.result = "Solar_Charging_Mode: ON: Power_rate:" + power_rate.c_str();
+  //response.result = "Solar_Charging_Mode: ON: Power_rate:" + power_rate.c_str();
 }
 
 
@@ -207,10 +212,10 @@ int main(int argc, char *argv[])
   //ROS Topic names
   std::string system_monitor_topic_ = "/capricorn/" + robot_name + "/system_monitor";
 
+  SolarChargingServer server;
+
   //create a nodehandle
   ros::NodeHandle nh;
-
-  SolarChargingServer server;
 
   server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::SystemMonitorCB, &server);
 

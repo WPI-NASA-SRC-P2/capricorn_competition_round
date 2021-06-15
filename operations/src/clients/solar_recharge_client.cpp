@@ -20,16 +20,19 @@ int main(int argc, char *argv[])
 
   ros::ServiceClient client = nh.serviceClient<operations::SolarCharge>("solar_charge");
 
-  operations::SolarChargeRequest req = true;
-  operations::SolarChargeResponse res;
-  client.call(req, res);
+
+  operations::SolarCharge solarCharge;
+  solarCharge.request.solar_charge_status = true;
+  
+  //operations::SolarChargeResponse res;
+  client.call(solarCharge);
 
   // #TODO: not sure how best to exit solar charging mode
   // operations::SolarChargeRequest req = false;
   // operations::SolarChargeResponse res;
   // client.call(req, res);
 
-  ros::Subscriber systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, solarChargeInitiate_2);
+  //ros::Subscriber systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, solarChargeInitiate);
   
   return 0;
 }
