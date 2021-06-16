@@ -15,6 +15,6 @@ private:
 
 public:
     ros::Subscriber pose_subscriber;
-    void poseCallback(nav_msgs::Odometry odom);
+    //void poseCallback(nav_msgs::Odometry odom);
     bool deadlinesCallback(utils::battery_deadlines::Request &req, utils::battery_deadlines::Response &res);
 };

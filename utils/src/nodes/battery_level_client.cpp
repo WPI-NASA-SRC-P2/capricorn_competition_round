@@ -4,14 +4,13 @@
 #include <nav_msgs/Odometry.h>
 #include <cstdlib>
 
+geometry_msgs::PoseStamped current_location_;
 
-geometry_msgs::PoseStamped BatteryLevelClient::poseCallback(nav_msgs::Odometry odom)
+void poseCallback(nav_msgs::Odometry odom)
 {
-  current_location_ = odom.pose.pose;
+  current_location_.pose = odom.pose.pose;
+  
 }
-
-
-
 
 int main(int argc, char **argv)
 {
@@ -23,19 +22,21 @@ int main(int argc, char **argv)
     return 1;
   }*/
 
-  std::string robot_name(argv[1]);
+  std::string robot_name_(argv[1]);
 
   ros::NodeHandle n;
 
-  ros::ServiceClient client = n.serviceClient<utils::battery_deadlines>("/capricorn/" + robot_name + "/deadlines_server");
+  ros::ServiceClient client = n.serviceClient<utils::battery_deadlines>("/capricorn/" + robot_name_ + "/deadlines_server");
 
   client.waitForExistence();
 
   utils::battery_deadlines srv;
 
-  srv.request.current_location =  
+  std::string pose_topic_ = "/" + robot_name_ + "/camera/odom";
 
-  
+  ros::Subscriber pose_subscriber_ = n.subscribe(pose_topic_, 1000, poseCallback);
+
+  srv.request.current_location = current_location_;
 
   if (client.call(srv))
   {

@@ -62,14 +62,14 @@ int main(int argc, char *argv[])
   std::string robot_name_(argv[1]); // takes the firt arg and sets it equal to  robot_name
 
   //ROS Topic for getting the curren location of the robot
-  std::string pose_topic_ = "/" + robot_name_ + "/camera/odom";
+  //std::string pose_topic_ = "/" + robot_name_ + "/camera/odom";
 
   //create a nodehandle
   ros::NodeHandle nh;
 
   BatteryLevelServer server;
 
-  server.pose_subscriber = nh.subscribe(pose_topic_, 1000, &BatteryLevelServer::poseCallback, &server);
+  //server.pose_subscriber = nh.subscribe(pose_topic_, 1000, &BatteryLevelServer::poseCallback, &server);
 
   debug_deadlinesPublisher = nh.advertise<std_msgs::Float64MultiArray>("/galaga/batteryLevelDeadlines", 1000);
 
