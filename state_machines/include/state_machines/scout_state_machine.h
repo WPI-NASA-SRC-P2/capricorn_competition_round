@@ -9,6 +9,7 @@
 #include <operations/Spiral.h>
 #include <operations/ResourceLocaliserAction.h>
 #include <srcp2_msgs/VolSensorMsg.h>
+#include <maploc/ResetOdom.h>
 
 using namespace COMMON_NAMES;
 
@@ -19,7 +20,10 @@ const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
     STATE_MACHINE_TASK::SCOUT_STOP_SEARCH,
     STATE_MACHINE_TASK::SCOUT_LOCATE_VOLATILE,
     STATE_MACHINE_TASK::SCOUT_UNDOCK,
-};
+    STATE_MACHINE_TASK::SCOUT_RESET_ODOM_GROUND_TRUTH,
+    STATE_MACHINE_TASK::SCOUT_RESET_ODOM,
+    STATE_MACHINE_TASK::SCOUT_SYNC_ODOM,
+    STATE_MACHINE_TASK::SCOUT_FACE_PROCESSING_PLANT};
 
 class ScoutStateMachine
 {
@@ -29,6 +33,7 @@ private:
   std::string robot_name_;
 
   ros::ServiceClient spiralClient_;
+  ros::ServiceClient resetScoutOdometryClient_;
   ros::Subscriber volatile_sub_;
   bool near_volatile_ = false;
   bool new_message_received = false;
@@ -37,6 +42,12 @@ private:
   typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> NavigationVisionClient;
   NavigationVisionClient *navigation_vision_client_;
   operations::NavigationVisionGoal navigation_vision_goal_;
+  /**
+   * @brief Goes to location with a combination of navigation and navigation vision 
+   * 
+   * @return true 
+   * @return false 
+   */
 
   typedef actionlib::SimpleActionClient<operations::ResourceLocaliserAction> ResourceLocaliserClient_;
   ResourceLocaliserClient_ *resource_localiser_client_;
@@ -73,11 +84,68 @@ private:
   bool undockRobot();
 
   /**
+   * @brief Move away from the excavator to continue on the trajectory, but before that reset the odometry as well, which is why it needs a pose as well.
+   * The scout will receive this pose from the excavator and it will flip and translate accordingly and reset its odometry. 
+   * 
+   */
+
+  bool undockRobot(const geometry_msgs::PoseStamped &POSE);
+
+  /**
    * @brief Volatile sensor callback
    * 
    * @param msg 
    */
+
   void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg);
+
+  /**
+   * @brief resets odometry, used after parking is done for scout, the oone withj pose signature is used when ground truth is not being used.
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session for the ground truth version.
+   */
+  bool resetOdometry(const geometry_msgs::PoseStamped &POSE);
+
+  /**
+   * @brief resets odometry, used after parking is done for scout, the oone withj pose signature is used when ground truth is not being used.
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session for the ground truth version.
+   */
+  bool resetOdometry();
+
+  /**
+   * @brief centers scout wrt processing plant and then resets the odometry according to whatever pose we pass it.
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted
+   */
+  bool syncOdometry(const geometry_msgs::PoseStamped &POSE);
+
+  /**
+   * @brief centers scout wrt processing plant.
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted
+   */
+  bool faceProcessingPlant();
+
+  /**
+   * @brief Wait till all the actionlib and service servers are started
+   * 
+   */
+  void waitForServerConnections();
+
+    /**
+   * @brief Goes to location with a combination of navigation and navigation vision 
+   * 
+   * @return true 
+   * @return false 
+   */
+
+  bool goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object);
+
 
 public:
   ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name);

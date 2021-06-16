@@ -89,16 +89,19 @@ void stopRobot()
 
 void getOnTopOfVolatile()
 {
-
-  geometry_msgs::PoseStamped hard_coded_pose;
-  hard_coded_pose.header.frame_id = robot_name_ + ROBOT_BASE;
-  hard_coded_pose.pose.position.x = 0.450; // Hardcoded distance of volatile sensor to the base footprint
-
   operations::NavigationGoal goal;
-  goal.pose = hard_coded_pose; // Position estimation is not perfect
-  goal.drive_mode = NAV_TYPE::GOAL;
 
+  goal.drive_mode = NAV_TYPE::MANUAL;
+  goal.forward_velocity = 0.6;   
+  goal.angular_velocity = 0;
   navigation_client_->sendGoal(goal);
+  ros::Duration(2).sleep();
+
+  goal.drive_mode = NAV_TYPE::MANUAL;
+  goal.forward_velocity = 0.0;   
+  goal.angular_velocity = 0;
+  navigation_client_->sendGoal(goal);
+  ros::Duration(0.5).sleep();
 }
 
 /**

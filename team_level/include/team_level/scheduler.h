@@ -8,6 +8,8 @@
 #include <actionlib/client/simple_action_client.h>
 #include <nav_msgs/Odometry.h>
 #include <operations/navigation_algorithm.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 using namespace COMMON_NAMES;
 
@@ -139,6 +141,12 @@ private:
   void startExcavator();
 
   /**
+   * @brief at the start of simulation, orders hauler to go to processing plant
+   * 
+   */
+  void startHauler();
+
+  /**
    * @brief Common Function for sending the robot's desired goal to their respective actionlibs
    * 
    * @param robot_name      The robot for which task is given
@@ -147,7 +155,7 @@ private:
    * @param task            Robot's desired task to be set
    */
   void sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task);
-  
+
   /**
    * @brief Common Function for sending the robot to the given location. 
    *        This function is specifically for GO_TO_LOC as that state also requires the location of the goal
@@ -160,8 +168,7 @@ private:
    * @param task            Robot's desired task to be set
    * @param goal_loc    
    */
-  void sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task, const geometry_msgs::PoseStamped& goal_loc);
-
+  void sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task, const geometry_msgs::PoseStamped &goal_loc);
 
   /**
    * @brief Sends the scout_desired_goal to scout state machine actionlib
@@ -170,14 +177,12 @@ private:
    */
   void sendScoutGoal(const STATE_MACHINE_TASK task);
 
-
   /**
    * @brief Sends the excavator_desired_goal to excavator state machine actionlib
    * 
    * @param task    Desired task to be sent to the excavator
    */
   void sendExcavatorGoal(const STATE_MACHINE_TASK task);
-
 
   /**
    * @brief Sends the hauler_desired_goal to hauler state machine actionlib
@@ -206,6 +211,13 @@ private:
  * @param msg 
  */
   void updateHaulerPose(const nav_msgs::Odometry::ConstPtr &msg);
+
+  /**
+  * @brief Reset odometry pose conversion logic. Used to rotate the pose of a robot by 180 degrees for resetOdom
+  * 
+  * @param msg, @param theta (radians)
+  */
+  geometry_msgs::PoseStamped rotatePose(const geometry_msgs::PoseStamped &msg, double theta);
 
 public:
   /**

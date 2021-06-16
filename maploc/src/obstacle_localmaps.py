@@ -96,9 +96,12 @@ class ObjectPlotter:
         obx = obx + 10
         oby = oby + 10
         # convert meters to pixels
-        obx_p = obx/self.occ_grid.info.resolution
-        oby_p = oby/self.occ_grid.info.resolution
-        radius_p = radius/self.occ_grid.info.resolution
+        no_zeroes_here = 0.0
+        if(self.occ_grid.info.resolution == 0):                           #HOTFIX: TO PREVENT DIVIDE-BY-ZERO-ERROR
+            no_zeroes_here = 0.05
+        obx_p = obx/(self.occ_grid.info.resolution + no_zeroes_here)
+        oby_p = oby/(self.occ_grid.info.resolution + no_zeroes_here)
+        radius_p = radius/(self.occ_grid.info.resolution + no_zeroes_here)
         # rospy.loginfo("Im here")
         # fill in obstacles found within localmaps
         for val in range(0, 901):
@@ -291,8 +294,9 @@ class ObjectPlotter:
 if __name__=="__main__":
     # initialize node
     rospy.init_node("Ground_Truth_Localmaps")
-    rospy.loginfo("ground_truth_localmaps node, online")
     # instantiate the object plotter to begin mapping
+    rospy.loginfo("[MAPLOC | obstacle_localmaps.py | " + str(sys.argv[1]) + "]: ground_truth_localmaps node, online") 
     ObstacleMap = ObjectPlotter()
+    rospy.sleep(5.)
     # this node works entirely based on the callback functions, thus just need to spin in main loop after creating the plotter object    
     rospy.spin()

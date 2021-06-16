@@ -123,15 +123,26 @@ void driveSprial()
   {
     double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
     bool done_driving = g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+    bool failed_driving = g_client->getState() == actionlib::SimpleClientGoalState::ABORTED;
+
     if (g_going_to_goal && !done_driving)
     {
+      // ROS_INFO("oKAY");
       g_last_dist = dist;
       ros::Duration(0.1).sleep();
       g_going_to_goal = true;
-      return;
+      if(failed_driving)
+      {
+        // ROS_INFO("o");
+        g_spiral_points.erase(g_spiral_points.begin());
+        was_driving = true;
+      }
+      else
+        return;
     }
     else
       g_going_to_goal = false;
+
 
     if (dist < CHECKPOINT_THRESHOLD)
     {
@@ -188,20 +199,8 @@ void spiralSearch()
   float direction = checkObstacle(obstacles);
 
   if (abs(direction) > 0.0)
-  {
-    g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
-    g_nav_goal.forward_velocity = FORWARD_VELOCITY;
-    g_nav_goal.direction = direction;
-    g_nav_goal.angular_velocity = 0;
-    g_new_trajectory = true;
-    // g_going_to_goal = true;
-    ROS_INFO("Avoiding Obstacle");
-    return;
-  }
-  else
-  {
-    driveSprial();
-  }
+    was_driving = true;
+  driveSprial();
 }
 
 /**

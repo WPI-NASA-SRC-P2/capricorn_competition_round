@@ -10,6 +10,7 @@
 #include <operations/ExcavatorAction.h>
 #include <geometry_msgs/PointStamped.h>
 #include <state_machines/RobotStateMachineTaskAction.h>
+#include <maploc/ResetOdom.h>
 
 using namespace COMMON_NAMES;
 
@@ -21,7 +22,11 @@ const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
     STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB,
     STATE_MACHINE_TASK::EXCAVATOR_DIG_AND_DUMP_VOLATILE,
     STATE_MACHINE_TASK::EXCAVATOR_GOTO_DEFAULT_ARM_POSE,
-};
+    STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM_GROUND_TRUTH,
+    STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM,
+    STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM,
+    STATE_MACHINE_TASK::EXCAVATOR_FACE_PROCESSING_PLANT,
+    STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR};
 
 class ExcavatorStateMachine
 {
@@ -29,6 +34,8 @@ private:
   ros::NodeHandle nh_;
 
   std::string robot_name_;
+
+  ros::ServiceClient resetExcavatorOdometryClient_;
 
   const double SLEEP_TIME = 0.5;
   const double ROTATION_SPEED = 0.5;
@@ -90,12 +97,74 @@ private:
   bool digAndDumpVolatile();
 
   /**
+   * @brief Digs and dump continuously until volatile is available AND RESET ODOMETRY 
+   * 
+   * @return true 
+   * @return false 
+   */
+  bool digAndDumpVolatile(const geometry_msgs::PoseStamped &POSE);
+
+  /**
    * @brief Takes excavator arm to default arm position (used for object detection)
    * 
    * @return true 
    * @return false 
    */
   bool goToDefaultArmPosition();
+
+    /**
+   * @brief Resets odometry to the pose passed to it, usually hauler. 
+   * 
+   * @return true 
+   * @return false 
+   */
+
+  bool resetOdometry(const geometry_msgs::PoseStamped &POSE);
+
+      /**
+   * @brief Resets odometry at the beginning of the simulation, to the ground truth. 
+   * 
+   * @return true 
+   * @return false 
+   */
+
+  bool resetOdometry();
+
+    /**
+   * @brief centers excavator wrt processing plant
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted
+   */
+
+  bool faceProcessingPlant();
+
+  /**
+   * @brief centers excavator wrt processing plant and then resets the odometry according to whatever pose we pass it.
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted
+   */
+
+  bool syncOdometry(const geometry_msgs::PoseStamped &POSE);
+
+    /**
+   * @brief REACHES THE REPAIR STATION
+   * 
+   * @return true : if task is successful.
+   * @return false : if task is failed or aborted or interrupted
+   */
+
+  bool goToRepairStation();
+
+    /**
+   * @brief Goes to location with a combination of navigation and navigation vision 
+   * 
+   * @return true 
+   * @return false 
+   */
+
+  bool goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object);
 
 public:
   ExcavatorStateMachine(ros::NodeHandle nh, const std::string &robot_name);

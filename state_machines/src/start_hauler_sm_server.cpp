@@ -35,7 +35,7 @@ bool checkTask(STATE_MACHINE_TASK task)
  */
 void cancelGoal(HaulerStateMachine *sm)
 {
-    ROS_INFO_STREAM(g_robot_name << " State Machine : Cancelling Goal");
+    ROS_INFO_STREAM("STATE_MACHINES | start_hauler_sm_server.cpp | " << g_robot_name << "]: State Machine : Cancelling Goal");
 
     sm->navigation_client_->cancelGoal();
     sm->hauler_client_->cancelGoal();
@@ -52,7 +52,7 @@ void cancelGoal(HaulerStateMachine *sm)
  */
 void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, HaulerStateMachine *sm)
 {
-    ROS_INFO_STREAM(g_robot_name << " State Machine: Received Goal: " << goal->task);
+    ROS_INFO_STREAM("STATE_MACHINES | start_hauler_sm_server.cpp | " << g_robot_name << "]: State Machine: Received Goal: " << goal->task);
 
     state_machines::RobotStateMachineTaskResult result;
 
@@ -64,7 +64,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 
     cancelGoal(sm);
 
-    ROS_INFO_STREAM(g_robot_name << " State Machine : Servers Connected, Executing Goal");
+    ROS_INFO_STREAM("STATE_MACHINES | start_hauler_sm_server.cpp | " << g_robot_name << "]: State Machine : Servers Connected, Executing Goal");
 
     STATE_MACHINE_TASK robot_state = (STATE_MACHINE_TASK)goal->task;
 
@@ -73,7 +73,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
         // the class is not valid, send the appropriate result
         result.result = COMMON_RESULT::INVALID_GOAL;
         as->setAborted(result, "Invalid Task");
-        ROS_ERROR_STREAM(g_robot_name << " State Machine : Invalid Task");
+        ROS_ERROR_STREAM("STATE_MACHINES | start_hauler_sm_server.cpp | " << g_robot_name << "]: State Machine : Invalid Task");
         return;
     }
 
@@ -91,6 +91,8 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
         output = sm->parkAtExcavator();
         break;
     case STATE_MACHINE_TASK::HAULER_GO_TO_PROC_PLANT:
+        // need to account for no access to pose of processing plant at start of simulation
+        // output = sm->goToLocObject(goal->goal_loc, COMMON_NAMES::OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
         output = sm->goToProcPlant();
         break;
     case STATE_MACHINE_TASK::HAULER_PARK_AT_HOPPER:
@@ -109,10 +111,17 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
         output = sm->dumpVolatileToProcPlant();
         break;
     case STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR:
-        output = sm->goBackToExcavator(goal->goal_loc);
+        output = sm->goToLocObject(goal->goal_loc, COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS);
+        // output = sm->goBackToExcavator(goal->goal_loc);
         break;
-    case STATE_MACHINE_TASK::HAULER_RESET_ODOM:
+    case STATE_MACHINE_TASK::HAULER_RESET_ODOM: //Reset odometry when it goes to processing plant
         output = sm->resetOdometry();
+        break;
+    case STATE_MACHINE_TASK::HAULER_RESET_ODOM_AT_HOPPER: //Reset odometry when it goes to processing plant
+        output = sm->resetOdometryAtHopper();
+        break;
+    case STATE_MACHINE_TASK::HAULER_FACE_PROCESSING_PLANT:
+        output = sm->faceProcessingPlant();
         break;
     default:
         ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
@@ -122,7 +131,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
     result.result = output ? COMMON_RESULT::SUCCESS : COMMON_RESULT::FAILED;
     as->setSucceeded(result);
 
-    ROS_INFO_STREAM(g_robot_name << " State Machine: Goal Finished");
+    ROS_INFO_STREAM("STATE_MACHINES | start_hauler_sm_server.cpp | " << g_robot_name << "]: State Machine: Goal Finished");
 
     return;
 }
@@ -146,10 +155,10 @@ int main(int argc, char *argv[])
     server.registerPreemptCallback(boost::bind(&cancelGoal, sm));
     server.start();
 
-    ROS_INFO_STREAM(g_robot_name << " State Machine: Started");
+    ROS_INFO_STREAM("STATE_MACHINES | start_hauler_sm_server.cpp | " << g_robot_name << "]: State Machine: Started");
     ros::spin();
 
-    ROS_WARN_STREAM(g_robot_name << " State Machine: Died!\n");
+    ROS_WARN_STREAM("STATE_MACHINES | start_hauler_sm_server.cpp | " << g_robot_name << "]: State Machine: Died!\n");
 
     return 0;
 }
