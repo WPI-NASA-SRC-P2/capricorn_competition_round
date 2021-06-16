@@ -210,7 +210,8 @@ int main(int argc, char *argv[])
   //initialize node
   ros::init(argc, argv, "solar_charging_server");
 
-  std::string robot_name(argv[1]);   
+  //std::string robot_name(argv[1]);   
+  std::string robot_name = "small_scout_1";
 
   //ROS Topic names
   std::string system_monitor_topic_ = "/capricorn/" + robot_name + "/system_monitor";
