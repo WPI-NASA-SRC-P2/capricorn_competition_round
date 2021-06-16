@@ -41,9 +41,6 @@ private:
     const float MAX_TURNING_RAD = M_PI/2;
     const float MIN_TURNING_RAD = -M_PI/2;
 
-    // Percentage that the robot needs to have had completed in its current path before anticipating a turn
-    const float PERCENTAGE_TURN_LOOK_AHEAD = 0.7;
-
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
     const float BASE_DRIVE_SPEED = 0.6;
     const float BASE_SPIN_SPEED = 0.3;

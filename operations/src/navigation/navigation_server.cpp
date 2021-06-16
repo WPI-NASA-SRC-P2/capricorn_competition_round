@@ -496,8 +496,6 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 
 	double distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());
 
-	double total_eucledian_distance_to_waypoint = calcEuclideanDist(*getRobotPose(), waypoint);
-
 	// While we're not at the waypoint
 	while(distance_to_waypoint > DIST_EPSILON)
 	{
@@ -514,14 +512,12 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		// Calculate the percentage driven of the current trajectory
 		double current_eucledian_distance_to_waypoint = calcEuclideanDist(*getRobotPose(), waypoint);
 
-		// NOTE: Add DIST_EPSILON to calculation if we want to start turning torwards the next heading sooner
-		double percentage_wpt_completed = 1 - (current_eucledian_distance_to_waypoint/total_eucledian_distance_to_waypoint);
-
 		// Calculate the delta heading
 		double delta_heading;
 
-		// Start steering towards the next waypoint's heading if we have completed more than 70% of the current path
-		if (percentage_wpt_completed > PERCENTAGE_TURN_LOOK_AHEAD)
+		// Start steering towards the next waypoint's heading when the robot is half its length away from it
+		// NOTE: Add DIST_EPSILON to calculation if we want to start turning torwards the next heading sooner
+		if (current_eucledian_distance_to_waypoint < (current_eucledian_distance_to_waypoint - NavigationAlgo::wheel_sep_length_/2))
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), future_waypoint, robot_name_, buffer_);
 		else
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
