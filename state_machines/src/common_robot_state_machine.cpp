@@ -96,9 +96,10 @@ void RobotScheduler::step() {
    if(m_pcCurrent) {
       /* Attempt a transition, every state of every rover has its own transition() */
       State* cNewState = &m_pcCurrent->transition();
-      if (interrupt)
+      if (m_bInterrupt)
       {
-         cNewState = &getState(SCOUT_UNDOCK);
+         cNewState = &getState(interrupt_state_);
+         m_bInterrupt = false;
       }
 
       if(cNewState != m_pcCurrent) {
@@ -120,7 +121,11 @@ void RobotScheduler::step() {
 
 //UNDERSTANDING: Each robot has its own done() and this is what is checked to perform step()
 void RobotScheduler::exec() {
-   while(!done()) step();
+   while(!done() && ros::ok()) 
+   {
+      step();
+      ros::spinOnce();
+   }
 }
 
 /****************************************/

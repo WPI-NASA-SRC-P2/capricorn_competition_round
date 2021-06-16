@@ -64,6 +64,7 @@ void Undock::step()
 {
    ++m_unCount;
    ROS_INFO_STREAM("Undock Step Function!");
+   ros::Duration(0.5).sleep();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,6 +85,7 @@ void Search::step()
 {
    ++m_unCount;
    ROS_INFO_STREAM("Searching Step Function!");
+   ros::Duration(0.5).sleep();
 }
 
 
