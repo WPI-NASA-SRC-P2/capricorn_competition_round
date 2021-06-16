@@ -115,7 +115,7 @@ void SolarChargingServer::setPowerSaveMode(bool state){
  * @param request solarChargeRequest 
  * @param reponse solarChargeResponse
  */
-static void SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequest &request, operations::SolarChargeResponse &response)
+bool SolarChargingServer::solarChargeInitiate(operations::SolarCharge::Request& request, operations::SolarCharge::Response& response)
 {
   should_turn = request.solar_charge_status;
   if(should_turn)
@@ -127,6 +127,7 @@ static void SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequ
     }
     ROS_INFO("Solar_Charging_Mode: ON: STARTING");
     response.result.data = "Solar_Charging_Mode: ON: STARTING";
+    return true;
   }
   else
   {
@@ -135,6 +136,7 @@ static void SolarChargingServer::solarChargeInitiate(operations::SolarChargeRequ
     setPowerSaveMode(false);
     ROS_INFO("Solar_Charging_Mode: OFF: Ending");
     response.result.data = "Solar_Charging_Mode: OFF: Ending";
+    return true;
   }
 
   //ROS_INFO("Starting transitiong to solar recharge");
@@ -213,10 +215,17 @@ int main(int argc, char *argv[])
   //ROS Topic names
   std::string system_monitor_topic_ = "/capricorn/" + robot_name + "/system_monitor";
 
+  //ROS ServerService
+  std::string power_saver_service_ =  "/" + robot_name + "/system_monitor/power_saver";
+ 
   SolarChargingServer server;
 
   //create a nodehandle
   ros::NodeHandle nh;
+
+  //Instantiating ROS server for solar charge mode
+  //server.solarChargerService = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
+  ros::ServiceServer serviceD = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
 
   server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::systemMonitorCB, &server);
 
@@ -224,15 +233,11 @@ int main(int argc, char *argv[])
   //debug_solar_charging_mode = nh.advertise<std_msgs::String>("/galaga/debug_solar_charging_status", 1000);
   
   //client for power saving mode
-  server.powerMode_client = nh.serviceClient<srcp2_msgs::SystemPowerSaveSrv>("power_mode");
+  server.powerMode_client = nh.serviceClient<srcp2_msgs::SystemPowerSaveSrv>(power_saver_service_);
 
   // operations::SolarChargeRequest req = true;
   // operations::SolarChargeResponse res;
   // client.call(req, res);
-
-
-  //Instantiating ROS server for generating trajectory
-  ros::ServiceServer server.advertiseService("solar_charger", SolarChargingServer::solarChargeInitiate);
 
   ros::spin();
 

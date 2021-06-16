@@ -28,16 +28,19 @@ private:
     bool power_saver = false;
     bool should_turn = false;
     bool is_turning = false;
-    bool turnRobot();
-    void rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier);
+    //bool turnRobot();
+    //void rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier);
     
     
 public:
+    bool turnRobot();
+    void rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier);
     void stopRobot(void);
-    void solarChargeInitiate(operations::SolarChargeRequest &request, operations::SolarChargeResponse &response);
+    bool solarChargeInitiate(operations::SolarCharge::Request& request, operations::SolarCharge::Response& response);
     void systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg);
     void setPowerSaveMode(bool on);
+
     ros::Subscriber systemMonitor_subscriber;
     ros::ServiceClient powerMode_client; 
-    ros::ServiceServer solarChargerService;
+    //ros::ServiceServer solarChargerService;
 };
