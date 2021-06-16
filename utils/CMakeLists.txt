@@ -182,6 +182,11 @@ target_link_libraries(battery_level_server ${PROJECT_NAME}
   ${catkin_LIBRARIES} 
 )
 
+add_executable(battery_level_client src/nodes/battery_level_client.cpp)
+add_dependencies(battery_level_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(battery_level_client ${PROJECT_NAME}
+  ${catkin_LIBRARIES} 
+)
 
 #############
 ## Install ##
