@@ -39,6 +39,25 @@ public:
   static constexpr float wheel_sep_length_ = 1.076;
   static constexpr float wheel_rad_ = 0.17;
 
+  // Wheel Angle limits for Ackermann steering
+  static constexpr float MAX_DELTA_HEADING = M_PI/4;
+  static constexpr float MIN_DELTA_HEADING = -M_PI/4;
+
+  /**
+   * @brief Map a delta heading (robot<->waypoint) to a set of wheel angles to perform Ackermann steering.
+   * 
+   * @param delta_heading The difference in heading needed to point the robot at the desired waypoint.
+   * @return std::vector<float> The angles the robot wheels should turn to to get to the waypoint.
+   *                  The vector will be in order:
+   *                  Clockwise from top, starting with FRONT_LEFT
+   * 
+   *          element 0: Front Left Wheel
+   *          element 1: Front Right Wheel
+   *          element 2: Back Right Wheel
+   *          element 3: Back Left Wheel
+   */
+  static std::vector<double> getSteeringAnglesAckermannTurn(double delta_heading);
+
   /**
    * @brief **DEPRICATED** Get the Steering Angles for Making Radial Turn 
    *        Use override with geometry_msgs::Point instead

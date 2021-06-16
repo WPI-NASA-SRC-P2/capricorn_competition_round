@@ -41,10 +41,6 @@ private:
     const float MAX_TURNING_RAD = M_PI/2;
     const float MIN_TURNING_RAD = -M_PI/2;
 
-    // Wheel Angle limits for Ackermann steering
-    const float MAX_DELTA_HEADING = M_PI/4;
-    const float MIN_DELTA_HEADING = -M_PI/4;
-
     // Percentage that the robot needs to have had completed in its current path before anticipating a turn
     const float PERCENTAGE_TURN_LOOK_AHEAD = 0.7;
 
@@ -268,14 +264,6 @@ private:
      * @return false Failed in driving the robot to the specified distance.
      */
     bool driveDistance(double delta_distance);
-
-    /**
-     * @brief Map a delta heading (robot<->waypoint) to a set of angles to perform Ackermann steering
-     * 
-     * @param delta_heading The difference in heading needed to point the robot at the desired waypoint.
-     * @return double The radii the robot wheels should turn to to get to the waypoint.
-     */
-    std::vector<double> headingToRadius(double delta_heading);
 
     /**
      * @brief Execute a smooth drive to a waypoint. WARNING: Will keep moving after termination.

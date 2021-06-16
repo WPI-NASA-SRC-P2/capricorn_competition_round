@@ -8,6 +8,55 @@ NavigationAlgo::~NavigationAlgo()
 {
 }
 
+std::vector<double> NavigationAlgo::getSteeringAnglesAckermannTurn(double delta_heading)
+{
+	// Initalize vector
+	std::vector<double> wheel_angles;
+	wheel_angles.resize(4);
+
+	// Check delta heading in case it equals to 0 (aka turning radius is infinite = no angular steering is needed)
+	if (delta_heading == 0){
+		wheel_angles.at(0) = 0.0;
+		wheel_angles.at(1) = 0.0;
+		wheel_angles.at(2) = 0.0;
+		wheel_angles.at(3) = 0.0;
+
+	}
+	// Checks to avoid steering wheels to their max ROF
+	else if(delta_heading > MAX_DELTA_HEADING)
+	{
+		wheel_angles.at(0) = MAX_DELTA_HEADING;
+		wheel_angles.at(1) = MAX_DELTA_HEADING;
+		wheel_angles.at(2) = 0.0;
+		wheel_angles.at(3) = 0.0;
+
+	}
+	else if(delta_heading < MIN_DELTA_HEADING)
+	{
+		wheel_angles.at(0) = MIN_DELTA_HEADING;
+		wheel_angles.at(1) = MIN_DELTA_HEADING;
+		wheel_angles.at(2) = 0.0;
+		wheel_angles.at(3) = 0.0;
+	}
+	else{
+
+		// Calculate center of radius of turn for Ackermann steering
+		double center_radius = wheel_sep_length_/tan(delta_heading);
+
+		geometry_msgs::Point center_of_rotation;
+
+		// Center pt of rotation is about the back wheels
+		center_of_rotation.x = -wheel_sep_length_/2;
+
+		// Steering of the front wheels depends on the center radius calculated
+		center_of_rotation.y = center_radius;
+
+		wheel_angles = getSteeringAnglesRadialTurn(center_of_rotation);
+	}
+
+	return wheel_angles;
+}
+
 std::vector<double> NavigationAlgo::getSteeringAnglesRadialTurn(const float radius)
 {
   std::vector<double> wheels_steer_angles;

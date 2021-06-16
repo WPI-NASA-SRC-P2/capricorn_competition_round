@@ -498,49 +498,6 @@ bool NavigationServer::driveDistance(double delta_distance)
 	return true;
 }
 
-std::vector<double> NavigationServer::headingToRadius(double delta_heading)
-{
-	double left_wheel_angle, right_wheel_angle;
-
-	// Check delta heading in case it equals to 0 (aka turning radius is infinite = no angular velocity)
-	if (delta_heading == 0){
-		left_wheel_angle = 0.0;
-
-		right_wheel_angle = 0.0;
-	}
-	else if(delta_heading > MAX_DELTA_HEADING)
-	{
-		left_wheel_angle = MAX_DELTA_HEADING;
-		right_wheel_angle = MAX_DELTA_HEADING;
-	}
-	else if(delta_heading < MIN_DELTA_HEADING)
-	{
-		left_wheel_angle = MIN_DELTA_HEADING;
-		right_wheel_angle = MIN_DELTA_HEADING;
-	}
-	else{
-
-		double center_radius = NavigationAlgo::wheel_sep_length_/tan(delta_heading);
-
-		if (delta_heading < 0)
-			center_radius = -center_radius;
-
-		left_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius - (NavigationAlgo::wheel_sep_width_/2));
-		right_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius + (NavigationAlgo::wheel_sep_width_/2));
-
-		if(delta_heading < 0)
-		{
-			left_wheel_angle = -left_wheel_angle;
-			right_wheel_angle = -right_wheel_angle;
-		}
-	}
-
-
-	std::vector<double> wheel_angles{left_wheel_angle, right_wheel_angle};
-
-	return wheel_angles;
-}
-
 bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint)
 {
 	brakeRobot(false);
@@ -577,10 +534,10 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		else
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
 
-		std::vector<double> wheel_angles = headingToRadius(delta_heading);
+		std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesAckermannTurn(delta_heading);
 
 		// Set wheels to that angle
-		steerRobotAckermann(wheel_angles);
+		steerRobot(wheel_angles);
 
 		// Set wheels at speed
 		moveRobotWheels(BASE_DRIVE_SPEED);
