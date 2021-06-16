@@ -6,7 +6,7 @@ TEAM CAPRICORN
 NASA SPACE ROBOTICS CHALLENGE
 
 Command Line Arguments Required:
-1. robot_name: eg. small_scout_1, small_excavator_2
+1. robot_name_: eg. small_scout_1, small_excavator_2
 */
 #include <mutex>
 #include <operations/NavigationAction.h>
@@ -46,6 +46,7 @@ bool resume_spiral = false;
 bool new_stop_call = false;
 const double CHECKPOINT_THRESHOLD = 2.0;
 bool was_driving = false;
+std::string robot_name_;
 
 /**
  * @brief Callback to the robot pose topic
@@ -127,13 +128,11 @@ void driveSprial()
 
     if (g_going_to_goal && !done_driving)
     {
-      // ROS_INFO("oKAY");
       g_last_dist = dist;
       ros::Duration(0.1).sleep();
       g_going_to_goal = true;
       if(failed_driving)
       {
-        // ROS_INFO("o");
         g_spiral_points.erase(g_spiral_points.begin());
         was_driving = true;
       }
@@ -151,7 +150,7 @@ void driveSprial()
       g_nav_goal.drive_mode = NAV_TYPE::REVOLVE;
       g_nav_goal.point = center_of_rot;
       g_nav_goal.forward_velocity = 2.0;
-      ROS_INFO_STREAM("Circular Motion radius: " << center_of_rot.point.y << "\tdist: " << dist);
+      ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Circular Motion radius: " << center_of_rot.point.y << "\tdist: " << dist);
       g_last_dist = 100; // Just to make it big for the next iteration
       g_new_trajectory = true;
       // g_going_to_goal = true;
@@ -163,7 +162,7 @@ void driveSprial()
       point_0 = g_spiral_points.at(0).point;
       point_2 = g_spiral_points.at(2).point;
 
-      ROS_INFO_STREAM("Going to goal dist:" << dist);
+      ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Going to goal dist:" << dist);
 
       g_nav_goal.drive_mode = NAV_TYPE::GOAL;
       g_nav_goal.pose.pose.position = g_spiral_points.at(1).point;
@@ -256,15 +255,15 @@ int main(int argc, char **argv)
 {
   if (argc != 2 && argc != 4)
   {
-    ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
+    ROS_ERROR_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "This node must be launched with the robotname passed as a command line argument!");
     return -1;
   }
 
-  std::string robot_name(argv[1]);
+  robot_name_ = std::string(argv[1]);
   // Convert char to int
   // https://www.softwaretestinghelp.com/cpp-character-conversion-functions/
-  ROBOT_NUMBER = (robot_name.back()) - 48; 
-  ros::init(argc, argv, robot_name + COMMON_NAMES::SCOUT_SEARCH_NODE_NAME);
+  ROBOT_NUMBER = (robot_name_.back()) - 48; 
+  ros::init(argc, argv, robot_name_ + COMMON_NAMES::SCOUT_SEARCH_NODE_NAME);
   ros::NodeHandle nh;
 
   bool odom_flag;
@@ -274,16 +273,16 @@ int main(int argc, char **argv)
 
 	if (odom_flag)
 	{
-		odom_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
-		ROS_INFO("Currently using cheat odom from Gazebo\n");
+		odom_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name_ + CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
+		ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Currently using cheat odom from Gazebo\n");
 	}
 	else
 	{
-		odom_sub = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, updateRobotPose);
-		ROS_INFO("Currently using odom from rtabmap\n");
+		odom_sub = nh.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 1000, updateRobotPose);
+		ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Currently using odom from rtabmap\n");
 	}
 
-  g_client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
+  g_client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
   g_client->waitForServer();
   g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
 
@@ -297,10 +296,10 @@ int main(int argc, char **argv)
     ros::spinOnce();
   }
 
-  ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
+  ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
 
   ros::ServiceServer service = nh.advertiseService(COMMON_NAMES::SCOUT_SEARCH_SERVICE, serviceCB);
-  ROS_INFO_STREAM("Starting Searching - " << robot_name);
+  ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Starting Searching - " << robot_name_);
   execute();
   return 0;
 }
