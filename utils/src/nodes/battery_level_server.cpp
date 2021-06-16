@@ -14,7 +14,14 @@ void BatteryLevelServer::poseCallback(nav_msgs::Odometry odom){
 
     geometry_msgs::Pose current_location_ = odom.pose.pose;
     
-    geometry_msgs::PoseStamped target_location_;
+    
+
+    // calculate the distance between the robot's current location and charging station
+    distance_ = battery_level::calc_distance(target_location_.pose.position.x, target_location_.pose.position.y, current_location_.position.x, current_location_.position.y);       //needs to be calculated using a distance formula
+}
+
+bool BatteryLevelServer::deadlinesCallback(utils::battery_deadlines::Request &req, utils::battery_deadlines::Response &res){
+    
     target_location_.pose.position.x = -6.0;
     target_location_.pose.position.y = -6.0;  
     target_location_.pose.position.z = 0.65;
@@ -22,12 +29,7 @@ void BatteryLevelServer::poseCallback(nav_msgs::Odometry odom){
     target_location_.pose.orientation.y = 0;
     target_location_.pose.orientation.z = 0;
     target_location_.pose.orientation.w = 1;
-
-    // calculate the distance between the robot's current location and charging station
-    distance_ = battery_level::calc_distance(target_location_.pose.position.x, target_location_.pose.position.y, current_location_.position.x, current_location_.position.y);       //needs to be calculated using a distance formula
-}
-
-bool BatteryLevelServer::deadlinesCallback(utils::battery_deadlines::Request &req, utils::battery_deadlines::Response &res){
+    
     std_msgs::Float64MultiArray deadlines;
 
     // publish the soft and hard deadlines to a topic
@@ -54,9 +56,7 @@ int main(int argc, char *argv[])
   //initialize node
   ros::init(argc, argv, "battery_level_server");
 
-  std::string robot_name(argv[1]); // takes the firt arg and sets it equal to  robot_name
-
-  std::string robot_name_ = robot_name;
+  std::string robot_name_(argv[1]); // takes the firt arg and sets it equal to  robot_name
 
   //ROS Topic for getting the curren location of the robot
   std::string pose_topic_ = "/" + robot_name_ + "/camera/odom";

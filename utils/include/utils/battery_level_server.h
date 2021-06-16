@@ -8,6 +8,9 @@ private:
     float distance_;
     float soft_deadline_;
     float hard_deadline_;
+    geometry_msgs::PoseStamped target_location_;
+    
+
 
 public:
     ros::Subscriber pose_subscriber;

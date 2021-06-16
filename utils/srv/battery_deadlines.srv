@@ -1,3 +1,4 @@
 geometry_msgs/PoseStamped currentLocation
 ---
-float64 base_battery_level
+float64 soft_deadline_
+float64 hard_deadline_
