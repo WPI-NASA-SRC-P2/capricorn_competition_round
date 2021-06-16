@@ -182,7 +182,7 @@ target_link_libraries(scout_state_machine ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
-add_executable(start_scout_sm src/start_scout_sm.cpp)
+add_executable(start_scout_sm src/scout/start_scout_sm.cpp)
 add_dependencies(start_scout_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(start_scout_sm ${PROJECT_NAME}
 ${catkin_LIBRARIES}
