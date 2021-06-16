@@ -513,7 +513,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		double current_eucledian_distance_to_waypoint = calcEuclideanDist(*getRobotPose(), waypoint);
 
 		// Calculate the delta heading
-		double delta_heading;
+		double delta_heading, center_radius;
 
 		// Start steering towards the next waypoint's heading when the robot is half its length away from it
 		// NOTE: Add DIST_EPSILON to calculation if we want to start turning torwards the next heading sooner
@@ -523,7 +523,11 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
 
 		// Calculate center of radius of turn for Ackermann steering
-		double center_radius = NavigationAlgo::wheel_sep_length_/tan(delta_heading);
+		// If delta heading is 0 (aka no change in heading) then we rotate about an infite center radius (aka we drive straight)
+		if (delta_heading == 0.0)
+			center_radius = DBL_MAX;
+		else
+			center_radius = NavigationAlgo::wheel_sep_length_/tan(delta_heading);
 
 		geometry_msgs::Point center_of_rotation;
 
@@ -533,7 +537,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		// Steering of the front wheels depends on the center radius previously calculated
 		center_of_rotation.y = center_radius;
 
-		std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesAckermannTurn(delta_heading, center_of_rotation);
+		std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesRadialTurn(center_of_rotation);
 		std::vector<double> wheel_velocities = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_rotation, BASE_DRIVE_SPEED);
 
 		// Set wheels to that angle
