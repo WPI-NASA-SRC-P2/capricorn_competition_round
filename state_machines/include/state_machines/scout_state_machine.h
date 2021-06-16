@@ -4,6 +4,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <utils/common_names.h>
 #include <operations/NavigationVisionAction.h>
+#include <operations/NavigationAction.h>
 #include <operations/Spiral.h>
 #include <operations/ResourceLocaliserAction.h>
 #include <srcp2_msgs/VolSensorMsg.h>
@@ -57,7 +58,7 @@ public:
       ++m_unCount;
       ROS_INFO_STREAM("  [" << getName() << "] - count = " << m_unCount);
    }
-   
+
 protected:
 
   uint32_t m_unMaxCount;
@@ -69,8 +70,8 @@ protected:
 
   ros::ServiceClient spiralClient_;
 
-  bool near_volatile_ = false;
-  bool new_volatile_msg_ = false;
+  bool near_volatile_ = false;       //
+  bool new_volatile_msg_ = false; 
 
   std::mutex objects_mutex_;
   perception::ObjectArray::ConstPtr vision_objects_;
@@ -78,6 +79,9 @@ protected:
 
   typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> NavigationVisionClient;
   NavigationVisionClient *navigation_vision_client_;
+
+  typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
+  NavigationClient *navigation_client_;
 
   typedef actionlib::SimpleActionClient<operations::ResourceLocaliserAction> ResourceLocaliserClient_;
   ResourceLocaliserClient_ *resource_localiser_client_;
@@ -120,7 +124,13 @@ public:
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
    
+   void entryPoint() override;
    void step() override;
+   void exitPoint() override;
+
+private: 
+   bool first_;
+   operations::NavigationGoal navigation_action_goal_;
 };
 
 class Search : public ScoutState {
@@ -130,7 +140,9 @@ public:
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override;
 
+   void entryPoint() override;
    void step() override;
+   void exitPoint() override;
    
 };
 
@@ -141,8 +153,9 @@ public:
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override;
 
+   void entryPoint() override;
    void step() override;
-   
+   void exitPoint() override;
 };
 
 

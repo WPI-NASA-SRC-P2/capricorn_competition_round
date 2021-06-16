@@ -2,7 +2,7 @@
     <!-- <arg name="robot_name" default="small_scout_1" /> -->
 
     <arg name="output" default="screen" />
-    <arg name="use_cheat_odom" default="true" />
+    <arg name="use_cheat_odom" default="false" />
     <arg name="use_crab_drive" default="false" />
 
     <include file="$(find team_level)/launch/all_object_detection.launch"/>
