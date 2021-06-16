@@ -13,6 +13,43 @@
 
 using namespace COMMON_NAMES;
 
+
+/****************************************/
+/****************************************/
+
+class ScoutScheduler : public RobotScheduler {
+   
+public:
+
+   ScoutScheduler(uint32_t un_max_t) :
+      m_unT(0),
+      m_unMaxT(un_max_t) {}
+
+   void step() override {
+      /* Increase time counter */
+      ++m_unT;
+      std::cout << "t = " << m_unT << std::endl;
+      /* Call parent class step */
+      RobotScheduler::step();
+   }
+
+   bool done() override {
+      return m_unT >= m_unMaxT;
+   }
+
+   void setInterrupt(STATE_MACHINE_TASK interrupt_state) override{
+      interrupt_state_ = interrupt_state;
+      m_bInterrupt = true;
+   }
+
+private:
+
+   uint32_t m_unT;
+   uint32_t m_unMaxT;
+};
+
+
+
 /****************************************/
 /****************************************/
 
@@ -88,38 +125,9 @@ protected:
 
 };
 
-/****************************************/
-/****************************************/
-
-class ScoutScheduler : public RobotScheduler {
-   
-public:
-
-   ScoutScheduler(uint32_t un_max_t) :
-      m_unT(0),
-      m_unMaxT(un_max_t) {}
-
-   void step() override {
-      /* Increase time counter */
-      ++m_unT;
-      std::cout << "t = " << m_unT << std::endl;
-      /* Call parent class step */
-      RobotScheduler::step();
-   }
-
-   bool done() override {
-      return m_unT >= m_unMaxT;
-   }
-
-private:
-
-   uint32_t m_unT;
-   uint32_t m_unMaxT;
-};
-
 class Undock : public ScoutState {
 public:   
-   Undock() : ScoutState(SCOUT_UNDOCK, 3) {}
+   Undock() : ScoutState(SCOUT_UNDOCK, 10) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
@@ -135,7 +143,7 @@ private:
 
 class Search : public ScoutState {
 public:   
-   Search() : ScoutState(SCOUT_SEARCH_VOLATILE, 3) {}
+   Search() : ScoutState(SCOUT_SEARCH_VOLATILE, 10) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override;
