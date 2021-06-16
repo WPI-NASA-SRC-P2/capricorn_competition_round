@@ -10,6 +10,7 @@
 #include <srcp2_msgs/VolSensorMsg.h>
 #include <operations/obstacle_avoidance.h>
 #include <state_machines/common_robot_state_machine.h>
+#include <maploc/ResetOdom.h>
 
 using namespace COMMON_NAMES;
 
@@ -34,7 +35,8 @@ public:
    }
 
    bool done() override {
-      return m_unT >= m_unMaxT;
+      // return m_unT >= m_unMaxT;
+      return false;
    }
 
    void setInterrupt(STATE_MACHINE_TASK interrupt_state) override{
@@ -47,6 +49,15 @@ private:
    uint32_t m_unT;
    uint32_t m_unMaxT;
 };
+const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
+    STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE,
+    STATE_MACHINE_TASK::SCOUT_STOP_SEARCH,
+    STATE_MACHINE_TASK::SCOUT_LOCATE_VOLATILE,
+    STATE_MACHINE_TASK::SCOUT_UNDOCK,
+    STATE_MACHINE_TASK::SCOUT_RESET_ODOM_GROUND_TRUTH,
+    STATE_MACHINE_TASK::SCOUT_RESET_ODOM,
+    STATE_MACHINE_TASK::SCOUT_SYNC_ODOM,
+    STATE_MACHINE_TASK::SCOUT_FACE_PROCESSING_PLANT};
 
 
 
@@ -106,7 +117,7 @@ protected:
   std::string robot_name_;
 
   ros::ServiceClient spiralClient_;
-
+  
   bool near_volatile_ = false;       //
   bool new_volatile_msg_ = false; 
 
@@ -151,7 +162,10 @@ public:
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
-   
+
+private:
+   operations::Spiral srv;
+
 };
 
 class Locate : public ScoutState {

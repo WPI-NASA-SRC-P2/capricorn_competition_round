@@ -7,7 +7,8 @@
 ScoutBaseState::ScoutBaseState(ros::NodeHandle nh, const std::string &robot_name) : nh_(nh), robot_name_(robot_name)
 {
   resource_localiser_client_ = new ResourceLocaliserClient_(RESOURCE_LOCALISER_ACTIONLIB, true);
-  navigation_vision_client_ = new NavigationVisionClient(robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
+  navigation_vision_client_ = new NavigationVisionClient(robot_name + "/" + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
+  navigation_client_ = new NavigationClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
 
   spiralClient_ = nh_.serviceClient<operations::Spiral>(SCOUT_SEARCH_SERVICE);
 
@@ -19,6 +20,7 @@ ScoutBaseState::~ScoutBaseState()
 {
   delete resource_localiser_client_;
   delete navigation_vision_client_;
+  delete navigation_client_;
 }
 
 /**

@@ -10,12 +10,23 @@ ScoutState::ScoutState(uint32_t un_id, uint32_t un_max_count) :
     m_unMaxCount(un_max_count)
 {
   robot_name_ = COMMON_NAMES::SCOUT_1;
-  resource_localiser_client_ = new ResourceLocaliserClient_(RESOURCE_LOCALISER_ACTIONLIB, true);
-  navigation_vision_client_ = new NavigationVisionClient(robot_name_ + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
-  navigation_client_ = new NavigationClient(robot_name_ + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
+  resource_localiser_client_ = new ResourceLocaliserClient_(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + RESOURCE_LOCALISER_ACTIONLIB, true);
+  /** @todo: FIX NAVIGATIONVISIONCLIENT TO BE CORRECT TOPIC */
+  navigation_vision_client_ = new NavigationVisionClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
+  navigation_client_ = new NavigationClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
+  ROS_INFO("Waiting for the scout action servers...");
+  navigation_vision_client_->waitForServer();
+  navigation_client_->waitForServer();
+  resource_localiser_client_->waitForServer();
+  
+  ROS_INFO("All scout action servers started!");
 
-  spiralClient_ = nh_.serviceClient<operations::Spiral>(SCOUT_SEARCH_SERVICE);
-
+  // spiral client for spiral motion
+  ROS_INFO("waiting for spiral client");
+  spiralClient_ = nh_.serviceClient<operations::Spiral>(CAPRICORN_TOPIC + robot_name_ + "/" + SCOUT_SEARCH_SERVICE);
+  spiralClient_.waitForExistence();
+  ROS_INFO("Spiral client started");
+  
   volatile_sub_ = nh_.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutState::volatileSensorCB, this);
   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ScoutState::objectsCallback, this);
 }
@@ -72,7 +83,7 @@ State& Undock::transition()
       return *this;
    }
    ROS_INFO("transitioning out of undock");
-   return getState(SCOUT_UNDOCK); // should be SCOUT_SEARCH_VOLATILE
+   return getState(SCOUT_SEARCH_VOLATILE); // should be SCOUT_SEARCH_VOLATILE
 }
 
 void Undock::step()
@@ -89,8 +100,8 @@ void Undock::step()
       navigation_action_goal_.pose = pt;
       navigation_client_->sendGoal(navigation_action_goal_);
       ROS_INFO_STREAM("Goal sent : " << navigation_action_goal_);
-      navigation_client_->waitForResult();
-      // first_ = false;
+      // navigation_client_->waitForResult();
+      first_ = false;
    }   
    else
       ROS_INFO_STREAM("Undock stepping, first_ = false now");
@@ -98,9 +109,8 @@ void Undock::step()
 
 void Undock::exitPoint() 
 {
-   // reset first to false so that undock can be rerun at the next volatile
-   first_ = false;
-   ROS_INFO("exitpoint of undock");
+   ROS_INFO("exitpoint of undock, cancelling undock goal");
+   navigation_client_->cancelGoal();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +119,11 @@ void Undock::exitPoint()
 
 void Search::entryPoint()
 {
-   // none at the moment
+   /** @TODO: Add no objects in vision functionality */
+   // start off with spiraling
+   srv.request.resume_spiral_motion = true;
+   near_volatile_ = false;
+   ROS_INFO("entering scout_search state");
 }
 
 State& Search::transition()
@@ -120,19 +134,23 @@ State& Search::transition()
       return *this;
    }
    // if near the volatile, switch to scout_locate_volatile state
+   ROS_INFO("volatile detected, transitioning to scout_undock state");
    return getState(SCOUT_UNDOCK);
 }
 
 void Search::step()
 {
-   ++m_unCount;
-   ROS_INFO_STREAM("Searching Step Function!");
-   ros::Duration(0.5).sleep();
+   // execute spiral motion
+   ROS_INFO("Executing spiral motion");
+   spiralClient_.call(srv);
 }
 
 void Search::exitPoint()
 {
-   // none at the moment
+   // cancel spiral motion 
+   srv.request.resume_spiral_motion = false;
+   spiralClient_.call(srv);
+   ROS_INFO("Exited spiral search.");
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,8 +197,8 @@ int main(int argc, char** argv)
       cSchd.addState(new Search());
       cSchd.addState(new Undock());
       cSchd.addState(new Locate());
-      // cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
-      cSchd.setInitialState(SCOUT_UNDOCK);
+      cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
+      // cSchd.setInitialState(SCOUT_UNDOCK);
       cSchd.exec();
       return 0;
    }

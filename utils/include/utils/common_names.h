@@ -66,6 +66,7 @@ namespace COMMON_NAMES
   const std::string TRUE_POSE_SRV = "/get_true_pose";
   const std::string RESET_ODOMETRY = "reset_rover_odom_srv";
   const std::string RTAB_ODOM_TOPIC = "/camera/odom";
+  // const std::string RTAB_ODOM_TOPIC = "/camera/odom/localization";
 
   /****** ROS NODE NAMES ******/
   const std::string NAVIGATION_VISION_SERVER_NODE_NAME = "_navigation_vision_server";
@@ -101,6 +102,7 @@ namespace COMMON_NAMES
   const std::string LOOKOUT_LOCATION_TOPIC = "/lookout_location";
   const std::string PARK_HAULER = "/park_hauler";
   const std::string HAULER_PARKED_TOPIC = "/hauler_parked";
+  const std::string NAV_TYPE_TOPIC = "/nav_type_topic";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
@@ -174,6 +176,10 @@ namespace COMMON_NAMES
     SCOUT_STOP_SEARCH,     // Stop executing the search algorithm.
     SCOUT_LOCATE_VOLATILE, // Pinpoint the location of the volatile
     SCOUT_UNDOCK,          // Move the Scout away from the Excavator
+    SCOUT_FACE_PROCESSING_PLANT, // Rotate the Scout using nav vision centering to proc plant
+    SCOUT_SYNC_ODOM,       // synchronize odometry of scout with excavator 
+    SCOUT_RESET_ODOM,      // reset odometry state for scout (calls the reset service)
+    SCOUT_RESET_ODOM_GROUND_TRUTH, // reset odometry of scout w.r.t. its starting position in sim
 
     /**************EXCAVATOR STATES**************/
     EXCAVATOR_GO_TO_LOC,             // Takes Excavator to a location from which it will
@@ -184,7 +190,12 @@ namespace COMMON_NAMES
     EXCAVATOR_DIG_AND_DUMP_VOLATILE, // Takes care of digging, and dumping
                                          // the volatile in hauler if volatile is found
     EXCAVATOR_GOTO_DEFAULT_ARM_POSE, // Moves excavator's arm to a default position used for object detection
-
+    EXCAVATOR_RESET_ODOM_GROUND_TRUTH, // reset odometry of excavator w.r.t. its starting position in sim
+    EXCAVATOR_RESET_ODOM,             // reset excavator odometry using reset odom service
+    EXCAVATOR_SYNC_ODOM,              // reset excavator odometry w.r.t. hauler odometry 
+    EXCAVATOR_FACE_PROCESSING_PLANT,  //Face processing plant using NAV_VISION::V_CENTER
+    EXCAVATOR_GO_TO_REPAIR,           //Go to repair station using NAV_VISION
+    
     /**************HAULER STATES**************/
     HAULER_GO_TO_LOC,                    // Takes Hauler to a location
     HAULER_DUMP_VOLATILE_TO_PROC_PLANT, // Undocks hauler from excavator, goes to processing plant,
@@ -193,14 +204,16 @@ namespace COMMON_NAMES
     HAULER_GO_BACK_TO_EXCAVATOR,        // Takes hauler from any location to excavator and parks
     HAULER_PARK_AT_EXCAVATOR,           // Hauler parks at excavator
     HAULER_FOLLOW_EXCAVATOR,            // Hauler follows excavator
-    HAULER_RESET_ODOM,
+    HAULER_RESET_ODOM,                  // Hauler reset odometry service call state
 
     // redundant modes for hauler (everything is taken care by above modes)
     HAULER_GO_TO_PROC_PLANT, // Hauler goes to processing plant
     HAULER_PARK_AT_HOPPER,   // Parks hauler wrt hopper
     HAULER_DUMP_VOLATILE,    // Empty hauler's bin
     HAULER_UNDOCK_EXCAVATOR, // undock from excavator (basically backward motion from excavator)
-    HAULER_UNDOCK_HOPPER    // undock from hopper (backward motion from hopper)
+    HAULER_UNDOCK_HOPPER,    // undock from hopper (backward motion from hopper)
+    HAULER_RESET_ODOM_AT_HOPPER, //face processing plant, park at hopper and then reset odom with ground truth
+    HAULER_FACE_PROCESSING_PLANT //face the processinf plant using NAV_VISION_TYPE::V_CENTER
   };
 
 } // namespace CAPRICORN_COMMON_NAMES

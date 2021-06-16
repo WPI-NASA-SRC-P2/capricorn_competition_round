@@ -244,7 +244,7 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 	{
 		change_in_yaw += 2*M_PI;
 	}
-	
+
 	return change_in_yaw;
 }
 
