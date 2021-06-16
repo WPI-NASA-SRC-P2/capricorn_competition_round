@@ -52,8 +52,6 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
  add_message_files(
-  DIRECTORY
-  ../operations/msg
   FILES
   TrajectoryWithVelocities.msg
  )

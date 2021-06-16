@@ -5,7 +5,7 @@
     <arg name="use_cheat_odom" default="false" />
     <arg name="use_crab_drive" default="false" />
 
-    <node pkg="tf" type="static_transform_publisher" name="EXCAVATOR_DIG_AND_DUMP_VOLATILE_odom" args="0 0 0 0 0 0 /odom /map 100" unless="$(arg use_cheat_odom)"/>
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /odom /map 100" />
 
     <include file="$(find state_machines)/launch/start_scout.launch">
         <arg name="robot_name" value="small_scout_1" />

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<robot name="sphere">
+	<material name="White" rgba="0 0 0 1" />
+
+	<link name="base_link">
+		<visual name="box1">
+			<geometry>
+				<box size="1.0 1.0 1.0" />
+			</geometry>
+
+			<material name="White" />
+		</visual>
+
+		<visual name="box2">
+			<origin xyz="0.5 0 0" rpy="0 0 0" />
+			<geometry>
+				<box size="0.5 0.5 0.5" />
+			</geometry>
+
+			<material name="White" />
+		</visual>
+
+    <inertial>
+      <mass value="10"/>
+      <inertia ixx="0.4" ixy="0.0" ixz="0.0" iyy="0.4" iyz="0.0" izz="0.2"/>
+    </inertial>
+	</link>
+</robot>
