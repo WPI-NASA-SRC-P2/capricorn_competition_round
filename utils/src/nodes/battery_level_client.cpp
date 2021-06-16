@@ -24,6 +24,8 @@ int main(int argc, char **argv)
 
   std::string robot_name_(argv[1]);
 
+  std::string pose_topic_ = "/" + robot_name_ + "/camera/odom";
+
   ros::NodeHandle n;
 
   ros::ServiceClient client = n.serviceClient<utils::battery_deadlines>("/capricorn/" + robot_name_ + "/deadlines_server");
@@ -31,8 +33,6 @@ int main(int argc, char **argv)
   client.waitForExistence();
 
   utils::battery_deadlines srv;
-
-  std::string pose_topic_ = "/" + robot_name_ + "/camera/odom";
 
   ros::Subscriber pose_subscriber_ = n.subscribe(pose_topic_, 1000, poseCallback);
 
