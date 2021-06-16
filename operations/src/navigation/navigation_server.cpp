@@ -905,78 +905,6 @@ void NavigationServer::revolveDriving(const operations::NavigationGoalConstPtr &
 	return;
 }
 
-double NavigationServer::getCumulativeTheta(double yaw, int &rotation_counter)
-{
-  // static variable, hence will retain its value
-  static double last_yaw = 0;
-
-  // If yaw if positive, then consider actual value of yaw (first two quads)
-  // Else consider 2PI plus yaw, becaues its the third and fourth quadrants
-  yaw = yaw >= 0 ? yaw : 2 * M_PI + yaw;
-
-	// Not sure why, but this is needed for theta calculation.
-  yaw /= 2;
-
-  if ((last_yaw > M_PI_2 && yaw < M_PI_2))
-  {
-    ROS_INFO("[operations | nav_server | %s]: Rotation Complete", robot_name_.c_str());
-    rotation_counter++;
-  }
-  last_yaw = yaw;
-  return (rotation_counter * M_PI + yaw);
-}
-
-void NavigationServer::spiralDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
-{
-	ROS_INFO("[operations | nav_server | %s]: Starting spiral motion", robot_name_.c_str());
-	brakeRobot(false);
-  
-	geometry_msgs::PoseStamped robot_start_pose = *getRobotPose();
-
-	// Stamp must be set to 0 for the latest transform
-	robot_start_pose.header.stamp = ros::Time(0);
-
-	// Counts the number of rotations complited in a spiral
-	int rotation_counter = 0;
-
-	double current_yaw;
-
-	geometry_msgs::PointStamped rotation_point;
-	rotation_point.header = getRobotPose()->header;
-
-	/**
-	 * @brief Continue loop until interrupted externally (through cancel goal)
-	 * 				This depends on the concept of osculating circles for a spiral
-	 * 				Depending on how much the robot has already travelled, get and 
-	 * 					execute the instantaneous radial turn to produce spiral motion
-	 * 					motion as a whole
-	 *				Source: https://en.wikipedia.org/wiki/Osculating_circle
-	 */
-	while (spiral_motion_continue_)
-	{		
-		current_yaw = NavigationAlgo::changeInOrientation(robot_start_pose, robot_name_, buffer_);
-
-		double spiral_t = getCumulativeTheta(current_yaw, rotation_counter);
-		double inst_radius = NavigationAlgo::getRadiusInArchimedeanSpiral(spiral_t);
-
-		rotation_point.point.x = 0;
-		rotation_point.point.y = inst_radius;
-		rotation_point.point.z = 0;
-
-		revolveRobot(rotation_point, SPIRAL_SPEED);
-		ros::Duration(0.1).sleep();
-	}
-
-	ROS_INFO("[operations | nav_server | %s]: Spiraling Complete", robot_name_.c_str());
-	steerRobot(0);
-	brakeRobot(true);
-
-  operations::NavigationResult res;
-	res.result = COMMON_RESULT::SUCCESS;
-	action_server->setSucceeded(res);
-	return;
-}
-
 void NavigationServer::followDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
 	ROS_INFO("[operations | nav_server | %s]: Follow drive: Following!", robot_name_.c_str());
@@ -1034,13 +962,6 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 
 			break;
 		
-		case NAV_TYPE::SPIRAL:
-
-			manual_driving_ = true;
-			spiralDriving(goal, server_);
-
-			break;
-		
 		case NAV_TYPE::FOLLOW:
 
 			manual_driving_ = true;
@@ -1057,7 +978,6 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 void NavigationServer::cancelGoal()
 {
 	manual_driving_ = true;
-	spiral_motion_continue_ = false;
 	steerRobot(0);
 	brakeRobot(true);
 	ROS_WARN("[operations | nav_server | %s]: Clearing current goal, got a new one", robot_name_.c_str());

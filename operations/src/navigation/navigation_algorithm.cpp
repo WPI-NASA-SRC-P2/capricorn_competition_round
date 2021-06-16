@@ -15,7 +15,7 @@ std::vector<double> NavigationAlgo::getSteeringAnglesAckermannTurn(double delta_
 	wheel_angles.resize(4);
 
 	// Check delta heading in case it equals to 0 (aka turning radius is infinite = no angular steering is needed)
-	if (delta_heading == 0){
+	if (delta_heading == 0.0){
 		wheel_angles.at(0) = 0.0;
 		wheel_angles.at(1) = 0.0;
 		wheel_angles.at(2) = 0.0;
