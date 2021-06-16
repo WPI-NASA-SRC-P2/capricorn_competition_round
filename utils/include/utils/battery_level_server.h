@@ -9,6 +9,7 @@ private:
     float soft_deadline_;
     float hard_deadline_;
     geometry_msgs::PoseStamped target_location_;
+    geometry_msgs::PoseStamped current_location_;
     
 
 

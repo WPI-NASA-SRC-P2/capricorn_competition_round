@@ -1,4 +1,4 @@
-geometry_msgs/PoseStamped currentLocation
+geometry_msgs/PoseStamped current_location
 ---
 float64 soft_deadline_
 float64 hard_deadline_

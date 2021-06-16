@@ -1,7 +1,17 @@
 #include "ros/ros.h"
 #include "utils/battery_deadlines.h"
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
 #include <cstdlib>
+
+
+geometry_msgs::PoseStamped BatteryLevelClient::poseCallback(nav_msgs::Odometry odom)
+{
+  current_location_ = odom.pose.pose;
+}
+
+
+
 
 int main(int argc, char **argv)
 {
@@ -22,6 +32,10 @@ int main(int argc, char **argv)
   client.waitForExistence();
 
   utils::battery_deadlines srv;
+
+  srv.request.current_location =  
+
+  
 
   if (client.call(srv))
   {

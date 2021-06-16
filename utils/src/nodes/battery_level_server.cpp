@@ -10,46 +10,49 @@ ros::Publisher debug_deadlinesPublisher;
 //Setting the node's update rate
 #define UPDATE_HZ 10
 
-void BatteryLevelServer::poseCallback(nav_msgs::Odometry odom){
+// void BatteryLevelServer::poseCallback(nav_msgs::Odometry odom)
+// {
+//     geometry_msgs::Pose current_location_ = odom.pose.pose;
+// }
 
-    geometry_msgs::Pose current_location_ = odom.pose.pose;
-    
-    
+bool BatteryLevelServer::deadlinesCallback(utils::battery_deadlines::Request &req, utils::battery_deadlines::Response &res)
+{
 
-    // calculate the distance between the robot's current location and charging station
-    distance_ = battery_level::calc_distance(target_location_.pose.position.x, target_location_.pose.position.y, current_location_.position.x, current_location_.position.y);       //needs to be calculated using a distance formula
-}
+  current_location_ = req.current_location;
 
-bool BatteryLevelServer::deadlinesCallback(utils::battery_deadlines::Request &req, utils::battery_deadlines::Response &res){
-    
-    target_location_.pose.position.x = -6.0;
-    target_location_.pose.position.y = -6.0;  
-    target_location_.pose.position.z = 0.65;
-    target_location_.pose.orientation.x = 0;
-    target_location_.pose.orientation.y = 0;
-    target_location_.pose.orientation.z = 0;
-    target_location_.pose.orientation.w = 1;
-    
-    std_msgs::Float64MultiArray deadlines;
+  target_location_.pose.position.x = -6.0;
+  target_location_.pose.position.y = -6.0;
+  target_location_.pose.position.z = 0.65;
+  target_location_.pose.orientation.x = 0;
+  target_location_.pose.orientation.y = 0;
+  target_location_.pose.orientation.z = 0;
+  target_location_.pose.orientation.w = 1;
 
-    // publish the soft and hard deadlines to a topic
-    float percentage_needed = 0; //battery_level::base_battery_level(battery_level::discharge_rate, distance_, battery_level::speed);
-    hard_deadline_ = 0;//battery_level::calc_hard_deadline(percentage_needed);
-    soft_deadline_ = 0; //battery_level::calc_soft_deadline(percentage_needed);
-    
+  // calculate the distance between the robot's current location and charging station
+  distance_ = battery_level::calc_distance(target_location_.pose.position.x, target_location_.pose.position.y, current_location_.pose.position.x, current_location_.pose.position.y); //needs to be calculated using a distance formula
 
-   deadlines.layout.dim[0].label  = "height";
-   deadlines.layout.dim[0].size   = 2;
-   deadlines.layout.dim[1].label  = "width";
-   deadlines.layout.dim[1].size   = 1;
-   deadlines.data[0] = soft_deadline_;
-   deadlines.data[1] = hard_deadline_;
-    //publish the dealines
-  debug_deadlinesPublisher.publish(deadlines); 
+  std_msgs::Float64MultiArray deadlines;
+
+  // publish the soft and hard deadlines to a topic
+  float percentage_needed = battery_level::base_battery_level(battery_level::discharge_rate, distance_, battery_level::speed);
+  hard_deadline_ = battery_level::calc_hard_deadline(percentage_needed);
+  soft_deadline_ = battery_level::calc_soft_deadline(percentage_needed);
+
+  deadlines.layout.dim[0].label = "height";
+  deadlines.layout.dim[0].size = 2;
+  deadlines.layout.dim[1].label = "width";
+  deadlines.layout.dim[1].size = 1;
+  deadlines.data[0] = soft_deadline_;
+  deadlines.data[1] = hard_deadline_;
+  //publish the dealines
+  debug_deadlinesPublisher.publish(deadlines);
+
+  //set the service response
+  res.soft_deadline_ = soft_deadline_;
+  res.hard_deadline_ = hard_deadline_;
 
   return true;
 }
-
 
 int main(int argc, char *argv[])
 {
