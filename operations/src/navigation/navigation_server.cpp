@@ -190,14 +190,6 @@ void NavigationServer::steerRobot(const std::vector<double>& angles)
 	publishMessage(back_left_steer_pub_, angles.at(3));
 }
 
-void NavigationServer::steerRobotAckermann(const std::vector<double>& angles)
-{
-	publishMessage(front_left_steer_pub_, angles.at(0));
-	publishMessage(front_right_steer_pub_, angles.at(1));
-	publishMessage(back_right_steer_pub_, 0);
-	publishMessage(back_left_steer_pub_, 0);
-}
-
 /**
  * @brief Steers the robot wheels for the angles
  * 
@@ -534,13 +526,25 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		else
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
 
-		std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesAckermannTurn(delta_heading);
+		// Calculate center of radius of turn for Ackermann steering
+		double center_radius = NavigationAlgo::wheel_sep_length_/tan(delta_heading);
+
+		geometry_msgs::Point center_of_rotation;
+
+		// Center pt of rotation is about the back wheels
+		center_of_rotation.x = -NavigationAlgo::wheel_sep_length_/2;
+
+		// Steering of the front wheels depends on the center radius previously calculated
+		center_of_rotation.y = center_radius;
+
+		std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesAckermannTurn(delta_heading, center_of_rotation);
+		std::vector<double> wheel_velocities = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_rotation, BASE_DRIVE_SPEED);
 
 		// Set wheels to that angle
 		steerRobot(wheel_angles);
 
 		// Set wheels at speed
-		moveRobotWheels(BASE_DRIVE_SPEED);
+		moveRobotWheels(wheel_velocities);
 
 		// Update distance to waypoint
 		distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());

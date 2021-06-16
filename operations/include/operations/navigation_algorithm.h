@@ -47,6 +47,10 @@ public:
    * @brief Map a delta heading (robot<->waypoint) to a set of wheel angles to perform Ackermann steering.
    * 
    * @param delta_heading The difference in heading needed to point the robot at the desired waypoint.
+   * @param center_of_rotation    The center of rotation from the center of the robot.                                
+   *                         The Center of Rotation follows right hand rule from top
+   *                         i.e. Positive X is to the front of the robot 
+   *                              Positive Y is to the left of the robot
    * @return std::vector<float> The angles the robot wheels should turn to to get to the waypoint.
    *                  The vector will be in order:
    *                  Clockwise from top, starting with FRONT_LEFT
@@ -56,7 +60,7 @@ public:
    *          element 2: Back Right Wheel
    *          element 3: Back Left Wheel
    */
-  static std::vector<double> getSteeringAnglesAckermannTurn(double delta_heading);
+  static std::vector<double> getSteeringAnglesAckermannTurn(double delta_heading, const geometry_msgs::Point center_of_rotation);
 
   /**
    * @brief **DEPRICATED** Get the Steering Angles for Making Radial Turn 

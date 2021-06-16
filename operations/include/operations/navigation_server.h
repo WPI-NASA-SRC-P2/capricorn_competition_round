@@ -180,14 +180,6 @@ private:
     float calcEuclideanDist(const geometry_msgs::PoseStamped& current_pose, const geometry_msgs::PoseStamped& goal);
 
     /**
-    * @brief Steers the robot wheels to perform Ackermann drive based on a set of wheel angles.
-    * 
-    * @param angles vector<double>
-    *               Angles at which the front robot wheels will be steered.
-    */
-    void steerRobotAckermann(const std::vector<double>& angles);
-
-    /**
     * @brief Steers the robot wheels for the angles.
     * 
     * @param angle Angle at which all robot wheels will be steered.

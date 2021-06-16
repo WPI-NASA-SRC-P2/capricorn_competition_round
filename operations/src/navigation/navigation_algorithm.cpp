@@ -8,7 +8,7 @@ NavigationAlgo::~NavigationAlgo()
 {
 }
 
-std::vector<double> NavigationAlgo::getSteeringAnglesAckermannTurn(double delta_heading)
+std::vector<double> NavigationAlgo::getSteeringAnglesAckermannTurn(double delta_heading, const geometry_msgs::Point center_of_rotation)
 {
 	// Initalize vector
 	std::vector<double> wheel_angles;
@@ -39,18 +39,6 @@ std::vector<double> NavigationAlgo::getSteeringAnglesAckermannTurn(double delta_
 		wheel_angles.at(3) = 0.0;
 	}
 	else{
-
-		// Calculate center of radius of turn for Ackermann steering
-		double center_radius = wheel_sep_length_/tan(delta_heading);
-
-		geometry_msgs::Point center_of_rotation;
-
-		// Center pt of rotation is about the back wheels
-		center_of_rotation.x = -wheel_sep_length_/2;
-
-		// Steering of the front wheels depends on the center radius calculated
-		center_of_rotation.y = center_radius;
-
 		wheel_angles = getSteeringAnglesRadialTurn(center_of_rotation);
 	}
 
