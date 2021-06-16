@@ -456,7 +456,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 		// we want to get a new trajectory from the planner.
 		if(distance_traveled + total_distance_traveled_ > TRAJECTORY_RESET_DIST)
 		{
-			ROS_INFO("driveDistance detected total distance > trajectory reset, setting trajectory flag.\n");
+			ROS_INFO("[operations | nav_server | %s]: driveDistance detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
 
 			moveRobotWheels(0);
 			brakeRobot(true);
@@ -655,12 +655,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 					if(CRAB_DRIVE_)
 					{
 						// Turn wheels to heading
-						ROS_INFO("Rotating wheels\n");
+						ROS_INFO("[operations | nav_server | %s]: Rotating wheels", robot_name_.c_str());
 						turned_successfully = rotateWheels(current_waypoint);
 					}
 					else
 					{
-						ROS_INFO("Rotating robot\n");
+						ROS_INFO("[operations | nav_server | %s]: Rotating robot", robot_name_.c_str());
 						turned_successfully = rotateRobot(current_waypoint);
 					}
 
@@ -672,13 +672,13 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 						if(manual_driving_)
 						{
-							ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+							ROS_ERROR("[operations | nav_server | %s]: Overridden by manual driving! Exiting", robot_name_.c_str());
 							res.result = COMMON_RESULT::INTERRUPTED;
 						}
 						else
 						{
 							//AAAH ERROR
-							ROS_ERROR_STREAM("Turn to waypoint " << i << " did not succeed. Exiting.\n");
+							ROS_ERROR("[operations | nav_server | %s]: Turn to waypoint %d did not succeed. Exiting", robot_name_.c_str(), i);
 							res.result = COMMON_RESULT::FAILED;
 							
 						}
@@ -697,13 +697,13 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 					operations::NavigationResult res;
 					if(manual_driving_)
 					{
-						ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Overridden by manual driving! Exiting", robot_name_.c_str());
 						res.result = COMMON_RESULT::INTERRUPTED;
 					}
 					else 
 					{
 						//AAAH ERROR
-						ROS_ERROR_STREAM("Drive to waypoint " << i << " did not succeed.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Turn to waypoint %d did not succeed. Exiting", robot_name_.c_str(), i);
 						res.result = COMMON_RESULT::FAILED;
 					}
 					action_server->setSucceeded(res);
@@ -720,12 +720,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				if(CRAB_DRIVE_)
 				{
 					// Turn wheels to heading
-					ROS_INFO("Rotating wheels\n");
+					ROS_INFO("[operations | nav_server | %s]: Rotating wheels", robot_name_.c_str());
 					turned_successfully = rotateWheels(current_waypoint);
 				}
 				else
 				{
-					ROS_INFO("Rotating robot\n");
+					ROS_INFO("[operations | nav_server | %s]: Rotating robot", robot_name_.c_str());
 					turned_successfully = rotateRobot(current_waypoint);
 				}
 
@@ -737,13 +737,13 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 					if(manual_driving_)
 					{
-						ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Overridden by manual driving! Exiting", robot_name_.c_str());
 						res.result = COMMON_RESULT::INTERRUPTED;
 					}
 					else
 					{
 						//AAAH ERROR
-						ROS_ERROR_STREAM("Turn to waypoint " << i << " did not succeed. Exiting.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Turn to waypoint %d did not succeed. Exiting", robot_name_.c_str(), i);
 						res.result = COMMON_RESULT::FAILED;
 						
 					}
@@ -759,13 +759,13 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				float delta_distance = NavigationAlgo::changeInPosition(current_robot_pose, current_waypoint);
 
 				//Drive to goal
-				ROS_INFO("Going the distance, going for speed\n");
+				ROS_INFO("[operations | nav_server | %s]: Going the distance, going for speed", robot_name_.c_str());
 				bool drove_successfully = driveDistance(delta_distance);
 
 				// If driveDistance set the get_new_trajectory_ flag, we should quit out of the for loop, which will get a new trajectory.
 				if(get_new_trajectory_)
 				{
-					ROS_INFO("Distance planner interrupt. Getting new trajectory.\n");
+					ROS_INFO("[operations | nav_server | %s]: Distance planner interrupt. Getting new trajectory.", robot_name_.c_str());
 
 					// Setting i to the length of the trajectory will terminate the for loop.
 					i = trajectory.waypoints.size();
@@ -777,12 +777,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 					operations::NavigationResult res;
 					if(manual_driving_)
 					{
-						ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Overridden by manual driving! Exiting", robot_name_.c_str());;
 						res.result = COMMON_RESULT::INTERRUPTED;
 					} else 
 					{
 						//AAAH ERROR
-						ROS_ERROR_STREAM("Drive to waypoint " << i << " did not succeed.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Turn to waypoint %d did not succeed. Exiting", robot_name_.c_str(), i);
 						res.result = COMMON_RESULT::FAILED;
 					}
 					action_server->setSucceeded(res);
