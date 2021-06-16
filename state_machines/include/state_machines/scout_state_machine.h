@@ -142,6 +142,17 @@ public:
    
 };
 
+class Locate : public ScoutState {
+public:   
+   Locate() : ScoutState(SCOUT_LOCATE_VOLATILE, 3) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override;
+
+   void step() override;
+   
+};
+
 
 
 // class Undock: public ScoutState
