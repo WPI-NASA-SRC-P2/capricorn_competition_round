@@ -149,7 +149,7 @@ def estimate3dLocation(category_index, i, box, cl, score, disp_img):
     # calculates mean disparity in the middle rows of the detected object bounding boxes
     for w in range(low_x, high_x):
         for v in range(low_y, high_y):
-            if disp_img[v, w] >= disp_min and disp_img[v, w] <= disp_max:
+            if high_y < HEIGHT and high_x < WIDTH and disp_img[v, w] >= disp_min and disp_img[v, w] <= disp_max:
                 disp_final += disp_img[v, w]
                 num_pixels += 1
 

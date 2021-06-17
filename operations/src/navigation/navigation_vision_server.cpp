@@ -242,32 +242,44 @@ void centering()
  */
 void undock()
 {
-    static bool centered = false;
+    perception::ObjectArray objects = g_objects;
 
-    if (centered)
-    {
-        if (!g_send_nav_goal && g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-        {
-            ROS_INFO_STREAM(g_robot_name << " NAV VISION: Undocked Successfully");
-            g_reached_goal = true;
-            centered = false;
-            g_send_nav_goal = false;
-        }
-        if (g_send_nav_goal)
-        {
-            geometry_msgs::PoseStamped pt;
-            pt.header.frame_id = g_robot_name + ROBOT_BASE;
-            pt.pose.position.y = -5;
-            g_nav_goal.drive_mode = NAV_TYPE::GOAL;
-            g_nav_goal.pose = pt;
-            g_client->sendGoal(g_nav_goal);
-            g_send_nav_goal = false;
-        }
+    std::vector<perception::Object> obstacles;
+
+    for (int i = 0; i < objects.number_of_objects; i++)
+        obstacles.push_back(objects.obj.at(i));
+
+    float avoidanceAngle =  checkObstacle(obstacles);
+
+    std::string avoidanceAnglePrint = std::to_string(avoidanceAngle);
+
+    if (avoidanceAngle != 0) {
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_nav_goal.forward_velocity = 0;
+        g_nav_goal.direction = 0;
+        g_nav_goal.angular_velocity = 5;
     }
-
-    if (!centered)
-    {
-        centered = center();
+    else { 
+        ROS_INFO("Undocking Robot");        
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_nav_goal.forward_velocity = 0;
+        g_nav_goal.direction = 0;
+        g_nav_goal.angular_velocity = 0;
+        g_client->sendGoal(g_nav_goal);
+        geometry_msgs::PoseStamped pt;
+        pt.header.frame_id = g_robot_name + ROBOT_BASE;
+        pt.pose.position.x = 5;
+        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+        g_nav_goal.pose = pt;
+        g_client->sendGoal(g_nav_goal);
+        g_client->waitForResult();
+        ROS_INFO("reached goal is true");
+        g_reached_goal = true;
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_nav_goal.forward_velocity = 0;
+        g_nav_goal.direction = 0;
+        g_nav_goal.angular_velocity = 0;
+        g_client->sendGoal(g_nav_goal);
     }
 }
 
