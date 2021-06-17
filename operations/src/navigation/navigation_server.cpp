@@ -190,14 +190,6 @@ void NavigationServer::steerRobot(const std::vector<double>& angles)
 	publishMessage(back_left_steer_pub_, angles.at(3));
 }
 
-void NavigationServer::steerRobotAckermann(const std::vector<double>& angles)
-{
-	publishMessage(front_left_steer_pub_, angles.at(0));
-	publishMessage(front_right_steer_pub_, angles.at(1));
-	publishMessage(back_right_steer_pub_, 0);
-	publishMessage(back_left_steer_pub_, 0);
-}
-
 /**
  * @brief Steers the robot wheels for the angles
  * 
@@ -386,7 +378,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 		return true;
 	}
 
-	printf("Turning %frad\n", delta_heading);
+	ROS_INFO("[operations | nav_server | %s]: Turning %frad", robot_name_.c_str(), delta_heading);
 	steerRobot(wheel_angles);
 
 	// While we have not turned the desired amount
@@ -423,8 +415,6 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 		// Slow this loop down a bit
 		update_rate_->sleep();
 	}
-
-	printf("Done rotating\n");
 
 	// Stop moving the robot after we are done moving
 	moveRobotWheels(0);
@@ -466,7 +456,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 		// we want to get a new trajectory from the planner.
 		if(distance_traveled + total_distance_traveled_ > TRAJECTORY_RESET_DIST)
 		{
-			ROS_INFO("driveDistance detected total distance > trajectory reset, setting trajectory flag.\n");
+			ROS_INFO("[operations | nav_server | %s]: driveDistance detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
 
 			moveRobotWheels(0);
 			brakeRobot(true);
@@ -500,56 +490,11 @@ bool NavigationServer::driveDistance(double delta_distance)
 	return true;
 }
 
-std::vector<double> NavigationServer::headingToRadius(double delta_heading)
-{
-	double left_wheel_angle, right_wheel_angle;
-
-	// Check delta heading in case it equals to 0 (aka turning radius is infinite = no angular velocity)
-	if (delta_heading == 0){
-		left_wheel_angle = 0.0;
-
-		right_wheel_angle = 0.0;
-	}
-	else if(delta_heading > MAX_DELTA_HEADING)
-	{
-		left_wheel_angle = MAX_DELTA_HEADING;
-		right_wheel_angle = MAX_DELTA_HEADING;
-	}
-	else if(delta_heading < MIN_DELTA_HEADING)
-	{
-		left_wheel_angle = MIN_DELTA_HEADING;
-		right_wheel_angle = MIN_DELTA_HEADING;
-	}
-	else{
-
-		double center_radius = NavigationAlgo::wheel_sep_length_/tan(delta_heading);
-
-		if (delta_heading < 0)
-			center_radius = -center_radius;
-
-		left_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius - (NavigationAlgo::wheel_sep_width_/2));
-		right_wheel_angle = atan2(NavigationAlgo::wheel_sep_length_, center_radius + (NavigationAlgo::wheel_sep_width_/2));
-
-		if(delta_heading < 0)
-		{
-			left_wheel_angle = -left_wheel_angle;
-			right_wheel_angle = -right_wheel_angle;
-		}
-	}
-
-
-	std::vector<double> wheel_angles{left_wheel_angle, right_wheel_angle};
-
-	return wheel_angles;
-}
-
 bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint)
 {
 	brakeRobot(false);
 
 	double distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());
-
-	double total_eucledian_distance_to_waypoint = calcEuclideanDist(*getRobotPose(), waypoint);
 
 	// While we're not at the waypoint
 	while(distance_to_waypoint > DIST_EPSILON)
@@ -567,25 +512,39 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		// Calculate the percentage driven of the current trajectory
 		double current_eucledian_distance_to_waypoint = calcEuclideanDist(*getRobotPose(), waypoint);
 
-		// NOTE: Add DIST_EPSILON to calculation if we want to start turning torwards the next heading sooner
-		double percentage_wpt_completed = 1 - (current_eucledian_distance_to_waypoint/total_eucledian_distance_to_waypoint);
-
 		// Calculate the delta heading
-		double delta_heading;
+		double delta_heading, center_radius;
 
-		// Start steering towards the next waypoint's heading if we have completed more than 70% of the current path
-		if (percentage_wpt_completed > PERCENTAGE_TURN_LOOK_AHEAD)
+		// Start steering towards the next waypoint's heading when the robot is half its length away from it
+		// NOTE: Add DIST_EPSILON to calculation if we want to start turning torwards the next heading sooner
+		if (current_eucledian_distance_to_waypoint < (current_eucledian_distance_to_waypoint - NavigationAlgo::wheel_sep_length_/2))
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), future_waypoint, robot_name_, buffer_);
 		else
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
 
-		std::vector<double> wheel_angles = headingToRadius(delta_heading);
+		// Calculate center of radius of turn for Ackermann steering
+		// If delta heading is 0 (aka no change in heading) then we rotate about an infite center radius (aka we drive straight)
+		if (delta_heading == 0.0)
+			center_radius = DBL_MAX;
+		else
+			center_radius = NavigationAlgo::wheel_sep_length_/tan(delta_heading);
+
+		geometry_msgs::Point center_of_rotation;
+
+		// Center pt of rotation is about the back wheels
+		center_of_rotation.x = -NavigationAlgo::wheel_sep_length_/2;
+
+		// Steering of the front wheels depends on the center radius previously calculated
+		center_of_rotation.y = center_radius;
+
+		std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesRadialTurn(center_of_rotation);
+		std::vector<double> wheel_velocities = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_rotation, BASE_DRIVE_SPEED);
 
 		// Set wheels to that angle
-		steerRobotAckermann(wheel_angles);
+		steerRobot(wheel_angles);
 
 		// Set wheels at speed
-		moveRobotWheels(BASE_DRIVE_SPEED);
+		moveRobotWheels(wheel_velocities);
 
 		// Update distance to waypoint
 		distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());
@@ -700,12 +659,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 					if(CRAB_DRIVE_)
 					{
 						// Turn wheels to heading
-						ROS_INFO("Rotating wheels\n");
+						ROS_INFO("[operations | nav_server | %s]: Rotating wheels", robot_name_.c_str());
 						turned_successfully = rotateWheels(current_waypoint);
 					}
 					else
 					{
-						ROS_INFO("Rotating robot\n");
+						ROS_INFO("[operations | nav_server | %s]: Rotating robot", robot_name_.c_str());
 						turned_successfully = rotateRobot(current_waypoint);
 					}
 
@@ -717,13 +676,13 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 						if(manual_driving_)
 						{
-							ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+							ROS_ERROR("[operations | nav_server | %s]: Overridden by manual driving! Exiting", robot_name_.c_str());
 							res.result = COMMON_RESULT::INTERRUPTED;
 						}
 						else
 						{
 							//AAAH ERROR
-							ROS_ERROR_STREAM("Turn to waypoint " << i << " did not succeed. Exiting.\n");
+							ROS_ERROR("[operations | nav_server | %s]: Turn to waypoint %d did not succeed. Exiting", robot_name_.c_str(), i);
 							res.result = COMMON_RESULT::FAILED;
 							
 						}
@@ -735,18 +694,20 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 				bool drove_successfully = smoothDriving(current_waypoint, future_waypoint);
 
+				//ROS_INFO("Eucledian dist after driving to waypoint: %f", calcEuclideanDist(*getRobotPose(), current_waypoint));
+
 				if (!drove_successfully)
 				{
 					operations::NavigationResult res;
 					if(manual_driving_)
 					{
-						ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Overridden by manual driving! Exiting", robot_name_.c_str());
 						res.result = COMMON_RESULT::INTERRUPTED;
 					}
 					else 
 					{
 						//AAAH ERROR
-						ROS_ERROR_STREAM("Drive to waypoint " << i << " did not succeed.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Turn to waypoint %d did not succeed. Exiting", robot_name_.c_str(), i);
 						res.result = COMMON_RESULT::FAILED;
 					}
 					action_server->setSucceeded(res);
@@ -763,12 +724,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				if(CRAB_DRIVE_)
 				{
 					// Turn wheels to heading
-					ROS_INFO("Rotating wheels\n");
+					ROS_INFO("[operations | nav_server | %s]: Rotating wheels", robot_name_.c_str());
 					turned_successfully = rotateWheels(current_waypoint);
 				}
 				else
 				{
-					ROS_INFO("Rotating robot\n");
+					ROS_INFO("[operations | nav_server | %s]: Rotating robot", robot_name_.c_str());
 					turned_successfully = rotateRobot(current_waypoint);
 				}
 
@@ -780,13 +741,13 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 					if(manual_driving_)
 					{
-						ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Overridden by manual driving! Exiting", robot_name_.c_str());
 						res.result = COMMON_RESULT::INTERRUPTED;
 					}
 					else
 					{
 						//AAAH ERROR
-						ROS_ERROR_STREAM("Turn to waypoint " << i << " did not succeed. Exiting.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Turn to waypoint %d did not succeed. Exiting", robot_name_.c_str(), i);
 						res.result = COMMON_RESULT::FAILED;
 						
 					}
@@ -802,13 +763,13 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				float delta_distance = NavigationAlgo::changeInPosition(current_robot_pose, current_waypoint);
 
 				//Drive to goal
-				ROS_INFO("Going the distance, going for speed\n");
+				ROS_INFO("[operations | nav_server | %s]: Going the distance, going for speed", robot_name_.c_str());
 				bool drove_successfully = driveDistance(delta_distance);
 
 				// If driveDistance set the get_new_trajectory_ flag, we should quit out of the for loop, which will get a new trajectory.
 				if(get_new_trajectory_)
 				{
-					ROS_INFO("Distance planner interrupt. Getting new trajectory.\n");
+					ROS_INFO("[operations | nav_server | %s]: Distance planner interrupt. Getting new trajectory.", robot_name_.c_str());
 
 					// Setting i to the length of the trajectory will terminate the for loop.
 					i = trajectory.waypoints.size();
@@ -820,12 +781,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 					operations::NavigationResult res;
 					if(manual_driving_)
 					{
-						ROS_ERROR_STREAM("Overridden by manual driving! Exiting.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Overridden by manual driving! Exiting", robot_name_.c_str());;
 						res.result = COMMON_RESULT::INTERRUPTED;
 					} else 
 					{
 						//AAAH ERROR
-						ROS_ERROR_STREAM("Drive to waypoint " << i << " did not succeed.\n");
+						ROS_ERROR("[operations | nav_server | %s]: Turn to waypoint %d did not succeed. Exiting", robot_name_.c_str(), i);
 						res.result = COMMON_RESULT::FAILED;
 					}
 					action_server->setSucceeded(res);
@@ -948,78 +909,6 @@ void NavigationServer::revolveDriving(const operations::NavigationGoalConstPtr &
 	return;
 }
 
-double NavigationServer::getCumulativeTheta(double yaw, int &rotation_counter)
-{
-  // static variable, hence will retain its value
-  static double last_yaw = 0;
-
-  // If yaw if positive, then consider actual value of yaw (first two quads)
-  // Else consider 2PI plus yaw, becaues its the third and fourth quadrants
-  yaw = yaw >= 0 ? yaw : 2 * M_PI + yaw;
-
-	// Not sure why, but this is needed for theta calculation.
-  yaw /= 2;
-
-  if ((last_yaw > M_PI_2 && yaw < M_PI_2))
-  {
-    ROS_INFO("[operations | nav_server | %s]: Rotation Complete", robot_name_.c_str());
-    rotation_counter++;
-  }
-  last_yaw = yaw;
-  return (rotation_counter * M_PI + yaw);
-}
-
-void NavigationServer::spiralDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
-{
-	ROS_INFO("[operations | nav_server | %s]: Starting spiral motion", robot_name_.c_str());
-	brakeRobot(false);
-  
-	geometry_msgs::PoseStamped robot_start_pose = *getRobotPose();
-
-	// Stamp must be set to 0 for the latest transform
-	robot_start_pose.header.stamp = ros::Time(0);
-
-	// Counts the number of rotations complited in a spiral
-	int rotation_counter = 0;
-
-	double current_yaw;
-
-	geometry_msgs::PointStamped rotation_point;
-	rotation_point.header = getRobotPose()->header;
-
-	/**
-	 * @brief Continue loop until interrupted externally (through cancel goal)
-	 * 				This depends on the concept of osculating circles for a spiral
-	 * 				Depending on how much the robot has already travelled, get and 
-	 * 					execute the instantaneous radial turn to produce spiral motion
-	 * 					motion as a whole
-	 *				Source: https://en.wikipedia.org/wiki/Osculating_circle
-	 */
-	while (spiral_motion_continue_)
-	{		
-		current_yaw = NavigationAlgo::changeInOrientation(robot_start_pose, robot_name_, buffer_);
-
-		double spiral_t = getCumulativeTheta(current_yaw, rotation_counter);
-		double inst_radius = NavigationAlgo::getRadiusInArchimedeanSpiral(spiral_t);
-
-		rotation_point.point.x = 0;
-		rotation_point.point.y = inst_radius;
-		rotation_point.point.z = 0;
-
-		revolveRobot(rotation_point, SPIRAL_SPEED);
-		ros::Duration(0.1).sleep();
-	}
-
-	ROS_INFO("[operations | nav_server | %s]: Spiraling Complete", robot_name_.c_str());
-	steerRobot(0);
-	brakeRobot(true);
-
-  operations::NavigationResult res;
-	res.result = COMMON_RESULT::SUCCESS;
-	action_server->setSucceeded(res);
-	return;
-}
-
 void NavigationServer::followDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server)
 {
 	ROS_INFO("[operations | nav_server | %s]: Follow drive: Following!", robot_name_.c_str());
@@ -1077,13 +966,6 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 
 			break;
 		
-		case NAV_TYPE::SPIRAL:
-
-			manual_driving_ = true;
-			spiralDriving(goal, server_);
-
-			break;
-		
 		case NAV_TYPE::FOLLOW:
 
 			manual_driving_ = true;
@@ -1100,7 +982,6 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 void NavigationServer::cancelGoal()
 {
 	manual_driving_ = true;
-	spiral_motion_continue_ = false;
 	steerRobot(0);
 	brakeRobot(true);
 	ROS_WARN("[operations | nav_server | %s]: Clearing current goal, got a new one", robot_name_.c_str());

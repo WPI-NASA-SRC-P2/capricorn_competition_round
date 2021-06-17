@@ -41,13 +41,6 @@ private:
     const float MAX_TURNING_RAD = M_PI/2;
     const float MIN_TURNING_RAD = -M_PI/2;
 
-    // Wheel Angle limits for Ackermann steering
-    const float MAX_DELTA_HEADING = M_PI/4;
-    const float MIN_DELTA_HEADING = -M_PI/4;
-
-    // Percentage that the robot needs to have had completed in its current path before anticipating a turn
-    const float PERCENTAGE_TURN_LOOK_AHEAD = 0.7;
-
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
     const float BASE_DRIVE_SPEED = 0.6;
     const float BASE_SPIN_SPEED = 0.3;
@@ -55,7 +48,6 @@ private:
     // Tolerances for linear and angular moves
     const float DIST_EPSILON = 1.0;
     const float ANGLE_EPSILON = 0.1;
-    const float SPIRAL_SPEED = 0.5;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
     const double TRAJECTORY_RESET_DIST = 5;
@@ -94,9 +86,6 @@ private:
 
     // Whether we are currently manually driving, or automatically following a trajectory
     bool manual_driving_ = false;
-
-    // Continue tracing spiral until this variable is true
-    bool spiral_motion_continue_ = true;
 
     // How much distance the robot has traveled since the last planner call. Compared against TRAJECTORY_RESET_DIST.
     double total_distance_traveled_ = 0;
@@ -184,14 +173,6 @@ private:
     float calcEuclideanDist(const geometry_msgs::PoseStamped& current_pose, const geometry_msgs::PoseStamped& goal);
 
     /**
-    * @brief Steers the robot wheels to perform Ackermann drive based on a set of wheel angles.
-    * 
-    * @param angles vector<double>
-    *               Angles at which the front robot wheels will be steered.
-    */
-    void steerRobotAckermann(const std::vector<double>& angles);
-
-    /**
     * @brief Steers the robot wheels for the angles.
     * 
     * @param angle Angle at which all robot wheels will be steered.
@@ -270,14 +251,6 @@ private:
     bool driveDistance(double delta_distance);
 
     /**
-     * @brief Map a delta heading (robot<->waypoint) to a set of angles to perform Ackermann steering
-     * 
-     * @param delta_heading The difference in heading needed to point the robot at the desired waypoint.
-     * @return double The radii the robot wheels should turn to to get to the waypoint.
-     */
-    std::vector<double> headingToRadius(double delta_heading);
-
-    /**
      * @brief Execute a smooth drive to a waypoint. WARNING: Will keep moving after termination.
      * 
      * @param waypoint The waypoint to drive the robot to.
@@ -330,14 +303,6 @@ private:
     void revolveRobot(geometry_msgs::PointStamped &revolve_about, double forward_velocity);
 
     /**
-     * @brief Spirals the robot. Used to locate volatiles. NAV_TYPE::SPIRAL. NOT YET IMPLEMENTED
-     * 
-     * @param goal The goal of the action.
-     * @param action_server The action server that this function is operating on.
-     */
-    void spiralDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server);
-
-    /**
      * @brief Spirals the robot. Used to locate volatiles. NAV_TYPE::FOLLOW. NOT YET IMPLEMENTED
      * 
      * @param goal The goal of the action.
@@ -357,22 +322,4 @@ private:
      * 
      */
     void cancelGoal();
-
-    /**
-    * @brief Get the Travel Theta object
-    * 	 			 The spiral motion generator requires the 'theta' covered by
-    * 	 			 the robot in terms of radian. 
-    * 	 			 This theta is incremental, [0, inf]
-    * 	 			 If the robot traverses one complete rotation, output will
-    * 	 			 be 2PI, and on completition of two rotations, the output
-    * 	 			 should be 4PI. This function returns this traveling theta
-    * 	 			 Please suggest if you can find a more intuitive name
-    *				
-    * 
-    * @param yaw 	 Current Yaw of the robot with respect to the initial position.
-    * @param rotation_counter 		Number of rotations already completed prior to 
-    *								this on-going rotation
-    * @return double 				Theta travelled
-    */
-    double getCumulativeTheta(double yaw, int &rotation_counter);
 };
