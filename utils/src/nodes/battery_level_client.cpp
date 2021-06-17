@@ -38,13 +38,16 @@ int main(int argc, char **argv)
 
   srv.request.current_location = current_location_;
 
+  ROS_INFO("client call succeeded : %f", srv.request.current_location.pose.position.y);
+
   if (client.call(srv))
   {
-    ROS_INFO("client call succeeded");
+    ROS_INFO("client call succeeded. softDeadline = %f", srv.response.soft_deadline_);
+    ROS_INFO("client call succeeded. hardDeadline = %f", srv.response.hard_deadline_);
   }
   else
   {
-    ROS_ERROR("Failed to call service trajectory generator");
+    ROS_ERROR("Failed to call the deadlines service");
     return 1;
   }
 
