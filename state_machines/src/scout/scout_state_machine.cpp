@@ -93,7 +93,7 @@ void Undock::step()
       ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from volatile");
       geometry_msgs::PoseStamped pt;
       pt.header.frame_id = robot_name_ + ROBOT_BASE;
-      pt.pose.position.x = -3;
+      pt.pose.position.x = -6;
       pt.pose.orientation.w = 1;
       
       navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
@@ -135,7 +135,7 @@ State& Search::transition()
    }
    // if near the volatile, switch to scout_locate_volatile state
    ROS_INFO("volatile detected, transitioning to scout_undock state");
-   return getState(SCOUT_UNDOCK);
+   return getState(SCOUT_LOCATE_VOLATILE);
 }
 
 void Search::step()
@@ -159,27 +159,37 @@ void Search::exitPoint()
 
 void Locate::entryPoint()
 {
-   // none at the moment
+   // we assume we are near the volatile
+   near_volatile_ = true;
+   first_ = true;
 }
 
 State& Locate::transition()
 {
-   // if no transition, stay in current state
-   if(m_unCount <= 10 && near_volatile_) {
+   // switch states once completed with locating the volatile
+   if(!(resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_) {
       return *this;
    }
+   ROS_WARN("Volatile found, moving to undock state");
    return getState(SCOUT_UNDOCK);
 }
 
 void Locate::step()
 {
-   ++m_unCount;
-   ROS_INFO_STREAM("LOcatingStep Function!");
+   if(first_)
+   {
+      resource_localiser_client_->sendGoal(goal);
+      ROS_INFO_STREAM("Sending resource localization goal");
+      first_ = false;
+   }
+   ROS_INFO_STREAM("Locating Step Function!");
 }
 
 void Locate::exitPoint()
 {
    // none at the moment
+   resource_localiser_client_->cancelGoal();
+   near_volatile_ = false;
 }
 
 //////////////////////////////////////////////////////////////////////////////////

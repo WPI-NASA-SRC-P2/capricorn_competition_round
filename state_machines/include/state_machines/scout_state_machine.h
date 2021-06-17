@@ -178,6 +178,10 @@ public:
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
+
+private:
+   operations::ResourceLocaliserGoal goal;
+   bool first_;
 };
 
 
