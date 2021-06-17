@@ -5,7 +5,7 @@
 # Copyright (c), 2019-2022 NASA-JSC. All Rights Reserved
 # Unauthorized Distribution Strictly Prohibited
 #
-ARG base_image="gazebo-ros"
+ARG base_image="final_gazebo_ros"
 FROM ${base_image}
 ARG enduser_name="srcp2"
 
