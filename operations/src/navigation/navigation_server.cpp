@@ -483,10 +483,15 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 {
 	brakeRobot(false);
 
-	double distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());
+	// Save the starting robot pose so we can track delta distance
+	geometry_msgs::PoseStamped starting_pose = *getRobotPose();
+
+	double distance_to_waypoint = NavigationAlgo::changeInPosition(*getRobotPose(), waypoint);
+		// Initialize the current traveled distance to 0. Used to terminate the loop, and to request a new trajectory.
+	double distance_traveled = 0;
 
 	// While we're not at the waypoint
-	while(distance_to_waypoint > DIST_EPSILON)
+	while((distance_to_waypoint > DIST_EPSILON) && ros::ok())
 	{
 		// If we are interrupted, stop.
 		if(manual_driving_)
@@ -496,6 +501,25 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 			brakeRobot(true);
 
 			return false;
+		}
+
+		distance_traveled = abs(NavigationAlgo::changeInPosition(starting_pose, *getRobotPose()));
+
+		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
+		// we want to get a new trajectory from the planner.
+		if(distance_traveled + total_distance_traveled_ > TRAJECTORY_RESET_DIST)
+		{
+			ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
+			ROS_WARN("Current distance traveled %f", distance_traveled);
+
+			moveRobotWheels(0);
+			brakeRobot(true);
+
+			// Reset the distance traveled
+			total_distance_traveled_ = 0;
+
+			get_new_trajectory_ = true;
+			return true;
 		}
 
 		// Calculate the current dist to waypoint
@@ -540,6 +564,13 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 
 		update_rate_->sleep();
 	}
+
+	// Update the total traveled distance with the total distance we just traveled.
+	total_distance_traveled_ += distance_traveled;
+
+	// Stop moving the robot after we are done moving
+	moveRobotWheels(0);
+	brakeRobot(true);
 
 	return true;
 }
