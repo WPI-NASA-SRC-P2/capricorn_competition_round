@@ -28,14 +28,15 @@ private:
     bool power_saver = false;
     bool should_turn = false;
     bool is_turning = false;
+    bool turnRobot();
+    void rotateRobot();
+    void stopRobot(void);
     //bool turnRobot();
     //void rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier);
     
     
 public:
-    bool turnRobot();
-    void rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier);
-    void stopRobot(void);
+    
     bool solarChargeInitiate(operations::SolarCharge::Request& request, operations::SolarCharge::Response& response);
     void systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg);
     void setPowerSaveMode(bool on);

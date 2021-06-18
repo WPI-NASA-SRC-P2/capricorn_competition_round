@@ -59,20 +59,30 @@ enum DrivingMode
  * 
  * @param rotate_direction   direction of rotation
  */
-void SolarChargingServer::rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier)
+void SolarChargingServer::rotateRobot()
 {
-  ROS_INFO("Setup Nav Goal to Turn");
-  operations::NavigationGoal goal;
+//   ROS_INFO("Setup Nav Goal to Turn");
+//   operations::NavigationGoal goal;
+//   typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
+//   Client* client;
+//  // Manual driving  
+//   goal.drive_mode = NAV_TYPE::MANUAL;
 
- // Manual driving  
+//   goal.forward_velocity = 0;
+//   goal.angular_velocity = rotate_direction * ROTATION_VELOCITY * rotational_velocity_multiplier;
+
+//   navigation_client_->sendGoal(goal);
+//   ROS_INFO("Send Nav Goal to Turn");
+//   ros::Duration(0.1).sleep();operations::NavigationGoal goal;
+  operations::NavigationGoal goal;
   goal.drive_mode = NAV_TYPE::MANUAL;
 
-  goal.forward_velocity = 0;
-  goal.angular_velocity = rotate_direction * ROTATION_VELOCITY * rotational_velocity_multiplier;
+    // Diverting values from twist to navigation
+    goal.forward_velocity = 0;
+    goal.angular_velocity = 0.6; //units radian per sec ???
 
   navigation_client_->sendGoal(goal);
-  ROS_INFO("Send Nav Goal to Turn");
-  ros::Duration(0.1).sleep();
+  ros::Duration(0.05).sleep();
 }
 
 /**
@@ -82,17 +92,26 @@ void SolarChargingServer::rotateRobot(const DrivingDirection rotate_direction, c
  */
 void SolarChargingServer::stopRobot(void)
 {
-  operations::NavigationGoal goal;
+  // operations::NavigationGoal goal;
 
-  // Manual driving
+  // // Manual driving
+  // goal.drive_mode = NAV_TYPE::MANUAL;
+
+  // goal.forward_velocity = 0;
+  // goal.angular_velocity = 0;
+
+  // navigation_client_->sendGoal(goal);
+  // ROS_INFO("Send Nav Goal to Stop");
+  // ros::Duration(0.5).sleep();
+  operations::NavigationGoal goal;
   goal.drive_mode = NAV_TYPE::MANUAL;
 
-  goal.forward_velocity = 0;
-  goal.angular_velocity = 0;
+    // Diverting values from twist to navigation
+    goal.forward_velocity = 0;
+    goal.angular_velocity = 0; //units radian per sec ???
 
   navigation_client_->sendGoal(goal);
-  ROS_INFO("Send Nav Goal to Stop");
-  ros::Duration(0.5).sleep();
+  ros::Duration(0.05).sleep();
 }
 
 // #TODO
@@ -118,33 +137,43 @@ void SolarChargingServer::setPowerSaveMode(bool state){
  */
 bool SolarChargingServer::solarChargeInitiate(operations::SolarCharge::Request& request, operations::SolarCharge::Response& response)
 {
+  rotateRobot();
+  // operations::NavigationGoal goal;
+  // goal.drive_mode = NAV_TYPE::MANUAL;
 
-  ROS_INFO("in the callback - 1");
+  //   // Diverting values from twist to navigation
+  //   goal.forward_velocity = 0;
+  //   goal.angular_velocity = 0.6; //units radian per sec ???
 
-  should_turn = request.solar_charge_status;
-  ROS_INFO("in the callback - 2");
-  if(should_turn)
-  {
-  ROS_INFO("in the callback - 3");
-    if(!is_turning) {
-      // std::async(std::launch::async, turnRobot());
-      turnRobot();
-      ROS_INFO("in the callback - 4");
-      is_turning = true;
-    }
-    ROS_INFO("Solar_Charging_Mode: ON: STARTING");
-    response.result.data = "Solar_Charging_Mode: ON: STARTING";
-    return true;
-  }
-  else
-  {
-    is_turning = false;
-    stopRobot();
-    setPowerSaveMode(false);
-    ROS_INFO("Solar_Charging_Mode: OFF: Ending");
-    response.result.data = "Solar_Charging_Mode: OFF: Ending";
-    return true;
-  }
+  // navigation_client_->sendGoal(goal);
+  
+
+  // ROS_INFO("in the callback - 1");
+
+  // should_turn = request.solar_charge_status;
+  // ROS_INFO("in the callback - 2");
+  // if(should_turn)
+  // {
+  // ROS_INFO("in the callback - 3");
+  //   if(!is_turning) {
+  //     // std::async(std::launch::async, turnRobot());
+  //     turnRobot();
+  //     ROS_INFO("in the callback - 4");
+  //     is_turning = true;
+  //   }
+  //   ROS_INFO("Solar_Charging_Mode: ON: STARTING");
+  //   response.result.data = "Solar_Charging_Mode: ON: STARTING";
+  //   return true;
+  // }
+  // else
+  // {
+  //   is_turning = false;
+  //   stopRobot();
+  //   setPowerSaveMode(false);
+  //   ROS_INFO("Solar_Charging_Mode: OFF: Ending");
+  //   response.result.data = "Solar_Charging_Mode: OFF: Ending";
+  //   return true;
+  // }
 
   //ROS_INFO("Starting transitiong to solar recharge");
 
@@ -156,7 +185,7 @@ bool SolarChargingServer::solarChargeInitiate(operations::SolarCharge::Request& 
 bool SolarChargingServer::turnRobot() {
   ROS_INFO("Solar_Charging_Mode: ON: Turning");
   DrivingDirection driving_direction = POSITIVE;
-  rotateRobot(driving_direction, 1.0);
+  rotateRobot();
   while(!solar_ok && ros::ok() && should_turn) // while there is no solar keep rotating 
   {
     ROS_INFO("Solar_Charging_Mode: ON: Rotate Into Position");
@@ -219,8 +248,8 @@ int main(int argc, char *argv[])
   //initialize node
   ros::init(argc, argv, "solar_charging_server");
 
-  //std::string robot_name(argv[1]);   
-  std::string robot_name = "small_scout_1";
+  std::string robot_name(argv[1]);   
+  //std::string robot_name = "small_scout_1";
 
   //ROS Topic names
   std::string system_monitor_topic_ = "/capricorn/" + robot_name + "/system_monitor";
@@ -237,6 +266,12 @@ int main(int argc, char *argv[])
   //server.solarChargerService = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
   ros::ServiceServer serviceD = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
 
+  // initialize client
+  navigation_client_= new NavigationClient_(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
+  //printf("Waiting for server...\n");
+  ROS_INFO_STREAM("[ operations | solar_recharge | "<<robot_name<<" ] "<< "Waiting for navigation server...");
+  bool serverExists = navigation_client_->waitForServer();
+  ROS_INFO_STREAM("[ operations | solar_recharge | "<<robot_name<<" ] "<< "Server Connected");
   //server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::systemMonitorCB, &server);
 
   //srv result
