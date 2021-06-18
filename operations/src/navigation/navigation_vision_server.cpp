@@ -62,6 +62,15 @@ enum REVOLVE_DIRECTION
 };
 
 /**
+ * @brief Returns the string to be logged or printed
+ * 
+ */
+std::string getString(std::string message)
+{
+    return "[OPERATIONS | NAV VISION SERVER | " + g_robot_name +  "]: " + message;
+}
+
+/**
  * @brief Set the Desired Label Bounding BoxHeight Threshold object
  * 
  */
@@ -143,7 +152,7 @@ bool center()
     {
         g_nav_goal.angular_velocity = 0;
         centered_times = 0;
-        ROS_INFO_STREAM(g_robot_name << " NAV VISION : Center finished to " << g_desired_label);
+        ROS_INFO_STREAM(getString(std::string("Center finished to ") + g_desired_label));
         return true;
     }
 
@@ -260,7 +269,7 @@ void undock()
         g_nav_goal.angular_velocity = 5;
     }
     else { 
-        ROS_INFO("Undocking Robot");        
+        ROS_INFO_STREAM(getString("Undocking Robot"));
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = 0;
         g_nav_goal.direction = 0;
@@ -273,7 +282,7 @@ void undock()
         g_nav_goal.pose = pt;
         g_client->sendGoal(g_nav_goal);
         g_client->waitForResult();
-        ROS_INFO("reached goal is true");
+        ROS_INFO_STREAM(getString("Robot Undocked"));
         g_reached_goal = true;
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = 0;
@@ -364,7 +373,7 @@ void visionNavigation()
             g_nav_goal.forward_velocity = FORWARD_VELOCITY;
             g_nav_goal.direction = direction;
             g_nav_goal.angular_velocity = 0;
-            ROS_INFO("Avoid Obstacle Mode");
+            ROS_INFO_STREAM(getString("Avoid Obstacle Mode"));
             return;
         }
 
@@ -404,7 +413,7 @@ void visionNavigation()
                 g_nav_goal.forward_velocity = 0;
                 g_reached_goal = true;
                 centered = false;
-                ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached Goal - " << g_desired_label);
+                ROS_INFO_STREAM(getString(std::string("Reached Goal - ") + g_desired_label));
                 return;
             }
             else
@@ -468,19 +477,19 @@ void goToGoalObsAvoid(const geometry_msgs::PoseStamped &goal_loc)
         g_nav_goal.angular_velocity = 0;
         g_send_nav_goal = true;
         g_previous_state_is_go_to = false;
-        ROS_INFO("Avoiding Obstacle");
+        ROS_INFO_STREAM(getString("Avoiding Obstacle"));
     }
     else
     {
         g_nav_goal.drive_mode = NAV_TYPE::GOAL;
         g_nav_goal.pose = goal_loc;
-        ROS_INFO_STREAM(g_robot_name << " Outgoing nav vision goal" << goal_loc);
+        ROS_INFO_STREAM(getString("Outgoing nav vision goal") << goal_loc);
         if (g_previous_state_is_go_to)
         {
             g_send_nav_goal = false;
             if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
             {
-                ROS_INFO_STREAM(g_robot_name << " NAV VISION: Reached GoTo Goal");
+                ROS_INFO_STREAM(getString("Reached GoTo Goal"));
                 g_reached_goal = true;
             }
         }
@@ -503,7 +512,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     if (object_found_frames > 10)
     {
-        // ROS_INFO("Going to vision navigation");
+        // ROS_INFO_STREAM("Going to vision navigation");
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
         visionNavigation();
@@ -529,7 +538,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-        // ROS_INFO("Going to vision navigation");
+        // ROS_INFO_STREAM("Going to vision navigation");
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
         visionNavigation();
@@ -543,7 +552,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         return;
     }
 
-    // ROS_INFO("Looking for object");
+    // ROS_INFO_STREAM("Looking for object");
 
     bool object_found = false;
 
@@ -557,7 +566,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         perception::Object object = objects.obj.at(i);
         if (object.label == g_desired_label)
         {
-            // ROS_INFO("Found object");
+            // ROS_INFO_STREAM("Found object");
             // Store the object's center
             object_found = true;
         }
@@ -586,7 +595,7 @@ void cancelGoal()
     g_nav_goal.angular_velocity = 0;
     g_client->sendGoal(g_nav_goal);
 
-    ROS_INFO_STREAM(g_robot_name << " NAV VISION : Cancelled Goal");
+    ROS_INFO_STREAM(getString("Cancelled Goal"));
 }
 
 /**
@@ -600,7 +609,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     operations::NavigationVisionResult result;
 
     NAV_VISION_TYPE mode = (NAV_VISION_TYPE)goal->mode;
-    ROS_INFO_STREAM(g_robot_name << " NAV VISION : Goal Received - " << mode);
+    ROS_INFO_STREAM(getString(std::string("Goal Received - ") + std::to_string(mode)));
 
     if (mode == NAV_VISION_TYPE::V_FOLLOW || mode == NAV_VISION_TYPE::V_REACH || mode == NAV_VISION_TYPE::V_UNDOCK || mode == NAV_VISION_TYPE::V_CENTER || mode == NAV_VISION_TYPE::V_NAV_AND_NAV_VISION)
     {
@@ -611,7 +620,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
             // the class is not valid, send the appropriate result
             result.result = COMMON_RESULT::INVALID_GOAL;
             as->setAborted(result, "Invalid Object Detection Class or Cannot go to the class");
-            ROS_INFO("Invalid Object Detection Class or Cannot go to the class");
+            ROS_INFO_STREAM(getString("Invalid Object Detection Class or Cannot go to the class"));
             return;
         }
 
@@ -671,7 +680,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
             }
             break;
         default:
-            ROS_ERROR_STREAM(g_robot_name + " NAV VISION: Encountered Unhandled State!");
+            ROS_ERROR_STREAM(getString("Encountered Unhandled State!"));
             result.result = COMMON_RESULT::INVALID_GOAL;
             as->setSucceeded(result, "Cancelled Goal");
             return;
@@ -710,7 +719,7 @@ int main(int argc, char **argv)
 {
     if (argc != 2 && argc != 4)
     {
-        ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
+        ROS_ERROR_STREAM(getString("This node must be launched with the robotname passed as a command line argument!"));
         return -1;
     }
 
@@ -728,7 +737,7 @@ int main(int argc, char **argv)
     Server server(nh, g_robot_name + NAVIGATION_VISION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.registerPreemptCallback(&cancelGoal);
     server.start();
-    ROS_INFO("Starting Navigation Vision Server");
+    ROS_INFO_STREAM(getString("Starting Navigation Vision Server"));
     ros::spin();
     return 0;
 }
