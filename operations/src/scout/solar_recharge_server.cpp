@@ -90,17 +90,11 @@ void SolarChargingServer::stopRobot(void)
   ros::Duration(0.05).sleep();
 }
 
-// #TODO
+
 void SolarChargingServer::setPowerSaveMode(bool state){
-  //call the server "small_scout_1/system_monitor/power_saver"
-  //set the request.power_save
-    // true: Power Save will be active
-    // false:: power Save will be deactivated
 
   srcp2_msgs::SystemPowerSaveSrv srv;
-
   srv.request.power_save = state;
-
   powerMode_client.call(srv);
 }
 
@@ -113,77 +107,29 @@ void SolarChargingServer::setPowerSaveMode(bool state){
  */
 bool SolarChargingServer::solarChargeInitiate(operations::SolarCharge::Request& request, operations::SolarCharge::Response& response)
 {
-  //rotateRobot();
-  //bool requestData = request.solar_charge_status;
-
-  setPowerSaveMode(false);
-  rotateRobot();
-  should_turn = true;
-  return true;
+  //response.result.data = "Solar_Charging_Mode: ON: Power_rate:" + power_rate.c_str(); << Maybe we will use this at some point
+  // 
+  ROS_INFO("entered solarChargeInit");
   
-  //setPowerSaveMode(true);
-  //stopRobot();
-  // operations::NavigationGoal goal;
-  // goal.drive_mode = NAV_TYPE::MANUAL;
-
-  //   // Diverting values from twist to navigation
-  //   goal.forward_velocity = 0;
-  //   goal.angular_velocity = 0.6; //units radian per sec ???
-
-  // navigation_client_->sendGoal(goal);
-  
-
-  // ROS_INFO("in the callback - 1");
-
-  // should_turn = request.solar_charge_status;
-  // ROS_INFO("in the callback - 2");
-  // if(should_turn)
-  // {
-  // ROS_INFO("in the callback - 3");
-  //   if(!is_turning) {
-  //     // std::async(std::launch::async, turnRobot());
-  //     turnRobot();
-  //     ROS_INFO("in the callback - 4");
-  //     is_turning = true;
-  //   }
-  //   ROS_INFO("Solar_Charging_Mode: ON: STARTING");
-  //   response.result.data = "Solar_Charging_Mode: ON: STARTING";
-  //   return true;
-  // }
-  // else
-  // {
-  //   is_turning = false;
-  //   stopRobot();
-  //   setPowerSaveMode(false);
-  //   ROS_INFO("Solar_Charging_Mode: OFF: Ending");
-  //   response.result.data = "Solar_Charging_Mode: OFF: Ending";
-  //   return true;
-  // }
-
-  //ROS_INFO("Starting transitiong to solar recharge");
-
-  
-  //ROS_INFO("Now Solar Recharging");
-  //response.result.data = "Solar_Charging_Mode: ON: Power_rate:" + power_rate.c_str();
-}
-
-bool SolarChargingServer::turnRobot() {
-  ROS_INFO("Solar_Charging_Mode: ON: Turning");
-  DrivingDirection driving_direction = POSITIVE;
-  rotateRobot();
-  while(!solar_ok && ros::ok() && should_turn) // while there is no solar keep rotating 
-  {
-    ROS_INFO("Solar_Charging_Mode: ON: Rotate Into Position");
+  if(request.solar_charge_status){
+    ROS_INFO("entered solarChargeInit request true");
+    setPowerSaveMode(false);
+    rotateRobot();
+    should_turn = true;
+    return true;
   }
-  stopRobot();
-  setPowerSaveMode(true);
-  ROS_INFO("Solar_Charging_Mode: ON: Charging");
-  return true;
+  if(!request.solar_charge_status){
+    ROS_INFO("entered solarChargeInit request false");
+    setPowerSaveMode(false);
+    stopRobot();
+    return true;
+  }
+  return false;
 }
 
 
 void SolarChargingServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg){
-  ROS_INFO("in the system monitor callback - 1");
+  //ROS_INFO("in the system monitor callback - 1");
   solar_ok = msg.solar_ok;
   power_rate = msg.power_rate;
   power_saver = msg.power_saver;   //i assume to check of we are in or out of power save mode
@@ -196,44 +142,6 @@ void SolarChargingServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &ms
   }
 
 }
-
-
-// int main(int argc, char **argv)
-// {
-//   // Ensure the robot name is passed in
-//   if (argc != 2 && argc != 4)
-//   {
-//     // Displaying an error message for correct usage of the script, and returning error.
-//     ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
-//     return -1;
-//   }
-//   else
-//   {
-//     // Robot Name from argument
-//     robot_name_ = std::string(argv[1]);
-//     std::string node_name = robot_name_ + "_solar_recharge_action_server";
-//     ros::init(argc, argv, node_name);
-//     ros::NodeHandle nh;
-
-//     ros::Subscriber subscriber = nh.subscribe("/" + robot_name_ + SYSTEM_MONITOR_TOPIC, 1000, updateRobotSolarOk);
-
-//     SolarRechargeServer solar_recharge_server(nh, SOLAR_RECHARGE_ACTIONLIB, boost::bind(&solarRecharge, _1, &solar_recharge_server), false);
-//     solar_recharge_server.start();
-
-//     ROS_INFO("Connecting to nav server...");
-
-//     navigation_client_ = new NavigationClient_(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB, true);
-//     navigation_client_->waitForServer();
-
-//     ROS_INFO("Connected. Waiting for a solar recharge request.");
-
-//     ros::spin();
-
-//     delete navigation_client_;
-
-//     return 0;
-//   }
-// }
 
 int main(int argc, char *argv[])
 {

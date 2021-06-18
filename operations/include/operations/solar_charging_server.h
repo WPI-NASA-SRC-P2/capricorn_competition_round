@@ -28,7 +28,6 @@ private:
     bool power_saver = false;
     bool should_turn = false;
     bool is_turning = false;
-    bool turnRobot();
     void rotateRobot();
     void stopRobot(void);
     //bool turnRobot();
