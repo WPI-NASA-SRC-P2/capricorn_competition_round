@@ -32,26 +32,26 @@ bool ScoutStateMachine::solarRecharge()
     // asumme that the robot isn't in a state
     // change the positon // rotating robot
     // 
-    if(naviagtion_client_goal.forward_velocity == 0){
-      // rotate the robot
-      const srcp2_msgs::SystemMonitorMsg &msg;
-      if(msg.solar_ok)
-      {
-        //change to power save mode
-      }
-      else()
-      {
-        //rotate the robot
-        while(!msg.solar_ok)
-        {
-          //roate incrementally
-        }
-      }
-      //naviagtion_client_goal.forward_velocity = 
-    }
-    //naviagtion_client_goal.forward_velocity = 
+    // if(naviagtion_client_goal.forward_velocity == 0){
+    //   // rotate the robot
+    //   const srcp2_msgs::SystemMonitorMsg &msg;
+    //   if(msg.solar_ok)
+    //   {
+    //     //change to power save mode
+    //   }
+    //   else()
+    //   {
+    //     //rotate the robot
+    //     while(!msg.solar_ok)
+    //     {
+    //       //roTate incrementally
+    //     }
+    //   }
+    //   //naviagtion_client_goal.forward_velocity = 
+    // }
+    // //naviagtion_client_goal.forward_velocity = 
 
-    naviagtion_client_->sendGoal(  );
+    naviagtion_client_->sendGoal();
     navigation_client_->waitForResult();
     //return (navigation_client_->getState() == actionLib::SimpleClientGoalState::SUCCEEDED);
     return true;

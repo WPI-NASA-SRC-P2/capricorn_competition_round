@@ -18,14 +18,24 @@ int main(int argc, char *argv[])
   //create a nodehandle
   ros::NodeHandle nh;
 
-  ros::ServiceClient client = nh.serviceClient<operations::SolarCharge>("solar_charge");
+  ROS_INFO("Client is not broken, before starting service client");
 
+  ros::ServiceClient client = nh.serviceClient<operations::SolarCharge>("solar_charger");
+  client.waitForExistence();
 
+  
   operations::SolarCharge solarCharge;
   solarCharge.request.solar_charge_status = true;
   
   //operations::SolarChargeResponse res;
-  client.call(solarCharge);
+  if(client.call(solarCharge))
+  {
+    ROS_INFO("Call succeeded! -> %s", solarCharge.response.result.data);
+  }
+  else
+  {
+    ROS_INFO("Call failed!");
+  };
 
   // #TODO: not sure how best to exit solar charging mode
   // operations::SolarChargeRequest req = false;

@@ -19,6 +19,7 @@ const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
     STATE_MACHINE_TASK::SCOUT_STOP_SEARCH,
     STATE_MACHINE_TASK::SCOUT_LOCATE_VOLATILE,
     STATE_MACHINE_TASK::SCOUT_UNDOCK,
+    STATE_MACHINE_TASK::SCOUT_SOLAR_RECHARGE,
 };
 
 class ScoutStateMachine
@@ -78,6 +79,16 @@ private:
    * @param msg 
    */
   void volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg);
+
+  /**
+   * @brief 
+   *        
+   * 
+   */
+  bool solarRecharge();
+
+
+
 
 public:
   ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name);

@@ -61,6 +61,7 @@ enum DrivingMode
  */
 void SolarChargingServer::rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier)
 {
+  ROS_INFO("Setup Nav Goal to Turn");
   operations::NavigationGoal goal;
 
  // Manual driving  
@@ -117,12 +118,18 @@ void SolarChargingServer::setPowerSaveMode(bool state){
  */
 bool SolarChargingServer::solarChargeInitiate(operations::SolarCharge::Request& request, operations::SolarCharge::Response& response)
 {
+
+  ROS_INFO("in the callback - 1");
+
   should_turn = request.solar_charge_status;
+  ROS_INFO("in the callback - 2");
   if(should_turn)
   {
+  ROS_INFO("in the callback - 3");
     if(!is_turning) {
       // std::async(std::launch::async, turnRobot());
       turnRobot();
+      ROS_INFO("in the callback - 4");
       is_turning = true;
     }
     ROS_INFO("Solar_Charging_Mode: ON: STARTING");
@@ -147,7 +154,7 @@ bool SolarChargingServer::solarChargeInitiate(operations::SolarCharge::Request& 
 }
 
 bool SolarChargingServer::turnRobot() {
-  ROS_INFO("Solar_Charging_Mode: ON: Starting");
+  ROS_INFO("Solar_Charging_Mode: ON: Turning");
   DrivingDirection driving_direction = POSITIVE;
   rotateRobot(driving_direction, 1.0);
   while(!solar_ok && ros::ok() && should_turn) // while there is no solar keep rotating 
@@ -162,9 +169,11 @@ bool SolarChargingServer::turnRobot() {
 
 
 void SolarChargingServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg){
+  ROS_INFO("in the callback - 1");
   solar_ok = msg.solar_ok;
   power_rate = msg.power_rate;
   power_saver = msg.power_saver;   //i assume to check of we are in or out of power save mode
+  ROS_INFO("in the callback - 2");
 }
 
 
@@ -228,13 +237,13 @@ int main(int argc, char *argv[])
   //server.solarChargerService = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
   ros::ServiceServer serviceD = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
 
-  server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::systemMonitorCB, &server);
+  //server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::systemMonitorCB, &server);
 
   //srv result
   //debug_solar_charging_mode = nh.advertise<std_msgs::String>("/galaga/debug_solar_charging_status", 1000);
   
   //client for power saving mode
-  server.powerMode_client = nh.serviceClient<srcp2_msgs::SystemPowerSaveSrv>(power_saver_service_);
+  //server.powerMode_client = nh.serviceClient<srcp2_msgs::SystemPowerSaveSrv>(power_saver_service_);
 
   // operations::SolarChargeRequest req = true;
   // operations::SolarChargeResponse res;
