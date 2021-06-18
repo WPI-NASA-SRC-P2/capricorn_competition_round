@@ -12,6 +12,7 @@
  * 
  */
 
+#include <mutex>
 #include <operations/NavigationAction.h> // Note: "Action" is appended
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/server/simple_action_server.h>
@@ -19,6 +20,7 @@
 #include <operations/obstacle_avoidance.h>
 #include <operations/navigation_algorithm.h>
 #include <nav_msgs/Odometry.h>
+#include <rosgraph_msgs/Clock.h>
 
 #define UPDATE_HZ 10
 
@@ -31,16 +33,17 @@ Client *g_client;
 
 operations::NavigationGoal g_nav_goal;
 perception::ObjectArray g_objects;
-
+rosgraph_msgs::Clock g_clock;
+rosgraph_msgs::Clock g_start_clock;
 std::string g_robot_name;
 geometry_msgs::PoseStamped g_robot_pose;
 
 const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
-const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05;
+const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05, TIMER_THRESH = 20.0;
 const double NOT_AVOID_OBSTACLE_THRESHOLD = 5.0;
-std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex;
+std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex, g_clock_mutex;
 std::string g_desired_label;
-bool g_reached_goal = false, g_cancel_called = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false;
+bool g_reached_goal = false, g_cancel_called = false, g_goal_failed = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false;
 int g_height_threshold = 400;
 
 enum HEIGHT_THRESHOLD
@@ -108,7 +111,7 @@ void setDesiredLabelHeightThreshold()
  * @return true - if the class is valid
  * @return false - if the class is invalid
  */
-bool check_class()
+bool checkClass()
 {
     if (g_desired_label == OBJECT_DETECTION_PROCESSING_PLANT_CLASS ||
         g_desired_label == OBJECT_DETECTION_REPAIR_STATION_CLASS ||
@@ -121,7 +124,16 @@ bool check_class()
 }
 
 /**
- * @brief Callback function which subscriber to Objects message published from object detection
+ * @brief Callback function which subscribes to clock message published by simulation to get the simulation time
+ * 
+ */
+ void clockCallback(const rosgraph_msgs::Clock clock)
+ {
+     g_clock = clock;
+ }
+
+/**
+ * @brief Callback function which subscribes to Objects message published from object detection
  * 
  * @param objs 
  */
@@ -133,6 +145,21 @@ void objectsCallback(const perception::ObjectArray &objs)
 }
 
 /**
+ * @brief Function which checks if the process has exceeded the timer limits
+ * 
+ * @return true : if exceeded
+ * @return false : otherwise
+ */
+bool checkIfFailed() 
+{
+    if((g_clock.clock - g_start_clock.clock).toSec() > TIMER_THRESH)
+    {
+        return true;
+    }
+    return false;
+}
+
+/**
  * @brief Function for centering robot wrt object
  * 
  * Steps:
@@ -140,6 +167,18 @@ void objectsCallback(const perception::ObjectArray &objs)
  */
 bool center()
 {
+    if(checkIfFailed())
+    {
+        g_goal_failed = true;
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_nav_goal.direction = 0;
+        g_nav_goal.angular_velocity = 0;
+        g_nav_goal.forward_velocity = 0;
+        g_client->sendGoal(g_nav_goal);
+        ROS_INFO_STREAM(getString("Task Failed"));
+        return true;
+    }
+
     const std::lock_guard<std::mutex> lock(g_objects_mutex);
     perception::ObjectArray objects = g_objects;
     // Initialize location and size variables
@@ -275,12 +314,6 @@ void undock()
         g_nav_goal.direction = 0;
         g_nav_goal.angular_velocity = 0;
         g_client->sendGoal(g_nav_goal);
-        geometry_msgs::PoseStamped pt;
-        pt.header.frame_id = g_robot_name + ROBOT_BASE;
-        pt.pose.position.x = 5;
-        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
-        g_nav_goal.pose = pt;
-        g_client->sendGoal(g_nav_goal);
         g_client->waitForResult();
         ROS_INFO_STREAM(getString("Robot Undocked"));
         g_reached_goal = true;
@@ -308,6 +341,18 @@ void visionNavigation()
 {
     const std::lock_guard<std::mutex> lock(g_objects_mutex);
     perception::ObjectArray objects = g_objects;
+    
+    if(checkIfFailed())
+    {
+        g_goal_failed = true;
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_nav_goal.direction = 0;
+        g_nav_goal.angular_velocity = 0;
+        g_nav_goal.forward_velocity = 0;
+        g_client->sendGoal(g_nav_goal);
+        ROS_INFO_STREAM(getString("Task Failed"));
+        return;
+    }
 
     static float prev_angular_velocity;
     static bool prev_centered, centered = false;
@@ -409,6 +454,7 @@ void visionNavigation()
             g_nav_goal.angular_velocity = 0;
             if (error_height < 0 && true_detection_times > FOUND_FRAME_THRESHOLD)
             {
+                g_start_clock = g_clock;
                 // If the object is having desired height, stop the robot
                 g_nav_goal.forward_velocity = 0;
                 g_reached_goal = true;
@@ -418,6 +464,8 @@ void visionNavigation()
             }
             else
             {
+                g_start_clock = g_clock;
+
                 // Keep driving forward according to height of the object
                 g_nav_goal.forward_velocity = FORWARD_VELOCITY;
             }
@@ -606,6 +654,8 @@ void cancelGoal()
  */
 void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
 {
+    g_start_clock = g_clock;
+
     operations::NavigationVisionResult result;
 
     NAV_VISION_TYPE mode = (NAV_VISION_TYPE)goal->mode;
@@ -615,7 +665,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     {
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_desired_label = goal->desired_object_label;
-        if (!check_class())
+        if (!checkClass())
         {
             // the class is not valid, send the appropriate result
             result.result = COMMON_RESULT::INVALID_GOAL;
@@ -635,10 +685,11 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     g_send_nav_goal = true;
     g_cancel_called = false;
     g_reached_goal = false;
+    g_goal_failed = false;
 
     ros::Rate update_rate(UPDATE_HZ);
 
-    while (ros::ok() && !g_reached_goal && !g_cancel_called)
+    while (ros::ok() && !g_reached_goal && !g_cancel_called && !g_goal_failed)
     {
         if (!g_message_received)
             continue;
@@ -690,6 +741,14 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
         const std::lock_guard<std::mutex> lock(g_cancel_goal_mutex);
     }
 
+    if(g_goal_failed)
+    {
+        g_goal_failed = false;
+        result.result = COMMON_RESULT::FAILED;
+        as->setSucceeded(result, "Failed Goal");
+        return;
+    }
+
     if (g_cancel_called)
     {
         g_cancel_called = false;
@@ -731,7 +790,7 @@ int main(int argc, char **argv)
     g_client = new Client(CAPRICORN_TOPIC + g_robot_name + "/" + NAVIGATION_ACTIONLIB, true);
 
     ros::Subscriber objects_sub = nh.subscribe(CAPRICORN_TOPIC + g_robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
-
+    ros::Subscriber clock_sub = nh.subscribe(CLOCK_TOPIC, 1, &clockCallback);
     ros::Subscriber robot_odom_sub = nh.subscribe(CAPRICORN_TOPIC + g_robot_name + CHEAT_ODOM_TOPIC, 1, &odomCallback);
 
     Server server(nh, g_robot_name + NAVIGATION_VISION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
