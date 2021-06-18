@@ -47,9 +47,9 @@ g_seq = 0
 g_lock = threading.Lock()
 
 g_class_individual_thresh = {
-    "processingPlant": 0.8,
-    "repairStation": 0.8,
-    "hopper": 0.6,
+    "processingPlant": 0.6,
+    "repairStation": 0.6,
+    "hopper": 0.7,
     "excavator": 0.7,
     "scout": 0.7,
 }
