@@ -245,17 +245,6 @@ void NavigationServer::moveRobotWheels(const double velocity)
 	publishMessage(back_right_vel_pub_, angular_velocity);
 }
 
-float NavigationServer::calcEuclideanDist(const geometry_msgs::PoseStamped& current_pose, const geometry_msgs::PoseStamped& goal)
-{
-	double x = current_pose.pose.position.x - goal.pose.position.x;
-	double y = current_pose.pose.position.y - goal.pose.position.y;
-
-	double dist;
-	dist = pow(x, 2) + pow(y, 2);
-	dist = sqrt(dist);
-
-	return dist;
-}
 
 /*******************************************************************/
 /****************** P U B L I S H E R   L O G I C ******************/
@@ -509,15 +498,15 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 			return false;
 		}
 
-		// Calculate the percentage driven of the current trajectory
-		double current_eucledian_distance_to_waypoint = calcEuclideanDist(*getRobotPose(), waypoint);
+		// Calculate the current dist to waypoint
+		double current_distance_to_waypoint = NavigationAlgo::changeInPosition(*getRobotPose(), waypoint);
 
 		// Calculate the delta heading
 		double delta_heading, center_radius;
 
 		// Start steering towards the next waypoint's heading when the robot is half its length away from it
 		// NOTE: Add DIST_EPSILON to calculation if we want to start turning torwards the next heading sooner
-		if (current_eucledian_distance_to_waypoint < (current_eucledian_distance_to_waypoint - NavigationAlgo::wheel_sep_length_/2))
+		if (current_distance_to_waypoint < (current_distance_to_waypoint - NavigationAlgo::wheel_sep_length_/2))
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), future_waypoint, robot_name_, buffer_);
 		else
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
@@ -694,7 +683,6 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 				bool drove_successfully = smoothDriving(current_waypoint, future_waypoint);
 
-				//ROS_INFO("Eucledian dist after driving to waypoint: %f", calcEuclideanDist(*getRobotPose(), current_waypoint));
 
 				if (!drove_successfully)
 				{
