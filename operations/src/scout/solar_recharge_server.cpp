@@ -61,19 +61,6 @@ enum DrivingMode
  */
 void SolarChargingServer::rotateRobot()
 {
-//   ROS_INFO("Setup Nav Goal to Turn");
-//   operations::NavigationGoal goal;
-//   typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
-//   Client* client;
-//  // Manual driving  
-//   goal.drive_mode = NAV_TYPE::MANUAL;
-
-//   goal.forward_velocity = 0;
-//   goal.angular_velocity = rotate_direction * ROTATION_VELOCITY * rotational_velocity_multiplier;
-
-//   navigation_client_->sendGoal(goal);
-//   ROS_INFO("Send Nav Goal to Turn");
-//   ros::Duration(0.1).sleep();operations::NavigationGoal goal;
   operations::NavigationGoal goal;
   goal.drive_mode = NAV_TYPE::MANUAL;
 
@@ -92,17 +79,6 @@ void SolarChargingServer::rotateRobot()
  */
 void SolarChargingServer::stopRobot(void)
 {
-  // operations::NavigationGoal goal;
-
-  // // Manual driving
-  // goal.drive_mode = NAV_TYPE::MANUAL;
-
-  // goal.forward_velocity = 0;
-  // goal.angular_velocity = 0;
-
-  // navigation_client_->sendGoal(goal);
-  // ROS_INFO("Send Nav Goal to Stop");
-  // ros::Duration(0.5).sleep();
   operations::NavigationGoal goal;
   goal.drive_mode = NAV_TYPE::MANUAL;
 
@@ -137,7 +113,16 @@ void SolarChargingServer::setPowerSaveMode(bool state){
  */
 bool SolarChargingServer::solarChargeInitiate(operations::SolarCharge::Request& request, operations::SolarCharge::Response& response)
 {
+  //rotateRobot();
+  //bool requestData = request.solar_charge_status;
+
+  setPowerSaveMode(false);
   rotateRobot();
+  should_turn = true;
+  return true;
+  
+  //setPowerSaveMode(true);
+  //stopRobot();
   // operations::NavigationGoal goal;
   // goal.drive_mode = NAV_TYPE::MANUAL;
 
@@ -198,11 +183,18 @@ bool SolarChargingServer::turnRobot() {
 
 
 void SolarChargingServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg){
-  ROS_INFO("in the callback - 1");
+  ROS_INFO("in the system monitor callback - 1");
   solar_ok = msg.solar_ok;
   power_rate = msg.power_rate;
   power_saver = msg.power_saver;   //i assume to check of we are in or out of power save mode
-  ROS_INFO("in the callback - 2");
+  
+  if(solar_ok && should_turn){
+    stopRobot();
+    setPowerSaveMode(true);
+    ROS_INFO("solar okay seen");
+    should_turn = false;
+  }
+
 }
 
 
@@ -252,10 +244,11 @@ int main(int argc, char *argv[])
   //std::string robot_name = "small_scout_1";
 
   //ROS Topic names
-  std::string system_monitor_topic_ = "/capricorn/" + robot_name + "/system_monitor";
+  //std::string system_monitor_topic_ = "/capricorn/" + robot_name + "/system_monitor";
+  std::string system_monitor_topic_ = robot_name + "/system_monitor";
 
   //ROS ServerService
-  std::string power_saver_service_ =  "/" + robot_name + "/system_monitor/power_saver";
+  std::string power_saver_service_ =  robot_name + "/system_monitor/power_saver";
  
   SolarChargingServer server;
 
@@ -263,7 +256,7 @@ int main(int argc, char *argv[])
   ros::NodeHandle nh;
 
   //Instantiating ROS server for solar charge mode
-  //server.solarChargerService = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
+  
   ros::ServiceServer serviceD = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
 
   // initialize client
@@ -272,13 +265,14 @@ int main(int argc, char *argv[])
   ROS_INFO_STREAM("[ operations | solar_recharge | "<<robot_name<<" ] "<< "Waiting for navigation server...");
   bool serverExists = navigation_client_->waitForServer();
   ROS_INFO_STREAM("[ operations | solar_recharge | "<<robot_name<<" ] "<< "Server Connected");
-  //server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::systemMonitorCB, &server);
+
+  server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::systemMonitorCB, &server);
 
   //srv result
   //debug_solar_charging_mode = nh.advertise<std_msgs::String>("/galaga/debug_solar_charging_status", 1000);
   
   //client for power saving mode
-  //server.powerMode_client = nh.serviceClient<srcp2_msgs::SystemPowerSaveSrv>(power_saver_service_);
+  server.powerMode_client = nh.serviceClient<srcp2_msgs::SystemPowerSaveSrv>(power_saver_service_);
 
   // operations::SolarChargeRequest req = true;
   // operations::SolarChargeResponse res;
