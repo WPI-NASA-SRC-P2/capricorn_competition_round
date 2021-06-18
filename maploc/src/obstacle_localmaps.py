@@ -208,8 +208,9 @@ class ObjectPlotter:
 
                 # set radius of object to be plotted based on the width of the bounding box observed
                 radius = (obj.width) / 2
-                # plot the obstacle onto the occupancy grid
-                self.addObstacle(obx, oby, radius)
+                # plot the obstacle onto the occupancy grid   !!!!!!!!!!!!!probably!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                if(radius >= 0.68):
+                    self.addObstacle(obx, oby, radius)
 
     # publish the updated occupancy grid
     # - publish self.occ_grid after finished
