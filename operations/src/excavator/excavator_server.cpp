@@ -129,19 +129,21 @@ geometry_msgs::PoseStamped getHaulerPose(geometry_msgs::PointStamped stamped_poi
       {   
           perception::Object object = objects.obj.at(i);
           // ROS_INFO_STREAM("Object label: " << object.label);
-          if(object.label == desired_label) {
+          if(object.label == desired_label)
+          {
               // Store the object's location
               currentHaulerPoseStamped = object.point;
               pointDetected = true;
-              ROS_INFO("[operations | excavator_server | %s]: Point Detected", robot_name_.c_str());
+              //ROS_INFO("[operations | excavator_server | %s]: Point Detected", robot_name_.c_str());
               break;
           }
       }
       count++;
   }
 
-  currentHaulerPoseStamped.pose.position.x += 0.5;
-  currentHaulerPoseStamped.pose.position.z -= 0.7;
+  currentHaulerPoseStamped.pose.position.x += 0.4;
+  currentHaulerPoseStamped.pose.position.y -= 0.2;
+  currentHaulerPoseStamped.pose.position.z -= 0.5;
 
   if (!pointDetected)
     ROS_WARN("[operations | excavator_server | %s]: Hauler antenna not detected, using default hauler position in left camera optical frame", robot_name_.c_str());
@@ -151,7 +153,7 @@ geometry_msgs::PoseStamped getHaulerPose(geometry_msgs::PointStamped stamped_poi
 
 std::vector<float> getDepthHeight(geometry_msgs::Point hauler_center)
 {
-  float l1 = 0.8; // shoulder link lenght
+  float l1 = 1.0; // shoulder link lenght
   float l2 = 0.8; // elbow link length
   std::vector<float> thetas;
   float D = hauler_center.x;
@@ -187,21 +189,21 @@ std::vector<float> getDumpAngleInBase(int tries)
 {
   tf::TransformListener tf_listener_; // For transformation from camera frame to shoulder frame
   
-  std::string base_frame = "small_excavator_1" + ROBOT_BASE;
+  std::string base_frame = "small_excavator_1" + ROBOT_BASE; //change to robot name
   std::string left_camera_frame = "small_excavator_1" + LEFT_CAMERA_ROBOT_LINK;
 
   bool transformSet = false; // flag to keep track of when valid frames are found
   int countTries = 0; // counter to keep track of tries
   
   geometry_msgs::PointStamped initial_point_stamped; // object to store detected hauler point in base frame
-  initial_point_stamped.point.z = 2.0; // Default assumed location is [0, 0, 2] in left camera frame in case object detection fails
+  initial_point_stamped.point.z = 1.2; // Default assumed location is [0, 0, 1.2] in left camera frame in case object detection fails
 
-  printPoint("Default point in left camera frame", initial_point_stamped.point);
+  //printPoint("Default point in left camera frame", initial_point_stamped.point);
 
   initial_point_stamped.point = getHaulerPose(initial_point_stamped).pose.position; // try to get hauler location from object detection  
   printPoint("Detected point in left camera frame", initial_point_stamped.point);
 
-  ROS_INFO("[operations | excavator_server | %s]: Initialized angle array", robot_name_.c_str());
+  //ROS_INFO("[operations | excavator_server | %s]: Initialized angle array", robot_name_.c_str());
 
   geometry_msgs::PointStamped final_point_stamped; // point stamped object to store transformation of point from camera frame to base frame
 
@@ -214,16 +216,15 @@ std::vector<float> getDumpAngleInBase(int tries)
   while(countTries<tries && !transformSet) {
         try{
             tf_listener_.transformPoint(base_frame, initial_point_stamped, final_point_stamped);
-            ros::Duration(5).sleep();
             transformSet = true;
         }
         catch (tf::TransformException &ex) {
             ROS_WARN_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Could not transform hauler detection from " << left_camera_frame << " to " << base_frame);
             ROS_ERROR("[operations | excavator_server | %s]: %s", robot_name_.c_str(), ex.what());
-            ros::Duration(1.0).sleep();
+            ros::Duration(0.1).sleep();
+            countTries++;
             continue;
         }
-        countTries++;
     }
   
   printPoint("Detected point in excavator base frame", final_point_stamped.point);
@@ -239,9 +240,8 @@ std::vector<float> getDumpAngleInBase(int tries)
 
   std::vector<float> thetas = getDepthHeight(final_wrt_shoulder);
 
-  printPoint("Transformed point in base frame", final_point_stamped.point);
-
   thetas.insert(thetas.begin(), findShoulderAngle(final_point_stamped.point));
+  ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: arm angles are " << thetas[0] << ", " << thetas[1] << ", " << thetas[2]);
   return thetas;
 }
 
@@ -355,7 +355,7 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     // previous shoulder yaw was 0.15
     publishAngles(thetas[0], -2, 1, 0.4); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(thetas[0], thetas[1], thetas[2]-0.2, (thetas[1]+thetas[2]+1.5)); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    publishAngles(thetas[0], thetas[1], thetas[2], (thetas[1]+thetas[2]+1.5)); // This set of values moves the scoop to deposit volatiles in the hauler bin
     ros::Duration(5).sleep();
     publishAngles(thetas[0], -2, 1, -0.7786); // This set of values moves the scoop to the front center
     ros::Duration(3).sleep();
