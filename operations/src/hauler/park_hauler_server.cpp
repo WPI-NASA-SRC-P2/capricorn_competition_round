@@ -48,7 +48,7 @@ bool g_hauler_message_received = false, g_excavator_message_received = false;
 
 // global variables for park excavator
 const int HAULER_HEIGHT_THRESH = 130, ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESH_WIDE = 100, EXCAVATOR_TIMES_DETECT_TIMES = 10, EXCAVATOR_HEIGHT_THRESH = 300;
-const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0, ROBOT_ANTENNA_DEPTH_THRESH = 2.0;
+const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0, ROBOT_ANTENNA_DEPTH_THRESH = 2.5;
 bool g_parked = false, g_found_orientation = false, g_cancel_called = false, g_revolve_direction_set = false;
 float g_revolve_direction = EXC_FORWARD_VELOCITY;
 int g_times_excavator = 0;
@@ -177,7 +177,7 @@ void parkWrtHopper()
 
     bool processing_plant_detected = (processing_plant_z != INIT_VALUE), furnace_detected = (furnace_z != INIT_VALUE), hopper_detected = (hopper_x != INIT_VALUE);
 
-    if (furnace_detected && furnace_z < 57)
+    if (furnace_detected && furnace_z < 2.2)
     {
         ROS_INFO_STREAM(getString("REACHED HOPPER"));
         for (int i = 0; i < 10; i++)
@@ -193,7 +193,8 @@ void parkWrtHopper()
         return;
     }
 
-    if (hopper_detected && furnace_detected && furnace_size_x > 100 && abs(hopper_x - furnace_x) < 30)
+    ROS_INFO_STREAM(getString(to_string(furnace_size_x)));
+    if (hopper_detected && furnace_detected && furnace_size_x > 100 && abs(hopper_x - furnace_x) < 50)
     {
         if (centering && furnace_x > 90)
         {
