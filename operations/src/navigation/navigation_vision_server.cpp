@@ -305,22 +305,26 @@ void undock()
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = 0;
         g_nav_goal.direction = 0;
-        g_nav_goal.angular_velocity = 5;
+        g_nav_goal.angular_velocity = 0.5;
     }
     else { 
         ROS_INFO_STREAM(getString("Undocking Robot"));
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
-        g_nav_goal.forward_velocity = 0;
+        g_nav_goal.forward_velocity = 2;
         g_nav_goal.direction = 0;
         g_nav_goal.angular_velocity = 0;
         g_client->sendGoal(g_nav_goal);
-        g_client->waitForResult();
+        g_client->sendGoal(g_nav_goal);
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(5).sleep();
         ROS_INFO_STREAM(getString("Robot Undocked"));
         g_reached_goal = true;
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = 0;
         g_nav_goal.direction = 0;
         g_nav_goal.angular_velocity = 0;
+        g_client->sendGoal(g_nav_goal);
+        g_client->sendGoal(g_nav_goal);
         g_client->sendGoal(g_nav_goal);
     }
 }
