@@ -193,7 +193,6 @@ void parkWrtHopper()
         return;
     }
 
-    ROS_INFO_STREAM(getString(to_string(furnace_size_x)));
     if (hopper_detected && furnace_detected && furnace_size_x > 100 && abs(hopper_x - furnace_x) < 50)
     {
         if (centering && furnace_x > 90)
