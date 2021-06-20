@@ -43,10 +43,7 @@ NavigationServer::~NavigationServer()
  */
 void NavigationServer::initVelocityPublisher(ros::NodeHandle& nh, const std::string& robot_name)
 {
-	front_left_vel_pub_ = nh.advertise<std_msgs::Float64>("/" + robot_name + FRONT_LEFT_WHEEL + VELOCITY_TOPIC, 1000);
-	front_right_vel_pub_ = nh.advertise<std_msgs::Float64>("/" + robot_name + FRONT_RIGHT_WHEEL + VELOCITY_TOPIC, 1000);
-	back_left_vel_pub_ = nh.advertise<std_msgs::Float64>("/" + robot_name + BACK_LEFT_WHEEL + VELOCITY_TOPIC, 1000);
-	back_right_vel_pub_ = nh.advertise<std_msgs::Float64>("/" + robot_name + BACK_RIGHT_WHEEL + VELOCITY_TOPIC, 1000);
+	wheel_ramp_pub_ = nh.advertise<operations::WheelVelocities>(CAPRICORN_TOPIC + robot_name + "/desired_wheel_velocities", 1000);
 }
 
 /**
@@ -183,52 +180,47 @@ void NavigationServer::publishMessage(ros::Publisher& publisher, float data)
 
 	publisher.publish(pub_data);
 }
-
-/**
- * @brief Steers the robot wheels for the angles
- * 
- * @param angles Steering angles
-	 *                  The vector will be in order:
-	 *                  Clockwise from top, starting with FRONT_LEFT
-	 * 
-	 *          element 0: Front Left Wheel
-	 *          element 1: Front Right Wheel
-	 *          element 2: Back Right Wheel
-	 *          element 3: Back Left Wheel
- */
-void NavigationServer::steerRobot(const std::vector<double>& angles)
+void NavigationServer::driveRobot(const std::vector<double>& speeds)
 {
-	publishMessage(front_left_steer_pub_, angles.at(0));
-	publishMessage(front_right_steer_pub_, angles.at(1));
-	publishMessage(back_right_steer_pub_, angles.at(2));
-	publishMessage(back_left_steer_pub_, angles.at(3));
+	operations::WheelVelocities vels;
+
+	vels.velocities = speeds;
+	vels.drive_mode = current_mode_;
+
+	wheel_ramp_pub_.publish(vels);
 }
 
-/**
- * @brief Steers the robot wheels for the angles
- * 
- * @param angle Angles at which the robot wheels will be steered
- */
+// Steers the robot wheels for the angles. Calls the other version
 void NavigationServer::steerRobot(const double angle)
 {
-	publishMessage(front_left_steer_pub_, angle);
-	publishMessage(front_right_steer_pub_, angle);
-	publishMessage(back_right_steer_pub_, angle);
-	publishMessage(back_left_steer_pub_, angle);
+	std::vector<double> angles = {angle, angle, angle, angle};
+
+	steerRobot(angles);
 }
 
-/**
- * @brief Move robot wheels with the given velocities
- * 
- * @param velocity Wheel Velocities
-	 *                  The vector will be in order:
-	 *                  Clockwise from top, starting with FRONT_LEFT
-	 * 
-	 *          element 0: Front Left Wheel
-	 *          element 1: Front Right Wheel
-	 *          element 2: Back Right Wheel
-	 *          element 3: Back Left Wheel
- */
+// Steers the robot wheels for the angles
+void NavigationServer::steerRobot(const std::vector<double>& angles)
+{
+	publishMessage(front_left_steer_pub_,  angles.at(0));
+	publishMessage(front_right_steer_pub_, angles.at(1));
+	publishMessage(back_right_steer_pub_,  angles.at(2));
+	publishMessage(back_left_steer_pub_,   angles.at(3));
+}
+
+/*********************************************************************/
+/******************       ROBOT VELOCITY LOGIC      ******************/
+/*********************************************************************/
+
+// Move robot wheels at a given velocity. Calls the other version
+void NavigationServer::moveRobotWheels(const double velocity)
+{
+	std::vector<double> velocities = {velocity, velocity, velocity, velocity};
+
+	moveRobotWheels(velocities);
+}
+
+// Move robot wheels at the velocity given in the vector. Will send velocities to the
+// ramp node to properly interpolate velociies
 void NavigationServer::moveRobotWheels(const std::vector<double> velocity)
 {
 	std::vector<double> angular_vels;
@@ -238,25 +230,23 @@ void NavigationServer::moveRobotWheels(const std::vector<double> velocity)
 		angular_vels.push_back(NavigationAlgo::linearToAngularVelocity(velocity.at(i)));
 	}
 
-	publishMessage(front_left_vel_pub_, angular_vels.at(0));
-	publishMessage(front_right_vel_pub_, angular_vels.at(1));
-	publishMessage(back_right_vel_pub_, angular_vels.at(2));
-	publishMessage(back_left_vel_pub_, angular_vels.at(3));
+	changeWheelSpeeds(angular_vels);
 }
 
-/**
- * @brief Move robot wheels with the given velocity 
- * 
- * @param velocity velocity for the wheels
- */
-void NavigationServer::moveRobotWheels(const double velocity)
+void NavigationServer::changeWheelSpeeds(std::vector<double> desired_velocities)
 {
-	double angular_velocity = NavigationAlgo::linearToAngularVelocity(velocity);
+	// If we are changing drive modes, ramp to 0, then ramp to our new velocity
+	if(last_mode_ != current_mode_)
+	{
+		std::vector<double> zeros {0, 0, 0, 0};
+		driveRobot(zeros);
+	}
 
-	publishMessage(front_left_vel_pub_, angular_velocity);
-	publishMessage(front_right_vel_pub_, angular_velocity);
-	publishMessage(back_left_vel_pub_, angular_velocity);
-	publishMessage(back_right_vel_pub_, angular_velocity);
+	// Ramp to desired_velocity
+	driveRobot(desired_velocities);
+
+	// Update mode after checking it's state
+	last_mode_ = current_mode_;
 }
 
 
@@ -552,7 +542,6 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		// Start steering towards the next waypoint's heading when the robot is half its length away from it
 		// NOTE: Add c_dist_epsilon_ to calculation if we want to start turning torwards the next heading sooner
 		if (current_distance_to_waypoint < (current_distance_to_waypoint - NavigationAlgo::wheel_sep_length_/2))
-		{
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), future_waypoint, robot_name_, buffer_);
 		else
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
@@ -1035,6 +1024,9 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 
 	// Zero out the total distance traveled when we receive a new goal
 	total_distance_traveled_ = 0;
+
+	// Update the new drive mode. Used for wheel velocity ramping
+	current_mode_ = NAV_TYPE(goal->drive_mode);
 
 	switch(goal->drive_mode)
 	{

@@ -11,6 +11,7 @@
 
 #include <operations/navigation_algorithm.h>
 #include <operations/NavigationAction.h> // Note: "Action" is appended
+#include <operations/WheelVelocities.h>
 #include <actionlib/server/simple_action_server.h>
 
 // Used to visualize poses in an array
@@ -68,7 +69,7 @@ private:
     ros::Rate *update_rate_;
 
     // Publishers for each wheel velocity and steering controller
-    ros::Publisher front_left_vel_pub_, front_right_vel_pub_, back_left_vel_pub_, back_right_vel_pub_;
+    ros::Publisher wheel_ramp_pub_;
     ros::Publisher front_left_steer_pub_, front_right_steer_pub_, back_left_steer_pub_, back_right_steer_pub_;
 
     // Debug publisher. Used to visualize poses in gazebo with utils/render_poses.py
@@ -103,6 +104,10 @@ private:
     // Whether we should get a new trajectory from the planner. Set by driveDistance in automaticDriving.
     bool get_new_trajectory_ = false;
     bool ramp_finished_ = false;
+
+    // The current and most recent drive mode the wheels were following
+    NAV_TYPE last_mode_;
+    NAV_TYPE current_mode_;
 
     /**
      * @brief Uses waypoint_pub_ to publish poses to be visualized in Gazebo.
@@ -165,6 +170,17 @@ private:
     void publishMessage(ros::Publisher &publisher, float data);
 
     /**
+     * @brief Sends the speeds to the ramp velocities node, so that wheels will ramp to these velocities.
+     * 
+     * @param speeds The vector of speeds to send.
+     *                  element 0: Front Left Wheel
+            *          element 1: Front Right Wheel
+            *          element 2: Back Right Wheel
+            *          element 3: Back Left Wheel
+     */
+    void driveRobot(const std::vector<double>& speeds);
+
+    /**
     * @brief Steers the robot wheels for the angles
     * 
     * @param angles Steering angles
@@ -205,6 +221,14 @@ private:
     * @param velocity velocity for the wheels.
     */
     void moveRobotWheels(const double velocity);
+
+    /**
+     * @brief 
+     * 
+     * @param desired_velocity 
+     * @param mode 
+     */
+    void changeWheelSpeeds(std::vector<double> desired_velocities);
 
     /**
      * @brief Sends a goal received from the Robot SM to the planner. Receives and returns the trajectory

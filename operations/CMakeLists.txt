@@ -59,7 +59,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ##   * uncomment the generate_messages entry below
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
-# Generate messages in the 'msg' folder
+## Generate messages in the 'msg' folder
 add_message_files(
   FILES
   WheelVelocities.msg
@@ -191,6 +191,12 @@ target_link_libraries(start_nav_server ${PROJECT_NAME}
 add_executable(wheel_speed_processing src/navigation/wheel_speed_processing.cpp)
 add_dependencies(wheel_speed_processing ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(wheel_speed_processing
+  ${catkin_LIBRARIES}
+)
+
+add_executable(ramp_wheel_velocities src/navigation/ramp_wheel_velocities.cpp)
+add_dependencies(ramp_wheel_velocities ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(ramp_wheel_velocities
   ${catkin_LIBRARIES}
 )
 

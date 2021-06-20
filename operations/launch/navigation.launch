@@ -6,12 +6,15 @@
 
     <!-- <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /odom /map 100" /> -->
 
-    <!-- Whether to use cheat odom or rtabmap. Utilized by navigation server. -->
-    <param name="cheat_odom" value="$(arg use_cheat_odom)"/>
-    <!-- Whether to use crab drive or point-and-go. Utilized by navigation server. -->
-    <param name="crab_drive" value="$(arg use_crab_drive)" />
+    <group ns="/capricorn/$(arg robot_name)">
+        <!-- Whether to use cheat odom or rtabmap. Utilized by navigation server. -->
+        <param name="cheat_odom" value="$(arg use_cheat_odom)"/>
+        <!-- Whether to use crab drive or point-and-go. Utilized by navigation server. -->
+        <param name="crab_drive" value="$(arg use_crab_drive)" />
 
-    <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" args="$(arg robot_name)" if="$(arg use_cheat_odom)"/>
-    <node name="start_nav_server" pkg="operations" type="start_nav_server" args="$(arg robot_name)" output="$(arg output)"/>
-    <node name="wheel_speed_processing" pkg="operations" type="wheel_speed_processing" args="$(arg robot_name)" />
+        <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" args="$(arg robot_name)" if="$(arg use_cheat_odom)"/>
+        <node name="start_nav_server" pkg="operations" type="start_nav_server" args="$(arg robot_name)" output="$(arg output)"/>
+        <node name="wheel_speed_processing" pkg="operations" type="wheel_speed_processing" args="$(arg robot_name)" />
+        <node name="ramp_wheel_velocities" pkg="operations" type="ramp_wheel_velocities" args="$(arg robot_name)" output="log" />
+    </group>
 </launch>
