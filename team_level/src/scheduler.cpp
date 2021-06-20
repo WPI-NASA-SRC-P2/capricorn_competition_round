@@ -1,386 +1,207 @@
 #include <team_level/scheduler.h>
+#include <algorithm>
 
-Scheduler::Scheduler(ros::NodeHandle nh, const int team_number) : nh_(nh)
-{
-  initTeam(team_number);
+/****************************************/
+/****************************************/
+
+TeamState& TeamState::getState(uint32_t un_state) {
+   return m_pcRobotScheduler->getState(un_state);
 }
 
-Scheduler::~Scheduler()
-{
-  delete scout_client_;
-  delete excavator_client_;
-  delete hauler_client_;
+/****************************************/
+/****************************************/
+
+//UNDERSTANDING: When we add states in addState(state), the state is assigned to a scheduler. 
+void TeamState::setRobotScheduler(TeamScheduler& c_robot_scheduler) {
+   m_pcRobotScheduler = &c_robot_scheduler;
 }
 
-void Scheduler::initTeam(const int team_number)
-{
-  SCOUT = team_number == 1 ? SCOUT_1 : SCOUT_2;
-  EXCAVATOR = team_number == 1 ? EXCAVATOR_1 : EXCAVATOR_2;
-  HAULER = team_number == 1 ? HAULER_1 : HAULER_2;
+/****************************************/
+/****************************************/
 
-  //   scout_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + SCOUT + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
-  //   excavator_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + EXCAVATOR + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
-  //   hauler_odom_sub_ = nh_.subscribe(CAPRICORN_TOPIC + HAULER + CHEAT_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
-
-  scout_odom_sub_ = nh_.subscribe(SCOUT + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateScoutPose, this);
-  excavator_odom_sub_ = nh_.subscribe(EXCAVATOR + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateExcavatorPose, this);
-  hauler_odom_sub_ = nh_.subscribe(HAULER + RTAB_ODOM_TOPIC, 1000, &Scheduler::updateHaulerPose, this);
-
-  initClients();
+TeamScheduler::~TeamScheduler() {
+   std::for_each(
+      m_mapStates.begin(),
+      m_mapStates.end(),
+      [](std::pair<uint32_t, TeamState*> c_item){
+         delete c_item.second;
+      });
 }
 
-void Scheduler::initClients()
-{
-  scout_client_ = new RobotClient(CAPRICORN_TOPIC + SCOUT + "/" + SCOUT + STATE_MACHINE_ACTIONLIB, true);
-  excavator_client_ = new RobotClient(CAPRICORN_TOPIC + EXCAVATOR + "/" + EXCAVATOR + STATE_MACHINE_ACTIONLIB, true);
-  hauler_client_ = new RobotClient(CAPRICORN_TOPIC + HAULER + "/" + HAULER + STATE_MACHINE_ACTIONLIB, true);
+/****************************************/
+/****************************************/
+
+//UNDERSTANDING: Adding states to an unordered map (map of states declared in the header).
+
+void TeamScheduler::addState(TeamState* pc_state) {
+   if(m_mapStates.find(pc_state->getId()) == m_mapStates.end()) {
+      m_mapStates[pc_state->getId()] = pc_state;
+      pc_state->setRobotScheduler(*this);
+   }
+   else {
+      throw StateMachineException(ToString("Duplicated state id ", pc_state->getId()));
+   }
 }
 
-void Scheduler::startScheduler()
-{
-  start_scheduler_ = true;
+/****************************************/
+/****************************************/
 
-  schedulerLoop();
+TeamState& TeamScheduler::getState(uint32_t un_id) {
+   auto pcState = m_mapStates.find(un_id);
+   if(pcState != m_mapStates.end()) {
+      return *(pcState->second);
+   }
+   else {
+      throw StateMachineException(ToString("Can't get state id ", un_id));
+   }
 }
 
-void Scheduler::schedulerLoop()
+/****************************************/
+/****************************************/
+
+//UNDERSTANDING: First finds the state in the map and then sets the entry point of the current state.
+
+void TeamScheduler::setInitialState(uint32_t un_state) {
+   auto pcState = m_mapStates.find(un_state);
+   // if state exists in map, then set it to the initial state of the scheduler
+   if(pcState != m_mapStates.end()) {
+      // acquire value of the state (every map has a key(first) and a value(second))
+      m_pcCurrent = pcState->second;
+      // completes entry point of the initial state
+      m_pcCurrent->entryPoint();
+   }
+   else {
+      throw StateMachineException(ToString("Can't set initial state to ", un_state));
+   }
+}
+
+/****************************************/
+/****************************************/
+
+void disbandingDoneTeam()
 {
-  init();
-  ROS_INFO("[SCHEDULER | scheduler.cpp | scheduler]: All State machines connected!");
-
-  startScout();
-  startExcavator();
-  startHauler();
-
-  while (ros::ok() && start_scheduler_)
+  std::vector<*ExcavationTeam>::iterator currTeam = activeTeams.begin();
+  while (currTeam != activeTeams.end())
   {
-    updateRobotStatus();
-
-    updateHauler();
-    updateExcavator();
-    updateScout();
-
-    sendScoutGoal(scout_desired_task);
-    sendExcavatorGoal(excavator_desired_task);
-    sendHaulerGoal(hauler_desired_task);
-
-    ros::Duration(0.5).sleep();
-    ros::spinOnce();
-  }
-}
-
-void Scheduler::stopScheduler()
-{
-  start_scheduler_ = false;
-}
-
-void Scheduler::init()
-{
-  scout_client_->waitForServer();
-  excavator_client_->waitForServer();
-  hauler_client_->waitForServer();
-}
-
-void Scheduler::updateRobotStatus()
-{
-  // THIS IS BAD, MUST BE HANDLED //
-  // If the task fails, then that logic should be taken care of as well
-  scout_task_completed_ = scout_client_->getState().isDone();         //== actionlib::SimpleClientGoalState::SUCCEEDED;
-  excavator_task_completed_ = excavator_client_->getState().isDone(); //== actionlib::SimpleClientGoalState::SUCCEEDED;
-  hauler_task_completed_ = hauler_client_->getState().isDone();       //== actionlib::SimpleClientGoalState::SUCCEEDED;
-}
-
-void Scheduler::startHauler()
-{
-  hauler_desired_task = HAULER_RESET_ODOM_AT_HOPPER;
-}
-
-void Scheduler::startExcavator()
-{
-  excavator_desired_task = EXCAVATOR_GOTO_DEFAULT_ARM_POSE;
-}
-
-void Scheduler::startScout()
-{
-  scout_desired_task = SCOUT_SEARCH_VOLATILE;
-}
-
-void Scheduler::updateScout()
-{
-
-  if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
-    scout_desired_task = (SCOUT_UNDOCK);
-  if (scout_goal_.task == SCOUT_UNDOCK && scout_task_completed_)
-    scout_desired_task = (SCOUT_SEARCH_VOLATILE);
-}
-
-void Scheduler::updateExcavator()
-{
-
-  static bool first_task = true;
-
-  if (scout_goal_.task == SCOUT_SEARCH_VOLATILE && scout_task_completed_)
-  {
-    if ((excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_) || first_task)
-    {
-      excavator_desired_task = (EXCAVATOR_GO_TO_SCOUT);
-      first_task = false;
+    if(currTeam->shouldDisband())
+    { 
+      activeTeams.erase(currTeam++)
     }
   }
-  // if (excavator_goal_.task == EXCAVATOR_GO_TO_LOC && excavator_task_completed_)
-  // {
-  //   excavator_desired_task = (EXCAVATOR_GO_TO_SCOUT);
-  // }
-  if (excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT && excavator_task_completed_)
-    excavator_desired_task = (EXCAVATOR_PARK_AND_PUB);
-  if (hauler_goal_.task == HAULER_PARK_AT_EXCAVATOR && hauler_task_completed_)
+}
+
+void checkForNewVolatile()
+{
+  for(int i = 0; i<scouts.size(); i++)
   {
-    excavator_desired_task = (EXCAVATOR_DIG_AND_DUMP_VOLATILE);
-    hauler_got_stuff_ = true;
+    if(scouts.at(i)->getCurrentState() == SCOUT_LOCATE)
+    {
+      scout_vecPair_volAvl_recruitedTeam.at(i).first = true;
+    }
   }
 }
 
-void Scheduler::updateHauler()
-{
-  ROS_INFO_STREAM("[SCHEDULER | scheduler.cpp | " + SCOUT + "]: " + "Scout Task:" << (scout_goal_.task) << " task completed:" << scout_task_completed_);
-  ROS_INFO_STREAM("[SCHEDULER | scheduler.cpp | " + EXCAVATOR + "]: " + "Excav Task:" << (excavator_goal_.task) << " task completed:" << excavator_task_completed_);
-  ROS_INFO_STREAM("[SCHEDULER | scheduler.cpp | " + HAULER + "]: " + "Hauler Task:" << (hauler_goal_.task) << " task completed:" << hauler_task_completed_);
+void TeamScheduler::step() {
+  // Check if can disband an active team
+  disbandingDoneTeam();
 
-  //This boolean checks IF the hauler has COMPLETED dumping volatile to processing plant.
-  bool dumping_done = hauler_goal_.task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_task_completed_;
-  //This boolean checks if hauler has COMPLETED resetting its odometry at the HOPPER.
-  bool odom_reset_done = hauler_goal_.task == HAULER_RESET_ODOM_AT_HOPPER && hauler_task_completed_;
-  //This boolean checks if the hauler is NOT dumping volatile, basically if its GOING TO THE LOC, PARKING AT THE EXCAVATOR or is not doing anything.
-  bool not_dumping = hauler_goal_.task != HAULER_DUMP_VOLATILE_TO_PROC_PLANT;
+  // Recruit missing hauler
 
-  //Conditions of excavator that should be met for the HAULER TO GO TO VOLATILE LOCATION.
-  if ((dumping_done || not_dumping || odom_reset_done) && hauler_goal_.task != HAULER_PARK_AT_EXCAVATOR)
+  // Check if scout has found anything
+  checkForNewVolatile();
+
+  // Check if that scout has been assigned a ticket
+  // *ticket: an excavator has been assigned for the volatile spot
+  // If not, 
+  for(int i = 0; i<scouts.size(); i++)
   {
-    bool excavator_going = excavator_goal_.task == EXCAVATOR_GO_TO_SCOUT || excavator_goal_.task == EXCAVATOR_GO_TO_LOC;
-    bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
-    if (excavator_going || excavator_waiting)
-      hauler_desired_task = (HAULER_FOLLOW_EXCAVATOR);
-  }
-  //Conditions of excavator that should be met for the HAULER_PARK_AT_EXCAVATOR.
-  if (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB && excavator_task_completed_)
+  if(scout_vecPair_volAvl_recruitedTeam.at(i).first)
+  if(!scout_vecPair_volAvl_recruitedTeam.at(i).second)
   {
-    if (hauler_goal_.task == HAULER_FOLLOW_EXCAVATOR && hauler_task_completed_)
-      hauler_desired_task = (HAULER_PARK_AT_EXCAVATOR);
+  // Recruit Excavator
+    // Check if excavator has been rectruited, assign a ticket to scout
+    for(int j = 0; j<excavators.size(); j++)
+    {
+      if(excavators.at(j)->getCurrentState == IDLE)
+      {
+        // Add the new team to vector of active teams
+        activeTeams.push_back(new ExcavationTeam());
+        activeTeams.back.setExcavator((EXCAVATOR_ENUM)j)
+        activeTeams.back.setScout((SCOUT_ENUM)i)
+        // Check if hauler has been recruited, if not, recruit one
+        for(int k = 0; k<haulers.size(); k++)
+        {
+          if(haulers.at(k)->getCurrentState == IDLE)
+          {
+            activeTeams.back.setHauler((EXCAVATOR_ENUM)k)
+            break;
+          }
+        }
+        scout_vecPair_volAvl_recruitedTeam.at(i).second = true;
+        break;
+      }
+    }
   }
-  //Conditions of excavator that should be met for the HAULER_DUMP_VOLATILE_TO_PROC_PLANT.
-  if (excavator_goal_.task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_task_completed_ && hauler_got_stuff_)
-  {
-    hauler_desired_task = (HAULER_DUMP_VOLATILE_TO_PROC_PLANT);
-    hauler_got_stuff_ = false;
   }
+  
+
+  // iterate over the active teams
+
+  // update the macro state for the current team
+
+  // check if the robots are in the states that they need to be. 
+  // If not, update the macro state
+
+  // Get the robot's states according to the macro state (redundant)
+
+  // Execute the robot states
 }
 
-void Scheduler::sendScoutGoal(const STATE_MACHINE_TASK task)
-{
-  // if (task == SCOUT_UNDOCK)
-  // {
-  //   // reset the scout's odometry when it is facing the excavator
-  //   geometry_msgs::PoseStamped scout_goal_pose;
-  //   scout_goal_pose = rotatePose(excavator_pose_, M_PI);
-  //   sendRobotGoal(SCOUT, scout_client_, scout_goal_, task, scout_goal_pose);
-  // }
-  // else
-  // {
-    sendRobotGoal(SCOUT, scout_client_, scout_goal_, task);
-  // }
+
+
+
+
+
+
+
+
+
+
+   /* Only execute if 'current' was initialized */
+  //  if(m_pcCurrent) {
+  //     /* Attempt a transition, every state of every rover has its own transition() */
+  //     TeamState* cNewState = &m_pcCurrent->transition();
+  //     if (m_bInterrupt)
+  //     {
+  //        cNewState = &getState(interrupt_state_);
+  //        m_bInterrupt = false;
+  //     }
+
+  //     if(cNewState != m_pcCurrent) {
+  //        /* Perform transition */
+  //        m_pcCurrent->exitPoint();
+  //        cNewState->entryPoint();
+  //        m_pcCurrent = cNewState;
+  //     }
+  //     /* Execute current state */
+  //     m_pcCurrent->step();
+  //  }
+  //  else {
+  //     throw StateMachineException("The Robotscheduler has not been initialized, you must call SetInitialState()");
+  //  }
 }
 
-void Scheduler::sendExcavatorGoal(const STATE_MACHINE_TASK task)
-{
-  if (task == EXCAVATOR_GO_TO_LOC || task == EXCAVATOR_GO_TO_SCOUT)
-  {
-    std::lock_guard<std::mutex> lock(scout_pose_mutex);
-    geometry_msgs::PoseStamped excavator_goal_pose;
-    excavator_goal_pose.header.frame_id = MAP;
-    sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, scout_pose_);
-  }
-  // if (task == EXCAVATOR_GO_TO_SCOUT)
-  // {
-  //   sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, scout_pose_); 
-  // }
-  // if (task == EXCAVATOR_DIG_AND_DUMP_VOLATILE)
-  // {
-  //   // reset odometry during dig and dump volatile state!
-  //   geometry_msgs::PoseStamped excavator_goal_pose;
-  //   excavator_goal_pose = rotatePose(hauler_pose_, M_PI);
-  //   sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task, excavator_goal_pose);
-  // }
-  //Adding what to do when excavator reset odometry is being called
+/****************************************/
+/****************************************/
 
-  else
-    sendRobotGoal(EXCAVATOR, excavator_client_, excavator_goal_, task);
+//UNDERSTANDING: Each robot has its own done() and this is what is checked to perform step()
+void TeamScheduler::exec() {
+   while(!done() && ros::ok()) 
+   {
+      step();
+      ros::spinOnce();
+   }
 }
 
-void Scheduler::sendHaulerGoal(const STATE_MACHINE_TASK task)
-{
-  // if (task == HAULER_GO_TO_LOC)
-  // {
-  //   std::lock_guard<std::mutex> lock(excavator_pose_mutex);
-
-  //   bool excavator_waiting = (excavator_goal_.task == EXCAVATOR_PARK_AND_PUB);
-
-  //   geometry_msgs::PoseStamped hauler_goal_pose;
-  //   geometry_msgs::PoseStamped ref_pose = excavator_waiting ? excavator_pose_ : scout_pose_;
-  //   hauler_goal_pose.header.frame_id = MAP;
-  //   hauler_goal_pose.pose = NavigationAlgo::getPointCloserToOrigin(ref_pose.pose, hauler_pose_.pose, -5.0);
-
-  //   sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task, hauler_goal_pose);
-  // }
-  // if (task == HAULER_GO_BACK_TO_EXCAVATOR)
-  // {
-  //   sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task, excavator_pose_);
-  // }
-  // else
-    sendRobotGoal(HAULER, hauler_client_, hauler_goal_, task);
-}
-
-void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task)
-{
-  if (robot_goal.task != task)
-  {
-    ROS_WARN_STREAM("[SCHEDULER | scheduler.cpp | " + robot_name + "]: " + "SCHEDULER : Setting " << robot_name << " Task: " << task);
-
-    // This is bad, should be removed //
-    if (task == EXCAVATOR_PARK_AND_PUB)
-      ros::Duration(20.0f).sleep();
-
-    robot_goal.task = task;
-    robot_client->sendGoal(robot_goal);
-  }
-}
-
-void Scheduler::sendRobotGoal(std::string robot_name, RobotClient *robot_client, state_machines::RobotStateMachineTaskGoal &robot_goal, const STATE_MACHINE_TASK task, const geometry_msgs::PoseStamped &goal_loc)
-{
-  if (robot_goal.task != task)
-  {
-    ROS_WARN_STREAM("[SCHEDULER | scheduler.cpp | " + robot_name + "]: " + "SCHEDULER : Setting " << robot_name << " Task: " << task);
-    robot_goal.task = task;
-    robot_goal.goal_loc = goal_loc;
-    robot_client->sendGoal(robot_goal);
-  }
-}
-
-/**
- * @brief Callback to the scout pose topic
- * 
- * @param msg 
- */
-void Scheduler::updateScoutPose(const nav_msgs::Odometry::ConstPtr &msg)
-{
-  std::lock_guard<std::mutex> lock(scout_pose_mutex);
-  scout_pose_.header = msg->header;
-  scout_pose_.pose = msg->pose.pose;
-}
-
-/**
- * @brief Callback to the Excavator pose topic
- * 
- * @param msg 
- */
-void Scheduler::updateExcavatorPose(const nav_msgs::Odometry::ConstPtr &msg)
-{
-  std::lock_guard<std::mutex> lock(excavator_pose_mutex);
-  excavator_pose_.header = msg->header;
-  excavator_pose_.pose = msg->pose.pose;
-}
-
-/**
- * @brief Callback to the Hauler pose topic
- * 
- * @param msg 
- */
-void Scheduler::updateHaulerPose(const nav_msgs::Odometry::ConstPtr &msg)
-{
-  std::lock_guard<std::mutex> lock(hauler_pose_mutex);
-  hauler_pose_.header = msg->header;
-  hauler_pose_.pose = msg->pose.pose;
-}
-
-/**
- * @brief Reset odometry pose conversion logic. Used to rotate the pose of a robot by 180 degrees for resetOdom
- * 
- * @param msg, @param theta (radians)
- */
-geometry_msgs::PoseStamped Scheduler::rotatePose(const geometry_msgs::PoseStamped &msg, double theta)
-{
-  // convert the input message's orientation quaternion into rpy for easy rotation
-  tf2::Quaternion q(msg.pose.orientation.x,
-                    msg.pose.orientation.y,
-                    msg.pose.orientation.z,
-                    msg.pose.orientation.w);
-
-  tf2::Matrix3x3 m(q);
-  double r, p, y;
-  m.getRPY(r, p, y);
-
-  // rotate the yaw by pi to have 180 degree rotation of the goal pose
-  q.setRPY(r, p, y + theta);
-
-  geometry_msgs::PoseStamped new_pose;
-  new_pose.header = msg.header;
-  //new_pose.pose.position.x = (msg.pose.position.x) + (3*(std::cos(y))); // potential offset, might need to look at which one needs cosine or sine based on wgat is observed
-  //new_pose.pose.position.y = (msg.pose.position.y) + (3*(std::sin(y))); 
-  //new_pose.pose.position.z = (msg.pose.position.z);  
-
-  new_pose.pose.position = msg.pose.position;
-  //new_pose.pose.orientation.z = (msg->pose.pose.orientation.z) + 1; // potential offset?
-  new_pose.pose.orientation = tf2::toMsg(q);
-
-  return new_pose;
-
-  /**
-  * @brief RESET LOGIC reference
-  * geometry_msgs::PoseStamped new_excav_pose;
-  * new_excav_pose.header.frame_id = ref_robot_name + BASE_FOOTPRINT;
-  * new_excav_pose.pose.position.x = 3;
-  * new_excav_pose.pose.orientation.z = 1;
-  * NavigationAlgo::transformPose(new_excav_pose, MAP, )
-
-  */
-}
-/*
-// Scheduler reset odom states in order of completion
-
-// hauler reset odom
-// first reset
-beginning of simulation->
-hauler rtabmap initialized with get_true_pose = false
-startHauler() set hauler desired task to goToProcPlant()
-update hauler reset_odom with use_gt = true to obtain true pose of hauler at hopper and store it in memory if the goaltask of goToProcPlant() is completed
-hauler exits reset odom steps (finished -> hauler spin)
-// subsequent resets
-hauler arrives at hopper
-update hauler sets desired task to reset_odom with use_gt = true upon detecting hauler dump volatile to processing plant completion (dumping_done boolean)
-hauler exits reset odom steps (finished -> hauler spin)
-//////////////////
-
-// excavator reset odom
-// first reset
-excavator rtabmap initialized with get_true_pose = true
-// subsequent resets
-excavator finishes collecting volatiles
-update hauler sets desired task to face processing plant upon detecting digging completion
-update excavator sets desired task to face processing plant upon detecting digging completion
-update excavator sets desired task to reset odom w.r.t. hauler odom upon detecting hauler face processing plant completion
-excavator exits reset odom steps (finished -> excavator -> spin)
-/////////////////
-
-// scout reset odom
-// first reset
-scout rtabmap initialized with get_true_pose = true (CANNOT CALL RESET ODOM WITH use_gt = true if doing this step)
-// subsequent resets
-excavator finishes go to scout state
-update excavator sets desired task to face processing plant upon detecting excavator go to scout completion
-update scout sets desired task to face processing plant upon detecting excavator go to scout completion
-update scout sets desired task to reset odom w.r.t. excavator upon detecting excavator face processing plant completion
-update excavator sets desired task to turn to face scout again upon detecting scout reset odom completion
-scout exits reset odom steps (finished -> update scout sets desired task to undock upon detecting excavator face scout completion)
-////////////////
-
-/////////////////////////
-*/
+/****************************************/
+/****************************************/
