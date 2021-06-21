@@ -160,19 +160,6 @@ private:
     void steerRobot(const std::vector<double> &angles);
 
     /**
-     * @brief Calculate the Euclidean distance between two give poses.
-     * 
-     * @param current_pose PoseStamped 
-     *                     The pose the robot is in at any given point in time.
-     * @param goal PoseStamped
-     *             The goal pose the robot is driving towards.
-     * 
-     * @return double 
-     *          The Eucliden distance between both poses.
-     */
-    float calcEuclideanDist(const geometry_msgs::PoseStamped& current_pose, const geometry_msgs::PoseStamped& goal);
-
-    /**
     * @brief Steers the robot wheels for the angles.
     * 
     * @param angle Angle at which all robot wheels will be steered.
