@@ -563,6 +563,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());
 
 		update_rate_->sleep();
+		ros::spinOnce();
 	}
 
 	// Update the total traveled distance with the total distance we just traveled.
