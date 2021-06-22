@@ -227,7 +227,8 @@ namespace COMMON_NAMES
     EXCAVATOR_3,
     HAULER_1,
     HAULER_2,
-    HAULER_3
+    HAULER_3,
+    NONE
   };
 
 } // namespace CAPRICORN_COMMON_NAMES
