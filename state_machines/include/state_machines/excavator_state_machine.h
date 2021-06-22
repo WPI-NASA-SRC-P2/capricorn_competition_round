@@ -33,7 +33,7 @@ public:
    void step() override {
       /* Increase time counter */
       ++m_unT;
-      std::cout << "t = " << m_unT << std::endl;
+      //std::cout << "t = " << m_unT << std::endl;
       /* Call parent class step */
       RobotScheduler::step();
    }
@@ -75,11 +75,7 @@ class ExcavatorState : public State {
    
 private:
   ros::Subscriber objects_sub_;
-
-  /**
-   * @brief Object detection objects callback
-   * 
-   * @param objs 
+   /*** @param objs 
    */
   void objectsCallback(const perception::ObjectArray::ConstPtr objs);
 
@@ -120,12 +116,15 @@ protected:
 
   typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> NavigationVisionClient;
   NavigationVisionClient *navigation_vision_client_;
+  operations::NavigationVisionGoal navigation_vision_goal_;
 
   typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
   NavigationClient *navigation_client_;
+  operations::ExcavatorGoal excavator_arm_goal_;
 
   typedef actionlib::SimpleActionClient<operations::ExcavatorAction> ExcavatorClient;
   ExcavatorClient *excavator_arm_client_;
+  operations::NavigationGoal navigation_action_goal_;
 
 };
 
@@ -143,7 +142,6 @@ public:
 
 private: 
    bool first_;
-   operations::NavigationVisionGoal navigation_vision_goal_;
    geometry_msgs::PoseStamped target_loc_;
 };
 
@@ -160,8 +158,42 @@ public:
 
 private: 
   bool first_;
-  operations::ExcavatorGoal goal_;
+  int counter_;
 };
 
+class ParkAndPub : public ExcavatorState {
+public:
+   ParkAndPub() : ExcavatorState(EXCAVATOR_PARK_AND_PUB, 10) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override ;
+   
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+  double begin_;
+  double current_;
+};
+
+class DigAndDump : public ExcavatorState {
+public:
+   DigAndDump() : ExcavatorState(EXCAVATOR_DIG_AND_DUMP_VOLATILE, 10) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override ;
+   
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+   bool volatile_found_;
+   bool dig_;
+   bool dump_;
+   int new_vol_loc_flag_;
+   int digging_attempt_;
+};
 // #endif
 
