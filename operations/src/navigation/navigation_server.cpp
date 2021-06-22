@@ -535,6 +535,8 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		else
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
 
+		ROS_WARN("[operations | nav_server | %s]: Delta heading %f", robot_name_.c_str(), delta_heading);
+
 		// Calculate center of radius of turn for Ackermann steering
 		// If delta heading is 0 (aka no change in heading) then we rotate about an infite center radius (aka we drive straight)
 		if (delta_heading == 0.0)
@@ -548,6 +550,8 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		center_of_rotation.x = -NavigationAlgo::wheel_sep_length_/2;
 
 		// Steering of the front wheels depends on the center radius previously calculated
+		ROS_ERROR("[operations | nav_server | %s]: Center radius %f", robot_name_.c_str(), center_radius);
+
 		center_of_rotation.y = center_radius;
 
 		std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesRadialTurn(center_of_rotation);
