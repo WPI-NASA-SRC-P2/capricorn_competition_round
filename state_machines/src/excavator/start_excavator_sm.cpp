@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 	// server.registerPreemptCallback(boost::bind(&cancelGoal, sm));
 	server.start();
 
-	ROS_INFO("Started Scout State Machine Actionlib Server");
+	ROS_INFO("Started Excavator State Machine Actionlib Server");
 	// ros::spin();
 
 	ROS_WARN("Excavator state machine died!\n");

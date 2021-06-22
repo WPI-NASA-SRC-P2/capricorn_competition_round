@@ -138,7 +138,7 @@ include_directories(
 ## Declare a C++ library
   add_library(${PROJECT_NAME}
   src/excavator/excavator_state_machine.cpp
-  src/scout/scout_state_machine.cpp
+  #src/scout/scout_state_machine.cpp
   src/hauler_state_machine.cpp
   src/common_robot_state_machine.cpp
  )

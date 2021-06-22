@@ -17,7 +17,7 @@ ExcavatorState::ExcavatorState(uint32_t un_id, uint32_t un_max_count) :
   ROS_INFO("Waiting for the excavator action servers...");
   navigation_vision_client_->waitForServer();
   navigation_client_->waitForServer();
-  excavator_arm_client_->waitForServer();
+//   excavator_arm_client_->waitForServer();
   
   ROS_INFO("All excavator action servers started!");
 
@@ -92,8 +92,8 @@ void GoToScout::step()
         navigation_vision_client_->sendGoal(navigation_vision_goal_);
         first_ = false;
    }   
-   else
-        ROS_INFO_STREAM("GoToScout stepping, first_ = false now");
+   // else
+   //      ROS_INFO_STREAM("GoToScout stepping, first_ = false now");
 }
 
 void GoToScout::exitPoint() 
