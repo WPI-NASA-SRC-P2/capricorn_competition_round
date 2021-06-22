@@ -1,0 +1,3 @@
+string robot_name
+bool current_state_done
+bool has_failed_last_state
