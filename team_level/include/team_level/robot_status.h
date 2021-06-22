@@ -2,10 +2,9 @@
 class RobotStatus{
    public:
       RobotStatus();
-      int addRobot()
-      int getId();
-      bool hasFailed();
-      bool isDone();
+      void addRobot(ROBOTS_ENUM robot)
+      bool hasFailed(ROBOTS_ENUM robot);
+      bool isDone(ROBOTS_ENUM robot);
    private:
       ros::Subscriber robot_state_subscriber;
 }
