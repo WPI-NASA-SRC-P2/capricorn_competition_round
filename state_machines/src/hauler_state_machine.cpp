@@ -134,7 +134,7 @@ bool HaulerStateMachine::resetOdometry()
     ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << "Hauler odometry has been reset");
     // srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
     // srv.request.ref_pose.pose.orientation.w = 1; //Need to check this out, but included this because having 'w' as non-zero gives a NAN value somewhere in some processing and odometry reset fails somehwere in the source files of rtabmap
-    srv.request.target_robot_name = COMMON_NAMES::HAULER_1;
+    srv.request.target_robot_name = COMMON_NAMES::HAULER_1_NAME;
     srv.request.use_ground_truth = true;
     return resetHaulerOdometryClient_.call(srv);
 }

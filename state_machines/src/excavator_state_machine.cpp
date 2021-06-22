@@ -170,7 +170,7 @@ bool ExcavatorStateMachine::resetOdometry()
     maploc::ResetOdom srv;
     ROS_WARN_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "Excavator odometry has been reset");
     srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
-    srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1;
+    srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1_NAME;
     srv.request.use_ground_truth = false; //If launching get_true_pose=true, always keep this as false. Ditto for scout.
 
     return resetExcavatorOdometryClient_.call(srv);
@@ -182,7 +182,7 @@ bool ExcavatorStateMachine::resetOdometry(const geometry_msgs::PoseStamped &POSE
     maploc::ResetOdom srv;
     ROS_WARN_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "Excavator odometry has been reset");
     srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
-    srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1;
+    srv.request.target_robot_name = COMMON_NAMES::EXCAVATOR_1_NAME;
     srv.request.ref_pose = POSE;
 
     return resetExcavatorOdometryClient_.call(srv);

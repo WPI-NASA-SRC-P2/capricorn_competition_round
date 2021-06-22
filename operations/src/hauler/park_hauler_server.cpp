@@ -506,12 +506,12 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
     {
         // park with excavator
         ROS_INFO("Parking To Excavator");
-        std::string excavator_name = COMMON_NAMES::EXCAVATOR_1;
+        std::string excavator_name = COMMON_NAMES::EXCAVATOR_1_NAME;
 
         if (goal->hopper_or_excavator == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS)
         {
             // uses "small_excavator_1" by default
-            ROS_INFO_STREAM("USING AS " << COMMON_NAMES::EXCAVATOR_1 << " EXCAVATOR DEFAULT");
+            ROS_INFO_STREAM("USING AS " << COMMON_NAMES::EXCAVATOR_1_NAME << " EXCAVATOR DEFAULT");
         }
         else
         {

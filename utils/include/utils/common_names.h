@@ -4,17 +4,17 @@
 namespace COMMON_NAMES
 {
   /****** ROBOTS ******/
-  const std::string SCOUT_1 = "small_scout_1";
-  const std::string SCOUT_2 = "small_scout_2";
-  const std::string SCOUT_3 = "small_scout_3";
+  const std::string SCOUT_1_NAME = "small_scout_1";
+  const std::string SCOUT_2_NAME = "small_scout_2";
+  const std::string SCOUT_3_NAME = "small_scout_3";
 
-  const std::string EXCAVATOR_1 = "small_excavator_1";
-  const std::string EXCAVATOR_2 = "small_excavator_2";
-  const std::string EXCAVATOR_3 = "small_excavator_3";
+  const std::string EXCAVATOR_1_NAME = "small_excavator_1";
+  const std::string EXCAVATOR_2_NAME = "small_excavator_2";
+  const std::string EXCAVATOR_3_NAME = "small_excavator_3";
 
-  const std::string HAULER_1 = "small_hauler_1";
-  const std::string HAULER_2 = "small_hauler_2";
-  const std::string HAULER_3 = "small_hauler_3";
+  const std::string HAULER_1_NAME = "small_hauler_1";
+  const std::string HAULER_2_NAME = "small_hauler_2";
+  const std::string HAULER_3_NAME = "small_hauler_3";
 
   /****** ROBOT FRAMES ******/
   const std::string MAP = "map";
@@ -214,6 +214,19 @@ namespace COMMON_NAMES
     HAULER_UNDOCK_HOPPER,    // undock from hopper (backward motion from hopper)
     HAULER_RESET_ODOM_AT_HOPPER, //face processing plant, park at hopper and then reset odom with ground truth
     HAULER_FACE_PROCESSING_PLANT //face the processinf plant using NAV_VISION_TYPE::V_CENTER
+  };
+
+  enum ROBOTS_ENUM
+  {
+    SCOUT_1,
+    SCOUT_2,
+    SCOUT_3,
+    EXCAVATOR_1,
+    EXCAVATOR_2,
+    EXCAVATOR_3,
+    HAULER_1,
+    HAULER_2,
+    HAULER_3
   };
 
 } // namespace CAPRICORN_COMMON_NAMES

@@ -177,9 +177,9 @@ int main(int argc, char *argv[])
     ros::NodeHandle nh;
 
     // ensure that the memory of which rovers already used their ground truth call is reset to true upon starting the node
-    robot_first[COMMON_NAMES::HAULER_1] = true;
-    robot_first[COMMON_NAMES::SCOUT_1] = true;
-    robot_first[COMMON_NAMES::EXCAVATOR_1] = true;
+    robot_first[COMMON_NAMES::HAULER_1_NAME] = true;
+    robot_first[COMMON_NAMES::SCOUT_1_NAME] = true;
+    robot_first[COMMON_NAMES::EXCAVATOR_1_NAME] = true;
 
     // set up service for reseting the odometry of the rover 
     ros::ServiceServer service = nh.advertiseService(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY, resetOdom);

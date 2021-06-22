@@ -9,7 +9,7 @@ ScoutState::ScoutState(uint32_t un_id, uint32_t un_max_count) :
     State(un_id, ToString("mystate_", un_id)),
     m_unMaxCount(un_max_count)
 {
-  robot_name_ = COMMON_NAMES::SCOUT_1;
+  robot_name_ = COMMON_NAMES::SCOUT_1_NAME;
   resource_localiser_client_ = new ResourceLocaliserClient_(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + RESOURCE_LOCALISER_ACTIONLIB, true);
   /** @todo: FIX NAVIGATIONVISIONCLIENT TO BE CORRECT TOPIC */
   navigation_vision_client_ = new NavigationVisionClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
