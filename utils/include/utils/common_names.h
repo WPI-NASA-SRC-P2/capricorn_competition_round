@@ -47,6 +47,7 @@ namespace COMMON_NAMES
 
   /****** SERVICES ******/
   const std::string SCOUT_SEARCH_SERVICE = "scout_search";
+  const std::string SET_ROBOT_STATE_SRV = "/set_robot_state";
 
   /****** GAZEBO ******/
   const std::string HEIGHTMAP = "heightmap";

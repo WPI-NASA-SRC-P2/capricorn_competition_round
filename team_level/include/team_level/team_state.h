@@ -1,3 +1,7 @@
+#pragma once
+#include <utils/common_names.h>
+#include "ros/ros.h"
+#include <state_machines/set_robot_state.h>
 
 // /**
 //  * The macrostate is a state machine for team-level coordination.
@@ -8,15 +12,13 @@
 //   public:
 // };
 
+using namespace COMMON_NAMES;
+
 class TeamState {
    
 public:
 
-   TeamState(uint32_t un_id,
-         const std::string& str_name) :
-      m_pcRobotScheduler(nullptr),
-      m_unId(un_id),
-      m_strName(str_name) {}
+   TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle nh);
 
    virtual ~TeamState() {}
 
@@ -30,28 +32,76 @@ public:
    
    virtual void step() = 0;
    
-   virtual State& transition() = 0;
+   virtual TeamState& transition() = 0;
 
-   State& getState(uint32_t un_state);
+   TeamState& getState(uint32_t un_state);
 
-   void setRobotScheduler(RobotScheduler& c_robot_scheduler);
+   // void setRobotScheduler(RobotScheduler& c_robot_scheduler);
    
 private:
 
-   RobotScheduler* m_pcRobotScheduler;
+   // // RobotScheduler* m_pcRobotScheduler;
    uint32_t m_unId;
    std::string m_strName;
+
+   ros::ServiceClient scout_1_service_client;
+   ros::ServiceClient scout_2_service_client;
+   ros::ServiceClient scout_3_service_client;
+
+   ros::ServiceClient excavator_1_service_client;
+   ros::ServiceClient excavator_2_service_client;
+   ros::ServiceClient excavator_3_service_client;
+
+   ros::ServiceClient hauler_1_service_client;
+   ros::ServiceClient hauler_2_service_client;
+   ros::ServiceClient hauler_3_service_client;
 };
 
-// All the states as per the diagram
-class TeamSearch: public TeamState{
-
-}
-
-class Recruite: public TeamState{
-
-}
-
-class ReachSite: public TeamState{
+// // All the states as per the diagram
+class STANDBY: public TeamState{
+   TeamState& transition() override ;
    
-}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+};
+
+class IDLE: public TeamState{
+   TeamState& transition() override ;
+   
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+};
+
+class SEARCH: public TeamState{
+   TeamState& transition() override ;
+   
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+};
+
+class SCOUT_WAITING: public TeamState{
+   TeamState& transition() override ;
+   
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+};
+
+class EXCAVATING: public TeamState{
+   TeamState& transition() override ;
+   
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+};
+
+class DUMPING: public TeamState{
+   TeamState& transition() override ;
+   
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+};

@@ -129,6 +129,7 @@ include
 add_library(${PROJECT_NAME}
   src/robot_status.cpp
   src/team.cpp
+  src/team_state.cpp
 )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
