@@ -43,7 +43,7 @@ private:
 
 /****************************************/
 /****************************************/
-
+template<int SCOUTS, int EXCAVATORS, int HAULERS>
 class TeamScheduler {
    
 public:
@@ -71,9 +71,11 @@ private:
 
    std::vector<*ExcavationTeam>
 
-   RobotStatus scouts[1];
-   RobotStatus excavators[2];
-   RobotStatus haulers[3];
+   // std::array instead of this
+
+   RobotStatus scouts[SCOUTS];
+   RobotStatus excavators[EXCAVATORS];
+   RobotStatus haulers[HAULERS];
 
    std::vector<std::pair<bool,bool>> scout_vecPair_volAvl_recruitedTeam;
    std::vector<bool> excavator_idle;
@@ -113,8 +115,10 @@ class ExcavationTeam{
 class RobotStatus{
    public:
       Robot(std::string robot_name)
-      getCurrentState();
-      getStateStatus();
+      int getId();
+      // StateStatusEnum getStateStatus();
+      bool hasFailed();
+      bool isDone();
    private:
       ros::Subscriber robot_state_subscriber;
 }

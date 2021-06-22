@@ -99,7 +99,7 @@ void checkForNewVolatile()
 {
   for(int i = 0; i<scouts.size(); i++)
   {
-    if(scouts.at(i)->getCurrentState() == SCOUT_LOCATE)
+    if(scouts.at(i)->getCurrentState() == SEARCH && scouts.at(i)->isDone())
     {
       scout_vecPair_volAvl_recruitedTeam.at(i).first = true;
     }
@@ -137,7 +137,7 @@ void recruitHauler(ExcavationTeam &team)
   }
 }
 
-void recruiTeams()
+void recruitTeams()
 {
   // Check if that scout has been assigned a ticket
   // *ticket: an excavator has been assigned for the volatile spot
@@ -189,7 +189,7 @@ void TeamScheduler::step() {
   // Check if scout has found anything
   checkForNewVolatile();
 
-  recruiTeams();
+  recruitTeams();
 
   updateMacroState();
   executeTeamStates();  
@@ -209,3 +209,6 @@ void TeamScheduler::exec() {
 
 /****************************************/
 /****************************************/
+
+// Might need to move the code to .h file
+// Should have the name to the robot numbers
