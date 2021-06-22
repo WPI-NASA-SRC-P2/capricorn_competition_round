@@ -24,29 +24,18 @@ NavigationClient_ *navigation_client_;
 
 using namespace COMMON_NAMES;
 
-double ROTATION_VELOCITY = 0.2;
-double DRIVING_VELOCITY = 0.2;
-double MAX_DETECT_DIST = 2.0;
-double VOLATILE_DISTANCE_THRESHOLD = 0.005;
-int FLIP_ROTATION_COUNT_MAX = 2;
-int REPEAT_COUNT_MAX = 2;
-bool near_volatile_ = false;
-bool new_message_received = false;
+//double ROTATION_VELOCITY = 0.2;
+//double DRIVING_VELOCITY = 0.2;
+//double MAX_DETECT_DIST = 2.0;
+//double VOLATILE_DISTANCE_THRESHOLD = 0.005;
+//int FLIP_ROTATION_COUNT_MAX = 2;
+//int REPEAT_COUNT_MAX = 2;
+//bool near_volatile_ = false;
+//bool new_message_received = false;
 
-double volatile_distance_;
+
 std::string robot_name_;
 
-/**
- * @brief enum for rotation direction
- *        When clockwise, send direction as it is
-          When Anticlockwise, flip the direction with -1
- * 
- */
-// enum DrivingDirection
-// {
-//   POSITIVE = 1,
-//   NEGATIVE = -1
-// };
 
 enum DrivingMode
 {
@@ -54,11 +43,6 @@ enum DrivingMode
   DRIVE_ROBOT_STRAIGHT
 };
 
-/**
- * @brief Rotate the robot in the given direction
- * 
- * @param rotate_direction   direction of rotation
- */
 void SolarChargingServer::rotateRobot()
 {
   operations::NavigationGoal goal;
@@ -72,11 +56,7 @@ void SolarChargingServer::rotateRobot()
   ros::Duration(0.05).sleep();
 }
 
-/**
- * @brief Stop the robot
- * 
- *
- */
+
 void SolarChargingServer::stopRobot(void)
 {
   operations::NavigationGoal goal;
@@ -98,13 +78,6 @@ void SolarChargingServer::setPowerSaveMode(bool state){
   powerMode_client.call(srv);
 }
 
-
-/**
- * @brief based on the request, either Acitivates Solar_Charge_Mode, or diactives it
- * 
- * @param request solarChargeRequest 
- * @param reponse solarChargeResponse
- */
 bool SolarChargingServer::solarChargeInitiate(operations::SolarCharge::Request& request, operations::SolarCharge::Response& response)
 {
   //response.result.data = "Solar_Charging_Mode: ON: Power_rate:" + power_rate.c_str(); << Maybe we will use this at some point
@@ -115,6 +88,7 @@ bool SolarChargingServer::solarChargeInitiate(operations::SolarCharge::Request& 
     ROS_INFO("entered solarChargeInit request true");
     setPowerSaveMode(false);
     rotateRobot();
+    response.result.data = "Started Solar Recharge Mode";
     should_turn = true;
     return true;
   }
@@ -122,6 +96,7 @@ bool SolarChargingServer::solarChargeInitiate(operations::SolarCharge::Request& 
     ROS_INFO("entered solarChargeInit request false");
     setPowerSaveMode(false);
     stopRobot();
+    response.result.data = "Ended/Killed Solar Recharge Mode";
     return true;
   }
   return false;
@@ -162,29 +137,22 @@ int main(int argc, char *argv[])
 
   //create a nodehandle
   ros::NodeHandle nh;
-
-  //Instantiating ROS server for solar charge mode
   
   ros::ServiceServer serviceD = nh.advertiseService("solar_charger", &SolarChargingServer::solarChargeInitiate, &server);
 
   // initialize client
   navigation_client_= new NavigationClient_(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
-  //printf("Waiting for server...\n");
   ROS_INFO_STREAM("[ operations | solar_recharge | "<<robot_name<<" ] "<< "Waiting for navigation server...");
   bool serverExists = navigation_client_->waitForServer();
   ROS_INFO_STREAM("[ operations | solar_recharge | "<<robot_name<<" ] "<< "Server Connected");
 
   server.systemMonitor_subscriber = nh.subscribe(system_monitor_topic_, 1000, &SolarChargingServer::systemMonitorCB, &server);
 
-  //srv result
+  //debugging purposes
   //debug_solar_charging_mode = nh.advertise<std_msgs::String>("/galaga/debug_solar_charging_status", 1000);
   
   //client for power saving mode
   server.powerMode_client = nh.serviceClient<srcp2_msgs::SystemPowerSaveSrv>(power_saver_service_);
-
-  // operations::SolarChargeRequest req = true;
-  // operations::SolarChargeResponse res;
-  // client.call(req, res);
 
   ros::spin();
 
