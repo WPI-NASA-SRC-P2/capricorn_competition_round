@@ -85,6 +85,7 @@ namespace COMMON_NAMES
   const std::string STATE_MACHINE_SERVER_NODE_NAME = "_sm_server";
 
   /****** TOPIC NAMES ******/
+  const std::string CLOCK_TOPIC = "/clock";
   const std::string CAPRICORN_TOPIC = "/capricorn/";
   const std::string POSE_ERROR_TOPIC = "/pose_error";
   const std::string GROUND_TRUTH_TOPIC = "/ground_truth";

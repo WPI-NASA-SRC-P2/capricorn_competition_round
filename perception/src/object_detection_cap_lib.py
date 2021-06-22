@@ -47,9 +47,9 @@ g_seq = 0
 g_lock = threading.Lock()
 
 g_class_individual_thresh = {
-    "processingPlant": 0.8,
-    "repairStation": 0.8,
-    "hopper": 0.6,
+    "processingPlant": 0.6,
+    "repairStation": 0.6,
+    "hopper": 0.7,
     "excavator": 0.7,
     "scout": 0.7,
 }
@@ -149,7 +149,7 @@ def estimate3dLocation(category_index, i, box, cl, score, disp_img):
     # calculates mean disparity in the middle rows of the detected object bounding boxes
     for w in range(low_x, high_x):
         for v in range(low_y, high_y):
-            if disp_img[v, w] >= disp_min and disp_img[v, w] <= disp_max:
+            if high_y < HEIGHT and high_x < WIDTH and disp_img[v, w] >= disp_min and disp_img[v, w] <= disp_max:
                 disp_final += disp_img[v, w]
                 num_pixels += 1
 
@@ -264,7 +264,7 @@ def detectionAlgorithm(
 
     # run object detection on input image
     output_dict = model_fn(input_tensor)
-    rospy.loginfo_once("Started Object Detection Finally")
+    rospy.loginfo_once("[PERCEPTION | OBJECT DETECTION LIB]: Started Object Detection Finally")
 
     # processing object detected data
     num_detections = int(output_dict.pop("num_detections"))
