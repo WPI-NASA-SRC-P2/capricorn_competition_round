@@ -34,7 +34,7 @@ public:
 
    void setState(STATE_MACHINE_TASK new_state) override{
       new_state_ = new_state;
-      m_bInterrupt = true;
+      new_state_request = true;
    }
 };
 
@@ -120,8 +120,8 @@ class Undock : public ScoutState {
 public:   
    Undock() : ScoutState(SCOUT_UNDOCK) {}
 
-   // define transition check conditions for the state (transition() is overriden by each individual state)
-   State& transition() override ;
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override ;
    
    void entryPoint() override;
    void step() override;
@@ -136,8 +136,8 @@ class Search : public ScoutState {
 public:   
    Search() : ScoutState(SCOUT_SEARCH_VOLATILE) {}
 
-   // define transition check conditions for the state (transition() is overriden by each individual state)
-   State& transition() override;
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
 
    void entryPoint() override;
    void step() override;
@@ -152,8 +152,8 @@ class Locate : public ScoutState {
 public:   
    Locate() : ScoutState(SCOUT_LOCATE_VOLATILE) {}
 
-   // define transition check conditions for the state (transition() is overriden by each individual state)
-   State& transition() override;
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
 
    void entryPoint() override;
    void step() override;
@@ -165,6 +165,15 @@ private:
 };
 
 
+class IdleState : public ScoutState {
+public:   
+   IdleState() : ScoutState(ROBOT_IDLE_STATE) {}
+
+   bool isDone() override{ return true; }
+   void entryPoint() override{}
+   void step() override{}
+   void exitPoint() override{}
+};
 
 // class Undock: public ScoutState
 // {

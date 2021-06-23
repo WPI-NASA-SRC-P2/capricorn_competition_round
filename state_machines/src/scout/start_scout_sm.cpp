@@ -72,8 +72,10 @@ int main(int argc, char *argv[])
       cSchd.addState(new Search());
       cSchd.addState(new Undock());
       cSchd.addState(new Locate());
-      cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
+      cSchd.addState(new IdleState());
+      cSchd.setInitialState(ROBOT_IDLE_STATE);
       cSchd.exec();
+	  ros::spin();
 	}
 	catch(StateMachineException& ex) {
 		std::cerr << "[ERROR] " << ex.getMessage() << std::endl;

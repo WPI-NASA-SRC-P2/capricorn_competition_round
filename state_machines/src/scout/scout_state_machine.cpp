@@ -75,14 +75,9 @@ void Undock::entryPoint()
    ROS_INFO("entrypoint of undock");
 }
 
-State& Undock::transition()
+bool Undock::isDone()
 {
-   if(!(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)) {
-      ROS_INFO("remaining in undock");
-      return *this;
-   }
-   ROS_INFO("transitioning out of undock");
-   return getState(SCOUT_SEARCH_VOLATILE); // should be SCOUT_SEARCH_VOLATILE
+   return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 void Undock::step()
@@ -125,16 +120,10 @@ void Search::entryPoint()
    ROS_INFO("entering scout_search state");
 }
 
-State& Search::transition()
+bool Search::isDone()
 {
    // if no transition, stay in current state
-   if(!near_volatile_) {
-      // stay in SCOUT_SEARCH_VOLATILE
-      return *this;
-   }
-   // if near the volatile, switch to scout_locate_volatile state
-   ROS_INFO("volatile detected, transitioning to scout_undock state");
-   return getState(SCOUT_LOCATE_VOLATILE);
+   return (near_volatile_);
 }
 
 void Search::step()
@@ -163,14 +152,10 @@ void Locate::entryPoint()
    first_ = true;
 }
 
-State& Locate::transition()
+bool Locate::isDone()
 {
    // switch states once completed with locating the volatile
-   if(!(resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_) {
-      return *this;
-   }
-   ROS_WARN("Volatile found, moving to undock state");
-   return getState(SCOUT_UNDOCK);
+   return ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
 }
 
 void Locate::step()

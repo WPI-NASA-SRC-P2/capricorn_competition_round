@@ -95,10 +95,10 @@ void RobotScheduler::step() {
    if(m_pcCurrent) {
       /* Attempt a transition, every state of every rover has its own transition() */
       State* cNewState = &m_pcCurrent->transition();
-      if (m_bInterrupt)
+      if (new_state_request)
       {
          cNewState = &getState(new_state_);
-         m_bInterrupt = false;
+         new_state_request = false;
       }
 
       if(cNewState != m_pcCurrent) {

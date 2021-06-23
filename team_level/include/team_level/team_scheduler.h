@@ -52,7 +52,7 @@ private:
    std::vector<bool> hauler_idle;
 
 protected:
-   bool m_bInterrupt = false;
+   bool new_state_request = false;
    STATE_MACHINE_TASK new_state_;
 };
 

@@ -70,7 +70,7 @@ private:
    std::unordered_map<uint32_t, State*> m_mapStates;
 
 protected:
-   bool m_bInterrupt = false;
+   bool new_state_request = false;
    STATE_MACHINE_TASK new_state_;
 };
 
@@ -99,7 +99,7 @@ public:
    
    virtual void step() = 0;
    
-   virtual State& transition() = 0;
+   virtual bool isDone() = 0;
 
    State& getState(uint32_t un_state);
 
