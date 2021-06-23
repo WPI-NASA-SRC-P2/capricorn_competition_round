@@ -1,3 +1,4 @@
 string robot_name
+int8 robot_current_state
 bool current_state_done
 bool has_failed_last_state

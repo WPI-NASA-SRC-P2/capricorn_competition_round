@@ -77,7 +77,7 @@ void Undock::entryPoint()
 
 bool Undock::isDone()
 {
-   return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return (navigation_client_->getState().isDone());
 }
 
 void Undock::step()
