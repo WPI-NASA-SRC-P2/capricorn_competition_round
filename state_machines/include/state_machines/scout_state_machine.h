@@ -10,6 +10,7 @@
 #include <srcp2_msgs/VolSensorMsg.h>
 #include <operations/obstacle_avoidance.h>
 #include <state_machines/common_robot_state_machine.h>
+#include <state_machines/robot_state_status.h>
 #include <maploc/ResetOdom.h>
 
 using namespace COMMON_NAMES;
@@ -76,7 +77,7 @@ private:
 
 public:
    
-   ScoutState(uint32_t un_id);
+   ScoutState(uint32_t un_id, std::string robot_name);
    
    ~ScoutState();
 
@@ -100,6 +101,8 @@ protected:
 
   ros::ServiceClient spiralClient_;
   
+  ros::Publisher status_pub_;
+
   bool near_volatile_ = false;       //
   bool new_volatile_msg_ = false; 
 
@@ -122,7 +125,7 @@ std::string ScoutState::robot_name_  ="";
 
 class Undock : public ScoutState {
 public:   
-   Undock() : ScoutState(SCOUT_UNDOCK) {}
+   Undock() : ScoutState(SCOUT_UNDOCK, robot_name_) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override ;
@@ -138,7 +141,7 @@ private:
 
 class Search : public ScoutState {
 public:   
-   Search() : ScoutState(SCOUT_SEARCH_VOLATILE) {}
+   Search() : ScoutState(SCOUT_SEARCH_VOLATILE, robot_name_) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
@@ -154,7 +157,7 @@ private:
 
 class Locate : public ScoutState {
 public:   
-   Locate() : ScoutState(SCOUT_LOCATE_VOLATILE) {}
+   Locate() : ScoutState(SCOUT_LOCATE_VOLATILE, robot_name_) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
@@ -171,7 +174,7 @@ private:
 
 class IdleState : public ScoutState {
 public:   
-   IdleState() : ScoutState(ROBOT_IDLE_STATE) {}
+   IdleState() : ScoutState(ROBOT_IDLE_STATE, robot_name_) {}
 
    bool isDone() override{ return true; }
    void entryPoint() override{}

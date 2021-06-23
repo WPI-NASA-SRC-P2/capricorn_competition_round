@@ -5,10 +5,12 @@
 ///////////////////////////////////// S C O U T   B A S E   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ScoutState::ScoutState(uint32_t un_id) :
+ScoutState::ScoutState(uint32_t un_id, std::string robot_name) :
     State(un_id, ToString("mystate_", un_id))
 {
-  robot_name_ = COMMON_NAMES::SCOUT_1_NAME;
+  robot_name_ = robot_name;
+  // publish the robot's status
+  status_pub_ = nh_.advertise<state_machines::robot_state_status>(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::ROBOTS_CURRENT_STATE_TOPIC, 10);
   resource_localiser_client_ = new ResourceLocaliserClient_(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + RESOURCE_LOCALISER_ACTIONLIB, true);
   /** @todo: FIX NAVIGATIONVISIONCLIENT TO BE CORRECT TOPIC */
   navigation_vision_client_ = new NavigationVisionClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
