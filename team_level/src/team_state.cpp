@@ -1,13 +1,40 @@
 #include <team_level/team_state.h>
 
 
-TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle nh) :
+TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle &nh) :
     //   m_pcRobotScheduler(nullptr), 
       m_unId(un_id), m_strName(str_name) 
 {
     robot_status = new RobotStatus(nh);
 
     robot_state_publisher_  = nh.advertise<state_machines::robot_desired_state>(COMMON_NAMES::CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 1, true);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// S T A N D B Y   S T A T E   C L A S S ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Standby::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+{
+   //Set to true to avoid repeatedly giving the goal.
+   ROS_INFO("entrypoint of Standby");
+   if((scout == NONE && excavator == NONE && hauler == NONE))
+      ROS_ERROR_STREAM("STANDBY STATE CALLED, BUT AT LEAST ONE ROBOT IS NOT UNSET");
+}
+
+bool Standby::isDone()
+{
+   return true;
+}
+
+void Standby::step()
+{
+   // Do Nothing
+}
+
+void Standby::exitPoint() 
+{
+   ROS_INFO("exitpoint of STANDBY, cancelling STANDBY goal");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -133,7 +160,7 @@ void Search::exitPoint()
 // int main(int argc, char** argv)
 // {
 //    ros::init(argc, argv, "scout_state_machine");
-//    ros::NodeHandle nh;
+//    ros::NodeHandle &nh;
 
 //    try {
 //       ScoutScheduler cSchd(700);

@@ -31,7 +31,7 @@ class TeamState {
    
 public:
 
-   TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle nh);
+   TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle &nh);
 
    virtual ~TeamState() {}
 
@@ -76,7 +76,8 @@ protected:
 
 // // All the states as per the diagram
 class Standby: public TeamState{
-   Standby(ros::NodeHandle nh):TeamState(STANDBY, "Standby", nh){}
+public:
+   Standby(ros::NodeHandle &nh):TeamState(STANDBY, "Standby", nh){}
    bool isDone() override ;
    
    void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
@@ -85,7 +86,8 @@ class Standby: public TeamState{
 };
 
 class Idle: public TeamState{
-   Idle(ros::NodeHandle nh):TeamState(IDLE, "Idle", nh){}
+public:
+   Idle(ros::NodeHandle &nh):TeamState(IDLE, "Idle", nh){}
    bool isDone() override ;
    
    void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
@@ -94,7 +96,8 @@ class Idle: public TeamState{
 };
 
 class Search: public TeamState{
-   Search(ros::NodeHandle nh):TeamState(SEARCH, "Search", nh){}
+public:
+   Search(ros::NodeHandle &nh):TeamState(SEARCH, "Search", nh){}
    bool isDone() override ;
    
    void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
@@ -103,7 +106,8 @@ class Search: public TeamState{
 };
 
 class ScoutWaiting: public TeamState{
-   ScoutWaiting(ros::NodeHandle nh):TeamState(SCOUT_WAITING, "ScoutWaiting", nh){}
+public:
+   ScoutWaiting(ros::NodeHandle &nh):TeamState(SCOUT_WAITING, "ScoutWaiting", nh){}
    bool isDone() override ;
    
    void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
@@ -112,7 +116,8 @@ class ScoutWaiting: public TeamState{
 };
 
 class Excavating: public TeamState{
-   Excavating(ros::NodeHandle nh):TeamState(EXCAVATING, "Excavating", nh){}
+public:
+   Excavating(ros::NodeHandle &nh):TeamState(EXCAVATING, "Excavating", nh){}
    bool isDone() override ;
    
    void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
@@ -121,7 +126,8 @@ class Excavating: public TeamState{
 };
 
 class Dumping: public TeamState{
-   Dumping(ros::NodeHandle nh):TeamState(DUMPING, "Dumping", nh){}
+public:
+   Dumping(ros::NodeHandle &nh):TeamState(DUMPING, "Dumping", nh){}
    bool isDone() override ;
    
    void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;

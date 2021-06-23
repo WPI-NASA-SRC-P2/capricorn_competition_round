@@ -3,10 +3,11 @@
 #include <utils/common_names.h>
 #include <team_level/robot_status.h>
 #include <team_level/team_state.h>
+#include <unordered_map>
 
 class Team{
 public:
-   Team(ros::NodeHandle nh, TEAM_MACRO_STATE team_state, ROBOTS_ENUM scout, 
+   Team(ros::NodeHandle &nh, TEAM_MACRO_STATE team_state, ROBOTS_ENUM scout, 
          ROBOTS_ENUM excavator, ROBOTS_ENUM hauler);
    ~Team();
 
@@ -36,6 +37,11 @@ private:
    ROBOTS_ENUM hired_scout, hired_excavator, hired_hauler;
    TEAM_MACRO_STATE macro_state;
 
-   void addStates();
+   void addStates(ros::NodeHandle &nh);
+   void addState(TeamState* macro_state);
+
+   void setInitialState(uint32_t un_state);
    
+   TeamState* current_state_ptr;
+   std::unordered_map<uint32_t, TeamState*> MACRO_STATE_PTR_MAP;
 };
