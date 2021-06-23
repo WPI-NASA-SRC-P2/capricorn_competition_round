@@ -18,7 +18,7 @@ void Standby::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM h
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of Standby");
-   if((scout == NONE && excavator == NONE && hauler == NONE))
+   if(!(scout == NONE && excavator == NONE && hauler == NONE))
       ROS_ERROR_STREAM("STANDBY STATE CALLED, BUT AT LEAST ONE ROBOT IS NOT UNSET");
 }
 
@@ -38,6 +38,33 @@ void Standby::exitPoint()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// I D L E   S T A T E   C L A S S ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Idle::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+{
+   //Set to true to avoid repeatedly giving the goal.
+   ROS_INFO("entrypoint of Idle");
+   if(scout == NONE && excavator == NONE && hauler == NONE)
+      ROS_ERROR_STREAM("IDLE STATE CALLED, BUT NO ROBOT IS SET");
+}
+
+bool Idle::isDone()
+{
+   return true;
+}
+
+void Idle::step()
+{
+   // Do Nothing
+}
+
+void Idle::exitPoint() 
+{
+   ROS_INFO("exitpoint of IDLE, cancelling IDLE goal");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// S E A R C H   S T A T E   C L A S S ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -45,27 +72,34 @@ void Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM ha
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of Search");
-   if(scout == NONE)
+   scout_in_team = scout;
+   excavator_in_team = excavator;
+   hauler_in_team = hauler;
+
+   if(scout_in_team == NONE)
       ROS_ERROR_STREAM("SCOUT IS UNSET, BUT STILL ENTRY POINT HAS BEEN CALLED!");
 
-   ROS_INFO("Making sure service client is connected");
-
-   if(ROBOT_ENUM_NAME_MAP.find(scout) == ROBOT_ENUM_NAME_MAP.end()) {
-      ROS_ERROR_STREAM("Set Scout "<<scout<<" doesn't exist on the ROBOT_ENUM_NAME_MAP");
+   if(ROBOT_ENUM_NAME_MAP.find(scout_in_team) == ROBOT_ENUM_NAME_MAP.end()) {
+      ROS_ERROR_STREAM("Set Scout "<<scout_in_team<<" doesn't exist on the ROBOT_ENUM_NAME_MAP");
    }
 }
 
 bool Search::isDone()
 {
-   return robot_status->isDone(scout);
+   return robot_status->isDone(scout_in_team);
 }
 
 void Search::step()
 {
+   if(ROBOT_ENUM_NAME_MAP.find(scout_in_team) != ROBOT_ENUM_NAME_MAP.end()) {
     state_machines::robot_desired_state desired_state_msg;
-    desired_state_msg.robot_name = ROBOT_ENUM_NAME_MAP[scout];
+    desired_state_msg.robot_name = ROBOT_ENUM_NAME_MAP[scout_in_team];
     desired_state_msg.robot_desired_state = SCOUT_SEARCH_VOLATILE;
     robot_state_publisher_.publish(desired_state_msg);
+   }
+   else{
+      ROS_ERROR_STREAM("Scout enum "<<scout_in_team<<" not found in map ROBOT_ENUM_NAME_MAP");
+   }
 }
 
 void Search::exitPoint() 

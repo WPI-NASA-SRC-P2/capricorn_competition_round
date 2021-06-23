@@ -56,7 +56,7 @@ protected:
    // // RobotScheduler* m_pcRobotScheduler;
    uint32_t m_unId;
    std::string m_strName;
-   ROBOTS_ENUM scout, excavator, hauler;
+   ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
    RobotStatus *robot_status;
 
    ros::Publisher robot_state_publisher_;

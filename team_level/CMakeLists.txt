@@ -169,6 +169,12 @@ target_link_libraries(robot_status ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
+add_executable(team src/team.cpp)
+add_dependencies(team ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(team ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############

@@ -30,8 +30,12 @@ public:
    bool isHaulerHired(){ return !(hired_hauler == NONE); }
    
    TEAM_MACRO_STATE getTeamMacroState(){ return macro_state; }
-   void setTeamMacroState(TEAM_MACRO_STATE team_state){ macro_state = team_state; }
+   void setTeamMacroState(TEAM_MACRO_STATE team_state){ 
+         macro_state = team_state; 
+         new_state_request = true;}
 
+   void exec();
+   
 private:
    void updateTeamMacroState();
    ROBOTS_ENUM hired_scout, hired_excavator, hired_hauler;
@@ -41,7 +45,12 @@ private:
    void addState(TeamState* macro_state);
 
    void setInitialState(uint32_t un_state);
-   
+
+   void step();
+   TeamState& getState(uint32_t un_id);
+
+   bool new_state_request;
+
    TeamState* current_state_ptr;
    std::unordered_map<uint32_t, TeamState*> MACRO_STATE_PTR_MAP;
 };

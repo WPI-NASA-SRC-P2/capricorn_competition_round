@@ -37,16 +37,16 @@ bool RobotStatus::isDone(ROBOTS_ENUM robot){
    }
 }
 
-int main(int argc, char** argv)
-{
-   ros::init(argc, argv, "scout_state_machine");
-   ros::NodeHandle nh;
+// int main(int argc, char** argv)
+// {
+//    ros::init(argc, argv, "scout_state_machine");
+//    ros::NodeHandle nh;
 
-   RobotStatus robot_status(nh);
-   while(ros::ok())
-   {
-      ROS_INFO_STREAM("Robot state done:"<<robot_status.isDone(SCOUT_1)<<"\tLast state failed:"<<robot_status.hasFailed(SCOUT_1));
-      ros::Duration(1).sleep();
-      ros::spinOnce();
-   }
-}
+//    RobotStatus robot_status(nh);
+//    while(ros::ok())
+//    {
+//       ROS_INFO_STREAM("Robot state done:"<<robot_status.isDone(SCOUT_1)<<"\tLast state failed:"<<robot_status.hasFailed(SCOUT_1));
+//       ros::Duration(1).sleep();
+//       ros::spinOnce();
+//    }
+// }
