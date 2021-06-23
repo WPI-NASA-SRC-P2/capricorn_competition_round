@@ -17,9 +17,9 @@ public:
    void setExcavator(ROBOTS_ENUM excavator){ hired_excavator = excavator; }
    void setHauler(ROBOTS_ENUM hauler){ hired_hauler = hauler; }
    
-   void disbandScout(ROBOTS_ENUM scout){ hired_scout = NONE; }
-   void disbandExcavator(ROBOTS_ENUM excavator){ hired_excavator = NONE; }
-   void disbandHauler(ROBOTS_ENUM hauler){ hired_hauler = NONE; }
+   void disbandScout(){ hired_scout = NONE; }
+   void disbandExcavator(){ hired_excavator = NONE; }
+   void disbandHauler(){ hired_hauler = NONE; }
    
    ROBOTS_ENUM getScout() const { return hired_scout; }
    ROBOTS_ENUM getExcavator() const { return hired_excavator; }
@@ -35,7 +35,7 @@ public:
          new_state_request = true;}
 
    void exec();
-   
+
 private:
    void updateTeamMacroState();
    ROBOTS_ENUM hired_scout, hired_excavator, hired_hauler;

@@ -222,6 +222,7 @@ namespace COMMON_NAMES
 
   enum ROBOTS_ENUM
   {
+    NONE,
     SCOUT_1,
     SCOUT_2,
     SCOUT_3,
@@ -230,8 +231,7 @@ namespace COMMON_NAMES
     EXCAVATOR_3,
     HAULER_1,
     HAULER_2,
-    HAULER_3,
-    NONE
+    HAULER_3
   };
 
 } // namespace CAPRICORN_COMMON_NAMES

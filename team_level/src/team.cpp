@@ -73,7 +73,8 @@ TeamState& Team::getState(uint32_t un_id) {
 void Team::step() {
    /* Only execute if 'current' was initialized */
    if(current_state_ptr) {
-       ROS_INFO_STREAM("Robot enum:" << SCOUT_1);
+       ROS_INFO_STREAM(hired_scout << "  " << hired_excavator << "  " << hired_hauler);
+    //    ROS_INFO_STREAM("Robot enum:" << SCOUT_1);
       /* Attempt a transition, every state of every rover has its own transition() */
       TeamState* cNewState = current_state_ptr;
       if (new_state_request)
@@ -85,7 +86,7 @@ void Team::step() {
       if(cNewState != current_state_ptr) {
          /* Perform transition */
          current_state_ptr->exitPoint();
-         cNewState->entryPoint(SCOUT_1);
+         cNewState->entryPoint(hired_scout, hired_excavator, hired_hauler);
          current_state_ptr = cNewState;
       }
       /* Execute current state */
@@ -106,6 +107,13 @@ void Team::exec() {
       setTeamMacroState(IDLE);
       step();
       ros::Duration(.50).sleep();
+      setTeamMacroState(SEARCH);
+      step();
+      ros::Duration(.50).sleep();
+      setTeamMacroState(IDLE);
+      step();
+      ros::Duration(.50).sleep();
+      disbandScout();
       setTeamMacroState(SEARCH);
       step();
       ros::Duration(.50).sleep();
