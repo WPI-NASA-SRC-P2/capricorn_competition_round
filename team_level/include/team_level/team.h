@@ -1,20 +1,13 @@
+#pragma once
+
 #include <utils/common_names.h>
 #include <team_level/robot_status.h>
-
-enum TEAM_MACRO_STATE{
-   STANDBY, // If No robot in the team;
-   IDLE,    // If Robots in the team are idle
-   SEARCH,  // Team has a busy scout
-   SCOUT_WAITING, // Team has a scout waiting for Excavator to take over
-   EXCAVATING,    // No or idle scout in the team
-                  // Excavator and Hauler busy digging and collecting
-   DUMPING, // Hauler going to dump the volatile
-            // No or idle Excavator
-};
+#include <team_level/team_state.h>
+#include <unordered_map>
 
 class Team{
 public:
-   Team(ros::NodeHandle nh, TEAM_MACRO_STATE team_state, ROBOTS_ENUM scout, 
+   Team(ros::NodeHandle &nh, TEAM_MACRO_STATE team_state, ROBOTS_ENUM scout, 
          ROBOTS_ENUM excavator, ROBOTS_ENUM hauler);
    ~Team();
 
@@ -43,4 +36,12 @@ private:
    void updateTeamMacroState();
    ROBOTS_ENUM hired_scout, hired_excavator, hired_hauler;
    TEAM_MACRO_STATE macro_state;
+
+   void addStates(ros::NodeHandle &nh);
+   void addState(TeamState* macro_state);
+
+   void setInitialState(uint32_t un_state);
+   
+   TeamState* current_state_ptr;
+   std::unordered_map<uint32_t, TeamState*> MACRO_STATE_PTR_MAP;
 };

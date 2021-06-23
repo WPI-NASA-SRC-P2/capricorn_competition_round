@@ -3,6 +3,7 @@
 #include "ros/ros.h"
 #include <state_machines/set_robot_state.h>
 #include <team_level/robot_status.h>
+#include <state_machines/robot_desired_state.h>
 
 // /**
 //  * The macrostate is a state machine for team-level coordination.
@@ -13,13 +14,24 @@
 //   public:
 // };
 
+enum TEAM_MACRO_STATE{
+   STANDBY, // If No robot in the team;
+   IDLE,    // If Robots in the team are idle
+   SEARCH,  // Team has a busy scout
+   SCOUT_WAITING, // Team has a scout waiting for Excavator to take over
+   EXCAVATING,    // No or idle scout in the team
+                  // Excavator and Hauler busy digging and collecting
+   DUMPING, // Hauler going to dump the volatile
+            // No or idle Excavator
+};
+
 using namespace COMMON_NAMES;
 
 class TeamState {
    
 public:
 
-   TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle nh);
+   TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle &nh);
 
    virtual ~TeamState() {}
 
@@ -27,7 +39,7 @@ public:
 
    const std::string& getName() const { return m_strName; }
    
-   virtual void entryPoint() = 0;
+   virtual void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) = 0;
    
    virtual void exitPoint() = 0;
    
@@ -47,76 +59,78 @@ protected:
    ROBOTS_ENUM scout, excavator, hauler;
    RobotStatus *robot_status;
 
-   ros::ServiceClient scout_1_service_client;
-   ros::ServiceClient scout_2_service_client;
-   ros::ServiceClient scout_3_service_client;
+   ros::Publisher robot_state_publisher_;
 
-   ros::ServiceClient excavator_1_service_client;
-   ros::ServiceClient excavator_2_service_client;
-   ros::ServiceClient excavator_3_service_client;
-
-   ros::ServiceClient hauler_1_service_client;
-   ros::ServiceClient hauler_2_service_client;
-   ros::ServiceClient hauler_3_service_client;
-
-   std::map<ROBOTS_ENUM, ros::ServiceClient> ROBOT_ENUM_SERVICE_MAP{
-                                 {SCOUT_1, scout_1_service_client},
-                                 {SCOUT_2, scout_2_service_client},
-                                 {SCOUT_3, scout_3_service_client},
-                                 {EXCAVATOR_1, excavator_1_service_client},
-                                 {EXCAVATOR_2, excavator_2_service_client},
-                                 {EXCAVATOR_3, excavator_3_service_client},
-                                 {HAULER_1, hauler_1_service_client},
-                                 {HAULER_2, hauler_2_service_client},
-                                 {HAULER_3, hauler_3_service_client}};
+   std::map<ROBOTS_ENUM, std::string> ROBOT_ENUM_NAME_MAP{
+                                 {SCOUT_1, SCOUT_1_NAME},
+                                 {SCOUT_2, SCOUT_2_NAME},
+                                 {SCOUT_3, SCOUT_3_NAME},
+                                 {EXCAVATOR_1, EXCAVATOR_1_NAME},
+                                 {EXCAVATOR_2, EXCAVATOR_2_NAME},
+                                 {EXCAVATOR_3, EXCAVATOR_3_NAME},
+                                 {HAULER_1, HAULER_1_NAME},
+                                 {HAULER_2, HAULER_2_NAME},
+                                 {HAULER_3, HAULER_3_NAME}};
 
 };
 
 // // All the states as per the diagram
-class STANDBY: public TeamState{
+class Standby: public TeamState{
+public:
+   Standby(ros::NodeHandle &nh):TeamState(STANDBY, "Standby", nh){}
    bool isDone() override ;
    
-   void entryPoint() override;
+   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };
 
-class IDLE: public TeamState{
+class Idle: public TeamState{
+public:
+   Idle(ros::NodeHandle &nh):TeamState(IDLE, "Idle", nh){}
    bool isDone() override ;
    
-   void entryPoint() override;
+   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };
 
-class SEARCH: public TeamState{
+class Search: public TeamState{
+public:
+   Search(ros::NodeHandle &nh):TeamState(SEARCH, "Search", nh){}
    bool isDone() override ;
    
-   void entryPoint() override;
+   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };
 
-class SCOUT_WAITING: public TeamState{
+class ScoutWaiting: public TeamState{
+public:
+   ScoutWaiting(ros::NodeHandle &nh):TeamState(SCOUT_WAITING, "ScoutWaiting", nh){}
    bool isDone() override ;
    
-   void entryPoint() override;
+   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };
 
-class EXCAVATING: public TeamState{
+class Excavating: public TeamState{
+public:
+   Excavating(ros::NodeHandle &nh):TeamState(EXCAVATING, "Excavating", nh){}
    bool isDone() override ;
    
-   void entryPoint() override;
+   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };
 
-class DUMPING: public TeamState{
+class Dumping: public TeamState{
+public:
+   Dumping(ros::NodeHandle &nh):TeamState(DUMPING, "Dumping", nh){}
    bool isDone() override ;
    
-   void entryPoint() override;
+   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };

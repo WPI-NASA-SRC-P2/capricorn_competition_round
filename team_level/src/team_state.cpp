@@ -1,71 +1,83 @@
 #include <team_level/team_state.h>
 
 
-TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle nh) :
+TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle &nh) :
     //   m_pcRobotScheduler(nullptr), 
       m_unId(un_id), m_strName(str_name) 
 {
     robot_status = new RobotStatus(nh);
 
-    scout_1_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + SCOUT_1_NAME + SET_ROBOT_STATE_SRV);
-    scout_2_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + SCOUT_2_NAME + SET_ROBOT_STATE_SRV);
-    scout_3_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + SCOUT_3_NAME + SET_ROBOT_STATE_SRV);
-    excavator_1_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + EXCAVATOR_1_NAME + SET_ROBOT_STATE_SRV);
-    excavator_2_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + EXCAVATOR_2_NAME + SET_ROBOT_STATE_SRV);
-    excavator_3_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + EXCAVATOR_3_NAME + SET_ROBOT_STATE_SRV);
-    hauler_1_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + HAULER_1_NAME + SET_ROBOT_STATE_SRV);
-    hauler_2_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + HAULER_2_NAME + SET_ROBOT_STATE_SRV);
-    hauler_3_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + HAULER_3_NAME + SET_ROBOT_STATE_SRV);
+    robot_state_publisher_  = nh.advertise<state_machines::robot_desired_state>(COMMON_NAMES::CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 1, true);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// S T A N D B Y   S T A T E   C L A S S ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Standby::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+{
+   //Set to true to avoid repeatedly giving the goal.
+   ROS_INFO("entrypoint of Standby");
+   if((scout == NONE && excavator == NONE && hauler == NONE))
+      ROS_ERROR_STREAM("STANDBY STATE CALLED, BUT AT LEAST ONE ROBOT IS NOT UNSET");
+}
+
+bool Standby::isDone()
+{
+   return true;
+}
+
+void Standby::step()
+{
+   // Do Nothing
+}
+
+void Standby::exitPoint() 
+{
+   ROS_INFO("exitpoint of STANDBY, cancelling STANDBY goal");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// S E A R C H   S T A T E   C L A S S ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void STANDBY::entryPoint()
+void Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
 {
    //Set to true to avoid repeatedly giving the goal.
-   ROS_INFO("entrypoint of undock");
+   ROS_INFO("entrypoint of Search");
    if(scout == NONE)
       ROS_ERROR_STREAM("SCOUT IS UNSET, BUT STILL ENTRY POINT HAS BEEN CALLED!");
 
    ROS_INFO("Making sure service client is connected");
 
-   if(ROBOT_ENUM_SERVICE_MAP.find(scout) != ROBOT_ENUM_SERVICE_MAP.end()) {
-      ROBOT_ENUM_SERVICE_MAP[scout].waitForExistence();
-      ROS_INFO("Scout server is connected");
-   }
-   else {
-      ROS_ERROR_STREAM("Set Scout "<<scout<<" doesn't exist on the ROBOT_ENUM_SERVICE_MAP");
+   if(ROBOT_ENUM_NAME_MAP.find(scout) == ROBOT_ENUM_NAME_MAP.end()) {
+      ROS_ERROR_STREAM("Set Scout "<<scout<<" doesn't exist on the ROBOT_ENUM_NAME_MAP");
    }
 }
 
-bool STANDBY::isDone()
+bool Search::isDone()
 {
    return robot_status->isDone(scout);
 }
 
-void STANDBY::step()
+void Search::step()
 {
-   state_machines::set_robot_state robot_state_srv;
-   robot_state_srv.request.robot_state = SCOUT_SEARCH_VOLATILE;
-   ROBOT_ENUM_SERVICE_MAP[scout].call(robot_state_srv);
+    state_machines::robot_desired_state desired_state_msg;
+    desired_state_msg.robot_name = ROBOT_ENUM_NAME_MAP[scout];
+    desired_state_msg.robot_desired_state = SCOUT_SEARCH_VOLATILE;
+    robot_state_publisher_.publish(desired_state_msg);
 }
 
-void STANDBY::exitPoint() 
+void Search::exitPoint() 
 {
-   ROS_INFO("exitpoint of undock, cancelling undock goal");
-
-   state_machines::set_robot_state robot_state_srv;
-   robot_state_srv.request.robot_state = SCOUT_STOP_SEARCH;
-   ROBOT_ENUM_SERVICE_MAP[scout].call(robot_state_srv);
+   ROS_INFO("exitpoint of SEARCH, cancelling SEARCH goal");
 }
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ///////////////////////////////////// S E A R C H   S T A T E   C L A S S ////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// void Search::entryPoint()
+// void Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
 // {
 //    /** @TODO: Add no objects in vision functionality */
 //    // start off with spiraling
@@ -105,7 +117,7 @@ void STANDBY::exitPoint()
 // /////////////////////////////////////  L O C A T E  S T A T E  C L A S S ////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// void Locate::entryPoint()
+// void Locate::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
 // {
 //    // we assume we are near the volatile
 //    near_volatile_ = true;
@@ -148,7 +160,7 @@ void STANDBY::exitPoint()
 // int main(int argc, char** argv)
 // {
 //    ros::init(argc, argv, "scout_state_machine");
-//    ros::NodeHandle nh;
+//    ros::NodeHandle &nh;
 
 //    try {
 //       ScoutScheduler cSchd(700);
