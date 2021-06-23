@@ -45,16 +45,6 @@ ScoutState::~ScoutState()
   delete navigation_client_;
 }
 
-// updates the robot_state_status fields and publishes them 
-// ScoutState::updateStatus()
-// {
-//   status_->robot_name = robot_name_;
-//   status_->robot_current_state = robot_current_state_;
-//   status_->current_state_done = current_state_done_;
-//   status_->last_state_succeeded = last_state_succeeded_;
-//   status_pub_.publish(status_);
-// }
-
 /****************************************/
 /****************************************/
 
@@ -98,11 +88,26 @@ void Undock::entryPoint()
    //Set to true to avoid repeatedly giving the goal.
    first_ = true;
    ROS_INFO("entrypoint of undock");
+   
+   // update the current status of the robot and publish it
+   
 }
 
 bool Undock::isDone()
 {
-   return (navigation_client_->getState().isDone());
+   // update the status of current state
+   current_state_done_ = navigation_client_->getState().isDone();
+
+   return current_state_done_;
+}
+
+bool Undock::hasSucceeded()
+{
+   // update the status of current state
+   // last_state_succeeded_ = (navigation_client_->getState() == actionlib::status::SUCCESS);
+   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   
+   return last_state_succeeded_;
 }
 
 void Undock::step()
@@ -147,8 +152,16 @@ void Search::entryPoint()
 
 bool Search::isDone()
 {
-   // if no transition, stay in current state
-   return (near_volatile_);
+   // if near the volatile, then the state is done
+   current_state_done_ = near_volatile_;
+   return (current_state_done_);
+}
+
+bool Search::hasSucceeded()
+{
+   // if near the volatile, then the state has succeeded
+   last_state_succeeded_ = near_volatile_;
+   return last_state_succeeded_;
 }
 
 void Search::step()
@@ -180,7 +193,15 @@ void Locate::entryPoint()
 bool Locate::isDone()
 {
    // switch states once completed with locating the volatile
-   return ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   current_state_done_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   return current_state_done_;
+}
+
+bool Locate::hasSucceeded()
+{
+   // state succeeded once rover is parked on top of volatile
+   last_state_succeeded_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   return last_state_succeeded_;
 }
 
 void Locate::step()
@@ -206,22 +227,22 @@ void Locate::exitPoint()
 //////////////////////////////////////////////////////////////////////////////////
 
 
-int main(int argc, char** argv)
-{
-   ros::init(argc, argv, "scout_state_machine");
-   ros::NodeHandle nh;
+// int main(int argc, char** argv)
+// {
+//    ros::init(argc, argv, "scout_state_machine");
+//    ros::NodeHandle nh;
 
-   try {
-      ScoutScheduler cSchd;
-      cSchd.addState(new Search());
-      cSchd.addState(new Undock());
-      cSchd.addState(new Locate());
-      cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
-      // cSchd.setInitialState(SCOUT_UNDOCK);
-      cSchd.exec();
-      return 0;
-   }
-   catch(StateMachineException& ex) {
-      std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
-   }
-}
+//    try {
+//       ScoutScheduler cSchd;
+//       cSchd.addState(new Search());
+//       cSchd.addState(new Undock());
+//       cSchd.addState(new Locate());
+//       cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
+//       // cSchd.setInitialState(SCOUT_UNDOCK);
+//       cSchd.exec();
+//       return 0;
+//    }
+//    catch(StateMachineException& ex) {
+//       std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
+//    }
+// }

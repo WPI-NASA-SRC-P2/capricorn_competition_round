@@ -99,34 +99,17 @@ public:
       ROS_INFO_STREAM("  [" << getName() << "] - exit point");
    }
 
-   static void setRobotName(const std::string &robot_name){ robot_name_ = robot_name; }
-
    void step() override {}
 
-  //  void updateStatus() 
-  //  {
-  //     status_->robot_name = robot_name_;
-  //     status_->robot_current_state = robot_current_state_;
-  //     status_->current_state_done = current_state_done_;
-  //     status_->last_state_succeeded = last_state_succeeded_;
-  //     status_pub_.publish(status_);
-  //  }
 
 protected:
   ros::NodeHandle nh_;
 
-  static std::string robot_name_;
-
   // robot_state_status variables
   int robot_desired_state_;
-  int robot_current_state_;
-  bool current_state_done_;
-  bool last_state_succeeded_;
-  state_machines::robot_state_status::ConstPtr status_;
+  state_machines::robot_state_status status_;
 
   ros::ServiceClient spiralClient_;
-  
-  ros::Publisher status_pub_;
 
   bool near_volatile_ = false;       //
   bool new_volatile_msg_ = false; 
@@ -145,16 +128,16 @@ protected:
   ResourceLocaliserClient_ *resource_localiser_client_;
 
 };
-/** TODO: why is robot_name_ set to ""? */
-std::string ScoutState::robot_name_  ="";
 
 class Undock : public ScoutState {
 public:   
    Undock() : ScoutState(SCOUT_UNDOCK, robot_name_) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
-   bool isDone() override ;
-   
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
@@ -170,6 +153,8 @@ public:
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
 
    void entryPoint() override;
    void step() override;
@@ -186,6 +171,8 @@ public:
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
 
    void entryPoint() override;
    void step() override;
@@ -202,6 +189,9 @@ public:
    IdleState() : ScoutState(ROBOT_IDLE_STATE, robot_name_) {}
 
    bool isDone() override{ return true; }
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    void entryPoint() override{}
    void step() override{}
    void exitPoint() override{}
