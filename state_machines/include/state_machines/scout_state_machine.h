@@ -89,12 +89,14 @@ public:
       ROS_INFO_STREAM("  [" << getName() << "] - exit point");
    }
 
+   static void setRobotName(const std::string &robot_name){ robot_name_ = robot_name; }
+
    void step() override {}
 
 protected:
   ros::NodeHandle nh_;
 
-  std::string robot_name_;
+  static std::string robot_name_;
 
   ros::ServiceClient spiralClient_;
   
@@ -115,6 +117,8 @@ protected:
   ResourceLocaliserClient_ *resource_localiser_client_;
 
 };
+
+std::string ScoutState::robot_name_  ="";
 
 class Undock : public ScoutState {
 public:   
