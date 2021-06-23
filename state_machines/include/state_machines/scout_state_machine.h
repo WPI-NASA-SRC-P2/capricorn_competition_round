@@ -103,12 +103,26 @@ public:
 
    void step() override {}
 
+  //  void updateStatus() 
+  //  {
+  //     status_->robot_name = robot_name_;
+  //     status_->robot_current_state = robot_current_state_;
+  //     status_->current_state_done = current_state_done_;
+  //     status_->last_state_succeeded = last_state_succeeded_;
+  //     status_pub_.publish(status_);
+  //  }
+
 protected:
   ros::NodeHandle nh_;
 
   static std::string robot_name_;
 
+  // robot_state_status variables
   int robot_desired_state_;
+  int robot_current_state_;
+  bool current_state_done_;
+  bool last_state_succeeded_;
+  state_machines::robot_state_status::ConstPtr status_;
 
   ros::ServiceClient spiralClient_;
   

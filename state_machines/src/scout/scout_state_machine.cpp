@@ -9,6 +9,11 @@ ScoutState::ScoutState(uint32_t un_id, std::string robot_name) :
     State(un_id, ToString("mystate_", un_id))
 {
   robot_name_ = robot_name;
+  // robot_state_status fields set to default values when state is constructed
+  robot_current_state_ = un_id;
+  current_state_done_ = false;
+  last_state_succeeded_ = false;
+
   // publish the robot's status
   status_pub_ = nh_.advertise<state_machines::robot_state_status>(CAPRICORN_TOPIC + ROBOTS_CURRENT_STATE_TOPIC, 10);
   resource_localiser_client_ = new ResourceLocaliserClient_(CAPRICORN_TOPIC + robot_name_ + "/" + RESOURCE_LOCALISER_ACTIONLIB, true);
@@ -39,6 +44,16 @@ ScoutState::~ScoutState()
   delete navigation_vision_client_;
   delete navigation_client_;
 }
+
+// updates the robot_state_status fields and publishes them 
+// ScoutState::updateStatus()
+// {
+//   status_->robot_name = robot_name_;
+//   status_->robot_current_state = robot_current_state_;
+//   status_->current_state_done = current_state_done_;
+//   status_->last_state_succeeded = last_state_succeeded_;
+//   status_pub_.publish(status_);
+// }
 
 /****************************************/
 /****************************************/

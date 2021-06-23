@@ -10,7 +10,7 @@ void RobotStatus::robotStateCB(state_machines::robot_state_status msg)
    std::string robot_name = msg.robot_name;
    if(ROBOT_NAME_TO_ENUM_MAP.find(robot_name) != ROBOT_NAME_TO_ENUM_MAP.end()) {
       ROBOTS_ENUM robot_enum = ROBOT_NAME_TO_ENUM_MAP[robot_name];
-      robot_isDone_hasFailed_map[robot_enum] = std::pair<bool,bool>(msg.current_state_done, msg.has_failed_last_state);
+      robot_isDone_hasFailed_map[robot_enum] = std::pair<bool,bool>(msg.current_state_done, msg.last_state_succeeded);
    }
    else {
       ROS_ERROR_STREAM(ROBOTS_CURRENT_STATE_TOPIC<<" published with an irregular robot name. Provided name: "<<msg.robot_name);
