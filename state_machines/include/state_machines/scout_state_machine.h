@@ -11,6 +11,7 @@
 #include <operations/obstacle_avoidance.h>
 #include <state_machines/common_robot_state_machine.h>
 #include <state_machines/robot_state_status.h>
+#include <state_machines/robot_desired_state.h>
 #include <maploc/ResetOdom.h>
 
 using namespace COMMON_NAMES;
@@ -60,6 +61,7 @@ class ScoutState : public State {
 private:
   ros::Subscriber volatile_sub_;
   ros::Subscriber objects_sub_;
+  ros::Subscriber desired_state_sub_;
 
   /**
    * @brief Volatile sensor callback
@@ -74,6 +76,13 @@ private:
    * @param objs 
    */
   void objectsCallback(const perception::ObjectArray::ConstPtr objs);
+
+  /**
+   * @brief Scheduler robot desired state callback for assigning robot's state
+   * 
+   * @param msg 
+   */
+  void desiredStateCB(const state_machines::robot_desired_state::ConstPtr &msg);
 
 public:
    
@@ -99,13 +108,15 @@ protected:
 
   static std::string robot_name_;
 
+  int robot_desired_state_;
+
   ros::ServiceClient spiralClient_;
   
   ros::Publisher status_pub_;
 
   bool near_volatile_ = false;       //
   bool new_volatile_msg_ = false; 
-
+ 
   std::mutex objects_mutex_;
   perception::ObjectArray::ConstPtr vision_objects_;
   bool objects_msg_received_ = false;
@@ -120,7 +131,7 @@ protected:
   ResourceLocaliserClient_ *resource_localiser_client_;
 
 };
-
+/** TODO: why is robot_name_ set to ""? */
 std::string ScoutState::robot_name_  ="";
 
 class Undock : public ScoutState {

@@ -10,11 +10,11 @@ ScoutState::ScoutState(uint32_t un_id, std::string robot_name) :
 {
   robot_name_ = robot_name;
   // publish the robot's status
-  status_pub_ = nh_.advertise<state_machines::robot_state_status>(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::ROBOTS_CURRENT_STATE_TOPIC, 10);
-  resource_localiser_client_ = new ResourceLocaliserClient_(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + RESOURCE_LOCALISER_ACTIONLIB, true);
+  status_pub_ = nh_.advertise<state_machines::robot_state_status>(CAPRICORN_TOPIC + ROBOTS_CURRENT_STATE_TOPIC, 10);
+  resource_localiser_client_ = new ResourceLocaliserClient_(CAPRICORN_TOPIC + robot_name_ + "/" + RESOURCE_LOCALISER_ACTIONLIB, true);
   /** @todo: FIX NAVIGATIONVISIONCLIENT TO BE CORRECT TOPIC */
-  navigation_vision_client_ = new NavigationVisionClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
-  navigation_client_ = new NavigationClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
+  navigation_vision_client_ = new NavigationVisionClient(CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + NAVIGATION_VISION_ACTIONLIB, true);
+  navigation_client_ = new NavigationClient(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB, true);
   ROS_INFO("Waiting for the scout action servers...");
   navigation_vision_client_->waitForServer();
   navigation_client_->waitForServer();
@@ -30,6 +30,7 @@ ScoutState::ScoutState(uint32_t un_id, std::string robot_name) :
   
   volatile_sub_ = nh_.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutState::volatileSensorCB, this);
   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ScoutState::objectsCallback, this);
+  desired_state_sub_ = nh_.subscribe(CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 2, &ScoutState::desiredStateCB, this);
 }
 
 ScoutState::~ScoutState()
@@ -65,6 +66,13 @@ void ScoutState::objectsCallback(const perception::ObjectArray::ConstPtr objs)
   objects_msg_received_ = true;
 }
 
+void ScoutState::desiredStateCB(const state_machines::robot_desired_state::ConstPtr &msg)
+{
+  if(msg->robot_name == robot_name_)
+  {
+    robot_desired_state_ = msg->robot_desired_state;
+  }
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// U N D O C K   S T A T E   C L A S S ////////////////////////////////////
