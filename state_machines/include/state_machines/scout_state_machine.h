@@ -22,33 +22,22 @@ class ScoutScheduler : public RobotScheduler {
    
 public:
 
-   ScoutScheduler(uint32_t un_max_t) :
-      m_unT(0),
-      m_unMaxT(un_max_t) {}
+   ScoutScheduler(){}
 
    void step() override {
-      /* Increase time counter */
-      ++m_unT;
-      std::cout << "t = " << m_unT << std::endl;
-      /* Call parent class step */
       RobotScheduler::step();
    }
 
    bool done() override {
-      // return m_unT >= m_unMaxT;
       return false;
    }
 
-   void setInterrupt(STATE_MACHINE_TASK interrupt_state) override{
-      interrupt_state_ = interrupt_state;
+   void setState(STATE_MACHINE_TASK new_state) override{
+      new_state_ = new_state;
       m_bInterrupt = true;
    }
-
-private:
-
-   uint32_t m_unT;
-   uint32_t m_unMaxT;
 };
+
 const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
     STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE,
     STATE_MACHINE_TASK::SCOUT_STOP_SEARCH,
@@ -87,14 +76,12 @@ private:
 
 public:
    
-   ScoutState(uint32_t un_id,
-           uint32_t un_max_count);
+   ScoutState(uint32_t un_id);
    
    ~ScoutState();
 
    //UNDERSTANDING: Trigerred in the setInitialState()
    void entryPoint() override {
-      m_unCount = 0;
       ROS_INFO_STREAM("  [" << getName() << "] - entry point");
    }
    //UNDERSTANDING: Every state might HAVE its own exitpoint. 
@@ -102,16 +89,9 @@ public:
       ROS_INFO_STREAM("  [" << getName() << "] - exit point");
    }
 
-   void step() override {
-      ++m_unCount;
-      ROS_INFO_STREAM("  [" << getName() << "] - count = " << m_unCount);
-   }
+   void step() override {}
 
 protected:
-
-  uint32_t m_unMaxCount;
-  uint32_t m_unCount;
-
   ros::NodeHandle nh_;
 
   std::string robot_name_;
@@ -138,7 +118,7 @@ protected:
 
 class Undock : public ScoutState {
 public:   
-   Undock() : ScoutState(SCOUT_UNDOCK, 10) {}
+   Undock() : ScoutState(SCOUT_UNDOCK) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
@@ -154,7 +134,7 @@ private:
 
 class Search : public ScoutState {
 public:   
-   Search() : ScoutState(SCOUT_SEARCH_VOLATILE, 10) {}
+   Search() : ScoutState(SCOUT_SEARCH_VOLATILE) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override;
@@ -170,7 +150,7 @@ private:
 
 class Locate : public ScoutState {
 public:   
-   Locate() : ScoutState(SCOUT_LOCATE_VOLATILE, 3) {}
+   Locate() : ScoutState(SCOUT_LOCATE_VOLATILE) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override;

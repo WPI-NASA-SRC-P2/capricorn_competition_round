@@ -20,7 +20,7 @@ std::string g_robot_name;
 
 typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
 
-ScoutScheduler cSchd(70);
+ScoutScheduler cSchd;
 
 /**
  * @brief Function which gets executed when any goal is received to actionlib
@@ -38,7 +38,7 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 
 	bool output = false;
 
-	cSchd.setInterrupt(robot_state);
+	cSchd.setState(robot_state);
 
 	result.result = output ? COMMON_NAMES::COMMON_RESULT::SUCCESS : COMMON_NAMES::COMMON_RESULT::FAILED;
 	as->setSucceeded(result);
@@ -69,8 +69,9 @@ int main(int argc, char *argv[])
 	ROS_INFO("Started Scout State Machine Actionlib Server");
 
 	try {
-      cSchd.addState(new Undock());
       cSchd.addState(new Search());
+      cSchd.addState(new Undock());
+      cSchd.addState(new Locate());
       cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
       cSchd.exec();
 	}

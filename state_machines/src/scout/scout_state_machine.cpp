@@ -5,9 +5,8 @@
 ///////////////////////////////////// S C O U T   B A S E   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ScoutState::ScoutState(uint32_t un_id, uint32_t un_max_count) :
-    State(un_id, ToString("mystate_", un_id)),
-    m_unMaxCount(un_max_count)
+ScoutState::ScoutState(uint32_t un_id) :
+    State(un_id, ToString("mystate_", un_id))
 {
   robot_name_ = COMMON_NAMES::SCOUT_1_NAME;
   resource_localiser_client_ = new ResourceLocaliserClient_(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + RESOURCE_LOCALISER_ACTIONLIB, true);
@@ -203,7 +202,7 @@ int main(int argc, char** argv)
    ros::NodeHandle nh;
 
    try {
-      ScoutScheduler cSchd(700);
+      ScoutScheduler cSchd;
       cSchd.addState(new Search());
       cSchd.addState(new Undock());
       cSchd.addState(new Locate());

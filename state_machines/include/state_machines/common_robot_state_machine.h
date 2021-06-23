@@ -62,7 +62,7 @@ public:
 
    virtual bool done() = 0;
    
-   virtual void setInterrupt(STATE_MACHINE_TASK interrupt_state) = 0;
+   virtual void setState(STATE_MACHINE_TASK new_state) = 0;
    
 private:
 
@@ -71,7 +71,7 @@ private:
 
 protected:
    bool m_bInterrupt = false;
-   STATE_MACHINE_TASK interrupt_state_;
+   STATE_MACHINE_TASK new_state_;
 };
 
 /****************************************/

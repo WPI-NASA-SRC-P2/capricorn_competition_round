@@ -53,7 +53,7 @@ private:
 
 protected:
    bool m_bInterrupt = false;
-   STATE_MACHINE_TASK interrupt_state_;
+   STATE_MACHINE_TASK new_state_;
 };
 
 #endif // TEAM_SCHEDULER_H

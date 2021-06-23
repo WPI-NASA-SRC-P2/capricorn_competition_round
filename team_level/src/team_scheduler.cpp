@@ -97,7 +97,7 @@ void RobotScheduler::step() {
       State* cNewState = &m_pcCurrent->transition();
       if (m_bInterrupt)
       {
-         cNewState = &getState(interrupt_state_);
+         cNewState = &getState(new_state_);
          m_bInterrupt = false;
       }
 
