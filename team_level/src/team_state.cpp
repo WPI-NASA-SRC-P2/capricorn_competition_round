@@ -5,6 +5,7 @@ TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandl
     //   m_pcRobotScheduler(nullptr), 
       m_unId(un_id), m_strName(str_name) 
 {
+    robot_status = new RobotStatus(nh);
 
     scout_1_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + SCOUT_1_NAME + SET_ROBOT_STATE_SRV);
     scout_2_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + SCOUT_2_NAME + SET_ROBOT_STATE_SRV);
@@ -17,53 +18,48 @@ TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandl
     hauler_3_service_client = nh.serviceClient<state_machines::set_robot_state>(CAPRICORN_TOPIC + HAULER_3_NAME + SET_ROBOT_STATE_SRV);
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////// U N D O C K   S T A T E   C L A S S ////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// S E A R C H   S T A T E   C L A S S ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// void STANDBY::entryPoint()
-// {
-//    //Set to true to avoid repeatedly giving the goal.
-//    first_ = true;
-//    ROS_INFO("entrypoint of undock");
-// }
+void STANDBY::entryPoint()
+{
+   //Set to true to avoid repeatedly giving the goal.
+   ROS_INFO("entrypoint of undock");
+   if(scout == NONE)
+      ROS_ERROR_STREAM("SCOUT IS UNSET, BUT STILL ENTRY POINT HAS BEEN CALLED!");
 
-// State& Undock::transition()
-// {
-//    if(!(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)) {
-//       ROS_INFO("remaining in undock");
-//       return *this;
-//    }
-//    ROS_INFO("transitioning out of undock");
-//    return getState(SCOUT_SEARCH_VOLATILE); // should be SCOUT_SEARCH_VOLATILE
-// }
+   ROS_INFO("Making sure service client is connected");
 
-// void Undock::step()
-// {
-//    if(first_)
-//    {
-//       ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from volatile");
-//       geometry_msgs::PoseStamped pt;
-//       pt.header.frame_id = robot_name_ + ROBOT_BASE;
-//       pt.pose.position.x = -6;
-//       pt.pose.orientation.w = 1;
-      
-//       navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-//       navigation_action_goal_.pose = pt;
-//       navigation_client_->sendGoal(navigation_action_goal_);
-//       ROS_INFO_STREAM("Goal sent : " << navigation_action_goal_);
-//       // navigation_client_->waitForResult();
-//       first_ = false;
-//    }   
-//    else
-//       ROS_INFO_STREAM("Undock stepping, first_ = false now");
-// }
+   if(ROBOT_ENUM_SERVICE_MAP.find(scout) != ROBOT_ENUM_SERVICE_MAP.end()) {
+      ROBOT_ENUM_SERVICE_MAP[scout].waitForExistence();
+      ROS_INFO("Scout server is connected");
+   }
+   else {
+      ROS_ERROR_STREAM("Set Scout "<<scout<<" doesn't exist on the ROBOT_ENUM_SERVICE_MAP");
+   }
+}
 
-// void Undock::exitPoint() 
-// {
-//    ROS_INFO("exitpoint of undock, cancelling undock goal");
-//    navigation_client_->cancelGoal();
-// }
+bool STANDBY::isDone()
+{
+   return robot_status->isDone(scout);
+}
+
+void STANDBY::step()
+{
+   state_machines::set_robot_state robot_state_srv;
+   robot_state_srv.request.robot_state = SCOUT_SEARCH_VOLATILE;
+   ROBOT_ENUM_SERVICE_MAP[scout].call(robot_state_srv);
+}
+
+void STANDBY::exitPoint() 
+{
+   ROS_INFO("exitpoint of undock, cancelling undock goal");
+
+   state_machines::set_robot_state robot_state_srv;
+   robot_state_srv.request.robot_state = SCOUT_STOP_SEARCH;
+   ROBOT_ENUM_SERVICE_MAP[scout].call(robot_state_srv);
+}
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ///////////////////////////////////// S E A R C H   S T A T E   C L A S S ////////////////////////////////////
@@ -78,7 +74,7 @@ TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandl
 //    ROS_INFO("entering scout_search state");
 // }
 
-// State& Search::transition()
+// bool Search::isDone()
 // {
 //    // if no transition, stay in current state
 //    if(!near_volatile_) {
@@ -116,7 +112,7 @@ TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandl
 //    first_ = true;
 // }
 
-// State& Locate::transition()
+// bool Locate::isDone()
 // {
 //    // switch states once completed with locating the volatile
 //    if(!(resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_) {
@@ -157,7 +153,7 @@ TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandl
 //    try {
 //       ScoutScheduler cSchd(700);
 //       cSchd.addState(new Search());
-//       cSchd.addState(new Undock());
+//       cSchd.addState(new STANDBY());
 //       cSchd.addState(new Locate());
 //       cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
 //       // cSchd.setInitialState(SCOUT_UNDOCK);

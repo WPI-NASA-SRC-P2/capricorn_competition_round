@@ -2,6 +2,7 @@
 #include <utils/common_names.h>
 #include "ros/ros.h"
 #include <state_machines/set_robot_state.h>
+#include <team_level/robot_status.h>
 
 // /**
 //  * The macrostate is a state machine for team-level coordination.
@@ -32,17 +33,19 @@ public:
    
    virtual void step() = 0;
    
-   virtual TeamState& transition() = 0;
+   virtual bool isDone() = 0;
 
    TeamState& getState(uint32_t un_state);
 
    // void setRobotScheduler(RobotScheduler& c_robot_scheduler);
    
-private:
+protected:
 
    // // RobotScheduler* m_pcRobotScheduler;
    uint32_t m_unId;
    std::string m_strName;
+   ROBOTS_ENUM scout, excavator, hauler;
+   RobotStatus *robot_status;
 
    ros::ServiceClient scout_1_service_client;
    ros::ServiceClient scout_2_service_client;
@@ -55,11 +58,23 @@ private:
    ros::ServiceClient hauler_1_service_client;
    ros::ServiceClient hauler_2_service_client;
    ros::ServiceClient hauler_3_service_client;
+
+   std::map<ROBOTS_ENUM, ros::ServiceClient> ROBOT_ENUM_SERVICE_MAP{
+                                 {SCOUT_1, scout_1_service_client},
+                                 {SCOUT_2, scout_2_service_client},
+                                 {SCOUT_3, scout_3_service_client},
+                                 {EXCAVATOR_1, excavator_1_service_client},
+                                 {EXCAVATOR_2, excavator_2_service_client},
+                                 {EXCAVATOR_3, excavator_3_service_client},
+                                 {HAULER_1, hauler_1_service_client},
+                                 {HAULER_2, hauler_2_service_client},
+                                 {HAULER_3, hauler_3_service_client}};
+
 };
 
 // // All the states as per the diagram
 class STANDBY: public TeamState{
-   TeamState& transition() override ;
+   bool isDone() override ;
    
    void entryPoint() override;
    void step() override;
@@ -67,7 +82,7 @@ class STANDBY: public TeamState{
 };
 
 class IDLE: public TeamState{
-   TeamState& transition() override ;
+   bool isDone() override ;
    
    void entryPoint() override;
    void step() override;
@@ -75,7 +90,7 @@ class IDLE: public TeamState{
 };
 
 class SEARCH: public TeamState{
-   TeamState& transition() override ;
+   bool isDone() override ;
    
    void entryPoint() override;
    void step() override;
@@ -83,7 +98,7 @@ class SEARCH: public TeamState{
 };
 
 class SCOUT_WAITING: public TeamState{
-   TeamState& transition() override ;
+   bool isDone() override ;
    
    void entryPoint() override;
    void step() override;
@@ -91,7 +106,7 @@ class SCOUT_WAITING: public TeamState{
 };
 
 class EXCAVATING: public TeamState{
-   TeamState& transition() override ;
+   bool isDone() override ;
    
    void entryPoint() override;
    void step() override;
@@ -99,7 +114,7 @@ class EXCAVATING: public TeamState{
 };
 
 class DUMPING: public TeamState{
-   TeamState& transition() override ;
+   bool isDone() override ;
    
    void entryPoint() override;
    void step() override;

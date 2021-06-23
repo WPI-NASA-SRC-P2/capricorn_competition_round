@@ -240,15 +240,15 @@ void execute()
 bool serviceCB(operations::Spiral::Request &req,
                operations::Spiral::Response &res)
 {
-  resume_spiral = req.resume_spiral_motion;
-
   // Whever interrupted, it assumes that this location has volatiles,
   // and robots will park. So it should continue from the next point after that.
-  if (!resume_spiral)
+  if (!req.resume_spiral_motion && resume_spiral)
   {
     g_spiral_points.erase(g_spiral_points.begin());
     new_stop_call = true;
   }
+  resume_spiral = req.resume_spiral_motion;
+
   return true;
 }
 
