@@ -198,12 +198,8 @@ std::vector<float> getDumpAngleInBase(int tries)
   geometry_msgs::PointStamped initial_point_stamped; // object to store detected hauler point in base frame
   initial_point_stamped.point.z = 1.2; // Default assumed location is [0, 0, 1.2] in left camera frame in case object detection fails
 
-  //printPoint("Default point in left camera frame", initial_point_stamped.point);
-
   initial_point_stamped.point = getHaulerPose(initial_point_stamped).pose.position; // try to get hauler location from object detection  
   printPoint("Detected point in left camera frame", initial_point_stamped.point);
-
-  //ROS_INFO("[operations | excavator_server | %s]: Initialized angle array", robot_name_.c_str());
 
   geometry_msgs::PointStamped final_point_stamped; // point stamped object to store transformation of point from camera frame to base frame
 
@@ -239,8 +235,12 @@ std::vector<float> getDumpAngleInBase(int tries)
 
 
   std::vector<float> thetas = getDepthHeight(final_wrt_shoulder);
-
-  thetas.insert(thetas.begin(), findShoulderAngle(final_point_stamped.point));
+  float shoulder_yaw = findShoulderAngle(final_point_stamped.point);
+  if(shoulder_yaw > 0)
+  {
+    shoulder_yaw = shoulder_yaw - 0.34*shoulder_yaw/0.78; // Offset for getting precise yaw angle
+  }
+  thetas.insert(thetas.begin(), shoulder_yaw);
   ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: arm angles are " << thetas[0] << ", " << thetas[1] << ", " << thetas[2]);
   return thetas;
 }
@@ -284,8 +284,8 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
 {
   std::vector<float> thetas = getDumpAngleInBase(3); // Get dumping angle based on hauler position from object detection using three tries for transformation
 
-  float theta = -1.57; // Rightmost arm position
-  static float last_vol_loc_angle = -1.57; // variable for storing last volatile location angle
+  float theta = -1.5; // Rightmost arm position
+  static float last_vol_loc_angle = -1.5; // variable for storing last volatile location angle
   float yaw_angle;
 
   if (target.x == 1) // Target for when the excavator parked to a new volatile position
@@ -355,8 +355,10 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     // previous shoulder yaw was 0.15
     publishAngles(thetas[0], -2, 1, 0.4); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(thetas[0], thetas[1], thetas[2], (thetas[1]+thetas[2]+1.5)); // This set of values moves the scoop to deposit volatiles in the hauler bin
-    ros::Duration(5).sleep();
+    publishAngles(thetas[0], thetas[1], thetas[2], 0.4); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    ros::Duration(3).sleep();
+    publishAngles(thetas[0], thetas[1], thetas[2], (thetas[1]+thetas[2]+1.8)); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    ros::Duration(3).sleep();
     publishAngles(thetas[0], -2, 1, -0.7786); // This set of values moves the scoop to the front center
     ros::Duration(3).sleep();
   }
