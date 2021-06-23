@@ -1,94 +1,26 @@
 #include <state_machines/scout_state_machine.h>
 
-ScoutStateMachine::ScoutStateMachine(ros::NodeHandle nh, const std::string &robot_name) : nh_(nh), robot_name_(robot_name)
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// S C O U T   B A S E   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ScoutBaseState::ScoutBaseState(ros::NodeHandle nh, const std::string &robot_name) : nh_(nh), robot_name_(robot_name)
 {
   resource_localiser_client_ = new ResourceLocaliserClient_(RESOURCE_LOCALISER_ACTIONLIB, true);
-  navigation_vision_client_ = new NavigationVisionClient(robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
+  navigation_vision_client_ = new NavigationVisionClient(robot_name + "/" + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
+  navigation_client_ = new NavigationClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
+
   spiralClient_ = nh_.serviceClient<operations::Spiral>(SCOUT_SEARCH_SERVICE);
 
-  volatile_sub_ = nh.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutStateMachine::volatileSensorCB, this);
-
-  waitForServerConnections();
+  volatile_sub_ = nh_.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutBaseState::volatileSensorCB, this);
+  objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ScoutBaseState::objectsCallback, this);
 }
 
-ScoutStateMachine::~ScoutStateMachine()
+ScoutBaseState::~ScoutBaseState()
 {
   delete resource_localiser_client_;
   delete navigation_vision_client_;
-}
-
-void ScoutStateMachine::waitForServerConnections()
-{
-  resource_localiser_client_->waitForServer();
-  navigation_vision_client_->waitForServer();
-  spiralClient_.waitForExistence();
-}
-
-bool ScoutStateMachine::startSearchingVolatile()
-{
-  continue_spiral_ = true;
-  // If starting spiral fails
-  if (!resumeSearchingVolatile(true))
-    return false;
-
-  while (ros::ok() && continue_spiral_)
-  {
-    if (near_volatile_)
-      return true;
-    ros::Duration(0.1).sleep();
-  }
-}
-
-bool ScoutStateMachine::stopSearchingVolatile()
-{
-  continue_spiral_ = false;
-  return resumeSearchingVolatile(false);
-}
-
-bool ScoutStateMachine::resumeSearchingVolatile(const bool resume)
-{
-  operations::Spiral srv;
-  srv.request.resume_spiral_motion = resume;
-  return spiralClient_.call(srv);
-}
-
-bool ScoutStateMachine::locateVolatile()
-{
-  stopSearchingVolatile();
-
-  operations::ResourceLocaliserGoal goal;
-  resource_localiser_client_->sendGoal(goal);
-  resource_localiser_client_->waitForResult();
-  return (resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-}
-
-bool ScoutStateMachine::undockRobot()
-{
-  navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
-  navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
-  navigation_vision_client_->sendGoal(navigation_vision_goal_);
-  navigation_vision_client_->waitForResult();
-  return navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
-}
-
-bool ScoutStateMachine::undockRobot(const geometry_msgs::PoseStamped &POSE)
-{
-  // face the excavator in preparation for resetting odometry
-  // navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
-  // navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
-  // navigation_vision_client_->sendGoal(navigation_vision_goal_);
-  // navigation_vision_client_->waitForResult();
-
-  // reset the odometry using the 180-degree rotated pose received from scheduler if facing excavator succeeds
-  // if (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-  resetOdometry(POSE);
-
-  // finish the undocking process
-  navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
-  navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
-  navigation_vision_client_->sendGoal(navigation_vision_goal_);
-  navigation_vision_client_->waitForResult();
-  return navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
+  delete navigation_client_;
 }
 
 /**
@@ -96,71 +28,156 @@ bool ScoutStateMachine::undockRobot(const geometry_msgs::PoseStamped &POSE)
  * 
  * @param msg 
  */
-void ScoutStateMachine::volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg)
+void ScoutBaseState::volatileSensorCB(const srcp2_msgs::VolSensorMsg::ConstPtr &msg)
 {
   near_volatile_ = !(msg->distance_to == -1);
+  new_volatile_msg_ = true;
 }
 
-/**
- * @brief Used for sending scout to a specific location using both 3D location and visual navigation (helper function for other states)
- * 
- * @param target_loc @param target_object
- */
-bool ScoutStateMachine::goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object)
+void ScoutBaseState::objectsCallback(const perception::ObjectArray::ConstPtr objs)
 {
-  navigation_vision_goal_.desired_object_label = target_object;
-  navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_NAV_AND_NAV_VISION;
-  navigation_vision_goal_.goal_loc = target_loc;
-  navigation_vision_client_->sendGoal(navigation_vision_goal_);
+  const std::lock_guard<std::mutex> lock(objects_mutex_);
+  vision_objects_ = objs;
+  objects_msg_received_ = true;
+}
+
+bool ScoutBaseState::entryPoint()
+{
+  return true;
+}
+
+bool ScoutBaseState::exec()
+{
+  return true;
+}
+
+bool ScoutBaseState::exitPoint()
+{
+  return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// U N D O C K   S T A T E  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+Undock::Undock(ros::NodeHandle nh, const std::string &robot_name):ScoutBaseState(nh,robot_name)
+{
+}
+
+bool Undock::entryPoint()
+{
+  ROS_INFO("Undock Entrypoint");
+  bool result = false;
+  while(!objects_msg_received_ && ros::ok())
+  {
+    ROS_INFO("Waiting to receive image");
+    ros::Duration(0.1).sleep();
+    ros::spinOnce();
+  }
+  if (vision_objects_->number_of_objects > 0)
+  {
+    const std::lock_guard<std::mutex> lock(objects_mutex_);
+    float direction = checkObstacle(vision_objects_->obj);
+    result = (abs(direction) > 0.0);
+  }
+  return result;
+}
+
+bool Undock::exec()
+{
+  ROS_INFO("Undock Exec");
+  operations::NavigationVisionGoal navigation_vision_goal;
+  navigation_vision_goal.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
+  navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
+  navigation_vision_client_->sendGoal(navigation_vision_goal);
   navigation_vision_client_->waitForResult();
   return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
-bool ScoutStateMachine::resetOdometry(const geometry_msgs::PoseStamped &POSE)
+bool Undock::exitPoint()
 {
-  resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
-  maploc::ResetOdom srv;
-  ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << "Scout odometry has been reset");
-  srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
-  srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
-  srv.request.use_ground_truth = false;
-  srv.request.ref_pose = POSE;
-
-  return resetScoutOdometryClient_.call(srv);
+  ROS_INFO("Undock Exit Point");
+  navigation_vision_client_->cancelGoal();
+  return true;
 }
 
-// this should never be called ideally
-bool ScoutStateMachine::resetOdometry()
-{
-  resetScoutOdometryClient_ = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
-  maploc::ResetOdom srv;
-  ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << "Scout odometry has been reset");
-  srv.request.ref_pose.header.frame_id = COMMON_NAMES::ODOM;
-  srv.request.target_robot_name = COMMON_NAMES::SCOUT_1;
-  srv.request.use_ground_truth = true;
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// S E A R C H   S T A T E  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-  return resetScoutOdometryClient_.call(srv);
+Search::Search(ros::NodeHandle nh, const std::string &robot_name):ScoutBaseState(nh,robot_name)
+{
 }
 
-bool ScoutStateMachine::faceProcessingPlant()
+bool Search::entryPoint()
 {
-  navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
-  navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
-  navigation_vision_client_->sendGoal(navigation_vision_goal_);
-  navigation_vision_client_->waitForResult();
-
-  return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-}
-bool ScoutStateMachine::syncOdometry(const geometry_msgs::PoseStamped &POSE)
-{
-  ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << "Syncing Scout odom");
-  if (faceProcessingPlant())
+  ROS_INFO("Searching Entry point");
+  bool result = true;
+  while(!objects_msg_received_ && ros::ok())
   {
-    return resetOdometry(POSE);
+    ROS_INFO("Waiting to receive image");
+    ros::Duration(0.1).sleep();
+    ros::spinOnce();
   }
-  else
+  if (vision_objects_->number_of_objects > 0)
   {
-    return false;
-    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << "Did not face processing plant yet!");
+    const std::lock_guard<std::mutex> lock(objects_mutex_);
+    float direction = checkObstacle(vision_objects_->obj);
+    result = !(abs(direction) > 0.0);
   }
+  return result;
+}
+
+bool Search::exec()
+{
+  return resumeSearchingVolatile(true);
+}
+
+bool Search::exitPoint()
+{
+  return resumeSearchingVolatile(false);
+}
+
+bool Search::resumeSearchingVolatile(bool resume)
+{
+  operations::Spiral srv;
+  srv.request.resume_spiral_motion = resume;
+  return spiralClient_.call(srv);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////  V O L A T I L E   L O C A T I O N  S T A T E  /////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+Locate::Locate(ros::NodeHandle nh, const std::string &robot_name):ScoutBaseState(nh,robot_name)
+{
+}
+
+bool Locate::entryPoint()
+{
+  ROS_INFO("Resource Localizing entrypoint");
+  while(!new_volatile_msg_ && ros::ok())
+  {
+    ros::Duration(0.1).sleep();
+    ros::spinOnce();
+  }
+  new_volatile_msg_ = false;
+  return near_volatile_;
+}
+
+bool Locate::exec()
+{
+  ROS_INFO("Resource Localizing exec");
+  operations::ResourceLocaliserGoal goal;
+  resource_localiser_client_->sendGoal(goal);
+  resource_localiser_client_->waitForResult();
+  return (resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}
+
+bool Locate::exitPoint()
+{
+  ROS_INFO("Resource Localizing exitpoint");
+  resource_localiser_client_->cancelGoal();
 }

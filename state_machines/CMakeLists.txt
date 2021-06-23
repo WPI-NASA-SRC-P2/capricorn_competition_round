@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   maploc
   operations
+  perception
 )
 
 ## System dependencies are found with CMake's conventions
@@ -119,7 +120,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES state_machines
-  CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs operations 
+  CATKIN_DEPENDS roscpp rospy actionlib_msgs std_msgs message_runtime utils geometry_msgs srcp2_msgs operations perception
   DEPENDS system_lib
 )
 
@@ -136,9 +137,10 @@ include_directories(
 
 ## Declare a C++ library
   add_library(${PROJECT_NAME}
-  src/excavator_state_machine.cpp
-  src/scout_state_machine.cpp
-  src/hauler_state_machine.cpp
+  src/excavator/excavator_state_machine.cpp
+  src/scout/scout_state_machine.cpp
+  src/hauler/hauler_state_machine.cpp
+  src/common_robot_state_machine.cpp
  )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
@@ -168,27 +170,51 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 #   ${catkin_LIBRARIES}
 # )
 
-add_executable(start_excavator_sm_server src/start_excavator_sm_server.cpp)
-add_dependencies(start_excavator_sm_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(start_excavator_sm_server ${PROJECT_NAME}
-${catkin_LIBRARIES}
-)
+# add_executable(excavator_state_machine src/excavator/excavator_state_machine.cpp)
+# add_dependencies(excavator_state_machine ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(excavator_state_machine ${PROJECT_NAME}
+# ${catkin_LIBRARIES}
+# )
 
-add_executable(start_scout_sm src/start_scout_sm.cpp)
-add_dependencies(start_scout_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(start_scout_sm ${PROJECT_NAME}
-${catkin_LIBRARIES}
-)
+# #add_executable(start_excavator_sm_server src/excavator/start_excavator_sm.cpp)
+# #add_dependencies(start_excavator_sm_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# #target_link_libraries(start_excavator_sm_server ${PROJECT_NAME}
+# #${catkin_LIBRARIES}
+# #)
 
-add_executable(start_hauler_sm_server src/start_hauler_sm_server.cpp)
-add_dependencies(start_hauler_sm_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(start_hauler_sm_server ${PROJECT_NAME}
-${catkin_LIBRARIES}
-)
+# add_executable(scout_state_machine src/scout/scout_state_machine.cpp)
+# add_dependencies(scout_state_machine ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(scout_state_machine ${PROJECT_NAME}
+# ${catkin_LIBRARIES}
+# )
+
+#add_executable(hauler_state_machine src/hauler/hauler_state_machine.cpp)
+#add_dependencies(hauler_state_machine ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(hauler_state_machine ${PROJECT_NAME}
+#${catkin_LIBRARIES}
+#)
+
+#add_executable(start_scout_sm src/scout/start_scout_sm.cpp)
+#add_dependencies(start_scout_sm ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(start_scout_sm ${PROJECT_NAME}
+#${catkin_LIBRARIES}
+#)
+
+#add_executable(start_hauler_sm_server src/start_hauler_sm_server.cpp)
+#add_dependencies(start_hauler_sm_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(start_hauler_sm_server ${PROJECT_NAME}
+#${catkin_LIBRARIES}
+#)
 
 add_executable(state_machine_tester src/state_machine_tester.cpp)
 add_dependencies(state_machine_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(state_machine_tester ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
+
+add_executable(new_state_machine_tester src/new_state_machine_tester.cpp)
+add_dependencies(new_state_machine_tester ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(new_state_machine_tester ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 

@@ -1,4 +1,5 @@
 #pragma once
+#include <sstream>
 
 namespace COMMON_NAMES
 {
@@ -173,48 +174,48 @@ namespace COMMON_NAMES
   enum STATE_MACHINE_TASK
   {
     /**************SCOUT STATES**************/
-    SCOUT_SEARCH_VOLATILE = 42,         // Execute spiral motion to search for the volatiles.
-    SCOUT_STOP_SEARCH = 1,              // Stop executing the search algorithm.
-    SCOUT_LOCATE_VOLATILE = 2,          // Pinpoint the location of the volatile
-    SCOUT_UNDOCK = 3,                   // Move the Scout away from the Excavator
-    SCOUT_RESET_ODOM_GROUND_TRUTH = 20, // Reset scout odometry with ground truth
-    SCOUT_RESET_ODOM = 21,              // Reset scout odometry without ground truth
-    SCOUT_SYNC_ODOM = 24,               //Centers wrt processing plant and resets odometry
-    SCOUT_FACE_PROCESSING_PLANT = 26,   //Centers wrt processing plant
+    SCOUT_SEARCH_VOLATILE, // Execute spiral motion to search for the volatiles.
+    SCOUT_STOP_SEARCH,     // Stop executing the search algorithm.
+    SCOUT_LOCATE_VOLATILE, // Pinpoint the location of the volatile
+    SCOUT_UNDOCK,          // Move the Scout away from the Excavator
+    SCOUT_FACE_PROCESSING_PLANT, // Rotate the Scout using nav vision centering to proc plant
+    SCOUT_SYNC_ODOM,       // synchronize odometry of scout with excavator 
+    SCOUT_RESET_ODOM,      // reset odometry state for scout (calls the reset service)
+    SCOUT_RESET_ODOM_GROUND_TRUTH, // reset odometry of scout w.r.t. its starting position in sim
 
     /**************EXCAVATOR STATES**************/
-    EXCAVATOR_GO_TO_LOC = 4,                // Takes Excavator to a location from which it will
-                                            // be quicker to get to the digging location
-    EXCAVATOR_GO_TO_SCOUT = 5,              // Get close to the volatile when it is detected
-    EXCAVATOR_PARK_AND_PUB = 6,             // Publish a message that excavator has reached,
-                                            // And park where the scout was located.
-    EXCAVATOR_DIG_AND_DUMP_VOLATILE = 7,    // Takes care of digging, and dumping
-                                            // the volatile in hauler if volatile is found
-    EXCAVATOR_GOTO_DEFAULT_ARM_POSE = 8,    // Moves excavator's arm to a default position used for object detection
-    EXCAVATOR_RESET_ODOM_GROUND_TRUTH = 22, // Reset excavator odometry
-    EXCAVATOR_RESET_ODOM = 23,              // Reset excavator odometry
-    EXCAVATOR_SYNC_ODOM = 25,               //Centers wrt processing plant and resets odometry
-    EXCAVATOR_FACE_PROCESSING_PLANT = 27,   //Centers wrt processing plant
-    EXCAVATOR_GO_TO_REPAIR = 29,            // sends excavator to repair station using visual navigation
-
+    EXCAVATOR_GO_TO_LOC,             // Takes Excavator to a location from which it will
+                                         // be quicker to get to the digging location
+    EXCAVATOR_GO_TO_SCOUT,           // Get close to the volatile when it is detected
+    EXCAVATOR_PARK_AND_PUB,          // Publish a message that excavator has reached,
+                                         // And park where the scout was located.
+    EXCAVATOR_DIG_AND_DUMP_VOLATILE, // Takes care of digging, and dumping
+                                         // the volatile in hauler if volatile is found
+    EXCAVATOR_GOTO_DEFAULT_ARM_POSE, // Moves excavator's arm to a default position used for object detection
+    EXCAVATOR_RESET_ODOM_GROUND_TRUTH, // reset odometry of excavator w.r.t. its starting position in sim
+    EXCAVATOR_RESET_ODOM,             // reset excavator odometry using reset odom service
+    EXCAVATOR_SYNC_ODOM,              // reset excavator odometry w.r.t. hauler odometry 
+    EXCAVATOR_FACE_PROCESSING_PLANT,  //Face processing plant using NAV_VISION::V_CENTER
+    EXCAVATOR_GO_TO_REPAIR,           //Go to repair station using NAV_VISION
+    
     /**************HAULER STATES**************/
-    HAULER_GO_TO_LOC = 9,                    // Takes Hauler to a location
-    HAULER_DUMP_VOLATILE_TO_PROC_PLANT = 10, // Undocks hauler from excavator, goes to processing plant,
+    HAULER_GO_TO_LOC,                    // Takes Hauler to a location
+    HAULER_DUMP_VOLATILE_TO_PROC_PLANT, // Undocks hauler from excavator, goes to processing plant,
                                              // parks hauler to processing plant, dumps volatile and
                                              // undocks hauler from hopper
-    HAULER_GO_BACK_TO_EXCAVATOR = 11,        // Takes hauler from any location to excavator and parks
-    HAULER_PARK_AT_EXCAVATOR = 12,           // Hauler parks at excavator
-    HAULER_FOLLOW_EXCAVATOR = 13,            // Hauler follows excavator
-    HAULER_RESET_ODOM = 14,                  // Reset Odom 
-    HAULER_RESET_ODOM_AT_HOPPER = 30,        // Whole sequence of parking and resetting odom
+    HAULER_GO_BACK_TO_EXCAVATOR,        // Takes hauler from any location to excavator and parks
+    HAULER_PARK_AT_EXCAVATOR,           // Hauler parks at excavator
+    HAULER_FOLLOW_EXCAVATOR,            // Hauler follows excavator
+    HAULER_RESET_ODOM,                  // Hauler reset odometry service call state
 
     // redundant modes for hauler (everything is taken care by above modes)
-    HAULER_GO_TO_PROC_PLANT = 15,     // Hauler goes to processing plant
-    HAULER_PARK_AT_HOPPER = 16,       // Parks hauler wrt hopper
-    HAULER_DUMP_VOLATILE = 17,        // Empty hauler's bin
-    HAULER_UNDOCK_EXCAVATOR = 18,     // undock from excavator (basically backward motion from excavator)
-    HAULER_UNDOCK_HOPPER = 19,        // undock from hopper (backward motion from hopper)
-    HAULER_FACE_PROCESSING_PLANT = 28 //Hauler rotates until it sees processing plant
+    HAULER_GO_TO_PROC_PLANT, // Hauler goes to processing plant
+    HAULER_PARK_AT_HOPPER,   // Parks hauler wrt hopper
+    HAULER_DUMP_VOLATILE,    // Empty hauler's bin
+    HAULER_UNDOCK_EXCAVATOR, // undock from excavator (basically backward motion from excavator)
+    HAULER_UNDOCK_HOPPER,    // undock from hopper (backward motion from hopper)
+    HAULER_RESET_ODOM_AT_HOPPER, //face processing plant, park at hopper and then reset odom with ground truth
+    HAULER_FACE_PROCESSING_PLANT //face the processinf plant using NAV_VISION_TYPE::V_CENTER
   };
 
 } // namespace CAPRICORN_COMMON_NAMES
@@ -226,3 +227,18 @@ enum EXCAVATOR_ARM_TASK
   START_UNLOADING = 2,
   GO_TO_DEFAULT = 3,
 };
+
+
+template<typename T>
+std::string ToString(T& t_arg) {
+   std::ostringstream oss;
+   oss << t_arg;
+   return oss.str();
+}
+
+template<typename T, typename... Ts>
+std::string ToString(T& t_arg, Ts... t_args) {
+   std::ostringstream oss;
+   oss << t_arg << ToString(t_args...);
+   return oss.str();
+}
