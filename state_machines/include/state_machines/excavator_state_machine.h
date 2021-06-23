@@ -193,7 +193,7 @@ private:
    bool dig_;
    bool dump_;
    int new_vol_loc_flag_;
-   int digging_attempt_;
+   int digging_attempt_ = 0;
 };
 // #endif
 
