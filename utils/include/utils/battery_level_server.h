@@ -15,6 +15,12 @@ private:
 
 public:
     ros::Subscriber pose_subscriber;
-    //void poseCallback(nav_msgs::Odometry odom);
-    bool deadlinesCallback(utils::battery_deadlines::Request &req, utils::battery_deadlines::Response &res);
+
+    /**
+     * @brief Calculates the deadlines and assigns it as a response for a ROS Service call
+     * 
+     * @param req Client's request to the server - in this case a current location of the robot in the simulation
+     * @param res Server's response to the client's request - in this case battery level deadlines
+     */
+    void deadlinesCallback(utils::battery_deadlines::Request &req, utils::battery_deadlines::Response &res);
 };

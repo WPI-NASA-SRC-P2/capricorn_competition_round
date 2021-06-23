@@ -1,39 +1,18 @@
 #include <iostream>
 #include "utils/battery_level.h"
 #include <bits/stdc++.h>
-/**
- * @brief 
- * 
- * @param target_x 
- * @param target_y 
- * @param current_x 
- * @param current_y 
- * @return float 
- */
+
 float battery_level::calc_distance(float target_x, float target_y, float current_x, float current_y){
     return sqrt(pow(target_x - current_x, 2) + pow(target_y - current_y, 2));
 }
 
 
-/**
- * @brief 
- * 
- * @param discharge_rate The rate at which the battery level is drained
- * @param distance 
- * @param speed 
- * @return float 
- */
 float battery_level::base_battery_level(const float discharge_rate, float distance, const float speed){
     float percentage_needed = discharge_rate * (distance / speed);
     return percentage_needed;
 }
 
-/**
- * @brief 
- * 
- * @param percentage_needed The percetnage needed to drive to task
- * @return float 
- */
+
 float battery_level::calc_soft_deadline(float percentage_needed){
     float soft_deadline = 0;
     float safety_factor = 1.4;
@@ -41,12 +20,7 @@ float battery_level::calc_soft_deadline(float percentage_needed){
     return soft_deadline;
 }
 
-/**
- * @brief calculates the hard deadline for the battery level 
- * 
- * @param percentage_needed 
- * @return float 
- */
+
 float battery_level::calc_hard_deadline(float percentage_needed){
     float hard_deadline = 0;
     float safety_factor = 1.2;
