@@ -17,4 +17,6 @@ Team::Team(ros::NodeHandle nh, TEAM_MACRO_STATE team_state, ROBOTS_ENUM scout,
     hired_hauler = hauler;
 
     macro_state = team_state;
+
+    // addState
 }

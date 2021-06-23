@@ -1,16 +1,8 @@
+#pragma once
+
 #include <utils/common_names.h>
 #include <team_level/robot_status.h>
-
-enum TEAM_MACRO_STATE{
-   STANDBY, // If No robot in the team;
-   IDLE,    // If Robots in the team are idle
-   SEARCH,  // Team has a busy scout
-   SCOUT_WAITING, // Team has a scout waiting for Excavator to take over
-   EXCAVATING,    // No or idle scout in the team
-                  // Excavator and Hauler busy digging and collecting
-   DUMPING, // Hauler going to dump the volatile
-            // No or idle Excavator
-};
+#include <team_level/team_state.h>
 
 class Team{
 public:
@@ -43,4 +35,7 @@ private:
    void updateTeamMacroState();
    ROBOTS_ENUM hired_scout, hired_excavator, hired_hauler;
    TEAM_MACRO_STATE macro_state;
+
+   void addStates();
+   
 };

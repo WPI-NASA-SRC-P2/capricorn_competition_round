@@ -1,3 +1,4 @@
+#pragma once
 #include <utils/common_names.h>
 #include <map>
 #include "ros/ros.h"
