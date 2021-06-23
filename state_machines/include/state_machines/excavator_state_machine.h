@@ -21,6 +21,7 @@ const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
     STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB,
     STATE_MACHINE_TASK::EXCAVATOR_DIG_AND_DUMP_VOLATILE,
     STATE_MACHINE_TASK::EXCAVATOR_GOTO_DEFAULT_ARM_POSE,
+    STATE_MACHINE_TASK::EXCAVATOR_VOLATILE_RECOVERY,
 };
 
 class ExcavatorStateMachine
@@ -74,6 +75,12 @@ private:
    * 
    */
   bool digVolatile();
+
+  /**
+   * @brief Excavatory recovery if volatile not found in first try
+   * 
+   */
+  void excavatorRecovery();
 
   /**
    * @brief Dump the volatile at Hauler Location

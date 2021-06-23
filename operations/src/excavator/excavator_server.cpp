@@ -304,6 +304,7 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
 
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
     ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Scoop info topic returned: " + scoop_value + "\n");
+    
 
     while (!volatile_found && last_vol_loc_angle < 1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
     {

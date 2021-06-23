@@ -694,6 +694,59 @@ void odomCallback(const nav_msgs::Odometry::ConstPtr &msg)
     g_robot_pose.pose = msg->pose.pose;
 }
 
+void excavatorRecovery(int trial_number)
+{
+    if(trial_number == 1)
+    {
+        //move straight
+        geometry_msgs::PoseStamped pt;
+        pt.header.frame_id = g_robot_name + ROBOT_BASE;
+        pt.pose.position.y = -1;
+        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+        g_nav_goal.pose = pt;
+        g_client->sendGoal(g_nav_goal);
+        g_send_nav_goal = false;
+        trial_number++;
+    }
+    else if(trial_number == 2)
+    {
+        //move left
+        geometry_msgs::PoseStamped pt;
+        pt.header.frame_id = g_robot_name + ROBOT_BASE;
+        pt.pose.position.y = 2;
+        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+        g_nav_goal.pose = pt;
+        g_client->sendGoal(g_nav_goal);
+        g_send_nav_goal = false;
+        trial_number++;
+        trial_number++;
+    }
+    else if(trial_number == 3)
+    {
+        //move right
+        geometry_msgs::PoseStamped pt;
+        pt.header.frame_id = g_robot_name + ROBOT_BASE;
+        pt.pose.position.y = -1;
+        pt.pose.position.x = -1;
+        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+        g_nav_goal.pose = pt;
+        g_client->sendGoal(g_nav_goal);
+        g_send_nav_goal = false;
+        trial_number++;
+    }
+    else
+    {
+        //move back
+        geometry_msgs::PoseStamped pt;
+        pt.header.frame_id = g_robot_name + ROBOT_BASE;
+        pt.pose.position.x = 2;
+        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+        g_nav_goal.pose = pt;
+        g_client->sendGoal(g_nav_goal);
+        g_send_nav_goal = false;
+    }
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 2 && argc != 4)
@@ -717,6 +770,12 @@ int main(int argc, char **argv)
     server.registerPreemptCallback(&cancelGoal);
     server.start();
     ROS_INFO("Starting Navigation Vision Server");
+
+    excavatorRecovery(1);
+    excavatorRecovery(2);
+    excavatorRecovery(3);
+    excavatorRecovery(4);
+
     ros::spin();
     return 0;
 }

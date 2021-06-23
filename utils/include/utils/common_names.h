@@ -183,6 +183,7 @@ namespace COMMON_NAMES
     EXCAVATOR_DIG_AND_DUMP_VOLATILE = 7, // Takes care of digging, and dumping
                                          // the volatile in hauler if volatile is found
     EXCAVATOR_GOTO_DEFAULT_ARM_POSE = 8, // Moves excavator's arm to a default position used for object detection
+    EXCAVATOR_VOLATILE_RECOVERY = 20, // Moves the excavator around if volatile isn't found in the first try 
 
     /**************HAULER STATES**************/
     HAULER_GO_TO_LOC = 9,                    // Takes Hauler to a location

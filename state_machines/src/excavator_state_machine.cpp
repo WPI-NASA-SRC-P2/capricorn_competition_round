@@ -82,6 +82,60 @@ bool ExcavatorStateMachine::digVolatile()
     return (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
+void ExcavatorStateMachine::excavatorRecovery(int trial_number)
+{
+    int trial_number = 1;
+    if(trial_number == 1)
+    {
+        //move straight
+        geometry_msgs::PoseStamped pt;
+        pt.header.frame_id = robot_name_ + ROBOT_BASE;
+        pt.pose.position.y = -1;
+        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+        g_nav_goal.pose = pt;
+        g_client->sendGoal(g_nav_goal);
+        g_send_nav_goal = false;
+        trial_number++;
+    }
+    else if(trial_number == 2)
+    {
+        //move left
+        geometry_msgs::PoseStamped pt;
+        pt.header.frame_id = robot_name_ + ROBOT_BASE;
+        pt.pose.position.y = 2;
+        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+        g_nav_goal.pose = pt;
+        g_client->sendGoal(g_nav_goal);
+        g_send_nav_goal = false;
+        trial_number++;
+        trial_number++;
+    }
+    else if(trial_number == 3)
+    {
+        //move right
+        geometry_msgs::PoseStamped pt;
+        pt.header.frame_id = robot_name_ + ROBOT_BASE;
+        pt.pose.position.y = -1;
+        pt.pose.position.x = -1;
+        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+        g_nav_goal.pose = pt;
+        g_client->sendGoal(g_nav_goal);
+        g_send_nav_goal = false;
+        trial_number++;
+    }
+    else
+    {
+        //move back
+        geometry_msgs::PoseStamped pt;
+        pt.header.frame_id = robot_name_ + ROBOT_BASE;
+        pt.pose.position.x = 2;
+        g_nav_goal.drive_mode = NAV_TYPE::GOAL;
+        g_nav_goal.pose = pt;
+        g_client->sendGoal(g_nav_goal);
+        g_send_nav_goal = false;
+    }
+}    
+
 bool ExcavatorStateMachine::dumpVolatile()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Dumping Volatile");
