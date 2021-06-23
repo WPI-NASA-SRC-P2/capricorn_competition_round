@@ -508,28 +508,28 @@ void DumpVolatile::exitPoint()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int main(int argc, char** argv)
-{
-   ros::init(argc, argv, "hauler_state_machine");
-   ros::NodeHandle nh;
+// int main(int argc, char** argv)
+// {
+//    ros::init(argc, argv, "hauler_state_machine");
+//    ros::NodeHandle nh;
 
-   try {
-      HaulerScheduler cSchd(700);
+//    try {
+//       HaulerScheduler cSchd(700);
       
-      cSchd.addState(new GoToProcPlant());
-      cSchd.addState(new ParkAtHopper());
-      cSchd.addState(new ResetOdom());
-      cSchd.addState(new UndockHopper());
-      cSchd.addState(new ResetOdomMacro());
-      cSchd.addState(new GoToExcavator());
-      cSchd.addState(new ParkAtExcavator());
-      cSchd.addState(new UndockExcavator());
-      cSchd.addState(new DumpVolatile());
-      cSchd.setInitialState(HAULER_PARK_AT_HOPPER);
-      cSchd.exec();
-      return 0;
-   }
-   catch(StateMachineException& ex) {
-      std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
-   }
-}
+//       cSchd.addState(new GoToProcPlant());
+//       cSchd.addState(new ParkAtHopper());
+//       cSchd.addState(new ResetOdom());
+//       cSchd.addState(new UndockHopper());
+//       cSchd.addState(new ResetOdomMacro());
+//       cSchd.addState(new GoToExcavator());
+//       cSchd.addState(new ParkAtExcavator());
+//       cSchd.addState(new UndockExcavator());
+//       cSchd.addState(new DumpVolatile());
+//       cSchd.setInitialState(HAULER_PARK_AT_HOPPER);
+//       cSchd.exec();
+//       return 0;
+//    }
+//    catch(StateMachineException& ex) {
+//       std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
+//    }
+// }

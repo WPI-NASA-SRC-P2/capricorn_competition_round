@@ -197,22 +197,22 @@ void Locate::exitPoint()
 //////////////////////////////////////////////////////////////////////////////////
 
 
-int main(int argc, char** argv)
-{
-   ros::init(argc, argv, "scout_state_machine");
-   ros::NodeHandle nh;
+// int main(int argc, char** argv)
+// {
+//    ros::init(argc, argv, "scout_state_machine");
+//    ros::NodeHandle nh;
 
-   try {
-      ScoutScheduler cSchd(700);
-      cSchd.addState(new Search());
-      cSchd.addState(new Undock());
-      cSchd.addState(new Locate());
-      cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
-      // cSchd.setInitialState(SCOUT_UNDOCK);
-      cSchd.exec();
-      return 0;
-   }
-   catch(StateMachineException& ex) {
-      std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
-   }
-}
+//    try {
+//       ScoutScheduler cSchd(700);
+//       cSchd.addState(new Search());
+//       cSchd.addState(new Undock());
+//       cSchd.addState(new Locate());
+//       cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
+//       // cSchd.setInitialState(SCOUT_UNDOCK);
+//       cSchd.exec();
+//       return 0;
+//    }
+//    catch(StateMachineException& ex) {
+//       std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
+//    }
+// }

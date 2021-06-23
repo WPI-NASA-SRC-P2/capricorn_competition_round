@@ -184,7 +184,7 @@ State& ParkAndPub::transition()
    }
    else
    {
-      return getState(EXCAVATOR_GOTO_DEFAULT_ARM_POSE);
+      return getState(EXCAVATOR_DIG_AND_DUMP_VOLATILE);
    }   
 }
 
@@ -304,25 +304,25 @@ void DigAndDump::exitPoint()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int main(int argc, char** argv)
-{
-   ros::init(argc, argv, "excavator_state_machine");
-   ros::NodeHandle nh;
+// int main(int argc, char** argv)
+// {
+//    ros::init(argc, argv, "excavator_state_machine");
+//    ros::NodeHandle nh;
 
-   try {
-      ExcavatorScheduler cSchd(700);
+//    try {
+//       ExcavatorScheduler cSchd(700);
       
-      cSchd.addState(new GoToDefaultArmPosition());
-      cSchd.addState(new GoToScout());
-      cSchd.addState(new ParkAndPub());
-      cSchd.addState(new DigAndDump());
-      cSchd.setInitialState(EXCAVATOR_DIG_AND_DUMP_VOLATILE);
-      // cSchd.setInitialState(EXCAVATOR_GOTO_DEFAULT_ARM_POSE);
-      // cSchd.setInitialState(EXCAVATOR_GO_TO_SCOUT);
-      cSchd.exec();
-      return 0;
-   }
-   catch(StateMachineException& ex) {
-      std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
-   }
-}
+//       cSchd.addState(new GoToDefaultArmPosition());
+//       cSchd.addState(new GoToScout());
+//       cSchd.addState(new ParkAndPub());
+//       cSchd.addState(new DigAndDump());
+//       cSchd.setInitialState(EXCAVATOR_DIG_AND_DUMP_VOLATILE);
+//       // cSchd.setInitialState(EXCAVATOR_GOTO_DEFAULT_ARM_POSE);
+//       // cSchd.setInitialState(EXCAVATOR_GO_TO_SCOUT);
+//       cSchd.exec();
+//       return 0;
+//    }
+//    catch(StateMachineException& ex) {
+//       std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
+//    }
+// }
