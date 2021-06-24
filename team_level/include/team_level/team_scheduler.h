@@ -27,10 +27,6 @@ public:
 
    void exec();
 
-   bool done();
-   
-   void setInterrupt(STATE_MACHINE_TASK interrupt_state);
-   
 private:
    std::array<RobotStatus*, MAX_SCOUTS> scouts;
    std::array<RobotStatus*, MAX_EXCAVATORS> excavators;
@@ -41,8 +37,50 @@ private:
    void initTeams(ros::NodeHandle nh);
 
    void initTeamArray(ros::NodeHandle nh);
+
    void addRobots();
+   
    void setSearchStates();
+
+   void recruitment();
+
+   bool hasScout(int team_index);
+
+   bool hasExcavator(int team_index);
+
+   bool hasHauler(int team_index);
+
+   void fireScout(int team_index);
+
+   void fireExcavator(int team_index);
+
+   void fireHauler(int team_index);
+
+   void recruitScout(int team_index);
+
+   void recruitExcavator(int team_index);
+
+   void recruitHauler(int team_index);
+
+   void checkAndRecruitForSearch(int team_index);
+
+   void checkAndRecruitForScoutWaiting(int team_index);
+
+   void checkAndRecruitForExcavating(int team_index);
+
+   void checkAndRecruitForDumping(int team_index);
+
+   void checkAndRecruitForIdle(int team_index);
+
+   void checkAndRecruitForStandby(int team_index);
+
+
+   std::array<bool, MAX_TEAMS> teams_need_scout;
+   std::array<bool, MAX_TEAMS> scout_for_sale;
+   std::array<bool, MAX_TEAMS> teams_need_excavator;
+   std::array<bool, MAX_TEAMS> excavator_for_sale;
+   std::array<bool, MAX_TEAMS> teams_need_hauler;
+   std::array<bool, MAX_TEAMS> hauler_for_sale;
 };
 
 #endif // TEAM_SCHEDULER_H
