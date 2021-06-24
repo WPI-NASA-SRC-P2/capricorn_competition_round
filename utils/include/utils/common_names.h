@@ -87,6 +87,7 @@ namespace COMMON_NAMES
   const std::string STATE_MACHINE_SERVER_NODE_NAME = "_sm_server";
 
   /****** TOPIC NAMES ******/
+  const std::string CLOCK_TOPIC = "/clock";
   const std::string CAPRICORN_TOPIC = "/capricorn/";
   const std::string POSE_ERROR_TOPIC = "/pose_error";
   const std::string GROUND_TRUTH_TOPIC = "/ground_truth";
@@ -155,11 +156,12 @@ namespace COMMON_NAMES
   /****** NAVIGATION ENUMS ******/
   enum NAV_TYPE
   {
-    MANUAL,  // Manual driving
-    GOAL,    // Trajectory generation with the planner from a goal
-    REVOLVE, // Revolve the robot around a fixed point
-    SPIRAL,  // Archimedean spiral (scout finding volatiles)
-    FOLLOW,  // Follow an object in frame
+    MANUAL,      // Manual driving
+    GOAL,        // Trajectory generation with the planner from a goal
+    GOAL_SMOOTH, // Follow a path, but do it smoothly instead of turn-in-place
+    REVOLVE,     // Revolve the robot around a fixed point
+    SPIRAL,      // Archimedean spiral (scout finding volatiles)
+    FOLLOW,      // Follow an object in frame
   };
 
   /****** COMMON RESULTS ENUMS (This is used by every actionlibrary)******/

@@ -63,6 +63,15 @@ perception::ObjectArray g_hauler_objects, g_excavator_objects;
 std::string g_robot_name;
 
 /**
+ * @brief Returns the string to be logged or printed
+ * 
+ */
+std::string getString(std::string message)
+{
+    return "[OPERATIONS | PARK HAULER SERVER | " + g_robot_name +  "]: " + message;
+}
+
+/**
  * @brief Callback function which subscriber to Objects message published from hauler's object detection
  * 
  * @param objs 
@@ -168,9 +177,9 @@ void parkWrtHopper()
 
     bool processing_plant_detected = (processing_plant_z != INIT_VALUE), furnace_detected = (furnace_z != INIT_VALUE), hopper_detected = (hopper_x != INIT_VALUE);
 
-    if (furnace_detected && furnace_center_y < 55)
+    if (furnace_detected && furnace_z < 2.2)
     {
-        ROS_INFO("REACHED HOPPER");
+        ROS_INFO_STREAM(getString("REACHED HOPPER"));
         for (int i = 0; i < 10; i++)
         {
             g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
@@ -184,7 +193,7 @@ void parkWrtHopper()
         return;
     }
 
-    if (hopper_detected && furnace_detected && furnace_size_x > 100 && abs(hopper_x - furnace_x) < 30)
+    if (hopper_detected && furnace_detected && furnace_size_x > 100 && abs(hopper_x - furnace_x) < 50)
     {
         if (centering && furnace_x > 90)
         {
@@ -356,7 +365,7 @@ void parkWrtExcavator()
 
             if (error_angle > 0 && error_angle < ANGLE_THRESHOLD_NARROW)
             {
-                ROS_INFO("HAULER's ORIENTATION CORRECT");
+                ROS_INFO_STREAM(getString("HAULER's ORIENTATION CORRECT"));
                 g_found_orientation = true;
             }
         }
@@ -463,7 +472,7 @@ void cancelGoal()
     g_nav_goal.angular_velocity = 0;
     g_nav_client->sendGoal(g_nav_goal);
 
-    ROS_INFO_STREAM("Park Hauler : Cancelled Goal");
+    ROS_INFO_STREAM(getString("Park Hauler : Cancelled Goal"));
 }
 
 /**
@@ -483,7 +492,7 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
     ros::Rate update_rate(UPDATE_HZ);
     bool park_mode = OBJECT_PARKER::EXCAVATOR;
 
-    ROS_INFO("Got the parking goal");
+    ROS_INFO_STREAM(getString("Got the parking goal"));
 
     ros::NodeHandle nh;
     ros::Subscriber excavator_objects_sub;
@@ -493,7 +502,7 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
         // check the mode, park with hopper
         // Assumes the robot has reached near processing plant
         g_nav_goal.forward_velocity = HOPPER_FORWARD_VELOCITY;
-        ROS_INFO("Parking To Hopper");
+        ROS_INFO_STREAM(getString("Parking To Hopper"));
         findProcessingPlant();
         // initialize all the necessary variables
         park_mode = OBJECT_PARKER::HOPPER;
@@ -548,7 +557,7 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
         return;
     }
 
-    ROS_INFO("Parked Robot");
+    ROS_INFO_STREAM(getString("Parked Robot"));
 
     result.result = COMMON_NAMES::COMMON_RESULT::SUCCESS;
     as->setSucceeded(result);
@@ -582,9 +591,9 @@ int main(int argc, char *argv[])
     Server server(nh, g_robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.registerPreemptCallback(&cancelGoal);
     server.start();
-    ROS_INFO("Starting Park Hauler Server");
+    ROS_INFO_STREAM(getString("Starting Park Hauler Server"));
     ros::spin();
 
-    ROS_INFO("Exiting");
+    ROS_INFO_STREAM(getString("Exiting"));
     return 0;
 }

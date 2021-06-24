@@ -211,8 +211,6 @@ double NavigationAlgo::changeInPosition(const geometry_msgs::PoseStamped& curren
 
 double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& current_waypoint, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer)
 {
-  //printf("%f\n", chan)
-
   // Hack (kind of) for Ashay. If the two poses are within 15cm of each other, we assume that we want to match orientations, not turn to face a waypoint
   // TODO: Make sure planner team doesn't give us two waypoints that is within this tolerance
   if(changeInPosition(current_robot_pose, current_waypoint) < 0.15)
@@ -258,7 +256,7 @@ double NavigationAlgo::changeInOrientation(const geometry_msgs::PoseStamped& des
   }
   else
   {
-    ROS_ERROR_STREAM("transformPose failed in changeInOrientation. Returning 0.\n");
+    ROS_ERROR("[operations | nav_algos | %s]: transformPose failed in changeInOrientation. Returning 0.", robot_name.c_str());
 
     return 0;
   }
@@ -283,7 +281,7 @@ bool NavigationAlgo::transformPose(geometry_msgs::PoseStamped& pose, const std::
     }
   }
 
-  ROS_ERROR_STREAM("tf2::ExtrapolationException too many times in a row! Failed while transforming from " << pose.header.frame_id << " to " << frame << " at time " << pose.header.stamp.sec << "." << pose.header.stamp.nsec);
+  ROS_ERROR("[operations | nav_algos]: tf2::ExtrapolationException too many times in a row! Failed while transforming from %s to %s at time %d.%d", pose.header.frame_id.c_str(), frame.c_str(), pose.header.stamp.sec, pose.header.stamp.nsec);
 
 	return false;
 }
@@ -313,7 +311,7 @@ double NavigationAlgo::getRadiusOfThreePointsCircle(const std::vector<geometry_m
 {
   if(points.size()!=3)
   {
-    ROS_ERROR("Must get 3 points to get Radius, supplied %i points", points.size());
+    ROS_ERROR("[operations | nav_algos]: Must get 3 points to get Radius, supplied %lu points", points.size());
 
     return -1.0;
   }
@@ -333,7 +331,7 @@ geometry_msgs::PointStamped NavigationAlgo::getCenterOfThreePointsCircle(const s
 {
   if(points.size()!=3)
   {
-    ROS_ERROR("Must get 3 points to get Center Location, supplied %i points", points.size());
+    ROS_ERROR("[operations | nav_algos]: Must get 3 points to get Center Location, supplied %lu points", points.size());
 
     geometry_msgs::PointStamped err;
     return err;
@@ -357,7 +355,7 @@ std::vector<double> NavigationAlgo::getABCDofThreePointsCircle(const std::vector
 {
   if(points.size()!=3)
   {
-    ROS_ERROR("Must get 3 points to calculate the A B C and D constants, supplied %i points", points.size());
+    ROS_ERROR("[operations | nav_algos]: Must get 3 points to calculate the A B C and D constants, supplied %lu points", points.size());
     
     // Not sure if this is right, but needs to return something. 
     std::vector<double> err;
@@ -410,17 +408,10 @@ geometry_msgs::Pose NavigationAlgo::getPointCloserToOrigin(const geometry_msgs::
     out_point.position.x = out_x;
     out_point.position.y = out_y;
 
-    // tf::Quaternion quat(self_point.orientation.x, self_point.orientation.y, self_point.orientation.z, self_point.orientation.w);
-    // tf::Matrix3x3 m(quat);
-    // double roll, pitch, yaw;
-    // m.getRPY(roll, pitch, yaw);
-    // double out_yaw = yaw+theta;
-
     tf2::Quaternion myQuaternion;
     myQuaternion.setRPY( 0, 0, theta );
 
     tf2::convert(myQuaternion, out_point.orientation);
-    // ROS_INFO_STREAM(yaw<<" "<<yaw<<" "<<yaw<<" "<<yaw<<" "<<yaw<<" "<<yaw<<" ");
   }
 
   return out_point;
