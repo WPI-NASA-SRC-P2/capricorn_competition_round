@@ -14,12 +14,16 @@ TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandl
 ///////////////////////////////////// S T A N D B Y   S T A T E   C L A S S ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Standby::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+bool Standby::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of Standby");
    if(!(scout == NONE && excavator == NONE && hauler == NONE))
+   {
       ROS_ERROR_STREAM("STANDBY STATE CALLED, BUT AT LEAST ONE ROBOT IS NOT UNSET");
+      return false;
+   }
+   return true;
 }
 
 bool Standby::isDone()
@@ -41,12 +45,16 @@ void Standby::exitPoint()
 ///////////////////////////////////// I D L E   S T A T E   C L A S S ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Idle::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+bool Idle::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of Idle");
    if(scout == NONE && excavator == NONE && hauler == NONE)
+   {
       ROS_ERROR_STREAM("IDLE STATE CALLED, BUT NO ROBOT IS SET");
+      return false;
+   }
+   return true;
 }
 
 bool Idle::isDone()
@@ -68,7 +76,7 @@ void Idle::exitPoint()
 ///////////////////////////////////// S E A R C H   S T A T E   C L A S S ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+bool Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of Search");
@@ -77,11 +85,16 @@ void Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM ha
    hauler_in_team = hauler;
 
    if(scout_in_team == NONE)
+   {
       ROS_ERROR_STREAM("SCOUT IS UNSET, BUT STILL ENTRY POINT HAS BEEN CALLED!");
+      return false;
+   }
 
    if(ROBOT_ENUM_NAME_MAP.find(scout_in_team) == ROBOT_ENUM_NAME_MAP.end()) {
       ROS_ERROR_STREAM("Set Scout "<<scout_in_team<<" doesn't exist on the ROBOT_ENUM_NAME_MAP");
+      return false;
    }
+   return true;
 }
 
 bool Search::isDone()
@@ -111,7 +124,7 @@ void Search::exitPoint()
 // ///////////////////////////////////// S E A R C H   S T A T E   C L A S S ////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// void Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+// bool Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
 // {
 //    /** @TODO: Add no objects in vision functionality */
 //    // start off with spiraling
@@ -151,7 +164,7 @@ void Search::exitPoint()
 // /////////////////////////////////////  L O C A T E  S T A T E  C L A S S ////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// void Locate::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+// bool Locate::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
 // {
 //    // we assume we are near the volatile
 //    near_volatile_ = true;

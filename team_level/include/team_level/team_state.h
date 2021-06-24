@@ -39,7 +39,7 @@ public:
 
    const std::string& getName() const { return m_strName; }
    
-   virtual void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) = 0;
+   virtual bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) = 0;
    
    virtual void exitPoint() = 0;
    
@@ -80,7 +80,7 @@ public:
    Standby(ros::NodeHandle &nh):TeamState(STANDBY, "Standby", nh){}
    bool isDone() override ;
    
-   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
+   bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };
@@ -90,7 +90,7 @@ public:
    Idle(ros::NodeHandle &nh):TeamState(IDLE, "Idle", nh){}
    bool isDone() override ;
    
-   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
+   bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };
@@ -100,7 +100,7 @@ public:
    Search(ros::NodeHandle &nh):TeamState(SEARCH, "Search", nh){}
    bool isDone() override ;
    
-   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
+   bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };
@@ -110,7 +110,7 @@ public:
    ScoutWaiting(ros::NodeHandle &nh):TeamState(SCOUT_WAITING, "ScoutWaiting", nh){}
    bool isDone() override ;
    
-   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
+   bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };
@@ -120,7 +120,7 @@ public:
    Excavating(ros::NodeHandle &nh):TeamState(EXCAVATING, "Excavating", nh){}
    bool isDone() override ;
    
-   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
+   bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };
@@ -130,7 +130,7 @@ public:
    Dumping(ros::NodeHandle &nh):TeamState(DUMPING, "Dumping", nh){}
    bool isDone() override ;
    
-   void entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
+   bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
 };

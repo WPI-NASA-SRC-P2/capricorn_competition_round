@@ -11,9 +11,9 @@
 
 using namespace COMMON_NAMES;
 
-#define MAX_SCOUTS 2
+#define MAX_SCOUTS 1
 #define MAX_EXCAVATORS 2
-#define MAX_HAULERS 2
+#define MAX_HAULERS 3
 #define MAX_TEAMS 4
 
 class TeamScheduler {
@@ -21,18 +21,21 @@ class TeamScheduler {
 public:
 
    TeamScheduler(ros::NodeHandle nh);
-   ~TeamScheduler();
+   ~TeamScheduler(){}
    
    void step();
 
    void exec();
 
 private:
-   std::array<RobotStatus*, MAX_SCOUTS> scouts;
-   std::array<RobotStatus*, MAX_EXCAVATORS> excavators;
-   std::array<RobotStatus*, MAX_HAULERS> haulers;
-
    std::array<Team*, MAX_TEAMS> all_teams;
+
+   std::array<bool, MAX_TEAMS> teams_need_scout;
+   std::array<bool, MAX_TEAMS> scout_for_sale;
+   std::array<bool, MAX_TEAMS> teams_need_excavator;
+   std::array<bool, MAX_TEAMS> excavator_for_sale;
+   std::array<bool, MAX_TEAMS> teams_need_hauler;
+   std::array<bool, MAX_TEAMS> hauler_for_sale;
 
    void initTeams(ros::NodeHandle nh);
 
@@ -73,14 +76,6 @@ private:
    void checkAndRecruitForIdle(int team_index);
 
    void checkAndRecruitForStandby(int team_index);
-
-
-   std::array<bool, MAX_TEAMS> teams_need_scout;
-   std::array<bool, MAX_TEAMS> scout_for_sale;
-   std::array<bool, MAX_TEAMS> teams_need_excavator;
-   std::array<bool, MAX_TEAMS> excavator_for_sale;
-   std::array<bool, MAX_TEAMS> teams_need_hauler;
-   std::array<bool, MAX_TEAMS> hauler_for_sale;
 };
 
 #endif // TEAM_SCHEDULER_H

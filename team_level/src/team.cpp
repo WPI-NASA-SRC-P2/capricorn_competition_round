@@ -72,7 +72,10 @@ void Team::step() {
       if(cNewState != current_state_ptr) {
          /* Perform transition */
          current_state_ptr->exitPoint();
-         cNewState->entryPoint(hired_scout, hired_excavator, hired_hauler);
+         bool entry = cNewState->entryPoint(hired_scout, hired_excavator, hired_hauler);
+         if(!entry)
+            return;
+            
          current_state_ptr = cNewState;
       }
       /* Execute current state */

@@ -270,3 +270,20 @@ void TeamScheduler::checkAndRecruitForStandby(int team_index)
    fireExcavator(team_index);
    fireHauler(team_index);
 }
+
+void TeamScheduler::step()
+{
+   for(int i = 0; i < MAX_TEAMS; i++)
+   {
+      all_teams.at(i)->step();
+   }
+}
+
+void TeamScheduler::exec()
+{
+   while(ros::ok())
+   {
+      step();
+      ros::Duration(0.5).sleep();
+   }
+}

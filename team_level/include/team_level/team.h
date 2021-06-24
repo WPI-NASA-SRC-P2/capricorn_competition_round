@@ -34,6 +34,7 @@ public:
          new_state_request = true;}
 
    void exec();
+   void step();
 
 private:
    void updateTeamMacroState();
@@ -45,7 +46,6 @@ private:
 
    void setInitialState(uint32_t un_state);
 
-   void step();
    TeamState& getState(uint32_t un_id);
 
    bool new_state_request;
