@@ -52,7 +52,7 @@ void RobotScheduler::addState(State* pc_state) {
       pc_state->setRobotScheduler(*this);
    }
    else {
-      throw StateMachineException(ToString("Duplicated state id ", pc_state->getId()));
+      ROS_ERROR_STREAM("Duplicated state id " << pc_state->getId());
    }
 }
 
@@ -65,7 +65,7 @@ State& RobotScheduler::getState(uint32_t un_id) {
       return *(pcState->second);
    }
    else {
-      throw StateMachineException(ToString("Can't get state id ", un_id));
+      ROS_ERROR_STREAM("Can't get state id "<< un_id);
    }
 }
 
@@ -84,7 +84,7 @@ void RobotScheduler::setInitialState(uint32_t un_state) {
       m_pcCurrent->entryPoint();
    }
    else {
-      throw StateMachineException(ToString("Can't set initial state to ", un_state));
+      ROS_ERROR_STREAM("Can't set initial state to "<< un_state);
    }
 }
 
@@ -113,7 +113,7 @@ void RobotScheduler::step() {
       m_pcCurrent->step();
    }
    else {
-      throw StateMachineException("The Robotscheduler has not been initialized, you must call SetInitialState()");
+      ROS_ERROR("The RobotScheduler has not been initialized, you must call SetInitialState()");
    }
 }
 

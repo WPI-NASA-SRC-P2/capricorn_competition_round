@@ -41,8 +41,11 @@ enum TEAM_MICRO_STATE{
    PARK_HAULER,
    DIG_AND_DUMP,
 
-   //DUMPING
-   DUMP_COLLECTION
+   // DUMPING
+   DUMP_COLLECTION,
+
+   // IDLE
+   IDLE_MICRO_STATE
 };
 
 using namespace COMMON_NAMES;
@@ -75,6 +78,8 @@ public:
 
    void setTeam(Team& c_robot_scheduler);
    
+   virtual TEAM_MICRO_STATE getMicroState() = 0;
+
 protected:
 
    Team* m_pcTeam;
@@ -82,7 +87,6 @@ protected:
    std::string m_strName;
    ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
    RobotStatus *robot_status;
-   TEAM_MICRO_STATE getMicroState();
 };
 
 // // All the states as per the diagram
@@ -92,6 +96,7 @@ public:
    bool isDone() override ;
 
    TeamState& transition() override {return *this;}
+   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
    
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
@@ -104,6 +109,7 @@ public:
    bool isDone() override ;
    
    TeamState& transition() override {return *this;}
+   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
    
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
@@ -116,6 +122,7 @@ public:
    bool isDone() override ;
 
    TeamState& transition() override;
+   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
    
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
@@ -128,6 +135,7 @@ public:
    bool isDone() override ;
    
    TeamState& transition() override;
+   TEAM_MICRO_STATE getMicroState();
    
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
@@ -146,6 +154,7 @@ public:
    bool isDone() override ;
    
    TeamState& transition() override;
+   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
    
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
@@ -158,6 +167,7 @@ public:
    bool isDone() override ;
    
    TeamState& transition() override;
+   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
    
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;

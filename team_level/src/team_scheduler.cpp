@@ -16,6 +16,7 @@ Team::~Team()
 void Team::addStates(ros::NodeHandle &nh)
 {
     addState(new Search(nh));
+    addState(new ScoutWaiting(nh));
     addState(new Standby(nh));
     addState(new Idle(nh));
 }
@@ -62,10 +63,11 @@ void Team::setInitialState(uint32_t un_state) {
 void Team::step() {
    /* Only execute if 'current' was initialized */
    if(current_state_ptr) {
-       ROS_INFO_STREAM(hired_scout << "  " << hired_excavator << "  " << hired_hauler);
+      //  ROS_INFO_STREAM(hired_scout << "  " << hired_excavator << "  " << hired_hauler);
     //    ROS_INFO_STREAM("Robot enum:" << SCOUT_1);
       /* Attempt a transition, every state of every rover has its own transition() */
-      TeamState* cNewState = current_state_ptr;
+      TeamState* cNewState = &current_state_ptr->transition();
+      // TeamState* cNewState = current_state_ptr;
       if (new_state_request)
       {
          cNewState = &getState(macro_state);

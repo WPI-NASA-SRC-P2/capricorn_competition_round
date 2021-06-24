@@ -287,6 +287,7 @@ void TeamManager::exec()
    while(ros::ok())
    {
       step();
+      ros::spinOnce();
       ros::Duration(0.5).sleep();
    }
 }

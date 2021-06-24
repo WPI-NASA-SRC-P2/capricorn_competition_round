@@ -2,7 +2,7 @@
 
 RobotStatus::RobotStatus(ros::NodeHandle nh)
 {
-   robot_state_subscriber = nh.subscribe(ROBOTS_CURRENT_STATE_TOPIC, 1000, &RobotStatus::robotStateCB, this);
+   robot_state_subscriber = nh.subscribe(CAPRICORN_TOPIC + ROBOTS_CURRENT_STATE_TOPIC, 1000, &RobotStatus::robotStateCB, this);
 
    robot_state_publisher = nh.advertise<state_machines::robot_desired_state>(COMMON_NAMES::CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 1, true);
 }
@@ -25,7 +25,7 @@ bool RobotStatus::hasSucceeded(ROBOTS_ENUM robot){
       return robot_isDone_hasSucceeded_map[robot].second;
    }
    else {
-      ROS_WARN_STREAM("Haven't received any message for the robot enum"<< robot <<" yet");
+      // ROS_INFO_STREAM("Haven't received any message for the robot enum"<< robot <<" yet");
       return false;
    }
 }
@@ -35,7 +35,7 @@ bool RobotStatus::isDone(ROBOTS_ENUM robot){
       return robot_isDone_hasSucceeded_map[robot].first;
    }
    else {
-      ROS_WARN_STREAM("Haven't received any message for the robot enum"<< robot <<" yet");
+      // ROS_INFO_STREAM("Haven't received any message for the robot enum"<< robot <<" yet");
       return false;
    }
 }
@@ -46,7 +46,7 @@ STATE_MACHINE_TASK RobotStatus::currentState(ROBOTS_ENUM robot)
       return (STATE_MACHINE_TASK)robot_state_map[robot];
    }
    else {
-      ROS_WARN_STREAM("Haven't received any message for the robot enum"<< robot <<" yet");
+      // ROS_INFO_STREAM("Haven't received any message for the robot enum"<< robot <<" yet");
       return ROBOT_IDLE_STATE;
    }
 }
@@ -58,6 +58,7 @@ void RobotStatus::setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_ta
     desired_state_msg.robot_name = ROBOT_ENUM_NAME_MAP[robot];
     desired_state_msg.robot_desired_state = desired_task;
     robot_state_publisher.publish(desired_state_msg);
+    ros::Duration(0.1).sleep();
    }
    else{
       ROS_ERROR_STREAM("Robot enum "<<robot<<" not found in map ROBOT_ENUM_NAME_MAP");
