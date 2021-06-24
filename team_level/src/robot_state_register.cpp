@@ -1,13 +1,13 @@
-#include <team_level/robot_status.h>
+#include <team_level/robot_state_register.h>
 
-RobotStatus::RobotStatus(ros::NodeHandle nh)
+RobotStateRegister::RobotStateRegister(ros::NodeHandle nh)
 {
-   robot_state_subscriber = nh.subscribe(CAPRICORN_TOPIC + ROBOTS_CURRENT_STATE_TOPIC, 1000, &RobotStatus::robotStateCB, this);
+   robot_state_subscriber = nh.subscribe(CAPRICORN_TOPIC + ROBOTS_CURRENT_STATE_TOPIC, 1000, &RobotStateRegister::robotStateCB, this);
 
    robot_state_publisher = nh.advertise<state_machines::robot_desired_state>(COMMON_NAMES::CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 1, true);
 }
 
-void RobotStatus::robotStateCB(state_machines::robot_state_status msg)
+void RobotStateRegister::robotStateCB(state_machines::robot_state_status msg)
 {
    std::string robot_name = msg.robot_name;
    if(ROBOT_NAME_TO_ENUM_MAP.find(robot_name) != ROBOT_NAME_TO_ENUM_MAP.end()) {
@@ -20,7 +20,7 @@ void RobotStatus::robotStateCB(state_machines::robot_state_status msg)
    }
 }
 
-bool RobotStatus::hasSucceeded(ROBOTS_ENUM robot){
+bool RobotStateRegister::hasSucceeded(ROBOTS_ENUM robot){
    if(robot_isDone_hasSucceeded_map.find(robot) != robot_isDone_hasSucceeded_map.end()) {
       return robot_isDone_hasSucceeded_map[robot].second;
    }
@@ -30,7 +30,7 @@ bool RobotStatus::hasSucceeded(ROBOTS_ENUM robot){
    }
 }
 
-bool RobotStatus::isDone(ROBOTS_ENUM robot){
+bool RobotStateRegister::isDone(ROBOTS_ENUM robot){
    if(robot_isDone_hasSucceeded_map.find(robot) != robot_isDone_hasSucceeded_map.end()) {
       return robot_isDone_hasSucceeded_map[robot].first;
    }
@@ -40,7 +40,7 @@ bool RobotStatus::isDone(ROBOTS_ENUM robot){
    }
 }
 
-STATE_MACHINE_TASK RobotStatus::currentState(ROBOTS_ENUM robot)
+STATE_MACHINE_TASK RobotStateRegister::currentState(ROBOTS_ENUM robot)
 {
    if(robot_state_map.find(robot) != robot_state_map.end()) {
       return (STATE_MACHINE_TASK)robot_state_map[robot];
@@ -51,7 +51,7 @@ STATE_MACHINE_TASK RobotStatus::currentState(ROBOTS_ENUM robot)
    }
 }
 
-void RobotStatus::setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_task)
+void RobotStateRegister::setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_task)
 {
    if(ROBOT_ENUM_NAME_MAP.find(robot) != ROBOT_ENUM_NAME_MAP.end()) {
     state_machines::robot_desired_state desired_state_msg;
@@ -70,10 +70,10 @@ void RobotStatus::setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_ta
 //    ros::init(argc, argv, "scout_state_machine");
 //    ros::NodeHandle nh;
 
-//    RobotStatus robot_status(nh);
+//    RobotStateRegister robot_state_register(nh);
 //    while(ros::ok())
 //    {
-//       ROS_INFO_STREAM("Robot state done:"<<robot_status.isDone(SCOUT_1)<<"\tLast state failed:"<<robot_status.hasSucceeded(SCOUT_1));
+//       ROS_INFO_STREAM("Robot state done:"<<robot_state_register.isDone(SCOUT_1)<<"\tLast state failed:"<<robot_state_register.hasSucceeded(SCOUT_1));
 //       ros::Duration(1).sleep();
 //       ros::spinOnce();
 //    }

@@ -127,7 +127,7 @@ include
 
 # Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/robot_status.cpp
+  src/robot_state_register.cpp
   src/team_scheduler.cpp
   src/team_state.cpp
   src/team_manager.cpp
@@ -170,9 +170,9 @@ target_link_libraries(start_scheduler ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
-add_executable(robot_status src/robot_status.cpp)
-add_dependencies(robot_status ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(robot_status ${PROJECT_NAME}
+add_executable(robot_state_register src/robot_state_register.cpp)
+add_dependencies(robot_state_register ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(robot_state_register ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 

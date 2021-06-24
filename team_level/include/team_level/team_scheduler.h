@@ -1,7 +1,7 @@
 #pragma once
 
 #include <utils/common_names.h>
-#include <team_level/robot_status.h>
+#include <team_level/robot_state_register.h>
 #include <team_level/team_state.h>
 #include <unordered_map>
 
@@ -9,8 +9,6 @@ class Team{
 public:
    Team(ros::NodeHandle &nh);
    ~Team();
-
-   RobotStatus *robot_state;
 
    void setScout(ROBOTS_ENUM scout){ hired_scout = scout; }
    void setExcavator(ROBOTS_ENUM excavator){ hired_excavator = excavator; }

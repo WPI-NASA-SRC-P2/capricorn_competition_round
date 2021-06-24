@@ -2,15 +2,12 @@
 
 Team::Team(ros::NodeHandle &nh)
 {
-    robot_state = new RobotStatus(nh);
-
     addStates(nh);
     setInitialState(STANDBY);
 }
 
 Team::~Team()
 {
-    delete robot_state;
 }
 
 void Team::addStates(ros::NodeHandle &nh)

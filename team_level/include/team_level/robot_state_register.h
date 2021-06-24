@@ -7,10 +7,10 @@
 
 using namespace COMMON_NAMES;
 
-class RobotStatus
+class RobotStateRegister
 {
    public:
-      RobotStatus(ros::NodeHandle nh);
+      RobotStateRegister(ros::NodeHandle nh);
       bool hasSucceeded(ROBOTS_ENUM robot);
       bool isDone(ROBOTS_ENUM robot);
       STATE_MACHINE_TASK currentState(ROBOTS_ENUM robot);

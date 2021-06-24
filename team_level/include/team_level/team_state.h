@@ -2,7 +2,7 @@
 #include <utils/common_names.h>
 #include "ros/ros.h"
 #include <state_machines/set_robot_state.h>
-#include <team_level/robot_status.h>
+#include <team_level/robot_state_register.h>
 
 // #include <team_level/team_scheduler.h>
 
@@ -86,7 +86,7 @@ protected:
    uint32_t m_unId;
    std::string m_strName;
    ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
-   RobotStatus *robot_status;
+   RobotStateRegister *robot_state_register;
 };
 
 // // All the states as per the diagram

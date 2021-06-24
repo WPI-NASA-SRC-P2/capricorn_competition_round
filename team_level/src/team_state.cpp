@@ -5,7 +5,7 @@ TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandl
       m_pcTeam(nullptr), 
       m_unId(un_id), m_strName(str_name) 
 {
-    robot_status = new RobotStatus(nh);
+    robot_state_register = new RobotStateRegister(nh);
 }
 
 void TeamState::setTeam(Team& c_robot_scheduler) {
@@ -97,7 +97,7 @@ bool Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM ha
 
 bool Search::isDone()
 {
-   return robot_status->isDone(scout_in_team);
+   return robot_state_register->isDone(scout_in_team);
 }
 
 TeamState& Search::transition()
@@ -113,7 +113,7 @@ TeamState& Search::transition()
    
 void Search::step()
 {
-   robot_status->setRobotState(scout_in_team, SCOUT_SEARCH_VOLATILE);
+   robot_state_register->setRobotState(scout_in_team, SCOUT_SEARCH_VOLATILE);
 }
 
 void Search::exitPoint() 
@@ -143,21 +143,21 @@ bool ScoutWaiting::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_E
 
 bool ScoutWaiting::isDone()
 {
-   STATE_MACHINE_TASK excavator_task = robot_status->currentState(excavator_in_team);
-   bool excavator_done_and_succeeded = robot_status->isDone(excavator_in_team) && robot_status->hasSucceeded(excavator_in_team);
+   STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
+   bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
 
    return excavator_task == PARK_EXCAVATOR_AT_SCOUT && excavator_done_and_succeeded;
 }
 
 TEAM_MICRO_STATE ScoutWaiting::getMicroState()
 {
-   STATE_MACHINE_TASK scout_task = robot_status->currentState(scout_in_team);
-   STATE_MACHINE_TASK excavator_task = robot_status->currentState(excavator_in_team);
-   STATE_MACHINE_TASK hauler_task = robot_status->currentState(hauler_in_team);
+   STATE_MACHINE_TASK scout_task = robot_state_register->currentState(scout_in_team);
+   STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
+   STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
 
-   bool scout_done_and_succeeded = robot_status->isDone(scout_in_team) && robot_status->hasSucceeded(scout_in_team);
-   bool excavator_done_and_succeeded = robot_status->isDone(excavator_in_team) && robot_status->hasSucceeded(excavator_in_team);
-   bool hauler_done_and_succeeded = robot_status->isDone(hauler_in_team) && robot_status->hasSucceeded(hauler_in_team);
+   bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team) && robot_state_register->hasSucceeded(scout_in_team);
+   bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
+   bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
 
    if (scout_task == SCOUT_SEARCH_VOLATILE)
       return ROBOTS_TO_GOAL;
@@ -228,23 +228,23 @@ void ScoutWaiting::step()
 void ScoutWaiting::stepRobotsToGoal()
 {
    // Scout Goal
-   robot_status->setRobotState(scout_in_team, SCOUT_LOCATE_VOLATILE);
+   robot_state_register->setRobotState(scout_in_team, SCOUT_LOCATE_VOLATILE);
 
    // Excavator Goal
-   robot_status->setRobotState(excavator_in_team, EXCAVATOR_MACRO_GO_TO_SCOUT);
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_MACRO_GO_TO_SCOUT);
 
    // Hauler Goal
-   robot_status->setRobotState(hauler_in_team, HAULER_GO_TO_LOC);
+   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOC);
 }
 
 void ScoutWaiting::stepUndockScout()
 {
-   robot_status->setRobotState(scout_in_team, SCOUT_MACRO_UNDOCK);
+   robot_state_register->setRobotState(scout_in_team, SCOUT_MACRO_UNDOCK);
 }
 
 void ScoutWaiting::stepParkExcavatorAtScout()
 {
-   robot_status->setRobotState(excavator_in_team, EXCAVATOR_PARK_AND_PUB);
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_PARK_AND_PUB);
 }
 
 void ScoutWaiting::exitPoint() 
