@@ -1,3 +1,2 @@
 string robot_name
 int8 robot_desired_state
-geomety_msgs/PoseStamped goal_pose

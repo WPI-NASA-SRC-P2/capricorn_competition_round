@@ -23,40 +23,47 @@ g_excavator_image = None
 g_excavator_disparity = None
 g_hauler_image = None
 g_hauler_disparity = None
+g_team_number = 0
 
+def getString(message):
+    """
+    Returns the string to be logged or printed
+    """
+    global g_team_number
+    return "[PERCEPTION | THREE OBJECT DETECTION | TEAM NUMER: " + g_team_number+ "]: " + message
 
 def scoutImageCallback(scout_image):
-    rospy.loginfo_once("Scout Image Callback Working")
+    rospy.loginfo_once(getString("Scout Image Callback Working"))
     global g_scout_image
     g_scout_image = g_bridge.imgmsg_to_cv2(scout_image, "bgr8")
 
 
 def scoutDisparityCallback(scout_disparity):
-    rospy.loginfo_once("Scout Disparity Callback Working")
+    rospy.loginfo_once(getString("Scout Disparity Callback Working"))
     global g_scout_disparity
     g_scout_disparity = g_bridge.imgmsg_to_cv2(scout_disparity.image, "32FC1")
 
 
 def excavatorImageCallback(excavator_image):
-    rospy.loginfo_once("Excavator Image Callback Working")
+    rospy.loginfo_once(getString("Excavator Image Callback Working"))
     global g_excavator_image
     g_excavator_image = g_bridge.imgmsg_to_cv2(excavator_image, "bgr8")
 
 
 def excavatorDisparityCallback(excavator_disparity):
-    rospy.loginfo_once("Excavator Disparity Callback Working")
+    rospy.loginfo_once(getString("Excavator Disparity Callback Working"))
     global g_excavator_disparity
     g_excavator_disparity = g_bridge.imgmsg_to_cv2(excavator_disparity.image, "32FC1")
 
 
 def haulerImageCallback(hauler_image):
-    rospy.loginfo_once("Hauler Image Callback Working")
+    rospy.loginfo_once(getString("Hauler Image Callback Working"))
     global g_hauler_image
     g_hauler_image = g_bridge.imgmsg_to_cv2(hauler_image, "bgr8")
 
 
 def haulerDisparityCallback(hauler_disparity):
-    rospy.loginfo_once("Hauler Disparity Callback Working")
+    rospy.loginfo_once(getString("Hauler Disparity Callback Working"))
     global g_hauler_disparity
     g_hauler_disparity = g_bridge.imgmsg_to_cv2(hauler_disparity.image, "32FC1")
 
@@ -123,7 +130,7 @@ def initObjectDetection(path_to_model, path_to_label_map):
     model = tf.saved_model.load(str.format(path_to_model))
     model_fn = model.signatures["serving_default"]
 
-    rospy.logwarn("Registering loop callback for three object detection")
+    rospy.loginfo(getString("Registering loop callback for three object detection"))
 
     global g_scout_image
     global g_scout_disparity
@@ -169,9 +176,9 @@ def initObjectDetection(path_to_model, path_to_label_map):
 if __name__ == "__main__":
     path_to_model = sys.argv[1]
     path_to_label_map = sys.argv[2]
-    team_number = sys.argv[3]
-    scout_name = "small_scout_" + team_number
-    excavator_name = "small_excavator_" + team_number
-    hauler_name = "small_hauler_" + team_number
+    g_team_number = sys.argv[3]
+    scout_name = "small_scout_" + g_team_number
+    excavator_name = "small_excavator_" + g_team_number
+    hauler_name = "small_hauler_" + g_team_number
     rospy.init_node("first_three_object_detection", anonymous=True)
     initObjectDetection(path_to_model, path_to_label_map)

@@ -1,3 +1,13 @@
+/**
+ * @file scout_state_machine.h
+ * @author Team Bebop(mmuqeetjibran@wpi.edu)
+ * @brief Hauler state machine which controls all the operations done by hauler
+ * @version 0.1
+ * @date 2021-06-23
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
 #pragma once
 
 #include <iostream>
@@ -34,7 +44,8 @@ public:
       return false;
    }
 
-   void setState(STATE_MACHINE_TASK new_state) override{
+   // void setState(STATE_MACHINE_TASK new_state) override{
+   void setState(STATE_MACHINE_TASK new_state) {
       new_state_ = new_state;
       new_state_request = true;
    }
@@ -100,6 +111,10 @@ public:
    }
 
    void step() override {}
+
+   State& transition() override {
+      return getState(SCOUT_RESET_ODOM);   //Just put to fix build errors
+   };
 
 
 protected:

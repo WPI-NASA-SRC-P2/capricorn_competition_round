@@ -103,6 +103,8 @@ public:
    
    virtual bool hasSucceeded() = 0;
 
+   virtual State& transition() = 0;    //This should be "deprecated".
+
    State& getState(uint32_t un_state);
 
    void setRobotScheduler(RobotScheduler& c_robot_scheduler);
