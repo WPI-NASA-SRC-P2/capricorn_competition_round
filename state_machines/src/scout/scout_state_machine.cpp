@@ -5,10 +5,11 @@
 ///////////////////////////////////// S C O U T   B A S E   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ScoutState::ScoutState(uint32_t un_id, std::string robot_name) :
-    State(un_id, ToString("mystate_", un_id))
+ScoutState::ScoutState(uint32_t un_id, ros::NodeHandle nh, std::string robot_name) :
+    State(un_id, ToString("mystate_", un_id), nh, robot_name)
 {
   robot_name_ = robot_name;
+  ROS_INFO_STREAM("SCOUT STATE MACHINE: robot_name_ = " + robot_name_);
   // robot_state_status fields set to default values when state is constructed
   robot_current_state_ = un_id;
   current_state_done_ = false;
@@ -16,7 +17,7 @@ ScoutState::ScoutState(uint32_t un_id, std::string robot_name) :
 
   // publish the robot's status
   status_pub_ = nh_.advertise<state_machines::robot_state_status>(CAPRICORN_TOPIC + ROBOTS_CURRENT_STATE_TOPIC, 10);
-  resource_localiser_client_ = new ResourceLocaliserClient_(CAPRICORN_TOPIC + robot_name_ + "/" + RESOURCE_LOCALISER_ACTIONLIB, true);
+  resource_localiser_client_ = new ResourceLocaliserClient_(CAPRICORN_TOPIC + robot_name + "/" + RESOURCE_LOCALISER_ACTIONLIB, true);
   /** @todo: FIX NAVIGATIONVISIONCLIENT TO BE CORRECT TOPIC */
   navigation_vision_client_ = new NavigationVisionClient(CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + NAVIGATION_VISION_ACTIONLIB, true);
   navigation_client_ = new NavigationClient(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB, true);
@@ -35,7 +36,6 @@ ScoutState::ScoutState(uint32_t un_id, std::string robot_name) :
   
   volatile_sub_ = nh_.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutState::volatileSensorCB, this);
   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ScoutState::objectsCallback, this);
-  desired_state_sub_ = nh_.subscribe(CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 2, &ScoutState::desiredStateCB, this);
 }
 
 ScoutState::~ScoutState()
@@ -69,14 +69,6 @@ void ScoutState::objectsCallback(const perception::ObjectArray::ConstPtr objs)
   const std::lock_guard<std::mutex> lock(objects_mutex_);
   vision_objects_ = objs;
   objects_msg_received_ = true;
-}
-
-void ScoutState::desiredStateCB(const state_machines::robot_desired_state::ConstPtr &msg)
-{
-  if(msg->robot_name == robot_name_)
-  {
-    robot_desired_state_ = msg->robot_desired_state;
-  }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -234,9 +226,10 @@ void Locate::exitPoint()
 
 //    try {
 //       ScoutScheduler cSchd;
-//       cSchd.addState(new Search());
-//       cSchd.addState(new Undock());
-//       cSchd.addState(new Locate());
+//       // cSchd.initROS(nh, SCOUT_1_NAME);
+//       cSchd.addState(new Search(nh, SCOUT_1_NAME));
+//       cSchd.addState(new Undock(nh, SCOUT_1_NAME));
+//       cSchd.addState(new Locate(nh, SCOUT_1_NAME));
 //       cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
 //       // cSchd.setInitialState(SCOUT_UNDOCK);
 //       cSchd.exec();
