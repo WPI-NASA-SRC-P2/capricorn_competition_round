@@ -6,12 +6,45 @@ TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandl
       m_unId(un_id), m_strName(str_name) 
 {
     robot_status = new RobotStatus(nh);
-
-    robot_state_publisher_  = nh.advertise<state_machines::robot_desired_state>(COMMON_NAMES::CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 1, true);
 }
 
 void TeamState::setTeam(Team& c_robot_scheduler) {
    m_pcTeam = &c_robot_scheduler;
+}
+
+TEAM_MICRO_STATE TeamState::getMicroState()
+{
+   STATE_MACHINE_TASK scout_task = robot_status->currentState(scout_in_team);
+   STATE_MACHINE_TASK excavator_task = robot_status->currentState(excavator_in_team);
+   STATE_MACHINE_TASK hauler_task = robot_status->currentState(hauler_in_team);
+
+   bool scout_done_and_succeeded = robot_status->isDone(scout_in_team) && robot_status->hasSucceeded(scout_in_team);
+   bool excavator_done_and_succeeded = robot_status->isDone(excavator_in_team) && robot_status->hasSucceeded(excavator_in_team);
+   bool hauler_done_and_succeeded = robot_status->isDone(hauler_in_team) && robot_status->hasSucceeded(hauler_in_team);
+
+   if (scout_task == SCOUT_SEARCH_VOLATILE)
+   // Should also include others as IDLE 
+   // and if not, show warning that anomaly found
+      return SEARCH_FOR_VOLATILE;
+   else if (scout_task == SCOUT_LOCATE_VOLATILE)
+   {
+      if (excavator_task == EXCAVATOR_MACRO_GO_TO_SCOUT && excavator_done_and_succeeded)
+         if (scout_done_and_succeeded)
+            return UNDOCK_SCOUT;
+      else
+         return ROBOTS_TO_GOAL;
+   }
+   else if (scout_task == SCOUT_MACRO_UNDOCK && scout_done_and_succeeded)
+   {
+      return PARK_EXCAVATOR_AT_SCOUT;
+   }
+   else
+   {
+      ROS_WARN("Unknown Combination of the robot states found!");
+      ROS_WARN_STREAM("Scout enum "<<scout_in_team<<" state:"<<scout_task);
+      ROS_WARN_STREAM("Excavator enum "<<excavator_in_team<<" state:"<<excavator_task);
+      ROS_WARN_STREAM("Hauler enum "<<hauler_in_team<<" state:"<<hauler_task);
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,10 +127,6 @@ bool Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM ha
       return false;
    }
 
-   if(ROBOT_ENUM_NAME_MAP.find(scout_in_team) == ROBOT_ENUM_NAME_MAP.end()) {
-      ROS_ERROR_STREAM("Set Scout "<<scout_in_team<<" doesn't exist on the ROBOT_ENUM_NAME_MAP");
-      return false;
-   }
    return true;
 }
 
@@ -109,25 +138,17 @@ bool Search::isDone()
 TeamState& Search::transition()
 {
    if(isDone())
-      return *this;
-   else
    {
       ROS_INFO("volatile detected, transitioning to scout_undock state");
       return getState(SCOUT_WAITING);
    }
+   else
+      return *this;
 }
    
 void Search::step()
 {
-   if(ROBOT_ENUM_NAME_MAP.find(scout_in_team) != ROBOT_ENUM_NAME_MAP.end()) {
-    state_machines::robot_desired_state desired_state_msg;
-    desired_state_msg.robot_name = ROBOT_ENUM_NAME_MAP[scout_in_team];
-    desired_state_msg.robot_desired_state = SCOUT_SEARCH_VOLATILE;
-    robot_state_publisher_.publish(desired_state_msg);
-   }
-   else{
-      ROS_ERROR_STREAM("Scout enum "<<scout_in_team<<" not found in map ROBOT_ENUM_NAME_MAP");
-   }
+   robot_status->setRobotState(scout_in_team, SCOUT_SEARCH_VOLATILE);
 }
 
 void Search::exitPoint() 
@@ -152,16 +173,6 @@ bool ScoutWaiting::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_E
       ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR SCOUT WAITING!");
       return false;
    }
-
-   bool scout_map_check = ROBOT_ENUM_NAME_MAP.find(scout_in_team) == ROBOT_ENUM_NAME_MAP.end();
-   bool excavator_map_check = ROBOT_ENUM_NAME_MAP.find(excavator_in_team) == ROBOT_ENUM_NAME_MAP.end();
-   bool hauler_map_check = ROBOT_ENUM_NAME_MAP.find(hauler_in_team) == ROBOT_ENUM_NAME_MAP.end();
-
-   if(scout_map_check || excavator_map_check || hauler_map_check) {
-      ROS_ERROR_STREAM("One of the robots doesn't exist on the ROBOT_ENUM_NAME_MAP");
-      ROS_ERROR_STREAM("Robots: Scout:"<<scout_in_team<<"\t Excavator:"<<excavator_in_team<<"\t Hauler:"<<hauler_in_team);
-      return false;
-   }
    return true;
 }
 
@@ -173,32 +184,57 @@ bool ScoutWaiting::isDone()
 TeamState& ScoutWaiting::transition()
 {
    if(isDone())
-      return *this;
-   else
    {
       ROS_INFO("Excavator reached, Shifting to EXCAVATING");
       return getState(EXCAVATING);
+   }
+   else
+   {
+      micro_state = getMicroState();
+      return *this;
    }
 }
    
 void ScoutWaiting::step()
 {
-   if(ROBOT_ENUM_NAME_MAP.find(excavator_in_team) != ROBOT_ENUM_NAME_MAP.end()) {
-    state_machines::robot_desired_state desired_state_msg;
-    desired_state_msg.robot_name = ROBOT_ENUM_NAME_MAP[excavator_in_team];
-    desired_state_msg.robot_desired_state = EXCAVATOR_GO_TO_LOC;
-    robot_state_publisher_.publish(desired_state_msg);
+   switch (micro_state)
+   {
+   case ROBOTS_TO_GOAL:
+      stepRobotsToGoal();
+      break;
+   case UNDOCK_SCOUT:
+      stepUndockScout();
+      break;
+   case PARK_EXCAVATOR_AT_SCOUT:
+      stepParkExcavatorAtScout();
+   default:
+      break;
    }
-   else{
-      ROS_ERROR_STREAM("Scout enum "<<excavator_in_team<<" not found in map ROBOT_ENUM_NAME_MAP");
-   }
+}
+
+void ScoutWaiting::stepRobotsToGoal()
+{
+   // Excavator Goal
+   robot_status->setRobotState(excavator_in_team, EXCAVATOR_GO_TO_SCOUT);
+
+   // Hauler Goal
+   robot_status->setRobotState(hauler_in_team, HAULER_GO_TO_LOC);
+}
+
+void ScoutWaiting::stepUndockScout()
+{
+   robot_status->setRobotState(scout_in_team, SCOUT_UNDOCK);
+}
+
+void ScoutWaiting::stepParkExcavatorAtScout()
+{
+   robot_status->setRobotState(excavator_in_team, EXCAVATOR_PARK_AND_PUB);
 }
 
 void ScoutWaiting::exitPoint() 
 {
    ROS_INFO("exitpoint of SEARCH, cancelling SEARCH goal");
 }
-
 
 // int main(int argc, char** argv)
 // {

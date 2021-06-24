@@ -3,7 +3,7 @@
 #include "ros/ros.h"
 #include <state_machines/set_robot_state.h>
 #include <team_level/robot_status.h>
-#include <state_machines/robot_desired_state.h>
+
 // #include <team_level/team_scheduler.h>
 
 // /**
@@ -82,20 +82,7 @@ protected:
    std::string m_strName;
    ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
    RobotStatus *robot_status;
-
-   ros::Publisher robot_state_publisher_;
-
-   std::map<ROBOTS_ENUM, std::string> ROBOT_ENUM_NAME_MAP{
-                                 {SCOUT_1, SCOUT_1_NAME},
-                                 {SCOUT_2, SCOUT_2_NAME},
-                                 {SCOUT_3, SCOUT_3_NAME},
-                                 {EXCAVATOR_1, EXCAVATOR_1_NAME},
-                                 {EXCAVATOR_2, EXCAVATOR_2_NAME},
-                                 {EXCAVATOR_3, EXCAVATOR_3_NAME},
-                                 {HAULER_1, HAULER_1_NAME},
-                                 {HAULER_2, HAULER_2_NAME},
-                                 {HAULER_3, HAULER_3_NAME}};
-
+   TEAM_MICRO_STATE getMicroState();
 };
 
 // // All the states as per the diagram
@@ -145,6 +132,12 @@ public:
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
+
+private:
+   TEAM_MICRO_STATE micro_state;
+   void stepRobotsToGoal();
+   void stepUndockScout();
+   void stepParkExcavatorAtScout();
 };
 
 class Excavating: public TeamState{

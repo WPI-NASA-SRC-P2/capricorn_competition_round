@@ -217,7 +217,14 @@ namespace COMMON_NAMES
     HAULER_UNDOCK_HOPPER,    // undock from hopper (backward motion from hopper)
     HAULER_RESET_ODOM_AT_HOPPER, //face processing plant, park at hopper and then reset odom with ground truth
     HAULER_FACE_PROCESSING_PLANT, //face the processinf plant using NAV_VISION_TYPE::V_CENTER
-    ROBOT_IDLE_STATE
+    ROBOT_IDLE_STATE,
+
+
+    /***************ROBOTS MACRO STATES***************/
+    SCOUT_MACRO_UNDOCK,
+    EXCAVATOR_MACRO_GO_TO_SCOUT,
+    EXCAVATOR_MACRO_DIG,
+    HAULER_MACRO_DUMP
   };
 
   enum ROBOTS_ENUM
