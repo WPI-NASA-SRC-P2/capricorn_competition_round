@@ -4,6 +4,7 @@
 #include <state_machines/set_robot_state.h>
 #include <team_level/robot_status.h>
 #include <state_machines/robot_desired_state.h>
+// #include <team_level/team_scheduler.h>
 
 // /**
 //  * The macrostate is a state machine for team-level coordination.
@@ -25,7 +26,28 @@ enum TEAM_MACRO_STATE{
             // No or idle Excavator
 };
 
+enum TEAM_MICRO_STATE{
+   // SEARCH
+   SEARCH_FOR_VOLATILE,
+
+   // SCOUT_WAITING
+   ROBOTS_TO_GOAL,
+   UNDOCK_SCOUT,
+   PARK_EXCAVATOR_AT_SCOUT,
+
+   // EXCAVATING
+   WAIT_FOR_HAULER,
+   PRE_PARK_MANEUVER_EXCAVATOR,
+   PARK_HAULER,
+   DIG_AND_DUMP,
+
+   //DUMPING
+   DUMP_COLLECTION
+};
+
 using namespace COMMON_NAMES;
+
+class Team;
 
 class TeamState {
    
@@ -47,13 +69,15 @@ public:
    
    virtual bool isDone() = 0;
 
+   virtual TeamState& transition() = 0;
+
    TeamState& getState(uint32_t un_state);
 
-   // void setRobotScheduler(RobotScheduler& c_robot_scheduler);
+   void setTeam(Team& c_robot_scheduler);
    
 protected:
 
-   // // RobotScheduler* m_pcRobotScheduler;
+   Team* m_pcTeam;
    uint32_t m_unId;
    std::string m_strName;
    ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
@@ -79,6 +103,8 @@ class Standby: public TeamState{
 public:
    Standby(ros::NodeHandle &nh):TeamState(STANDBY, "Standby", nh){}
    bool isDone() override ;
+
+   TeamState& transition() override {return *this;}
    
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
@@ -90,6 +116,8 @@ public:
    Idle(ros::NodeHandle &nh):TeamState(IDLE, "Idle", nh){}
    bool isDone() override ;
    
+   TeamState& transition() override {return *this;}
+   
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
@@ -99,6 +127,8 @@ class Search: public TeamState{
 public:
    Search(ros::NodeHandle &nh):TeamState(SEARCH, "Search", nh){}
    bool isDone() override ;
+
+   TeamState& transition() override;
    
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
@@ -110,6 +140,8 @@ public:
    ScoutWaiting(ros::NodeHandle &nh):TeamState(SCOUT_WAITING, "ScoutWaiting", nh){}
    bool isDone() override ;
    
+   TeamState& transition() override;
+   
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
@@ -120,6 +152,8 @@ public:
    Excavating(ros::NodeHandle &nh):TeamState(EXCAVATING, "Excavating", nh){}
    bool isDone() override ;
    
+   TeamState& transition() override;
+   
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
@@ -129,6 +163,8 @@ class Dumping: public TeamState{
 public:
    Dumping(ros::NodeHandle &nh):TeamState(DUMPING, "Dumping", nh){}
    bool isDone() override ;
+   
+   TeamState& transition() override;
    
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;

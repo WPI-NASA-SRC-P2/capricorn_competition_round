@@ -36,6 +36,8 @@ public:
    void exec();
    void step();
 
+   TeamState& getState(uint32_t un_id);
+
 private:
    void updateTeamMacroState();
    ROBOTS_ENUM hired_scout = NONE, hired_excavator = NONE, hired_hauler = NONE;
@@ -45,8 +47,6 @@ private:
    void addState(TeamState* macro_state);
 
    void setInitialState(uint32_t un_state);
-
-   TeamState& getState(uint32_t un_id);
 
    bool new_state_request;
 

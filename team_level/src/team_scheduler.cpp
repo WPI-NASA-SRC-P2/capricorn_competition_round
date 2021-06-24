@@ -23,10 +23,25 @@ void Team::addStates(ros::NodeHandle &nh)
 void Team::addState(TeamState* pc_state) {
    if(MACRO_STATE_PTR_MAP.find(pc_state->getId()) == MACRO_STATE_PTR_MAP.end()) {
       MACRO_STATE_PTR_MAP[pc_state->getId()] = pc_state;
-    //   pc_state->setRobotScheduler(*this);
+      pc_state->setTeam(*this);
    }
    else {
       ROS_ERROR_STREAM("Duplicated state id " << pc_state->getId());
+   }
+}
+
+TeamState& TeamState::getState(uint32_t un_state) {
+   return m_pcTeam->getState(un_state);
+}
+
+TeamState& Team::getState(uint32_t un_id) 
+{
+   auto pcState = MACRO_STATE_PTR_MAP.find(un_id);
+   if(pcState != MACRO_STATE_PTR_MAP.end()) {
+      return *(pcState->second);
+   }
+   else {
+      ROS_ERROR_STREAM("Can't get state id " << un_id);
    }
 }
 
@@ -43,18 +58,6 @@ void Team::setInitialState(uint32_t un_state) {
       ROS_ERROR_STREAM("Can't set initial state to " << un_state);
    }
 }
-
-
-TeamState& Team::getState(uint32_t un_id) {
-   auto pcState = MACRO_STATE_PTR_MAP.find(un_id);
-   if(pcState != MACRO_STATE_PTR_MAP.end()) {
-      return *(pcState->second);
-   }
-   else {
-      ROS_ERROR_STREAM("Can't get state id " << un_id);
-   }
-}
-
 
 void Team::step() {
    /* Only execute if 'current' was initialized */
@@ -82,7 +85,7 @@ void Team::step() {
       current_state_ptr->step();
    }
    else {
-      ROS_ERROR_STREAM("The Robotscheduler has not been initialized, you must call SetInitialState()");
+      ROS_ERROR_STREAM("The Team has not been initialized, you must call SetInitialState()");
    }
 }
 

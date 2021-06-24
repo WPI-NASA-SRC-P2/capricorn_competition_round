@@ -2,12 +2,16 @@
 
 
 TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle &nh) :
-    //   m_pcRobotScheduler(nullptr), 
+      m_pcTeam(nullptr), 
       m_unId(un_id), m_strName(str_name) 
 {
     robot_status = new RobotStatus(nh);
 
     robot_state_publisher_  = nh.advertise<state_machines::robot_desired_state>(COMMON_NAMES::CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 1, true);
+}
+
+void TeamState::setTeam(Team& c_robot_scheduler) {
+   m_pcTeam = &c_robot_scheduler;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,6 +106,17 @@ bool Search::isDone()
    return robot_status->isDone(scout_in_team);
 }
 
+TeamState& Search::transition()
+{
+   if(isDone())
+      return *this;
+   else
+   {
+      ROS_INFO("volatile detected, transitioning to scout_undock state");
+      return getState(SCOUT_WAITING);
+   }
+}
+   
 void Search::step()
 {
    if(ROBOT_ENUM_NAME_MAP.find(scout_in_team) != ROBOT_ENUM_NAME_MAP.end()) {
@@ -120,88 +135,69 @@ void Search::exitPoint()
    ROS_INFO("exitpoint of SEARCH, cancelling SEARCH goal");
 }
 
-// //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ///////////////////////////////////// S E A R C H   S T A T E   C L A S S ////////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// S C O U T _ W A I T I N G   S T A T E   C L A S S ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// bool Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
-// {
-//    /** @TODO: Add no objects in vision functionality */
-//    // start off with spiraling
-//    srv.request.resume_spiral_motion = true;
-//    near_volatile_ = false;
-//    ROS_INFO("entering scout_search state");
-// }
+bool ScoutWaiting::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+{
+   //Set to true to avoid repeatedly giving the goal.
+   ROS_INFO("entrypoint of ScoutWaiting");
+   scout_in_team = scout;
+   excavator_in_team = excavator;
+   hauler_in_team = hauler;
 
-// bool Search::isDone()
-// {
-//    // if no transition, stay in current state
-//    if(!near_volatile_) {
-//       // stay in SCOUT_SEARCH_VOLATILE
-//       return *this;
-//    }
-//    // if near the volatile, switch to scout_locate_volatile state
-//    ROS_INFO("volatile detected, transitioning to scout_undock state");
-//    return getState(SCOUT_LOCATE_VOLATILE);
-// }
+   if(scout_in_team == NONE || excavator_in_team == NONE || hauler_in_team == NONE )
+   {
+      ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR SCOUT WAITING!");
+      return false;
+   }
 
-// void Search::step()
-// {
-//    // execute spiral motion
-//    ROS_INFO("Executing spiral motion");
-//    spiralClient_.call(srv);
-// }
+   bool scout_map_check = ROBOT_ENUM_NAME_MAP.find(scout_in_team) == ROBOT_ENUM_NAME_MAP.end();
+   bool excavator_map_check = ROBOT_ENUM_NAME_MAP.find(excavator_in_team) == ROBOT_ENUM_NAME_MAP.end();
+   bool hauler_map_check = ROBOT_ENUM_NAME_MAP.find(hauler_in_team) == ROBOT_ENUM_NAME_MAP.end();
 
-// void Search::exitPoint()
-// {
-//    // cancel spiral motion 
-//    srv.request.resume_spiral_motion = false;
-//    spiralClient_.call(srv);
-//    ROS_INFO("Exited spiral search.");
-// }
+   if(scout_map_check || excavator_map_check || hauler_map_check) {
+      ROS_ERROR_STREAM("One of the robots doesn't exist on the ROBOT_ENUM_NAME_MAP");
+      ROS_ERROR_STREAM("Robots: Scout:"<<scout_in_team<<"\t Excavator:"<<excavator_in_team<<"\t Hauler:"<<hauler_in_team);
+      return false;
+   }
+   return true;
+}
 
-// //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// /////////////////////////////////////  L O C A T E  S T A T E  C L A S S ////////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+bool ScoutWaiting::isDone()
+{
+   return robot_status->isDone(excavator_in_team);
+}
 
-// bool Locate::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
-// {
-//    // we assume we are near the volatile
-//    near_volatile_ = true;
-//    first_ = true;
-// }
+TeamState& ScoutWaiting::transition()
+{
+   if(isDone())
+      return *this;
+   else
+   {
+      ROS_INFO("Excavator reached, Shifting to EXCAVATING");
+      return getState(EXCAVATING);
+   }
+}
+   
+void ScoutWaiting::step()
+{
+   if(ROBOT_ENUM_NAME_MAP.find(excavator_in_team) != ROBOT_ENUM_NAME_MAP.end()) {
+    state_machines::robot_desired_state desired_state_msg;
+    desired_state_msg.robot_name = ROBOT_ENUM_NAME_MAP[excavator_in_team];
+    desired_state_msg.robot_desired_state = EXCAVATOR_GO_TO_LOC;
+    robot_state_publisher_.publish(desired_state_msg);
+   }
+   else{
+      ROS_ERROR_STREAM("Scout enum "<<excavator_in_team<<" not found in map ROBOT_ENUM_NAME_MAP");
+   }
+}
 
-// bool Locate::isDone()
-// {
-//    // switch states once completed with locating the volatile
-//    if(!(resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_) {
-//       return *this;
-//    }
-//    ROS_WARN("Volatile found, moving to undock state");
-//    return getState(SCOUT_UNDOCK);
-// }
-
-// void Locate::step()
-// {
-//    if(first_)
-//    {
-//       resource_localiser_client_->sendGoal(goal);
-//       ROS_INFO_STREAM("Sending resource localization goal");
-//       first_ = false;
-//    }
-//    ROS_INFO_STREAM("Locating Step Function!");
-// }
-
-// void Locate::exitPoint()
-// {
-//    // none at the moment
-//    resource_localiser_client_->cancelGoal();
-//    near_volatile_ = false;
-// }
-
-// //////////////////////////////////////////////////////////////////////////////////
-// ///////////////////////////////////// M A I N ////////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////////
+void ScoutWaiting::exitPoint() 
+{
+   ROS_INFO("exitpoint of SEARCH, cancelling SEARCH goal");
+}
 
 
 // int main(int argc, char** argv)
@@ -211,7 +207,7 @@ void Search::exitPoint()
 
 //    try {
 //       ScoutScheduler cSchd(700);
-//       cSchd.addState(new Search());
+//       cSchd.addState(new ScoutWaiting());
 //       cSchd.addState(new STANDBY());
 //       cSchd.addState(new Locate());
 //       cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
