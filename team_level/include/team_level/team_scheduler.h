@@ -7,53 +7,42 @@
 #include <unordered_map>
 #include <utils/common_names.h>
 #include "ros/ros.h"
+#include <team_level/team.h>
 
 using namespace COMMON_NAMES;
 
-#define TOTAL_SCOUTS 2
-#define TOTAL_EXAVATORS 2
-#define TOTAL_HAULERS 2
+#define MAX_SCOUTS 2
+#define MAX_EXCAVATORS 2
+#define MAX_HAULERS 2
+#define MAX_TEAMS 4
 
 class TeamScheduler {
    
 public:
 
-   virtual ~TeamScheduler();
-
-   virtual void addState(State* pc_state);
-
-   State& getState(uint32_t un_id);
-
-   void setInitialState(uint32_t un_state);
+   TeamScheduler(ros::NodeHandle nh);
+   ~TeamScheduler();
    
-   virtual void step();
+   void step();
 
-   virtual void exec();
+   void exec();
 
-   virtual bool done() = 0;
+   bool done();
    
-   virtual void setInterrupt(STATE_MACHINE_TASK interrupt_state) = 0;
+   void setInterrupt(STATE_MACHINE_TASK interrupt_state);
    
 private:
+   std::array<RobotStatus*, MAX_SCOUTS> scouts;
+   std::array<RobotStatus*, MAX_EXCAVATORS> excavators;
+   std::array<RobotStatus*, MAX_HAULERS> haulers;
 
-   State* m_pcCurrent;
-   std::unordered_map<uint32_t, State*> m_mapStates;
+   std::array<Team*, MAX_TEAMS> all_teams;
 
-   std::vector<*ExcavationTeam>
+   void initTeams(ros::NodeHandle nh);
 
-   // std::array instead of this
-
-   RobotStatus scouts[TOTAL_SCOUTS];
-   RobotStatus excavators[TOTAL_EXAVATORS];
-   RobotStatus haulers[TOTAL_HAULERS];
-
-   std::vector<std::pair<bool,bool>> scout_vecPair_volAvl_recruitedTeam;
-   std::vector<bool> excavator_idle;
-   std::vector<bool> hauler_idle;
-
-protected:
-   bool new_state_request = false;
-   STATE_MACHINE_TASK new_state_;
+   void initTeamArray(ros::NodeHandle nh);
+   void addRobots();
+   void setSearchStates();
 };
 
 #endif // TEAM_SCHEDULER_H

@@ -1,131 +1,57 @@
 #include <team_level/team_scheduler.h>
 
-/****************************************/
-/****************************************/
-
-StateMachineException::StateMachineException(const std::string& str_msg) :
-   m_strMsg(str_msg) {}
-
-/****************************************/
-/****************************************/
-
-std::string StateMachineException::getMessage() const {
-   return m_strMsg;
+TeamScheduler::TeamScheduler(ros::NodeHandle nh)
+{
+   initTeams(nh);
 }
 
-/****************************************/
-/****************************************/
-
-State& State::getState(uint32_t un_state) {
-   return m_pcRobotScheduler->getState(un_state);
+void TeamScheduler::initTeams(ros::NodeHandle nh)
+{
+   initTeamArray(nh);
+   addRobots();
+   setSearchStates();
 }
 
-/****************************************/
-/****************************************/
-
-//UNDERSTANDING: When we add states in addState(state), the state is assigned to a scheduler. 
-void State::setRobotScheduler(RobotScheduler& c_robot_scheduler) {
-   m_pcRobotScheduler = &c_robot_scheduler;
-}
-
-/****************************************/
-/****************************************/
-
-RobotScheduler::~RobotScheduler() {
-   std::for_each(
-      m_mapStates.begin(),
-      m_mapStates.end(),
-      [](std::pair<uint32_t, State*> c_item){
-         delete c_item.second;
-      });
-}
-
-/****************************************/
-/****************************************/
-
-//UNDERSTANDING: Adding states to an unordered map (map of states declared in the header).
-
-void RobotScheduler::addState(State* pc_state) {
-   if(m_mapStates.find(pc_state->getId()) == m_mapStates.end()) {
-      m_mapStates[pc_state->getId()] = pc_state;
-      pc_state->setRobotScheduler(*this);
-   }
-   else {
-      throw StateMachineException(ToString("Duplicated state id ", pc_state->getId()));
-   }
-}
-
-/****************************************/
-/****************************************/
-
-State& RobotScheduler::getState(uint32_t un_id) {
-   auto pcState = m_mapStates.find(un_id);
-   if(pcState != m_mapStates.end()) {
-      return *(pcState->second);
-   }
-   else {
-      throw StateMachineException(ToString("Can't get state id ", un_id));
-   }
-}
-
-/****************************************/
-/****************************************/
-
-//UNDERSTANDING: First finds the state in the map and then sets the entry point of the current state.
-
-void RobotScheduler::setInitialState(uint32_t un_state) {
-   auto pcState = m_mapStates.find(un_state);
-   // if state exists in map, then set it to the initial state of the scheduler
-   if(pcState != m_mapStates.end()) {
-      // acquire value of the state (every map has a key(first) and a value(second))
-      m_pcCurrent = pcState->second;
-      // completes entry point of the initial state
-      m_pcCurrent->entryPoint();
-   }
-   else {
-      throw StateMachineException(ToString("Can't set initial state to ", un_state));
-   }
-}
-
-/****************************************/
-/****************************************/
-
-void RobotScheduler::step() {
-   /* Only execute if 'current' was initialized */
-   if(m_pcCurrent) {
-      /* Attempt a transition, every state of every rover has its own transition() */
-      State* cNewState = &m_pcCurrent->transition();
-      if (new_state_request)
-      {
-         cNewState = &getState(new_state_);
-         new_state_request = false;
-      }
-
-      if(cNewState != m_pcCurrent) {
-         /* Perform transition */
-         m_pcCurrent->exitPoint();
-         cNewState->entryPoint();
-         m_pcCurrent = cNewState;
-      }
-      /* Execute current state */
-      m_pcCurrent->step();
-   }
-   else {
-      throw StateMachineException("The Robotscheduler has not been initialized, you must call SetInitialState()");
-   }
-}
-
-/****************************************/
-/****************************************/
-
-//UNDERSTANDING: Each robot has its own done() and this is what is checked to perform step()
-void RobotScheduler::exec() {
-   while(!done() && ros::ok()) 
+void TeamScheduler::initTeamArray(ros::NodeHandle nh)
+{
+   for(int i = 0; i < MAX_TEAMS; i++)
    {
-      step();
-      ros::spinOnce();
+      all_teams.at(i) = new Team(nh);
    }
 }
 
-/****************************************/
-/****************************************/
+void TeamScheduler::addRobots()
+{
+   for(int i = 0; i < MAX_SCOUTS; i++)
+   {
+      int robot_index = (int) SCOUT_1 + i;
+      ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
+      all_teams.at(i)->setScout(robot);
+      all_teams.at(i)->setTeamMacroState(IDLE);
+   }
+   
+   for(int i = 0; i < MAX_EXCAVATORS; i++)
+   {
+      int robot_index = (int) EXCAVATOR_1 + i;
+      ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
+      all_teams.at(i)->setExcavator(robot);
+      all_teams.at(i)->setTeamMacroState(IDLE);
+   }
+   
+   for(int i = 0; i < MAX_HAULERS; i++)
+   {
+      int robot_index = (int) HAULER_1 + i;
+      ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
+      all_teams.at(i)->setHauler(robot);
+      all_teams.at(i)->setTeamMacroState(IDLE);
+   }      
+}
+
+void TeamScheduler::setSearchStates()
+{
+   for(int i = 0; i < MAX_TEAMS; i++)
+   {
+      if(all_teams.at(i)->isScoutHired())
+         all_teams.at(i)->setTeamMacroState(SEARCH);
+   }
+}

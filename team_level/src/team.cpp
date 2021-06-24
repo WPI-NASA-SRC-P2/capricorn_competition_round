@@ -1,25 +1,11 @@
 #include <team_level/team.h>
 
-Team::Team(ros::NodeHandle &nh, TEAM_MACRO_STATE team_state, ROBOTS_ENUM scout, 
-         ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+Team::Team(ros::NodeHandle &nh)
 {
     robot_state = new RobotStatus(nh);
 
-    if(scout != NONE)
-        setScout(scout);
-    if(excavator != NONE)
-        setScout(excavator);
-    if(hauler != NONE)
-        setScout(hauler);
-
-    hired_scout = scout;
-    hired_excavator = excavator;
-    hired_hauler = hauler;
-
-    macro_state = team_state;
-
     addStates(nh);
-    setInitialState(macro_state);
+    setInitialState(STANDBY);
 }
 
 Team::~Team()
@@ -51,7 +37,7 @@ void Team::setInitialState(uint32_t un_state) {
       // acquire value of the state (every map has a key(first) and a value(second))
       current_state_ptr = pcState->second;
       // completes entry point of the initial state
-      current_state_ptr->entryPoint();
+      current_state_ptr->entryPoint(hired_scout, hired_excavator, hired_hauler);
    }
    else {
       ROS_ERROR_STREAM("Can't set initial state to " << un_state);
@@ -102,24 +88,11 @@ void Team::step() {
 
 //UNDERSTANDING: Each robot has its own done() and this is what is checked to perform step()
 void Team::exec() {
+   while(ros::ok())
+   {
       step();
-      ros::Duration(.50).sleep();
-      setTeamMacroState(IDLE);
-      step();
-      ros::Duration(.50).sleep();
-      setTeamMacroState(SEARCH);
-      step();
-      ros::Duration(.50).sleep();
-      setTeamMacroState(IDLE);
-      step();
-      ros::Duration(.50).sleep();
-      disbandScout();
-      setTeamMacroState(SEARCH);
-      step();
-      ros::Duration(.50).sleep();
-      setTeamMacroState(STANDBY);
-      step();
-    //   ros::spinOnce();
+      ros::spinOnce();
+   }
 }
 
 
@@ -128,8 +101,8 @@ int main(int argc, char** argv)
    ros::init(argc, argv, "scout_state_machine");
    ros::NodeHandle nh;
 
-   Team team(nh, TEAM_MACRO_STATE::STANDBY, ROBOTS_ENUM::SCOUT_1, ROBOTS_ENUM::NONE, ROBOTS_ENUM::NONE);
-    team.exec();
+   // Team team(nh, TEAM_MACRO_STATE::STANDBY, ROBOTS_ENUM::SCOUT_1, ROBOTS_ENUM::NONE, ROBOTS_ENUM::NONE);
+   // team.exec();
 
     // ros::Duration(1).sleep();
 //     team.setTeamMacroState(SEARCH);

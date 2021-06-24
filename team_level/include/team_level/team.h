@@ -7,8 +7,7 @@
 
 class Team{
 public:
-   Team(ros::NodeHandle &nh, TEAM_MACRO_STATE team_state, ROBOTS_ENUM scout, 
-         ROBOTS_ENUM excavator, ROBOTS_ENUM hauler);
+   Team(ros::NodeHandle &nh);
    ~Team();
 
    RobotStatus *robot_state;
@@ -38,7 +37,7 @@ public:
 
 private:
    void updateTeamMacroState();
-   ROBOTS_ENUM hired_scout, hired_excavator, hired_hauler;
+   ROBOTS_ENUM hired_scout = NONE, hired_excavator = NONE, hired_hauler = NONE;
    TEAM_MACRO_STATE macro_state;
 
    void addStates(ros::NodeHandle &nh);
