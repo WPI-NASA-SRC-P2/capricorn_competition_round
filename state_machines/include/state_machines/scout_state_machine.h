@@ -10,6 +10,8 @@
 #include <srcp2_msgs/VolSensorMsg.h>
 #include <operations/obstacle_avoidance.h>
 #include <state_machines/common_robot_state_machine.h>
+#include <state_machines/robot_state_status.h>
+#include <state_machines/robot_desired_state.h>
 #include <maploc/ResetOdom.h>
 
 using namespace COMMON_NAMES;
@@ -59,6 +61,7 @@ class ScoutState : public State {
 private:
   ros::Subscriber volatile_sub_;
   ros::Subscriber objects_sub_;
+  ros::Subscriber desired_state_sub_;
 
   /**
    * @brief Volatile sensor callback
@@ -74,9 +77,16 @@ private:
    */
   void objectsCallback(const perception::ObjectArray::ConstPtr objs);
 
+  /**
+   * @brief Scheduler robot desired state callback for assigning robot's state
+   * 
+   * @param msg 
+   */
+  void desiredStateCB(const state_machines::robot_desired_state::ConstPtr &msg);
+
 public:
    
-   ScoutState(uint32_t un_id);
+   ScoutState(uint32_t un_id, std::string robot_name);
    
    ~ScoutState();
 
@@ -89,20 +99,21 @@ public:
       ROS_INFO_STREAM("  [" << getName() << "] - exit point");
    }
 
-   static void setRobotName(const std::string &robot_name){ robot_name_ = robot_name; }
-
    void step() override {}
+
 
 protected:
   ros::NodeHandle nh_;
 
-  static std::string robot_name_;
+  // robot_state_status variables
+  int robot_desired_state_;
+  state_machines::robot_state_status status_;
 
   ros::ServiceClient spiralClient_;
-  
+
   bool near_volatile_ = false;       //
   bool new_volatile_msg_ = false; 
-
+ 
   std::mutex objects_mutex_;
   perception::ObjectArray::ConstPtr vision_objects_;
   bool objects_msg_received_ = false;
@@ -118,15 +129,15 @@ protected:
 
 };
 
-std::string ScoutState::robot_name_  ="";
-
 class Undock : public ScoutState {
 public:   
-   Undock() : ScoutState(SCOUT_UNDOCK) {}
+   Undock() : ScoutState(SCOUT_UNDOCK, robot_name_) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
-   bool isDone() override ;
-   
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
@@ -138,10 +149,12 @@ private:
 
 class Search : public ScoutState {
 public:   
-   Search() : ScoutState(SCOUT_SEARCH_VOLATILE) {}
+   Search() : ScoutState(SCOUT_SEARCH_VOLATILE, robot_name_) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
 
    void entryPoint() override;
    void step() override;
@@ -154,10 +167,12 @@ private:
 
 class Locate : public ScoutState {
 public:   
-   Locate() : ScoutState(SCOUT_LOCATE_VOLATILE) {}
+   Locate() : ScoutState(SCOUT_LOCATE_VOLATILE, robot_name_) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
 
    void entryPoint() override;
    void step() override;
@@ -171,9 +186,12 @@ private:
 
 class IdleState : public ScoutState {
 public:   
-   IdleState() : ScoutState(ROBOT_IDLE_STATE) {}
+   IdleState() : ScoutState(ROBOT_IDLE_STATE, robot_name_) {}
 
    bool isDone() override{ return true; }
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    void entryPoint() override{}
    void step() override{}
    void exitPoint() override{}

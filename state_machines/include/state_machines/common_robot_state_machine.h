@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <utils/common_names.h>
 #include "ros/ros.h"
-
+#include <state_machines/robot_state_status.h>
 using namespace COMMON_NAMES;
 
 // class MacroState;
@@ -100,17 +100,39 @@ public:
    virtual void step() = 0;
    
    virtual bool isDone() = 0;
+   
+   virtual bool hasSucceeded() = 0;
 
    State& getState(uint32_t un_state);
 
    void setRobotScheduler(RobotScheduler& c_robot_scheduler);
+
+   void setRobotName(const std::string &robot_name){ robot_name_ = robot_name; }
    
+   void updateStatus() 
+   {
+      status_.robot_name = robot_name_;
+      status_.robot_current_state = robot_current_state_;
+      status_.current_state_done = current_state_done_;
+      status_.last_state_succeeded = last_state_succeeded_;
+      status_pub_.publish(status_);
+   }
+
 private:
 
    RobotScheduler* m_pcRobotScheduler;
    uint32_t m_unId;
    std::string m_strName;
-};
 
+protected:
+  std::string robot_name_;
+  
+  int robot_current_state_;
+  bool current_state_done_;
+  bool last_state_succeeded_;
+  state_machines::robot_state_status status_;
+  ros::Publisher status_pub_;
+  
+};
 
 #endif // STATE_MACHINE_H

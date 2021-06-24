@@ -109,6 +109,7 @@ void RobotScheduler::step() {
          m_pcCurrent = cNewState;
       }
       /* Execute current state */
+      m_pcCurrent->updateStatus();
       m_pcCurrent->step();
    }
    else {

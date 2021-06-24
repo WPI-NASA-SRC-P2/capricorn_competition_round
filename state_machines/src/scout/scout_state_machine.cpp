@@ -5,14 +5,21 @@
 ///////////////////////////////////// S C O U T   B A S E   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ScoutState::ScoutState(uint32_t un_id) :
+ScoutState::ScoutState(uint32_t un_id, std::string robot_name) :
     State(un_id, ToString("mystate_", un_id))
 {
-  robot_name_ = COMMON_NAMES::SCOUT_1_NAME;
-  resource_localiser_client_ = new ResourceLocaliserClient_(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + RESOURCE_LOCALISER_ACTIONLIB, true);
+  robot_name_ = robot_name;
+  // robot_state_status fields set to default values when state is constructed
+  robot_current_state_ = un_id;
+  current_state_done_ = false;
+  last_state_succeeded_ = false;
+
+  // publish the robot's status
+  status_pub_ = nh_.advertise<state_machines::robot_state_status>(CAPRICORN_TOPIC + ROBOTS_CURRENT_STATE_TOPIC, 10);
+  resource_localiser_client_ = new ResourceLocaliserClient_(CAPRICORN_TOPIC + robot_name_ + "/" + RESOURCE_LOCALISER_ACTIONLIB, true);
   /** @todo: FIX NAVIGATIONVISIONCLIENT TO BE CORRECT TOPIC */
-  navigation_vision_client_ = new NavigationVisionClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
-  navigation_client_ = new NavigationClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
+  navigation_vision_client_ = new NavigationVisionClient(CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + NAVIGATION_VISION_ACTIONLIB, true);
+  navigation_client_ = new NavigationClient(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB, true);
   ROS_INFO("Waiting for the scout action servers...");
   navigation_vision_client_->waitForServer();
   navigation_client_->waitForServer();
@@ -28,6 +35,7 @@ ScoutState::ScoutState(uint32_t un_id) :
   
   volatile_sub_ = nh_.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutState::volatileSensorCB, this);
   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ScoutState::objectsCallback, this);
+  desired_state_sub_ = nh_.subscribe(CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 2, &ScoutState::desiredStateCB, this);
 }
 
 ScoutState::~ScoutState()
@@ -63,6 +71,13 @@ void ScoutState::objectsCallback(const perception::ObjectArray::ConstPtr objs)
   objects_msg_received_ = true;
 }
 
+void ScoutState::desiredStateCB(const state_machines::robot_desired_state::ConstPtr &msg)
+{
+  if(msg->robot_name == robot_name_)
+  {
+    robot_desired_state_ = msg->robot_desired_state;
+  }
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// U N D O C K   S T A T E   C L A S S ////////////////////////////////////
@@ -73,11 +88,26 @@ void Undock::entryPoint()
    //Set to true to avoid repeatedly giving the goal.
    first_ = true;
    ROS_INFO("entrypoint of undock");
+   
+   // update the current status of the robot and publish it
+   
 }
 
 bool Undock::isDone()
 {
-   return (navigation_client_->getState().isDone());
+   // update the status of current state
+   current_state_done_ = navigation_client_->getState().isDone();
+
+   return current_state_done_;
+}
+
+bool Undock::hasSucceeded()
+{
+   // update the status of current state
+   // last_state_succeeded_ = (navigation_client_->getState() == actionlib::status::SUCCESS);
+   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   
+   return last_state_succeeded_;
 }
 
 void Undock::step()
@@ -122,8 +152,16 @@ void Search::entryPoint()
 
 bool Search::isDone()
 {
-   // if no transition, stay in current state
-   return (near_volatile_);
+   // if near the volatile, then the state is done
+   current_state_done_ = near_volatile_;
+   return (current_state_done_);
+}
+
+bool Search::hasSucceeded()
+{
+   // if near the volatile, then the state has succeeded
+   last_state_succeeded_ = near_volatile_;
+   return last_state_succeeded_;
 }
 
 void Search::step()
@@ -155,7 +193,15 @@ void Locate::entryPoint()
 bool Locate::isDone()
 {
    // switch states once completed with locating the volatile
-   return ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   current_state_done_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   return current_state_done_;
+}
+
+bool Locate::hasSucceeded()
+{
+   // state succeeded once rover is parked on top of volatile
+   last_state_succeeded_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   return last_state_succeeded_;
 }
 
 void Locate::step()
@@ -181,22 +227,22 @@ void Locate::exitPoint()
 //////////////////////////////////////////////////////////////////////////////////
 
 
-int main(int argc, char** argv)
-{
-   ros::init(argc, argv, "scout_state_machine");
-   ros::NodeHandle nh;
+// int main(int argc, char** argv)
+// {
+//    ros::init(argc, argv, "scout_state_machine");
+//    ros::NodeHandle nh;
 
-   try {
-      ScoutScheduler cSchd;
-      cSchd.addState(new Search());
-      cSchd.addState(new Undock());
-      cSchd.addState(new Locate());
-      cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
-      // cSchd.setInitialState(SCOUT_UNDOCK);
-      cSchd.exec();
-      return 0;
-   }
-   catch(StateMachineException& ex) {
-      std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
-   }
-}
+//    try {
+//       ScoutScheduler cSchd;
+//       cSchd.addState(new Search());
+//       cSchd.addState(new Undock());
+//       cSchd.addState(new Locate());
+//       cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
+//       // cSchd.setInitialState(SCOUT_UNDOCK);
+//       cSchd.exec();
+//       return 0;
+//    }
+//    catch(StateMachineException& ex) {
+//       std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
+//    }
+// }

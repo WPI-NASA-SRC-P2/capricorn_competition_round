@@ -72,9 +72,10 @@ int main(int argc, char *argv[])
       cSchd.addState(new Search());
       cSchd.addState(new Undock());
       cSchd.addState(new Locate());
-      cSchd.addState(new IdleState());
-      cSchd.setInitialState(ROBOT_IDLE_STATE);
-      cSchd.exec();
+      // cSchd.addState(new IdleState());
+      // cSchd.setInitialState(ROBOT_IDLE_STATE);
+      cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
+			cSchd.exec();
 	  ros::spin();
 	}
 	catch(StateMachineException& ex) {
