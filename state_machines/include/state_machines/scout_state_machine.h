@@ -30,26 +30,26 @@ using namespace COMMON_NAMES;
 /****************************************/
 /****************************************/
 
-class ScoutScheduler : public RobotScheduler {
+// class ScoutScheduler : public RobotScheduler {
    
-public:
+// public:
 
-   ScoutScheduler(){}
+//    ScoutScheduler(){}
 
-   void step() override {
-      RobotScheduler::step();
-   }
+//    void step() override {
+//       RobotScheduler::step();
+//    }
 
-   bool done() override {
-      return false;
-   }
+//    bool done() override {
+//       return false;
+//    }
 
-   // void setState(STATE_MACHINE_TASK new_state) override{
-   void setState(STATE_MACHINE_TASK new_state) {
-      new_state_ = new_state;
-      new_state_request = true;
-   }
-};
+//    // void setState(STATE_MACHINE_TASK new_state) override{
+//    void setState(STATE_MACHINE_TASK new_state) {
+//       new_state_ = new_state;
+//       new_state_request = true;
+//    }
+// };
 
 const std::set<STATE_MACHINE_TASK> SCOUT_TASKS = {
     STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE,
@@ -72,8 +72,7 @@ class ScoutState : public State {
 private:
   ros::Subscriber volatile_sub_;
   ros::Subscriber objects_sub_;
-  ros::Subscriber desired_state_sub_;
-
+  
   /**
    * @brief Volatile sensor callback
    * 
@@ -88,16 +87,10 @@ private:
    */
   void objectsCallback(const perception::ObjectArray::ConstPtr objs);
 
-  /**
-   * @brief Scheduler robot desired state callback for assigning robot's state
-   * 
-   * @param msg 
-   */
-  void desiredStateCB(const state_machines::robot_desired_state::ConstPtr &msg);
-
+  
 public:
    
-   ScoutState(uint32_t un_id, std::string robot_name);
+   ScoutState(uint32_t un_id, ros::NodeHandle nh, std::string robot_name);
    
    ~ScoutState();
 
@@ -113,13 +106,11 @@ public:
    void step() override {}
 
    State& transition() override {
-      return getState(SCOUT_RESET_ODOM);   //Just put to fix build errors
+      return getState(SCOUT_RESET_ODOM);   //Just put to fix build errors, remove all traces of transition from the state machines. 
    };
 
 
 protected:
-  ros::NodeHandle nh_;
-
   // robot_state_status variables
   int robot_desired_state_;
   state_machines::robot_state_status status_;
@@ -146,7 +137,7 @@ protected:
 
 class Undock : public ScoutState {
 public:   
-   Undock() : ScoutState(SCOUT_UNDOCK, robot_name_) {}
+   Undock(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_UNDOCK, nh, robot_name) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
@@ -164,7 +155,7 @@ private:
 
 class Search : public ScoutState {
 public:   
-   Search() : ScoutState(SCOUT_SEARCH_VOLATILE, robot_name_) {}
+   Search(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_SEARCH_VOLATILE, nh, robot_name) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
@@ -182,7 +173,7 @@ private:
 
 class Locate : public ScoutState {
 public:   
-   Locate() : ScoutState(SCOUT_LOCATE_VOLATILE, robot_name_) {}
+   Locate(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_LOCATE_VOLATILE, nh, robot_name) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
@@ -201,7 +192,7 @@ private:
 
 class IdleState : public ScoutState {
 public:   
-   IdleState() : ScoutState(ROBOT_IDLE_STATE, robot_name_) {}
+   IdleState(ros::NodeHandle nh, std::string robot_name) : ScoutState(ROBOT_IDLE_STATE, nh, robot_name) {}
 
    bool isDone() override{ return true; }
    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)

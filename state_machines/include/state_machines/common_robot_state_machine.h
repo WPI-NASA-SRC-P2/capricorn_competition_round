@@ -8,6 +8,7 @@
 #include <utils/common_names.h>
 #include "ros/ros.h"
 #include <state_machines/robot_state_status.h>
+#include <state_machines/robot_desired_state.h>
 using namespace COMMON_NAMES;
 
 // class MacroState;
@@ -47,31 +48,41 @@ private:
 class RobotScheduler {
    
 public:
+   RobotScheduler(const ros::NodeHandle &nh, std::string robot_name);
 
-   virtual ~RobotScheduler();
+   ~RobotScheduler();
 
-   virtual void addState(State* pc_state);
+   void addState(State* pc_state);
 
    State& getState(uint32_t un_id);
 
    void setInitialState(uint32_t un_state);
    
-   virtual void step();
+   void step();
 
-   virtual void exec();
+   void exec();
 
-   virtual bool done() = 0;
+   bool done();
    
-   virtual void setState(STATE_MACHINE_TASK new_state) = 0;
-   
+   void setState(STATE_MACHINE_TASK new_state);
+
+   /**
+   * @brief Scheduler robot desired state callback for assigning robot's state
+   * 
+   * @param msg 
+   */
+   void desiredStateCB(const state_machines::robot_desired_state::ConstPtr &msg);
+
 private:
-
+   ros::NodeHandle nh_;
    State* m_pcCurrent;
    std::unordered_map<uint32_t, State*> m_mapStates;
 
 protected:
    bool new_state_request = false;
    STATE_MACHINE_TASK new_state_;
+   ros::Subscriber desired_state_sub_;
+   std::string robot_name_;
 };
 
 /****************************************/
@@ -82,10 +93,10 @@ class State {
 public:
 
    State(uint32_t un_id,
-         const std::string& str_name) :
+         const std::string& str_name, ros::NodeHandle nh, std::string robot_name) :
       m_pcRobotScheduler(nullptr),
       m_unId(un_id),
-      m_strName(str_name) {}
+      m_strName(str_name), nh_(nh), robot_name_(robot_name) {}
 
    virtual ~State() {}
 
@@ -121,12 +132,12 @@ public:
    }
 
 private:
-
    RobotScheduler* m_pcRobotScheduler;
    uint32_t m_unId;
    std::string m_strName;
 
 protected:
+   ros::NodeHandle nh_;
   std::string robot_name_;
   
   int robot_current_state_;

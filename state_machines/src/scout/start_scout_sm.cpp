@@ -13,40 +13,8 @@
 
 #include <ros/ros.h>
 #include <state_machines/scout_state_machine.h>
-#include <state_machines/RobotStateMachineTaskAction.h>
-#include <actionlib/server/simple_action_server.h>
 
 std::string g_robot_name;
-
-typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
-
-ScoutScheduler cSchd;
-
-/**
- * @brief Function which gets executed when any goal is received to actionlib
- * 
- * @param goal for action lib
- * @param as variable to send feedback
- * @param sm ScoutStateMachine object
- */
-void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as)
-{
-	ROS_INFO_STREAM("Received " << g_robot_name << "  State Machine Goal: " << goal->task);
-
-	state_machines::RobotStateMachineTaskResult result;
-	STATE_MACHINE_TASK robot_state = (STATE_MACHINE_TASK)goal->task;
-
-	bool output = false;
-
-	cSchd.setState(robot_state);
-
-	result.result = output ? COMMON_NAMES::COMMON_RESULT::SUCCESS : COMMON_NAMES::COMMON_RESULT::FAILED;
-	as->setSucceeded(result);
-
-	ROS_INFO_STREAM(g_robot_name << "Goal Finished "<< output);
-
-	return;
-}
 
 int main(int argc, char *argv[])
 {
@@ -57,27 +25,24 @@ int main(int argc, char *argv[])
 	}
 
 	g_robot_name = argv[1];
-
+	ROS_INFO_STREAM("Robot Name = " + g_robot_name);
 	ros::init(argc, argv, g_robot_name + "_sm");
 	ros::NodeHandle nh;
-
-
-	SM_SERVER server(nh, g_robot_name + COMMON_NAMES::STATE_MACHINE_ACTIONLIB, boost::bind(&execute, _1, &server), false);
-	// server.registerPreemptCallback(boost::bind(&cancelGoal, sm));
-	server.start();
 
 	ROS_INFO("Started Scout State Machine Actionlib Server");
 
 	try {
-      cSchd.addState(new Search());
-      cSchd.addState(new Undock());
-      cSchd.addState(new Locate());
-      // cSchd.addState(new IdleState());
-      // cSchd.setInitialState(ROBOT_IDLE_STATE);
-      cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
-			cSchd.exec();
-	  ros::spin();
+		RobotScheduler cSchd(nh, SCOUT_1_NAME);
+		// cSchd.initROS(nh, SCOUT_1_NAME);
+		cSchd.addState(new Search(nh, SCOUT_1_NAME));
+		cSchd.addState(new Undock(nh, SCOUT_1_NAME));
+		cSchd.addState(new Locate(nh, SCOUT_1_NAME));
+		cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
+		// cSchd.setInitialState(SCOUT_UNDOCK);
+		cSchd.exec();
+		return 0;
 	}
+
 	catch(StateMachineException& ex) {
 		std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
 	}

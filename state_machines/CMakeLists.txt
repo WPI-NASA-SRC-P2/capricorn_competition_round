@@ -136,9 +136,9 @@ include_directories(
 
 ## Declare a C++ library
   add_library(${PROJECT_NAME}
-  src/excavator/excavator_state_machine.cpp
+  #src/excavator/excavator_state_machine.cpp
   src/scout/scout_state_machine.cpp
-  src/hauler/hauler_state_machine.cpp
+  #src/hauler/hauler_state_machine.cpp
   src/common_robot_state_machine.cpp
  )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -181,11 +181,11 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 #${catkin_LIBRARIES}
 #)
 
-# add_executable(scout_state_machine src/scout/scout_state_machine.cpp)
-# add_dependencies(scout_state_machine ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(scout_state_machine ${PROJECT_NAME}
-# ${catkin_LIBRARIES}
-# )
+#add_executable(scout_state_machine src/scout/scout_state_machine.cpp)
+#add_dependencies(scout_state_machine ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries(scout_state_machine ${PROJECT_NAME}
+#${catkin_LIBRARIES}
+#)
 
 #add_executable(hauler_state_machine src/hauler/hauler_state_machine.cpp)
 #add_dependencies(hauler_state_machine ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

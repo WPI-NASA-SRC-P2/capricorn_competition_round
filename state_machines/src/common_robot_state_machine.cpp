@@ -32,6 +32,14 @@ void State::setRobotScheduler(RobotScheduler& c_robot_scheduler) {
 /****************************************/
 /****************************************/
 
+/**RobotScheduler constructor, created primarily to run subscriber to update the states in the callback. Not virtual, so the destructor is not virtual either. 
+*/
+RobotScheduler::RobotScheduler(const ros::NodeHandle &nh, std::string robot_name) : nh_(nh), robot_name_(robot_name)
+{
+   // set subscriber for updating desired state from scheduler
+   desired_state_sub_ = nh_.subscribe(CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 2, &RobotScheduler::desiredStateCB, this);
+}
+
 RobotScheduler::~RobotScheduler() {
    std::for_each(
       m_mapStates.begin(),
@@ -43,6 +51,21 @@ RobotScheduler::~RobotScheduler() {
 
 /****************************************/
 /****************************************/
+
+void RobotScheduler::desiredStateCB(const state_machines::robot_desired_state::ConstPtr &msg)
+{
+   // only change state if the desired state is a new one (to prevent calling entrypoint too often)
+   // check for name equality
+   
+   // if(getState(msg->robot_desired_state) != *m_pcCurrent)
+   if(msg->robot_name == robot_name_)
+   {
+      new_state_request = true;
+      new_state_ = static_cast<STATE_MACHINE_TASK> (msg->robot_desired_state);
+      ROS_INFO_STREAM("New state received: " << new_state_);             //Checking if the casting isn't messed up. 
+   }                
+    
+}
 
 //UNDERSTANDING: Adding states to an unordered map (map of states declared in the header).
 
@@ -88,6 +111,15 @@ void RobotScheduler::setInitialState(uint32_t un_state) {
    }
 }
 
+
+/****************************************/
+/****************************************/
+/** @HOTFIX:  Something has to be done about done()*/ 
+bool RobotScheduler::done(){
+   // just keep running in loop by returning false
+   return false;
+}
+
 /****************************************/
 /****************************************/
 
@@ -128,6 +160,8 @@ void RobotScheduler::exec() {
       ros::spinOnce();
    }
 }
+
+
 
 /****************************************/
 /****************************************/
