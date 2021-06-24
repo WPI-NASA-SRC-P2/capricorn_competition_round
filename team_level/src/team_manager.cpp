@@ -179,6 +179,7 @@ void TeamManager::recruitScout(int team_index)
       {
          ROBOTS_ENUM scout = all_teams.at(i)->getScout();
          all_teams.at(team_index)->setScout(scout);
+         all_teams.at(i)->disbandScout();
 
          scout_for_sale.at(i) = false;
          teams_need_scout.at(team_index) = false;
@@ -194,6 +195,7 @@ void TeamManager::recruitExcavator(int team_index)
       {
          ROBOTS_ENUM excavator = all_teams.at(i)->getScout();
          all_teams.at(team_index)->setExcavator(excavator);
+         all_teams.at(i)->disbandExcavator();
 
          excavator_for_sale.at(i) = false;
          teams_need_excavator.at(team_index) = false;
@@ -209,6 +211,7 @@ void TeamManager::recruitHauler(int team_index)
       {
          ROBOTS_ENUM hauler = all_teams.at(i)->getScout();
          all_teams.at(team_index)->setHauler(hauler);
+         all_teams.at(i)->disbandHauler();
 
          hauler_for_sale.at(i) = false;
          teams_need_hauler.at(team_index) = false;
