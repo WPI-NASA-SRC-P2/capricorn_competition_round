@@ -1,81 +1,55 @@
-#ifndef TEAM_SCHEDULER_H
-#define TEAM_SCHEDULER_H
+#pragma once
 
-#include <cstdint>
-#include <memory>
-#include <string>
-#include <unordered_map>
 #include <utils/common_names.h>
-#include "ros/ros.h"
-#include <team_level/team.h>
+#include <team_level/robot_status.h>
+#include <team_level/team_state.h>
+#include <unordered_map>
 
-using namespace COMMON_NAMES;
-
-#define MAX_SCOUTS 1
-#define MAX_EXCAVATORS 2
-#define MAX_HAULERS 3
-#define MAX_TEAMS 4
-
-class TeamScheduler {
-   
+class Team{
 public:
+   Team(ros::NodeHandle &nh);
+   ~Team();
 
-   TeamScheduler(ros::NodeHandle nh);
-   ~TeamScheduler(){}
+   RobotStatus *robot_state;
+
+   void setScout(ROBOTS_ENUM scout){ hired_scout = scout; }
+   void setExcavator(ROBOTS_ENUM excavator){ hired_excavator = excavator; }
+   void setHauler(ROBOTS_ENUM hauler){ hired_hauler = hauler; }
    
-   void step();
+   void disbandScout(){ hired_scout = NONE; }
+   void disbandExcavator(){ hired_excavator = NONE; }
+   void disbandHauler(){ hired_hauler = NONE; }
+   
+   ROBOTS_ENUM getScout() const { return hired_scout; }
+   ROBOTS_ENUM getExcavator() const { return hired_excavator; }
+   ROBOTS_ENUM getHauler() const { return hired_hauler; }
+   
+   bool isScoutHired(){ return !(hired_scout == NONE); }
+   bool isExcavatorHired(){ return !(hired_excavator == NONE); }
+   bool isHaulerHired(){ return !(hired_hauler == NONE); }
+   
+   TEAM_MACRO_STATE getTeamMacroState(){ return macro_state; }
+   void setTeamMacroState(TEAM_MACRO_STATE team_state){ 
+         macro_state = team_state; 
+         new_state_request = true;}
 
    void exec();
+   void step();
 
 private:
-   std::array<Team*, MAX_TEAMS> all_teams;
+   void updateTeamMacroState();
+   ROBOTS_ENUM hired_scout = NONE, hired_excavator = NONE, hired_hauler = NONE;
+   TEAM_MACRO_STATE macro_state;
 
-   std::array<bool, MAX_TEAMS> teams_need_scout;
-   std::array<bool, MAX_TEAMS> scout_for_sale;
-   std::array<bool, MAX_TEAMS> teams_need_excavator;
-   std::array<bool, MAX_TEAMS> excavator_for_sale;
-   std::array<bool, MAX_TEAMS> teams_need_hauler;
-   std::array<bool, MAX_TEAMS> hauler_for_sale;
+   void addStates(ros::NodeHandle &nh);
+   void addState(TeamState* macro_state);
 
-   void initTeams(ros::NodeHandle nh);
+   void setInitialState(uint32_t un_state);
 
-   void initTeamArray(ros::NodeHandle nh);
+   TeamState& getState(uint32_t un_id);
 
-   void addRobots();
-   
-   void setSearchStates();
+   bool new_state_request;
 
-   void recruitment();
-
-   bool hasScout(int team_index);
-
-   bool hasExcavator(int team_index);
-
-   bool hasHauler(int team_index);
-
-   void fireScout(int team_index);
-
-   void fireExcavator(int team_index);
-
-   void fireHauler(int team_index);
-
-   void recruitScout(int team_index);
-
-   void recruitExcavator(int team_index);
-
-   void recruitHauler(int team_index);
-
-   void checkAndRecruitForSearch(int team_index);
-
-   void checkAndRecruitForScoutWaiting(int team_index);
-
-   void checkAndRecruitForExcavating(int team_index);
-
-   void checkAndRecruitForDumping(int team_index);
-
-   void checkAndRecruitForIdle(int team_index);
-
-   void checkAndRecruitForStandby(int team_index);
+   TeamState* current_state_ptr;
+   std::unordered_map<uint32_t, TeamState*> MACRO_STATE_PTR_MAP;
 };
-
-#endif // TEAM_SCHEDULER_H

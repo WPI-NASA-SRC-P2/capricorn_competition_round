@@ -1,11 +1,11 @@
-#include <team_level/team_scheduler.h>
+#include <team_level/team_manager.h>
 
 int main(int argc, char* argv[])
 {
     ros::init(argc, argv, "sceduler");
     ros::NodeHandle nh;
 
-    TeamScheduler team_scheduler(nh);
+    TeamManager team_scheduler(nh);
 
     team_scheduler.exec();
 

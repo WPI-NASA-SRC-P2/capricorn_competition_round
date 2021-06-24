@@ -1,214 +1,289 @@
-#include <team_level/scheduler.h>
-#include <algorithm>
+#include <team_level/team_manager.h>
 
-/****************************************/
-/****************************************/
-
-TeamState& TeamState::getState(uint32_t un_state) {
-   return m_pcRobotScheduler->getState(un_state);
+TeamManager::TeamManager(ros::NodeHandle nh)
+{
+   initTeams(nh);
 }
 
-/****************************************/
-/****************************************/
-
-//UNDERSTANDING: When we add states in addState(state), the state is assigned to a scheduler. 
-void TeamState::setRobotScheduler(TeamScheduler& c_robot_scheduler) {
-   m_pcRobotScheduler = &c_robot_scheduler;
+void TeamManager::initTeams(ros::NodeHandle nh)
+{
+   initTeamArray(nh);
+   addRobots();
+   setSearchStates();
 }
 
-/****************************************/
-/****************************************/
-
-TeamScheduler::~TeamScheduler() {
-   std::for_each(
-      m_mapStates.begin(),
-      m_mapStates.end(),
-      [](std::pair<uint32_t, TeamState*> c_item){
-         delete c_item.second;
-      });
-}
-
-/****************************************/
-/****************************************/
-
-//UNDERSTANDING: Adding states to an unordered map (map of states declared in the header).
-
-void TeamScheduler::addState(TeamState* pc_state) {
-   if(m_mapStates.find(pc_state->getId()) == m_mapStates.end()) {
-      m_mapStates[pc_state->getId()] = pc_state;
-      pc_state->setRobotScheduler(*this);
-   }
-   else {
-      throw StateMachineException(ToString("Duplicated state id ", pc_state->getId()));
+void TeamManager::initTeamArray(ros::NodeHandle nh)
+{
+   for(int i = 0; i < MAX_TEAMS; i++)
+   {
+      all_teams.at(i) = new Team(nh);
    }
 }
 
-/****************************************/
-/****************************************/
-
-TeamState& TeamScheduler::getState(uint32_t un_id) {
-   auto pcState = m_mapStates.find(un_id);
-   if(pcState != m_mapStates.end()) {
-      return *(pcState->second);
+void TeamManager::addRobots()
+{
+   for(int i = 0; i < MAX_SCOUTS; i++)
+   {
+      int robot_index = (int) SCOUT_1 + i;
+      ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
+      all_teams.at(i)->setScout(robot);
+      all_teams.at(i)->setTeamMacroState(IDLE);
    }
-   else {
-      throw StateMachineException(ToString("Can't get state id ", un_id));
+   
+   for(int i = 0; i < MAX_EXCAVATORS; i++)
+   {
+      int robot_index = (int) EXCAVATOR_1 + i;
+      ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
+      all_teams.at(i)->setExcavator(robot);
+      all_teams.at(i)->setTeamMacroState(IDLE);
+   }
+   
+   for(int i = 0; i < MAX_HAULERS; i++)
+   {
+      int robot_index = (int) HAULER_1 + i;
+      ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
+      all_teams.at(i)->setHauler(robot);
+      all_teams.at(i)->setTeamMacroState(IDLE);
+   }      
+}
+
+void TeamManager::setSearchStates()
+{
+   for(int i = 0; i < MAX_TEAMS; i++)
+   {
+      if(all_teams.at(i)->isScoutHired())
+         all_teams.at(i)->setTeamMacroState(SEARCH);
    }
 }
 
-/****************************************/
-/****************************************/
-
-//UNDERSTANDING: First finds the state in the map and then sets the entry point of the current state.
-
-void TeamScheduler::setInitialState(uint32_t un_state) {
-   auto pcState = m_mapStates.find(un_state);
-   // if state exists in map, then set it to the initial state of the scheduler
-   if(pcState != m_mapStates.end()) {
-      // acquire value of the state (every map has a key(first) and a value(second))
-      m_pcCurrent = pcState->second;
-      // completes entry point of the initial state
-      m_pcCurrent->entryPoint();
-   }
-   else {
-      throw StateMachineException(ToString("Can't set initial state to ", un_state));
-   }
-}
-
-/****************************************/
-/****************************************/
-
-void disbandingDoneTeam()
+void TeamManager::recruitment()
 {
-  std::vector<*ExcavationTeam>::iterator currTeam = activeTeams.begin();
-  while (currTeam != activeTeams.end())
-  {
-    if(currTeam->shouldTeamDisband())
-    { 
-      currTeam->disbandTeam();
-      activeTeams.erase(currTeam++);
-    }
-    if(shouldScoutDisband())
-    {
-      currTeam->disbandScout();
-    }
-  }
-}
-
-void checkForNewVolatile()
-{
-  for(int i = 0; i<scouts.size(); i++)
-  {
-    if(scouts.at(i)->getCurrentState() == SEARCH && scouts.at(i)->isDone())
-    {
-      scout_vecPair_volAvl_recruitedTeam.at(i).first = true;
-    }
-  }
-}
-
-void updateMacroState()
-{
-  // iterate over the active teams
-
-  // update the macro state for the current team
-
-  // check if the robots are in the states that they need to be. 
-  // If not, update the macro state
-
-  // Get the robot's states according to the macro state (redundant)
-
-}
-
-void executeTeamStates()
-{
-  // Execute the robot states
-
-}
-
-void recruitHauler(ExcavationTeam &team)
-{
-  for(int k = 0; k<haulers.size(); k++)
-  {
-    if(haulers.at(k)->getCurrentState == IDLE)
-    {
-      team->setHauler((EXCAVATOR_ENUM)k)
-      break;
-    }
-  }
-}
-
-void recruitTeams()
-{
-  // Check if that scout has been assigned a ticket
-  // *ticket: an excavator has been assigned for the volatile spot
-  // If not, 
-  for(int i = 0; i<scouts.size(); i++)
-  {
-  if(scout_vecPair_volAvl_recruitedTeam.at(i).first)
-  if(!scout_vecPair_volAvl_recruitedTeam.at(i).second)
-  {
-  // Recruit Excavator
-    // Check if excavator has been rectruited, assign a ticket to scout
-    for(int j = 0; j<excavators.size(); j++)
-    {
-      if(excavators.at(j)->getCurrentState == IDLE)
+   for(int i = 0; i < MAX_TEAMS; i++)
+   {
+      
+      switch (all_teams.at(i)->getTeamMacroState())
       {
-        // Add the new team to vector of active teams
-        activeTeams.push_back(new ExcavationTeam());
-        activeTeams.back.setExcavator((EXCAVATOR_ENUM)j)
-        activeTeams.back.setScout((SCOUT_ENUM)i)
-        // Check if hauler has been recruited, if not, recruit one
-        recruitHauler(activeTeams.back);
-
-        scout_vecPair_volAvl_recruitedTeam.at(i).second = true;
-        break;
+      case STANDBY:
+         checkAndRecruitForStandby(i);
+         break;
+      case IDLE:
+         checkAndRecruitForIdle(i);
+         break;
+      case SEARCH:
+         checkAndRecruitForSearch(i);
+         break;
+      case SCOUT_WAITING:
+         checkAndRecruitForScoutWaiting(i);
+         break;
+      case EXCAVATING:
+         checkAndRecruitForExcavating(i);
+         break;
+      case DUMPING:
+         checkAndRecruitForDumping(i);
+         break;
+      default:
+         break;
       }
-    }
-  }
-  }
+   }
 }
 
-void recruitHaulerIfNeeded()
+bool TeamManager::hasScout(int team_index)
 {
-  for (auto team : activeTeams)
-  {
-    if(!team->isHaulerRecruited())
-    {
-      recruitHauler(team);
-    }
-  }
+   if(all_teams.at(team_index)->isScoutHired())
+   {
+      teams_need_scout.at(team_index) = false;
+      return true;
+   }
+   else
+   {
+      ROS_INFO_THROTTLE(1, "Team %i needs Scout", team_index);
+      teams_need_scout.at(team_index) = true;
+      return false;
+   }
 }
 
-void TeamScheduler::step() {
-  // Check if can disband an active team
-  disbandingDoneTeam();
-
-  // Recruit missing hauler
-  recruitHaulerIfNeeded();
-
-  // Check if scout has found anything
-  checkForNewVolatile();
-
-  recruitTeams();
-
-  updateMacroState();
-  executeTeamStates();  
+bool TeamManager::hasExcavator(int team_index)
+{
+   if(all_teams.at(team_index)->isExcavatorHired())
+   {
+      teams_need_excavator.at(team_index) = false;
+      return true;
+   }
+   else
+   {
+      ROS_INFO_THROTTLE(1, "Team %i needs Excavator", team_index);
+      teams_need_excavator.at(team_index) = true;
+      return false;
+   }
 }
 
-/****************************************/
-/****************************************/
+bool TeamManager::hasHauler(int team_index)
+{
+   if(all_teams.at(team_index)->isHaulerHired())
+   {
+      teams_need_hauler.at(team_index) = false;
+      return true;
+   }
+   else
+   {
+      ROS_INFO_THROTTLE(1, "Team %i needs Hauler", team_index);
+      teams_need_hauler.at(team_index) = true;
+      return false;
+   }
+}
 
-//UNDERSTANDING: Each robot has its own done() and this is what is checked to perform step()
-void TeamScheduler::exec() {
-   while(!done() && ros::ok()) 
+void TeamManager::fireScout(int team_index)
+{
+   if(all_teams.at(team_index)->isScoutHired())
+   {
+      ROS_INFO_THROTTLE(1, "Scout for sale in team %i", team_index);
+      scout_for_sale.at(team_index) = true;
+   }
+   else
+   {
+      scout_for_sale.at(team_index) = false;
+   }
+}
+
+void TeamManager::fireExcavator(int team_index)
+{
+   if(all_teams.at(team_index)->isExcavatorHired())
+   {
+      ROS_INFO_THROTTLE(1, "Excavator for sale in team %i", team_index);
+      excavator_for_sale.at(team_index) = true;
+   }
+   else
+   {
+      excavator_for_sale.at(team_index) = false;
+   }
+}
+
+void TeamManager::fireHauler(int team_index)
+{
+   if(all_teams.at(team_index)->isHaulerHired())
+   {
+      ROS_INFO_THROTTLE(1, "Hauler for sale in team %i", team_index);
+      hauler_for_sale.at(team_index) = true;
+   }
+   else
+   {
+      hauler_for_sale.at(team_index) = true;
+   }
+}
+
+void TeamManager::recruitScout(int team_index)
+{
+   for (int i = 0; i < MAX_TEAMS; i++)
+   {
+      if(scout_for_sale.at(i))
+      {
+         ROBOTS_ENUM scout = all_teams.at(i)->getScout();
+         all_teams.at(team_index)->setScout(scout);
+
+         scout_for_sale.at(i) = false;
+         teams_need_scout.at(team_index) = false;
+      }
+   }
+}
+
+void TeamManager::recruitExcavator(int team_index)
+{
+   for (int i = 0; i < MAX_TEAMS; i++)
+   {
+      if(excavator_for_sale.at(i))
+      {
+         ROBOTS_ENUM excavator = all_teams.at(i)->getScout();
+         all_teams.at(team_index)->setExcavator(excavator);
+
+         excavator_for_sale.at(i) = false;
+         teams_need_excavator.at(team_index) = false;
+      }
+   }
+}
+
+void TeamManager::recruitHauler(int team_index)
+{
+   for (int i = 0; i < MAX_TEAMS; i++)
+   {
+      if(hauler_for_sale.at(i))
+      {
+         ROBOTS_ENUM hauler = all_teams.at(i)->getScout();
+         all_teams.at(team_index)->setHauler(hauler);
+
+         hauler_for_sale.at(i) = false;
+         teams_need_hauler.at(team_index) = false;
+      }
+   }
+}
+
+
+void TeamManager::checkAndRecruitForSearch(int team_index)
+{
+   if(!hasScout(team_index))
+      recruitScout(team_index);
+   
+   fireExcavator(team_index);
+   fireHauler(team_index);
+}
+
+void TeamManager::checkAndRecruitForScoutWaiting(int team_index)
+{
+   if(!hasScout(team_index))
+      recruitScout(team_index);
+   if(!hasExcavator(team_index))
+      recruitExcavator(team_index);
+   if(!hasHauler(team_index))
+      recruitHauler(team_index);
+}
+
+void TeamManager::checkAndRecruitForExcavating(int team_index)
+{
+   if(!hasExcavator(team_index))
+      recruitExcavator(team_index);
+   if(!hasHauler(team_index))
+      recruitHauler(team_index);
+
+   fireScout(team_index);
+   // Recruit from array as well
+}
+
+void TeamManager::checkAndRecruitForDumping(int team_index)
+{
+   if(!hasHauler(team_index))
+      recruitHauler(team_index);
+   
+   fireScout(team_index);
+   fireExcavator(team_index);
+   // Recruit from array as well
+}
+
+void TeamManager::checkAndRecruitForIdle(int team_index)
+{
+   fireScout(team_index);
+   fireExcavator(team_index);
+   fireHauler(team_index);
+}
+
+void TeamManager::checkAndRecruitForStandby(int team_index)
+{
+   fireScout(team_index);
+   fireExcavator(team_index);
+   fireHauler(team_index);
+}
+
+void TeamManager::step()
+{
+   for(int i = 0; i < MAX_TEAMS; i++)
+   {
+      all_teams.at(i)->step();
+   }
+}
+
+void TeamManager::exec()
+{
+   while(ros::ok())
    {
       step();
-      ros::spinOnce();
+      ros::Duration(0.5).sleep();
    }
 }
-
-/****************************************/
-/****************************************/
-
-// Might need to move the code to .h file
-// Should have the name to the robot numbers
