@@ -98,7 +98,10 @@ bool Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM ha
 
 bool Search::isDone()
 {
-   return robot_state_register->isDone(scout_in_team);
+   STATE_MACHINE_TASK scout_task = robot_state_register->currentState(scout_in_team);
+   bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team) && robot_state_register->hasSucceeded(scout_in_team);
+
+   return scout_task == SCOUT_SEARCH_VOLATILE && scout_done_and_succeeded;
 }
 
 TeamState& Search::transition()

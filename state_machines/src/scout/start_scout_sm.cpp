@@ -37,7 +37,8 @@ int main(int argc, char *argv[])
 		cSchd.addState(new Search(nh, SCOUT_1_NAME));
 		cSchd.addState(new Undock(nh, SCOUT_1_NAME));
 		cSchd.addState(new Locate(nh, SCOUT_1_NAME));
-		cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
+		cSchd.addState(new IdleState(nh, SCOUT_1_NAME));
+		cSchd.setInitialState(ROBOT_IDLE_STATE);
 		// cSchd.setInitialState(SCOUT_UNDOCK);
 		cSchd.exec();
 		return 0;

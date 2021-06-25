@@ -196,7 +196,7 @@ public:
 
    bool isDone() override{ return true; }
    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
-   bool hasSucceeded() override;
+   bool hasSucceeded() override{};
 
    void entryPoint() override{}
    void step() override{}
