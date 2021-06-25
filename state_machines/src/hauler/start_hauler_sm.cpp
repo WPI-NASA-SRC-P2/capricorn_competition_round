@@ -31,23 +31,25 @@ int main(int argc, char *argv[])
 	ros::init(argc, argv, g_robot_name + "_sm");
 	ros::NodeHandle nh;
 
-	ROS_INFO("Started Excavator State Machine Actionlib Server");
+	ROS_INFO("Started Hauler State Machine Actionlib Server");
 
 	try {
-		RobotScheduler cSchd(nh, EXCAVATOR_1_NAME);
+		RobotScheduler cSchd(nh, g_robot_name);
       
-      cSchd.addState(new GoToProcPlant(nh, HAULER_1_NAME));
-      cSchd.addState(new ParkAtHopper(nh, HAULER_1_NAME));
-      cSchd.addState(new ResetOdom(nh, HAULER_1_NAME));
-      cSchd.addState(new UndockHopper(nh, HAULER_1_NAME));
-      cSchd.addState(new ResetOdomMacro(nh, HAULER_1_NAME));
-      cSchd.addState(new GoToExcavator(nh, HAULER_1_NAME));
-      cSchd.addState(new ParkAtExcavator(nh, HAULER_1_NAME));
-      cSchd.addState(new UndockExcavator(nh, HAULER_1_NAME));
-      cSchd.addState(new DumpVolatile(nh, HAULER_1_NAME));
+      cSchd.addState(new GoToProcPlant(nh, g_robot_name));
+      cSchd.addState(new ParkAtHopper(nh, g_robot_name));
+      cSchd.addState(new ResetOdom(nh, g_robot_name));
+      cSchd.addState(new UndockHopper(nh, g_robot_name));
+      cSchd.addState(new ResetOdomMacro(nh, g_robot_name));
+      cSchd.addState(new GoToExcavator(nh, g_robot_name));
+      cSchd.addState(new ParkAtExcavator(nh, g_robot_name));
+      cSchd.addState(new UndockExcavator(nh, g_robot_name));
+      cSchd.addState(new DumpVolatile(nh, g_robot_name));
       cSchd.setInitialState(HAULER_PARK_AT_HOPPER);
       cSchd.exec();
       return 0;
+
+
 	}
 
 	catch(StateMachineException& ex) {

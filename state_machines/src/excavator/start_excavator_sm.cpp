@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 		cSchd.addState(new GoToScout(nh, EXCAVATOR_1_NAME));
 		cSchd.addState(new ParkAndPub(nh, EXCAVATOR_1_NAME));
 		cSchd.addState(new DigAndDump(nh, EXCAVATOR_1_NAME));
-		cSchd.setInitialState(EXCAVATOR_GO_TO_SCOUT);
+		cSchd.setInitialState(EXCAVATOR_DIG_AND_DUMP_VOLATILE);
 		cSchd.exec();
 		return 0;
 	}

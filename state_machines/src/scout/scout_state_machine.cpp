@@ -184,14 +184,15 @@ void Locate::entryPoint()
 bool Locate::isDone()
 {
    // switch states once completed with locating the volatile
-   current_state_done_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   current_state_done_ = (resource_localiser_client_->getState().isDone());
    return current_state_done_;
 }
 
 bool Locate::hasSucceeded()
 {
    // state succeeded once rover is parked on top of volatile
-   last_state_succeeded_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   // last_state_succeeded_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   last_state_succeeded_ = (resource_localiser_client_->getState().isDone());
    return last_state_succeeded_;
 }
 

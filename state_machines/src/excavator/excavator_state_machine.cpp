@@ -13,6 +13,7 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
 {
   /** @todo: FIX SO THAT CAN USE ANY EXCAVATOR NAME, SO NO NAMESPACE ISSUES */
   robot_name_ = robot_name;
+  robot_current_state_ = un_id;
   /** @todo: FIX NAVIGATIONVISIONCLIENT TO BE CORRECT TOPIC */
   navigation_vision_client_ = new NavigationVisionClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
   navigation_client_ = new NavigationClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
@@ -87,13 +88,13 @@ void GoToScout::step()
       //   ROS_WARN("Target Loc for GOTOSCOUT");
         target_loc_ = m_pcRobotScheduler->getDesiredPose();
       //   ROS_WARN_STREAM(target_loc_);
-      //   if(target_loc_.pose.position.x != 0.0)   /** TODO: should be handled in navigation stack */
-      //   {
+        if(target_loc_.pose.position.x != 0.0)   /** TODO: should be handled in navigation stack */
+        {
          navigation_vision_goal_.goal_loc = target_loc_;
          navigation_vision_client_->sendGoal(navigation_vision_goal_);
          ROS_INFO("Excavator State Machine: SUCCESSFUL POSE RECEIVED");
          first_ = false;
-      //   }
+        }
         
    }   
    // else
