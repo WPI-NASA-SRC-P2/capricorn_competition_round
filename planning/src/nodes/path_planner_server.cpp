@@ -21,8 +21,11 @@ bool map_received_ = false;
 
 bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
-  std::lock_guard<std::mutex> lock(oGrid_mutex_);
-  auto paddedGrid = CSpace::getCSpace(global_oGrid_, 50, 10);
+  std::unique_lock<std::mutex> locationLock(oGrid_mutex_);
+  auto global_oGrid_CPY = global_oGrid_;
+  locationLock.unlock();
+
+  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 4);
 
   #ifdef DEBUG_INSTRUMENTATION
   debug_oGridPublisher.publish(paddedGrid);
