@@ -223,5 +223,19 @@ private:
    int new_vol_loc_flag_;
    int digging_attempt_ = 0;
 };
+
+class IdleState : public ExcavatorState {
+public:   
+   IdleState(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(ROBOT_IDLE_STATE, nh, robot_name) {}
+
+   bool isDone() override{ return true; }
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override{return true;}
+
+   void entryPoint() override{}
+   void step() override{}
+   void exitPoint() override{}
+   State& transition() override{} 
+};
 // #endif
 

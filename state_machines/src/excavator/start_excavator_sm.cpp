@@ -34,13 +34,14 @@ int main(int argc, char *argv[])
 	ROS_INFO("Started Excavator State Machine Actionlib Server");
 
 	try {
-		RobotScheduler cSchd(nh, EXCAVATOR_1_NAME);
+		RobotScheduler cSchd(nh, g_robot_name);
 		// cSchd.initROS(nh, SCOUT_1_NAME);
-		cSchd.addState(new GoToDefaultArmPosition(nh, EXCAVATOR_1_NAME));
-		cSchd.addState(new GoToScout(nh, EXCAVATOR_1_NAME));
-		cSchd.addState(new ParkAndPub(nh, EXCAVATOR_1_NAME));
-		cSchd.addState(new DigAndDump(nh, EXCAVATOR_1_NAME));
-		cSchd.setInitialState(EXCAVATOR_DIG_AND_DUMP_VOLATILE);
+		cSchd.addState(new GoToDefaultArmPosition(nh, g_robot_name));
+		cSchd.addState(new GoToScout(nh, g_robot_name));
+		cSchd.addState(new ParkAndPub(nh, g_robot_name));
+		cSchd.addState(new DigAndDump(nh, g_robot_name));
+		cSchd.addState(new IdleState(nh, g_robot_name));
+		cSchd.setInitialState(ROBOT_IDLE_STATE);
 		cSchd.exec();
 		return 0;
 	}
