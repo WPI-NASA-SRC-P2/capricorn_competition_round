@@ -5,10 +5,10 @@
 #include <team_level/team_state.h>
 #include <unordered_map>
 
-class Team{
+class TeamScheduler{
 public:
-   Team(ros::NodeHandle &nh);
-   ~Team();
+   TeamScheduler(ros::NodeHandle &nh);
+   ~TeamScheduler();
 
    void setScout(ROBOTS_ENUM scout){ hired_scout = scout; }
    void setExcavator(ROBOTS_ENUM excavator){ hired_excavator = excavator; }

@@ -1,16 +1,16 @@
 #include <team_level/team_scheduler.h>
 
-Team::Team(ros::NodeHandle &nh)
+TeamScheduler::TeamScheduler(ros::NodeHandle &nh)
 {
     addStates(nh);
     setInitialState(STANDBY);
 }
 
-Team::~Team()
+TeamScheduler::~TeamScheduler()
 {
 }
 
-void Team::addStates(ros::NodeHandle &nh)
+void TeamScheduler::addStates(ros::NodeHandle &nh)
 {
     addState(new Search(nh));
     addState(new ScoutWaiting(nh));
@@ -18,7 +18,7 @@ void Team::addStates(ros::NodeHandle &nh)
     addState(new Idle(nh));
 }
 
-void Team::addState(TeamState* pc_state) {
+void TeamScheduler::addState(TeamState* pc_state) {
    if(MACRO_STATE_PTR_MAP.find(pc_state->getId()) == MACRO_STATE_PTR_MAP.end()) {
       MACRO_STATE_PTR_MAP[pc_state->getId()] = pc_state;
       pc_state->setTeam(*this);
@@ -32,7 +32,7 @@ TeamState& TeamState::getState(uint32_t un_state) {
    return m_pcTeam->getState(un_state);
 }
 
-TeamState& Team::getState(uint32_t un_id) 
+TeamState& TeamScheduler::getState(uint32_t un_id) 
 {
    auto pcState = MACRO_STATE_PTR_MAP.find(un_id);
    if(pcState != MACRO_STATE_PTR_MAP.end()) {
@@ -43,7 +43,7 @@ TeamState& Team::getState(uint32_t un_id)
    }
 }
 
-void Team::setInitialState(uint32_t un_state) {
+void TeamScheduler::setInitialState(uint32_t un_state) {
    auto pcState = MACRO_STATE_PTR_MAP.find(un_state);
    // if state exists in map, then set it to the initial state of the scheduler
    if(pcState != MACRO_STATE_PTR_MAP.end()) {
@@ -57,7 +57,7 @@ void Team::setInitialState(uint32_t un_state) {
    }
 }
 
-void Team::step() {
+void TeamScheduler::step() {
    /* Only execute if 'current' was initialized */
    if(current_state_ptr) {
       //  ROS_INFO_STREAM(hired_scout << "  " << hired_excavator << "  " << hired_hauler);
@@ -92,7 +92,7 @@ void Team::step() {
 /****************************************/
 
 //UNDERSTANDING: Each robot has its own done() and this is what is checked to perform step()
-void Team::exec() {
+void TeamScheduler::exec() {
    while(ros::ok())
    {
       step();
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
    ros::init(argc, argv, "scout_state_machine");
    ros::NodeHandle nh;
 
-   // Team team(nh, TEAM_MACRO_STATE::STANDBY, ROBOTS_ENUM::SCOUT_1, ROBOTS_ENUM::NONE, ROBOTS_ENUM::NONE);
+   // TeamScheduler team(nh, TEAM_MACRO_STATE::STANDBY, ROBOTS_ENUM::SCOUT_1, ROBOTS_ENUM::NONE, ROBOTS_ENUM::NONE);
    // team.exec();
 
     // ros::Duration(1).sleep();

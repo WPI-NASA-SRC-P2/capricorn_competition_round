@@ -28,7 +28,7 @@ public:
    void exec();
 
 private:
-   std::array<Team*, MAX_TEAMS> all_teams;
+   std::array<TeamScheduler*, MAX_TEAMS> all_teams;
 
    std::array<bool, MAX_TEAMS> teams_need_scout;
    std::array<bool, MAX_TEAMS> scout_for_sale;

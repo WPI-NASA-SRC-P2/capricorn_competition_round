@@ -8,7 +8,7 @@ TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandl
     robot_state_register = new RobotStateRegister(nh);
 }
 
-void TeamState::setTeam(Team& c_robot_scheduler) {
+void TeamState::setTeam(TeamScheduler& c_robot_scheduler) {
    m_pcTeam = &c_robot_scheduler;
 }
 

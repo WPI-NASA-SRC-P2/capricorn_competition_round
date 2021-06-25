@@ -16,7 +16,7 @@ void TeamManager::initTeamArray(ros::NodeHandle nh)
 {
    for(int i = 0; i < MAX_TEAMS; i++)
    {
-      all_teams.at(i) = new Team(nh);
+      all_teams.at(i) = new TeamScheduler(nh);
    }
 }
 

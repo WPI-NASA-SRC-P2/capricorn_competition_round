@@ -50,7 +50,7 @@ enum TEAM_MICRO_STATE{
 
 using namespace COMMON_NAMES;
 
-class Team;
+class TeamScheduler;
 
 class TeamState {
    
@@ -76,13 +76,13 @@ public:
 
    TeamState& getState(uint32_t un_state);
 
-   void setTeam(Team& c_robot_scheduler);
+   void setTeam(TeamScheduler& c_robot_scheduler);
    
    virtual TEAM_MICRO_STATE getMicroState() = 0;
 
 protected:
 
-   Team* m_pcTeam;
+   TeamScheduler* m_pcTeam;
    uint32_t m_unId;
    std::string m_strName;
    ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
