@@ -64,7 +64,7 @@ class ObjectPlotter:
         metadata = MapMetaData()
         # define dimensions of blank occupancy grid
         # resolution units are (m/pixel), value of 0.05 matches rtabmap resolution
-        metadata.resolution = 0.25
+        metadata.resolution = 0.25     
         # sets the map to be 20m x 20m regardless of resolution
         metadata.width = int(40 / metadata.resolution)  
         metadata.height = int(20 / metadata.resolution)
@@ -100,7 +100,7 @@ class ObjectPlotter:
         # initialize map data as all zeros
         UNOCCUPIED = 0
         self.occ_grid.data = ([UNOCCUPIED] * self.occ_grid.info.width * self.occ_grid.info.height)
-        self.occ_grid.header.frame_id = "map"
+        self.occ_grid.header.frame_id = self.robot_name + "_base_footprint"
         # self.occ_grid.header.frame_id = "map"
         # self.occ_grid.header.frame_id = self.robot_name + "_map_center"
 
