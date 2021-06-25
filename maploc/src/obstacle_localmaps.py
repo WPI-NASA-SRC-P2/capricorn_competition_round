@@ -100,7 +100,7 @@ class ObjectPlotter:
         # initialize map data as all zeros
         UNOCCUPIED = 0
         self.occ_grid.data = ([UNOCCUPIED] * self.occ_grid.info.width * self.occ_grid.info.height)
-        self.occ_grid.header.frame_id = self.robot_name + "_base_footprint"
+        self.occ_grid.header.frame_id = "map"
         # self.occ_grid.header.frame_id = "map"
         # self.occ_grid.header.frame_id = self.robot_name + "_map_center"
 
