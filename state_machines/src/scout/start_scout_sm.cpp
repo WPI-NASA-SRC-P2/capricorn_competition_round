@@ -32,12 +32,12 @@ int main(int argc, char *argv[])
 	ROS_INFO("Started Scout State Machine Actionlib Server");
 
 	try {
-		RobotScheduler cSchd(nh, SCOUT_1_NAME);
+		RobotScheduler cSchd(nh, g_robot_name);
 		// cSchd.initROS(nh, SCOUT_1_NAME);
-		cSchd.addState(new Search(nh, SCOUT_1_NAME));
-		cSchd.addState(new Undock(nh, SCOUT_1_NAME));
-		cSchd.addState(new Locate(nh, SCOUT_1_NAME));
-		cSchd.addState(new IdleState(nh, SCOUT_1_NAME));
+		cSchd.addState(new Search(nh, g_robot_name));
+		cSchd.addState(new Undock(nh, g_robot_name));
+		cSchd.addState(new Locate(nh, g_robot_name));
+		cSchd.addState(new IdleState(nh, g_robot_name));
 		cSchd.setInitialState(ROBOT_IDLE_STATE);
 		// cSchd.setInitialState(SCOUT_UNDOCK);
 		cSchd.exec();

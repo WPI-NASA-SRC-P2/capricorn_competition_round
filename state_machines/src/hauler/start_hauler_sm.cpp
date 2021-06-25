@@ -1,8 +1,8 @@
 /**
- * @file start_excavator_sm.cpp
+ * @file start_hauler_sm.cpp
  * @author team bebop (mmuqeetjibran.wpi.edu)
- * @brief This ros node creates a tester for the excavator, handles every task present in 
- * COMMON_NAMES::STATE_MACHINE_TASK for excavator
+ * @brief This ros node creates a tester for the hauler, handles every task present in 
+ * COMMON_NAMES::STATE_MACHINE_TASK for hauler
  * 
  * @version 0.1
  * @date 2021-06-25
@@ -45,7 +45,8 @@ int main(int argc, char *argv[])
       cSchd.addState(new ParkAtExcavator(nh, g_robot_name));
       cSchd.addState(new UndockExcavator(nh, g_robot_name));
       cSchd.addState(new DumpVolatile(nh, g_robot_name));
-      cSchd.setInitialState(HAULER_PARK_AT_HOPPER);
+	  cSchd.addState(new IdleState(nh, g_robot_name));
+      cSchd.setInitialState(ROBOT_IDLE_STATE);
       cSchd.exec();
       return 0;
 
@@ -57,7 +58,7 @@ int main(int argc, char *argv[])
 	}
 	// ros::spin();
 
-	ROS_WARN("Excavator state machine died!\n");
+	ROS_WARN("Hauler state machine died!\n");
 
 	return 0;
 }
