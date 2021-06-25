@@ -73,10 +73,15 @@ public:
    */
    void desiredStateCB(const state_machines::robot_desired_state::ConstPtr &msg);
 
+   geometry_msgs::PoseStamped getDesiredPose(){
+      ROS_INFO_STREAM(" state_machines | common_robot_state_machine.h | RobotScheduler | Pose Sent = " << goal_pose_);
+      return goal_pose_;}
+
 private:
    ros::NodeHandle nh_;
    State* m_pcCurrent;
    std::unordered_map<uint32_t, State*> m_mapStates;
+   geometry_msgs::PoseStamped goal_pose_;
 
 protected:
    bool new_state_request = false;
@@ -96,7 +101,12 @@ public:
          const std::string& str_name, ros::NodeHandle nh, std::string robot_name) :
       m_pcRobotScheduler(nullptr),
       m_unId(un_id),
-      m_strName(str_name), nh_(nh), robot_name_(robot_name) {}
+      m_strName(str_name), nh_(nh), robot_name_(robot_name) {
+
+      // publish the robot's status
+      status_pub_ = nh_.advertise<state_machines::robot_state_status>(CAPRICORN_TOPIC + ROBOTS_CURRENT_STATE_TOPIC, 10);
+     
+      }
 
    virtual ~State() {}
 
@@ -132,12 +142,14 @@ public:
    }
 
 private:
-   RobotScheduler* m_pcRobotScheduler;
+   
    uint32_t m_unId;
    std::string m_strName;
 
 protected:
-   ros::NodeHandle nh_;
+  RobotScheduler* m_pcRobotScheduler;
+
+  ros::NodeHandle nh_;
   std::string robot_name_;
   
   int robot_current_state_;

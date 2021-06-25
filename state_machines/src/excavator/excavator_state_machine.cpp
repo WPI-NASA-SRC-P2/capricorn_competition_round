@@ -8,12 +8,11 @@
 ///////////////////////////////////// E X C A V A T O R   B A S E   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ExcavatorState::ExcavatorState(uint32_t un_id, uint32_t un_max_count) :
-    State(un_id, ToString("mystate_", un_id)),
-    m_unMaxCount(un_max_count)
+ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string robot_name) :
+    State(un_id, ToString("mystate_", un_id), nh, robot_name)
 {
   /** @todo: FIX SO THAT CAN USE ANY EXCAVATOR NAME, SO NO NAMESPACE ISSUES */
-  robot_name_ = COMMON_NAMES::EXCAVATOR_1;
+  robot_name_ = robot_name;
   /** @todo: FIX NAVIGATIONVISIONCLIENT TO BE CORRECT TOPIC */
   navigation_vision_client_ = new NavigationVisionClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
   navigation_client_ = new NavigationClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
@@ -64,25 +63,18 @@ void GoToScout::entryPoint()
    //Set to true to avoid repeatedly giving the goal.
     first_ = true;
     // setting target_loc manually
-    target_loc_ = geometry_msgs::PoseStamped();
-    target_loc_.pose.position.x = 7.6;
-    target_loc_.pose.position.y = 20.0;
-    target_loc_.pose.position.z = 1.6;
-    target_loc_.header.frame_id = "map";
-    /** TODO: default arm position should be the state that is called before this state, etc */ 
-    // goToDefaultArmPosition();
+   //  target_loc_ = geometry_msgs::PoseStamped();
+   //  target_loc_.pose.position.x = 7.6;
+   //  target_loc_.pose.position.y = 20.0;
+   //  target_loc_.pose.position.z = 1.6;
+   //  target_loc_.header.frame_id = "map";
     ROS_INFO("entrypoint of go_to_scout");
-    /** TODO: check if target object exists in the nav server?*/
+    target_loc_ = m_pcRobotScheduler->getDesiredPose();
 }
 
 State& GoToScout::transition()
 {
-//    if(!(navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)) {
-//       ROS_INFO("remaining in undock");
-//       return *this;
-//    }
-//    ROS_INFO("transitioning out of undock");
-   return getState(EXCAVATOR_GO_TO_SCOUT); // should be SCOUT_SEARCH_VOLATILE
+   return getState(EXCAVATOR_GO_TO_SCOUT); 
 }
 
 void GoToScout::step()
@@ -92,12 +84,20 @@ void GoToScout::step()
         ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Going to scout");
         navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS;
         navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_NAV_AND_NAV_VISION;
-        navigation_vision_goal_.goal_loc = target_loc_;
-        navigation_vision_client_->sendGoal(navigation_vision_goal_);
-        first_ = false;
+      //   ROS_WARN("Target Loc for GOTOSCOUT");
+        target_loc_ = m_pcRobotScheduler->getDesiredPose();
+      //   ROS_WARN_STREAM(target_loc_);
+        if(target_loc_.pose.position.x != 0.0)   /** TODO: should be handled in navigation stack */
+        {
+         navigation_vision_goal_.goal_loc = target_loc_;
+         navigation_vision_client_->sendGoal(navigation_vision_goal_);
+         ROS_INFO("Excavator State Machine: SUCCESSFUL POSE RECEIVED");
+         first_ = false;
+        }
+        
    }   
-   else
-        ROS_INFO_STREAM("GoToScout stepping, first_ = false now");
+   // else
+      //   ROS_INFO_STREAM("GoToScout stepping, first_ = false now");
 }
 
 void GoToScout::exitPoint() 
@@ -106,6 +106,16 @@ void GoToScout::exitPoint()
    navigation_vision_client_->cancelGoal();
 }
 
+bool GoToScout::isDone() {
+   current_state_done_ = navigation_vision_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool GoToScout::hasSucceeded() {
+
+   last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// D E F A U L T _ A R M   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,20 +124,19 @@ void GoToDefaultArmPosition::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
     first_ = true;
-   //  counter_ = 0;
     ROS_INFO("entrypoint of goToDefaultArmPosition");
 }
 
 State& GoToDefaultArmPosition::transition()
 {
-   //  return getState(EXCAVATOR_GOTO_DEFAULT_ARM_POSE);
-   if(first_) {
-      ROS_INFO("remaining in default arm position state");
-      return *this;
-   }
-   ROS_INFO("transitioning out of default arm position state");
-   return getState(EXCAVATOR_GO_TO_SCOUT); // should be SCOUT_SEARCH_VOLATILE
-   // return *this;
+   // //  return getState(EXCAVATOR_GOTO_DEFAULT_ARM_POSE);
+   // if(first_) {
+   //    ROS_INFO("remaining in default arm position state");
+   //    return *this;
+   // }
+   // ROS_INFO("transitioning out of default arm position state");
+   // return getState(EXCAVATOR_GO_TO_SCOUT); // should be SCOUT_SEARCH_VOLATILE
+   // // return *this;
 }
 
 void GoToDefaultArmPosition::step()
@@ -148,7 +157,7 @@ void GoToDefaultArmPosition::step()
         ROS_WARN_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Going to Default Excavator Arm Position");
         excavator_arm_goal_.task = EXCAVATOR_ARM_TASK::GO_TO_DEFAULT;
         excavator_arm_client_->sendGoal(excavator_arm_goal_);
-        excavator_arm_client_->waitForResult();
+      //   excavator_arm_client_->waitForResult();
         first_ = false;
    }   
    else
@@ -160,6 +169,17 @@ void GoToDefaultArmPosition::exitPoint()
    ROS_WARN("exitpoint of GoToScout, cancelling GoToScout goal");
    /** TODO: check if it is actually possible to cancel excavator arm client goal*/
    // excavator_arm_client_->cancelGoal();
+}
+
+bool GoToDefaultArmPosition::isDone() {
+   current_state_done_ = excavator_arm_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool GoToDefaultArmPosition::hasSucceeded() {
+
+   last_state_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,6 +208,7 @@ State& ParkAndPub::transition()
    }   
 }
 
+/** TODO: Fix step() to actually park/pub, not just drive straight */ 
 void ParkAndPub::step()
 {
    /////////////////////////////////////////////
@@ -216,6 +237,17 @@ void ParkAndPub::exitPoint()
    // cleanup the state (cancel nav goal)
    ROS_INFO("Excavator Parking Completed");
    navigation_client_->cancelGoal();
+}
+
+bool ParkAndPub::isDone() {
+   current_state_done_ = navigation_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool ParkAndPub::hasSucceeded() {
+
+   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -297,6 +329,17 @@ void DigAndDump::exitPoint()
 {
    // cleanup (cancel goals)
    excavator_arm_client_->cancelGoal();
+}
+
+bool DigAndDump::isDone() {
+   current_state_done_ = excavator_arm_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool DigAndDump::hasSucceeded() {
+
+   last_state_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////

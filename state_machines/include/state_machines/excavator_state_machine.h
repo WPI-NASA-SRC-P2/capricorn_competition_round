@@ -35,35 +35,35 @@ using namespace COMMON_NAMES;
 /****************************************/
 /****************************************/
 
-class ExcavatorScheduler : public RobotScheduler {
-public:
-   ExcavatorScheduler(uint32_t un_max_t) :
-      m_unT(0),
-      m_unMaxT(un_max_t) {}
+// class ExcavatorScheduler : public RobotScheduler {
+// public:
+//    ExcavatorScheduler(uint32_t un_max_t) :
+//       m_unT(0),
+//       m_unMaxT(un_max_t) {}
 
-   void step() override {
-      /* Increase time counter */
-      ++m_unT;
-      //std::cout << "t = " << m_unT << std::endl;
-      /* Call parent class step */
-      RobotScheduler::step();
-   }
+//    void step() override {
+//       /* Increase time counter */
+//       ++m_unT;
+//       //std::cout << "t = " << m_unT << std::endl;
+//       /* Call parent class step */
+//       RobotScheduler::step();
+//    }
    
-   bool done() override {
-      // return m_unT >= m_unMaxT;
-      return false;
-   }
+//    bool done() override {
+//       // return m_unT >= m_unMaxT;
+//       return false;
+//    }
 
-   // void setInterrupt(STATE_MACHINE_TASK interrupt_state) override{  //Add only if its there in the base class. 
-   //    interrupt_state_ = interrupt_state;
-   //    m_bInterrupt = true;
-   // }
+//    // void setInterrupt(STATE_MACHINE_TASK interrupt_state) override{  //Add only if its there in the base class. 
+//    //    interrupt_state_ = interrupt_state;
+//    //    m_bInterrupt = true;
+//    // }
 
-private:
+// private:
 
-   uint32_t m_unT;
-   uint32_t m_unMaxT;
-};
+//    uint32_t m_unT;
+//    uint32_t m_unMaxT;
+// };
 
 
 const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
@@ -81,7 +81,6 @@ const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
 /****************************************/
 /****************************************/
 
-
 class ExcavatorState : public State {
    
 private:
@@ -92,8 +91,7 @@ private:
 
 public:
    
-   ExcavatorState(uint32_t un_id,
-           uint32_t un_max_count);
+   ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string robot_name);
    
    ~ExcavatorState();
 
@@ -141,11 +139,16 @@ protected:
 
 class GoToScout : public ExcavatorState {
 public:   
-   GoToScout() : ExcavatorState(EXCAVATOR_GO_TO_SCOUT, 10) {}
+   GoToScout(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_SCOUT, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
    
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
@@ -158,10 +161,15 @@ private:
 
 class GoToDefaultArmPosition : public ExcavatorState {
 public:   
-   GoToDefaultArmPosition() : ExcavatorState(EXCAVATOR_GOTO_DEFAULT_ARM_POSE, 10) {}
+   GoToDefaultArmPosition(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GOTO_DEFAULT_ARM_POSE, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
    
    void entryPoint() override;
    void step() override;
@@ -169,16 +177,20 @@ public:
 
 private: 
   bool first_;
-  int counter_;
 };
 
 class ParkAndPub : public ExcavatorState {
 public:
-   ParkAndPub() : ExcavatorState(EXCAVATOR_PARK_AND_PUB, 10) {}
+   ParkAndPub(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_PARK_AND_PUB, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
    
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
@@ -190,11 +202,16 @@ private:
 
 class DigAndDump : public ExcavatorState {
 public:
-   DigAndDump() : ExcavatorState(EXCAVATOR_DIG_AND_DUMP_VOLATILE, 10) {}
+   DigAndDump(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_DIG_AND_DUMP_VOLATILE, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
    
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    void entryPoint() override;
    void step() override;
    void exitPoint() override;

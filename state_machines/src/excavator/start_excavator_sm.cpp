@@ -1,11 +1,11 @@
 /**
- * @file start_scout_sm.cpp
- * @author Ashay Aswale (asaswale.wpi.edu)
- * @brief This ros node creates an action library for the scout, handles every task present in 
- * COMMON_NAMES::STATE_MACHINE_TASK for scout
+ * @file start_excavator_sm.cpp
+ * @author team bebop (mmuqeetjibran.wpi.edu)
+ * @brief This ros node creates a tester for the excavator, handles every task present in 
+ * COMMON_NAMES::STATE_MACHINE_TASK for excavator
  * 
  * @version 0.1
- * @date 2021-05-16
+ * @date 2021-06-25
  * 
  * @copyright Copyright (c) 2021
  * 
@@ -18,36 +18,6 @@
 
 std::string g_robot_name;
 
-typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
-
-ExcavatorScheduler cSchd(70);
-
-/**
- * @brief Function which gets executed when any goal is received to actionlib
- * 
- * @param goal for action lib
- * @param as variable to send feedback
- * @param sm ScoutStateMachine object
- */
-void exec(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as)
-{
-	ROS_INFO_STREAM("Received " << g_robot_name << "  State Machine Goal: " << goal->task);
-
-	state_machines::RobotStateMachineTaskResult result;
-	STATE_MACHINE_TASK robot_state = (STATE_MACHINE_TASK)goal->task;
-
-	bool output = false;
-
-	cSchd.setInterrupt(robot_state);
-
-	result.result = output ? COMMON_NAMES::COMMON_RESULT::SUCCESS : COMMON_NAMES::COMMON_RESULT::FAILED;
-	as->setSucceeded(result);
-
-	ROS_INFO_STREAM(g_robot_name << "Goal Finished "<< output);
-
-	return;
-}
-
 int main(int argc, char *argv[])
 {
 	if (argc != 2 && argc != 4)
@@ -57,16 +27,27 @@ int main(int argc, char *argv[])
 	}
 
 	g_robot_name = argv[1];
-
+	ROS_INFO_STREAM("Robot Name = " + g_robot_name);
 	ros::init(argc, argv, g_robot_name + "_sm");
 	ros::NodeHandle nh;
 
-
-	SM_SERVER server(nh, g_robot_name + COMMON_NAMES::STATE_MACHINE_ACTIONLIB, boost::bind(&execute, _1, &server), false);
-	// server.registerPreemptCallback(boost::bind(&cancelGoal, sm));
-	server.start();
-
 	ROS_INFO("Started Excavator State Machine Actionlib Server");
+
+	try {
+		RobotScheduler cSchd(nh, EXCAVATOR_1_NAME);
+		// cSchd.initROS(nh, SCOUT_1_NAME);
+		cSchd.addState(new GoToDefaultArmPosition(nh, EXCAVATOR_1_NAME));
+		cSchd.addState(new GoToScout(nh, EXCAVATOR_1_NAME));
+		cSchd.addState(new ParkAndPub(nh, EXCAVATOR_1_NAME));
+		cSchd.addState(new DigAndDump(nh, EXCAVATOR_1_NAME));
+		cSchd.setInitialState(EXCAVATOR_GO_TO_SCOUT);
+		cSchd.exec();
+		return 0;
+	}
+
+	catch(StateMachineException& ex) {
+		std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
+	}
 	// ros::spin();
 
 	ROS_WARN("Excavator state machine died!\n");

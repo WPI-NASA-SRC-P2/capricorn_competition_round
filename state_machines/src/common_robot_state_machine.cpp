@@ -61,7 +61,9 @@ void RobotScheduler::desiredStateCB(const state_machines::robot_desired_state::C
    if(msg->robot_name == robot_name_)
    {
       new_state_request = true;
-      new_state_ = static_cast<STATE_MACHINE_TASK> (msg->robot_desired_state);
+      new_state_ = (STATE_MACHINE_TASK) msg->robot_desired_state;
+      goal_pose_ = msg->goal_pose;
+      ROS_INFO_STREAM(" state_machines | common_robot_state_machine.h | RobotScheduler | Pose RECEIVED = " << goal_pose_);
       ROS_INFO_STREAM("New state received: " << new_state_);             //Checking if the casting isn't messed up. 
    }                
     
@@ -141,8 +143,9 @@ void RobotScheduler::step() {
          m_pcCurrent = cNewState;
       }
       /* Execute current state */
+      if(!m_pcCurrent->isDone())
+         m_pcCurrent->step();
       m_pcCurrent->updateStatus();
-      m_pcCurrent->step();
    }
    else {
       ROS_ERROR("The RobotScheduler has not been initialized, you must call SetInitialState()");
