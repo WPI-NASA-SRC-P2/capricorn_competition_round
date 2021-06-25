@@ -164,14 +164,14 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
 
    if (scout_task == SCOUT_SEARCH_VOLATILE)
       return ROBOTS_TO_GOAL;
-   if (excavator_task == EXCAVATOR_MACRO_GO_TO_SCOUT && excavator_done_and_succeeded)
+   if (excavator_task == EXCAVATOR_GO_TO_SCOUT && excavator_done_and_succeeded)
       if (scout_task == SCOUT_LOCATE_VOLATILE && scout_done_and_succeeded)
          return UNDOCK_SCOUT;
-   if (scout_task == SCOUT_MACRO_UNDOCK && scout_done_and_succeeded)
+   if (scout_task == SCOUT_UNDOCK && scout_done_and_succeeded)
       return PARK_EXCAVATOR_AT_SCOUT;
    if (scout_task == SCOUT_LOCATE_VOLATILE)
    {
-      bool excav_in_process = excavator_task == EXCAVATOR_MACRO_GO_TO_SCOUT;
+      bool excav_in_process = excavator_task == EXCAVATOR_GO_TO_SCOUT;
       bool excav_absent = excavator_task == ROBOT_IDLE_STATE;
 
       bool hauler_in_process = hauler_task == HAULER_GO_TO_LOC;
@@ -229,7 +229,7 @@ void ScoutWaiting::stepRobotsToGoal()
    robot_state_register->setRobotState(scout_in_team, SCOUT_LOCATE_VOLATILE);
 
    // Excavator Goal
-   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_MACRO_GO_TO_SCOUT, volatile_site_location);
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_GO_TO_SCOUT, volatile_site_location);
 
    // Hauler Goal
    robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOC, volatile_site_location);
@@ -237,7 +237,7 @@ void ScoutWaiting::stepRobotsToGoal()
 
 void ScoutWaiting::stepUndockScout()
 {
-   robot_state_register->setRobotState(scout_in_team, SCOUT_MACRO_UNDOCK);
+   robot_state_register->setRobotState(scout_in_team, SCOUT_UNDOCK);
 }
 
 void ScoutWaiting::stepParkExcavatorAtScout()
@@ -277,7 +277,7 @@ bool Excavating::isDone()
    STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
    bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
 
-   return excavator_task == EXCAVATOR_MACRO_DIG && excavator_done_and_succeeded;
+   return excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_succeeded;
 }
 
 TEAM_MICRO_STATE Excavating::getMicroState()
@@ -360,7 +360,7 @@ void Excavating::stepParkHauler()
 
 void Excavating::stepDigAndDump()
 {
-   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_MACRO_DIG);
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_DIG_AND_DUMP_VOLATILE);
 }
 
 void Excavating::exitPoint() 
@@ -393,7 +393,7 @@ bool Dumping::isDone()
    STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
    bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
 
-   return hauler_task == HAULER_MACRO_DUMP && hauler_done_and_succeeded;
+   return hauler_task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_done_and_succeeded;
 }
 
 TeamState& Dumping::transition()
@@ -411,7 +411,7 @@ TeamState& Dumping::transition()
    
 void Dumping::step()
 {
-   robot_state_register->setRobotState(hauler_in_team, HAULER_MACRO_DUMP);
+   robot_state_register->setRobotState(hauler_in_team, HAULER_DUMP_VOLATILE_TO_PROC_PLANT);
 }
 
 void Dumping::exitPoint() 

@@ -121,9 +121,16 @@ public:
    void setRobotScheduler(RobotScheduler& c_robot_scheduler);
 
    void setRobotName(const std::string &robot_name){ robot_name_ = robot_name; }
+
+   void updateStatus(){
+      isDone();
+      hasSucceeded();
+   }
    
-   void updateStatus() 
+   void publishStatus() 
    {
+      updateStatus();
+      
       status_.robot_name = robot_name_;
       status_.robot_current_state = robot_current_state_;
       status_.current_state_done = current_state_done_;

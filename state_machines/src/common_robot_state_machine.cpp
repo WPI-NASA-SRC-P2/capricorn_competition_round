@@ -141,7 +141,7 @@ void RobotScheduler::step() {
          m_pcCurrent = cNewState;
       }
       /* Execute current state */
-      m_pcCurrent->updateStatus();
+      m_pcCurrent->publishStatus();
       m_pcCurrent->step();
    }
    else {
@@ -157,6 +157,7 @@ void RobotScheduler::exec() {
    while(!done() && ros::ok()) 
    {
       step();
+      ros::Duration(0.5).sleep();
       ros::spinOnce();
    }
 }
