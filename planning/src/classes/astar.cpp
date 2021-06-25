@@ -130,7 +130,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
 
   if (oGrid.data.size() == 0)
   {
-    ROS_WARN("Occupancy Grid is Empty.");
+    ROS_WARN("[planning | astar | %s]: Occupancy Grid is Empty.", robot_name);
     return Path();
   }
   // A Star Implementation based off https://en.wikipedia.org/wiki/A*_search_algorithm
@@ -170,7 +170,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   // If it is, we need to find the closest point on the edge of the occupancy grid to the target.
   if ((int)target.x > (int)oGrid.info.width / 2 || (int)target.x < (int)-(oGrid.info.width / 2) || (int)target.y > (int)oGrid.info.height / 2 || (int)target.y < (int)-(oGrid.info.height / 2))
   {
-    ROS_WARN("Finding New index...");
+    ROS_WARN("[planning | astar | %s]: Finding New index...", robot_name);
     float minDist = INFINITY;
     int bestIndex = centerIndex;
     for (int i = 0; i < oGrid.info.width; ++i)
@@ -211,12 +211,12 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   {
     // If the target point was on the grid, just calculate the index of the point (with the center being 0,0)
     endIndex = (target.y + (oGrid.info.height / 2)) * oGrid.info.width + (target.x + (oGrid.info.width / 2));
-    ROS_WARN("Calculated Index: %d", endIndex);
+    ROS_WARN("[planning | astar | %s]: Calculated Index: %d", robot_name, endIndex);
   }
   // Check if the final destination is occupied.
   if (oGrid.data[endIndex] > threshold)
   {
-    ROS_WARN("TARGET IN OCCUPIED SPACE, UNREACHABLE");
+    ROS_WARN("[planning | astar | %s]: TARGET IN OCCUPIED SPACE, UNREACHABLE", robot_name);
     return Path();
   }
 
@@ -262,6 +262,6 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
     }
   }
 
-  ROS_WARN("[WARNING] Call to navigation failed to find valid path.\n");
+  ROS_WARN("[planning | astar | %s]: Call to navigation failed to find valid path.\n", robot_name);
   return Path();
 }
