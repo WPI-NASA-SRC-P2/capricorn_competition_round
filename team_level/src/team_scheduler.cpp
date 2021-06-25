@@ -78,9 +78,10 @@ void TeamScheduler::step() {
          /* Perform transition */
          current_state_ptr->exitPoint();
          bool entry = cNewState->entryPoint(hired_scout, hired_excavator, hired_hauler);
+         
+         setTeamMacroState((TEAM_MACRO_STATE) cNewState->getId());
          if(!entry)
             return;
-            
          current_state_ptr = cNewState;
       }
       /* Execute current state */

@@ -60,7 +60,7 @@ void TeamManager::recruitment()
 {
    for(int i = 0; i < MAX_TEAMS; i++)
    {
-      
+      ROS_INFO_STREAM(all_teams.at(i)->getScout()<<"  "<<all_teams.at(i)->getExcavator()<<"  "<<all_teams.at(i)->getHauler());
       switch (all_teams.at(i)->getTeamMacroState())
       {
       case STANDBY:
@@ -85,6 +85,7 @@ void TeamManager::recruitment()
          break;
       }
    }
+   ROS_INFO("");
 }
 
 bool TeamManager::hasScout(int team_index)
@@ -183,6 +184,7 @@ void TeamManager::recruitScout(int team_index)
 
          scout_for_sale.at(i) = false;
          teams_need_scout.at(team_index) = false;
+         break;
       }
    }
 }
@@ -193,12 +195,13 @@ void TeamManager::recruitExcavator(int team_index)
    {
       if(excavator_for_sale.at(i))
       {
-         ROBOTS_ENUM excavator = all_teams.at(i)->getScout();
+         ROBOTS_ENUM excavator = all_teams.at(i)->getExcavator();
          all_teams.at(team_index)->setExcavator(excavator);
          all_teams.at(i)->disbandExcavator();
 
          excavator_for_sale.at(i) = false;
          teams_need_excavator.at(team_index) = false;
+         break;
       }
    }
 }
@@ -209,12 +212,13 @@ void TeamManager::recruitHauler(int team_index)
    {
       if(hauler_for_sale.at(i))
       {
-         ROBOTS_ENUM hauler = all_teams.at(i)->getScout();
+         ROBOTS_ENUM hauler = all_teams.at(i)->getHauler();
          all_teams.at(team_index)->setHauler(hauler);
          all_teams.at(i)->disbandHauler();
 
          hauler_for_sale.at(i) = false;
          teams_need_hauler.at(team_index) = false;
+         break;
       }
    }
 }
@@ -286,6 +290,7 @@ void TeamManager::exec()
 {
    while(ros::ok())
    {
+      recruitment();
       step();
       ros::spinOnce();
       ros::Duration(0.5).sleep();
