@@ -92,6 +92,7 @@ void navigationCB(const geometry_msgs::Point::ConstPtr& goal_point)
     // goal.point.header.frame_id = robot_name + ROBOT_CHASSIS;
 
     goal.drive_mode = NAV_TYPE::GOAL_SMOOTH;
+    // goal.epsilon = 0.1;
 
     printf("Sending auto goal to actionlib server\n");
     client->sendGoal(goal);

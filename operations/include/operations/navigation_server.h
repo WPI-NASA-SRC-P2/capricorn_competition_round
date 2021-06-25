@@ -38,8 +38,9 @@ public:
 
 private:
     // Tolerances for linear and angular moves
-    const float DIST_EPSILON = 1.0;
+    const float DIST_EPSILON = 0.5;
     const float ANGLE_EPSILON = 0.1;
+    float c_dist_epsilon_ = DIST_EPSILON;
 
     // Delta heading limits for smooth drive
     const float MAX_TURNING_RAD = M_PI/2 - ANGLE_EPSILON;

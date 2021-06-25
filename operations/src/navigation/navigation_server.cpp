@@ -428,7 +428,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 	double distance_traveled = 0;
 
 	// While we have not traveled the desired distance, keep driving.
-	while (abs(distance_traveled - delta_distance) > DIST_EPSILON && ros::ok())
+	while (abs(distance_traveled - delta_distance) > c_dist_epsilon_ && ros::ok())
 	{
 		if(manual_driving_)
 		{
@@ -491,7 +491,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	double distance_traveled = 0;
 
 	// While we're not at the waypoint
-	while((distance_to_waypoint > DIST_EPSILON) && ros::ok())
+	while((distance_to_waypoint > c_dist_epsilon_) && ros::ok())
 	{
 		// If we are interrupted, stop.
 		if(manual_driving_)
@@ -529,7 +529,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		double delta_heading, center_radius;
 
 		// Start steering towards the next waypoint's heading when the robot is half its length away from it
-		// NOTE: Add DIST_EPSILON to calculation if we want to start turning torwards the next heading sooner
+		// NOTE: Add c_dist_epsilon_ to calculation if we want to start turning torwards the next heading sooner
 		if (current_distance_to_waypoint < (current_distance_to_waypoint - NavigationAlgo::wheel_sep_length_/2))
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), future_waypoint, robot_name_, buffer_);
 		else
@@ -959,7 +959,17 @@ void NavigationServer::followDriving(const operations::NavigationGoalConstPtr &g
 
 void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 {
-  ROS_INFO("[operations | nav_server | %s]: Received NavigationGoal, dispatching", robot_name_.c_str());
+  	ROS_INFO("[operations | nav_server | %s]: Received NavigationGoal, dispatching", robot_name_.c_str());
+	if(goal->epsilon == 0.0)
+	{
+		c_dist_epsilon_ = DIST_EPSILON;
+		ROS_INFO("[operations | nav_server | %s]: Default epsilon", robot_name_.c_str());
+	}
+	else
+	{
+		c_dist_epsilon_ = goal->epsilon;
+		ROS_INFO("[operations | nav_server | %s]: Got epsilon of %f", robot_name_.c_str(), c_dist_epsilon_);
+	}
 
 	// Zero out the total distance traveled when we receive a new goal
 	total_distance_traveled_ = 0;
