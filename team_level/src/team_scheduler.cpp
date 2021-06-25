@@ -14,6 +14,8 @@ void TeamScheduler::addStates(ros::NodeHandle &nh)
 {
     addState(new Search(nh));
     addState(new ScoutWaiting(nh));
+    addState(new Excavating(nh));
+    addState(new Dumping(nh));
     addState(new Standby(nh));
     addState(new Idle(nh));
 }
@@ -28,11 +30,11 @@ void TeamScheduler::addState(TeamState* pc_state) {
    }
 }
 
-TeamState& TeamState::getState(uint32_t un_state) {
+TeamState& TeamState::getState(uint64_t un_state) {
    return m_pcTeam->getState(un_state);
 }
 
-TeamState& TeamScheduler::getState(uint32_t un_id) 
+TeamState& TeamScheduler::getState(uint64_t un_id) 
 {
    auto pcState = MACRO_STATE_PTR_MAP.find(un_id);
    if(pcState != MACRO_STATE_PTR_MAP.end()) {
@@ -43,7 +45,7 @@ TeamState& TeamScheduler::getState(uint32_t un_id)
    }
 }
 
-void TeamScheduler::setInitialState(uint32_t un_state) {
+void TeamScheduler::setInitialState(uint64_t un_state) {
    auto pcState = MACRO_STATE_PTR_MAP.find(un_state);
    // if state exists in map, then set it to the initial state of the scheduler
    if(pcState != MACRO_STATE_PTR_MAP.end()) {
@@ -51,6 +53,7 @@ void TeamScheduler::setInitialState(uint32_t un_state) {
       current_state_ptr = pcState->second;
       // completes entry point of the initial state
       current_state_ptr->entryPoint(hired_scout, hired_excavator, hired_hauler);
+      setTeamMacroState((TEAM_MACRO_STATE) un_state);
    }
    else {
       ROS_ERROR_STREAM("Can't set initial state to " << un_state);

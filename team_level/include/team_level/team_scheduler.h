@@ -34,7 +34,7 @@ public:
    void exec();
    void step();
 
-   TeamState& getState(uint32_t un_id);
+   TeamState& getState(uint64_t un_id);
 
 private:
    void updateTeamMacroState();
@@ -42,12 +42,12 @@ private:
    TEAM_MACRO_STATE macro_state;
 
    void addStates(ros::NodeHandle &nh);
-   void addState(TeamState* macro_state);
+   void addState(TeamState* teamStatePtr);
 
-   void setInitialState(uint32_t un_state);
+   void setInitialState(uint64_t un_state);
 
    bool new_state_request;
 
    TeamState* current_state_ptr;
-   std::unordered_map<uint32_t, TeamState*> MACRO_STATE_PTR_MAP;
+   std::unordered_map<uint64_t, TeamState*> MACRO_STATE_PTR_MAP;
 };

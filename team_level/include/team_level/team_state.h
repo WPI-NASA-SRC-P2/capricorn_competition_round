@@ -38,7 +38,7 @@ enum TEAM_MICRO_STATE{
    // EXCAVATING
    WAIT_FOR_HAULER,
    PRE_PARK_MANEUVER_EXCAVATOR,
-   PARK_HAULER,
+   PARK_AT_EXCAVATOR_HAULER,
    DIG_AND_DUMP,
 
    // DUMPING
@@ -56,11 +56,11 @@ class TeamState {
    
 public:
 
-   TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle &nh);
+   TeamState(uint64_t un_id, const std::string& str_name, ros::NodeHandle &nh);
 
    virtual ~TeamState() {}
 
-   uint32_t getId() const { return m_unId; }
+   uint64_t getId() const { return m_unId; }
 
    const std::string& getName() const { return m_strName; }
    
@@ -74,7 +74,7 @@ public:
 
    virtual TeamState& transition() = 0;
 
-   TeamState& getState(uint32_t un_state);
+   TeamState& getState(uint64_t un_state);
 
    void setTeam(TeamScheduler& c_robot_scheduler);
    
@@ -83,7 +83,7 @@ public:
 protected:
 
    TeamScheduler* m_pcTeam;
-   uint32_t m_unId;
+   uint64_t m_unId;
    std::string m_strName;
    ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
    RobotStateRegister *robot_state_register;
@@ -154,11 +154,17 @@ public:
    bool isDone() override ;
    
    TeamState& transition() override;
-   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
+   TEAM_MICRO_STATE getMicroState();
    
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
+private:
+   TEAM_MICRO_STATE micro_state;
+   void stepWaitForHauler();
+   void stepPreParkManeuverExcavator();
+   void stepParkHauler();
+   void stepDigAndDump();
 };
 
 class Dumping: public TeamState{

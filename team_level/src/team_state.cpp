@@ -1,7 +1,7 @@
 #include <team_level/team_state.h>
 
 
-TeamState::TeamState(uint32_t un_id, const std::string& str_name, ros::NodeHandle &nh) :
+TeamState::TeamState(uint64_t un_id, const std::string& str_name, ros::NodeHandle &nh) :
       m_pcTeam(nullptr), 
       m_unId(un_id), m_strName(str_name) 
 {
@@ -146,7 +146,7 @@ bool ScoutWaiting::isDone()
    STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
    bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
 
-   return excavator_task == PARK_EXCAVATOR_AT_SCOUT && excavator_done_and_succeeded;
+   return excavator_task == EXCAVATOR_PARK_AND_PUB && excavator_done_and_succeeded;
 }
 
 TEAM_MICRO_STATE ScoutWaiting::getMicroState()
@@ -162,15 +162,10 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
    if (scout_task == SCOUT_SEARCH_VOLATILE)
       return ROBOTS_TO_GOAL;
    if (excavator_task == EXCAVATOR_MACRO_GO_TO_SCOUT && excavator_done_and_succeeded)
-   {
       if (scout_task == SCOUT_LOCATE_VOLATILE && scout_done_and_succeeded)
          return UNDOCK_SCOUT;
-   }
    if (scout_task == SCOUT_MACRO_UNDOCK && scout_done_and_succeeded)
-   {
       return PARK_EXCAVATOR_AT_SCOUT;
-   }
-   // Now for the current state
    if (scout_task == SCOUT_LOCATE_VOLATILE)
    {
       bool excav_in_process = excavator_task == EXCAVATOR_MACRO_GO_TO_SCOUT;
@@ -185,13 +180,11 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
          ROS_WARN_STREAM("Hauler state anomaly!"<<hauler_task);
       return ROBOTS_TO_GOAL;
    }
-   else
-   {
-      ROS_WARN("Unknown Combination of the robot states found!");
-      ROS_WARN_STREAM("Scout enum "<<scout_in_team<<" state:"<<scout_task);
-      ROS_WARN_STREAM("Excavator enum "<<excavator_in_team<<" state:"<<excavator_task);
-      ROS_WARN_STREAM("Hauler enum "<<hauler_in_team<<" state:"<<hauler_task);
-   }
+
+   ROS_WARN("Unknown Combination of the robot states found!");
+   ROS_WARN_STREAM("Scout enum "<<scout_in_team<<" state:"<<scout_task);
+   ROS_WARN_STREAM("Excavator enum "<<excavator_in_team<<" state:"<<excavator_task);
+   ROS_WARN_STREAM("Hauler enum "<<hauler_in_team<<" state:"<<hauler_task);
 }
 
 TeamState& ScoutWaiting::transition()
@@ -220,7 +213,9 @@ void ScoutWaiting::step()
       break;
    case PARK_EXCAVATOR_AT_SCOUT:
       stepParkExcavatorAtScout();
+      break;
    default:
+      ROS_WARN_STREAM("Incorrect micro state found:"<<micro_state);
       break;
    }
 }
@@ -250,6 +245,173 @@ void ScoutWaiting::stepParkExcavatorAtScout()
 void ScoutWaiting::exitPoint() 
 {
    ROS_INFO("exitpoint of SEARCH, cancelling SEARCH goal");
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// E X C A V A T I N G   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool Excavating::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+{
+   //Set to true to avoid repeatedly giving the goal.
+   ROS_INFO("entrypoint of Excavating");
+   scout_in_team = scout;
+   excavator_in_team = excavator;
+   hauler_in_team = hauler;
+
+   if(excavator_in_team == NONE || hauler_in_team == NONE )
+   {
+      ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR SCOUT WAITING!");
+      return false;
+   }
+   return true;
+}
+
+bool Excavating::isDone()
+{
+   STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
+   bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
+
+   return excavator_task == EXCAVATOR_MACRO_DIG && excavator_done_and_succeeded;
+}
+
+TEAM_MICRO_STATE Excavating::getMicroState()
+{
+   STATE_MACHINE_TASK scout_task = robot_state_register->currentState(scout_in_team);
+   STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
+   STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
+
+   bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team) && robot_state_register->hasSucceeded(scout_in_team);
+   bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
+   bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
+
+   if(hauler_in_team == NONE)
+      return WAIT_FOR_HAULER;
+   if(hauler_task == ROBOT_IDLE_STATE || hauler_task == HAULER_GO_TO_LOC)
+      if(!hauler_done_and_succeeded)
+         return WAIT_FOR_HAULER;
+   if(hauler_task == HAULER_PARK_AT_EXCAVATOR && hauler_done_and_succeeded)
+      return DIG_AND_DUMP;
+   if(excavator_task == EXCAVATOR_PRE_PARK_MANEUVER && excavator_done_and_succeeded)
+      return PARK_AT_EXCAVATOR_HAULER;
+   if(hauler_task == HAULER_GO_TO_LOC && hauler_done_and_succeeded)
+      return PRE_PARK_MANEUVER_EXCAVATOR;
+
+   ROS_WARN("Unknown Combination of the robot states found!");
+   ROS_WARN_STREAM("Scout enum "<<scout_in_team<<" state:"<<scout_task);
+   ROS_WARN_STREAM("Excavator enum "<<excavator_in_team<<" state:"<<excavator_task);
+   ROS_WARN_STREAM("Hauler enum "<<hauler_in_team<<" state:"<<hauler_task);
+}
+
+TeamState& Excavating::transition()
+{
+   if(isDone())
+   {
+      ROS_INFO("Excavator reached, Shifting to DUMPING");
+      return getState(DUMPING);
+   }
+   else
+   {
+      micro_state = getMicroState();
+      return *this;
+   }
+}
+   
+void Excavating::step()
+{
+   switch (micro_state)
+   {
+   case WAIT_FOR_HAULER:
+      stepWaitForHauler();
+      break;
+   case PRE_PARK_MANEUVER_EXCAVATOR:
+      stepPreParkManeuverExcavator();
+      break;
+   case PARK_AT_EXCAVATOR_HAULER:
+      stepParkHauler();
+      break;
+   case DIG_AND_DUMP:
+      stepDigAndDump();
+      break;
+   default:
+      break;
+   }
+}
+
+void Excavating::stepWaitForHauler()
+{
+   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOC);
+}
+
+void Excavating::stepPreParkManeuverExcavator()
+{
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_PRE_PARK_MANEUVER);
+}
+
+void Excavating::stepParkHauler()
+{
+   robot_state_register->setRobotState(hauler_in_team, HAULER_PARK_AT_EXCAVATOR);
+}
+
+void Excavating::stepDigAndDump()
+{
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_MACRO_DIG);
+}
+
+void Excavating::exitPoint() 
+{
+   ROS_INFO("exitpoint of SEARCH, cancelling SEARCH goal");
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// D U M P I N G   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool Dumping::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+{
+   //Set to true to avoid repeatedly giving the goal.
+   ROS_INFO("entrypoint of Dumping");
+   scout_in_team = scout;
+   excavator_in_team = excavator;
+   hauler_in_team = hauler;
+
+   if(excavator_in_team == NONE || hauler_in_team == NONE )
+   {
+      ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR SCOUT WAITING!");
+      return false;
+   }
+   return true;
+}
+
+bool Dumping::isDone()
+{
+   STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
+   bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
+
+   return hauler_task == HAULER_MACRO_DUMP && hauler_done_and_succeeded;
+}
+
+TeamState& Dumping::transition()
+{
+   if(isDone())
+   {
+      ROS_INFO("Excavator reached, Shifting to IDLE");
+      return getState(IDLE);
+   }
+   else
+   {
+      return *this;
+   }
+}
+   
+void Dumping::step()
+{
+   robot_state_register->setRobotState(hauler_in_team, HAULER_MACRO_DUMP);
+}
+
+void Dumping::exitPoint() 
+{
+   ROS_INFO("exitpoint of Dumping, cancelling Dumping goal");
 }
 
 // int main(int argc, char** argv)
