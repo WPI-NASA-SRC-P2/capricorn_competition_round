@@ -4,6 +4,7 @@
 #include "ros/ros.h"
 #include <state_machines/robot_state_status.h>
 #include <state_machines/robot_desired_state.h>
+#include <geometry_msgs/PoseStamped.h>
 
 using namespace COMMON_NAMES;
 
@@ -16,6 +17,7 @@ class RobotStateRegister
       STATE_MACHINE_TASK currentState(ROBOTS_ENUM robot);
 
       void setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_task);
+      void setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_task, geometry_msgs::PoseStamped target_pose);
       
    private:
       ros::Subscriber robot_state_subscriber;

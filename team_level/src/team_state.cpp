@@ -6,6 +6,7 @@ TeamState::TeamState(uint64_t un_id, const std::string& str_name, ros::NodeHandl
       m_unId(un_id), m_strName(str_name) 
 {
     robot_state_register = new RobotStateRegister(nh);
+    robot_pose_register = new RobotPoseRegister(nh);
 }
 
 void TeamState::setTeam(TeamScheduler& c_robot_scheduler) {
@@ -138,6 +139,8 @@ bool ScoutWaiting::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_E
       ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR SCOUT WAITING!");
       return false;
    }
+
+   volatile_site_location = robot_pose_register->getRobotPose(scout_in_team);
    return true;
 }
 
@@ -226,10 +229,10 @@ void ScoutWaiting::stepRobotsToGoal()
    robot_state_register->setRobotState(scout_in_team, SCOUT_LOCATE_VOLATILE);
 
    // Excavator Goal
-   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_MACRO_GO_TO_SCOUT);
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_MACRO_GO_TO_SCOUT, volatile_site_location);
 
    // Hauler Goal
-   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOC);
+   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOC, volatile_site_location);
 }
 
 void ScoutWaiting::stepUndockScout()
@@ -264,6 +267,8 @@ bool Excavating::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENU
       ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR SCOUT WAITING!");
       return false;
    }
+
+   volatile_site_location = robot_pose_register->getRobotPose(excavator_in_team);
    return true;
 }
 
@@ -340,7 +345,7 @@ void Excavating::step()
 
 void Excavating::stepWaitForHauler()
 {
-   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOC);
+   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOC, volatile_site_location);
 }
 
 void Excavating::stepPreParkManeuverExcavator()
