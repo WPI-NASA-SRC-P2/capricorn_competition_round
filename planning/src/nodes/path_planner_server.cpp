@@ -5,6 +5,7 @@
 #include "planning/TrajectoryWithVelocities.h"
 #include <geometry_msgs/Point.h>
 
+
 //Setting the node's update rate
 #define UPDATE_HZ 10
 
@@ -14,6 +15,9 @@
 ros::Publisher debug_oGridPublisher;
 ros::Publisher debug_pathPublisher;
 #endif
+
+std::string robot_name_ = "";
+bool map_received_ = false;
 
 bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
@@ -27,7 +31,7 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   debug_oGridPublisher.publish(paddedGrid);
   #endif
 
-  auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position);
+  auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, 50, robot_name_);
 
   #ifdef DEBUG_INSTRUMENTATION
   debug_pathPublisher.publish(path);
@@ -39,17 +43,19 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
     trajectory.waypoints = path.poses;
 
     res.trajectory = trajectory;
-  } else {
-    ROS_WARN("No Poses Set.");
-  }
 
-  return true;
+    return true;
+  } else {
+    ROS_WARN("[planning | path_planner_server | %s]: No Poses Set.", robot_name_);
+  }
+  return false;
 }
 
-void PathServer::oGridCallback(nav_msgs::OccupancyGrid oGrid)
+void PathServer::oGridCallback(nav_msgs::OccupancyGrid::ConstPtr oGrid)
 {
   std::lock_guard<std::mutex> lock(oGrid_mutex_);
-  global_oGrid_ = oGrid;
+  global_oGrid_ = *oGrid;
+  map_received_ = true;
 }
 
 int main(int argc, char *argv[])
@@ -59,8 +65,10 @@ int main(int argc, char *argv[])
 
   std::string robot_name(argv[1]);
 
+  robot_name_ = robot_name;
+
   //ROS Topic names
-  std::string oGrid_topic_ = "/capricorn/small_scout_1/object_detection_map";
+  std::string oGrid_topic_ = "/capricorn/"+ robot_name_ +"/object_detection_map";
 
   //create a nodehandle
   ros::NodeHandle nh;
@@ -73,6 +81,12 @@ int main(int argc, char *argv[])
   debug_oGridPublisher = nh.advertise<nav_msgs::OccupancyGrid>("/galaga/debug_oGrid", 1000);
   debug_pathPublisher = nh.advertise<nav_msgs::Path>("/galaga/debug_path", 1000);
   #endif
+
+  while(!map_received_ && ros::ok())
+  {
+    ros::Duration(0.1).sleep();
+    ros::spinOnce();
+  }
 
   //Instantiating ROS server for generating trajectory
   ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &PathServer::trajectoryGeneration, &server);

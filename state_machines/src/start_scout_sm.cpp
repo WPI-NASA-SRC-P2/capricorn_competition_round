@@ -12,6 +12,7 @@
  */
 
 #include <ros/ros.h>
+#include <geometry_msgs/Pose.h>
 #include <state_machines/scout_state_machine.h>
 
 std::string g_robot_name;
@@ -39,26 +40,22 @@ bool checkTask(STATE_MACHINE_TASK task)
  */
 void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ScoutStateMachine *sm)
 {
-	ROS_INFO_STREAM("Received " << g_robot_name << "  State Machine Goal: " << goal->task);
+	ROS_INFO_STREAM("[STATE_MACHINES | start_scout_sm.cpp ]: Received " << g_robot_name << "  State Machine Goal: " << goal->task);
 
 	state_machines::RobotStateMachineTaskResult result;
-  state_machines::RobotStateMachineTaskFeedback feedback;
-  feedback.volatile_found = false;
-  as->publishFeedback(feedback);
-
-	// Waiting for the servers to start
-  sm->resource_localiser_client_->waitForServer(); 
-  
-	ROS_INFO_STREAM(g_robot_name << ": Servers Connected, Executing Goal");
+	state_machines::RobotStateMachineTaskFeedback feedback;
+	feedback.volatile_found = false;
+	as->publishFeedback(feedback);
 
 	STATE_MACHINE_TASK robot_state = (STATE_MACHINE_TASK)goal->task;
+	geometry_msgs::PoseStamped resetPose = goal->goal_loc; //Doubtful
 
 	if (!checkTask(robot_state))
 	{
 		// the class is not valid, send the appropriate result
 		result.result = COMMON_NAMES::COMMON_RESULT::INVALID_GOAL;
 		as->setAborted(result, "Invalid Task");
-		ROS_ERROR_STREAM("Invalid Task - " << g_robot_name << " State Machine");
+		ROS_ERROR_STREAM("[STATE_MACHINES | start_scout_sm.cpp ]: Invalid Task - " << g_robot_name << " State Machine");
 		return;
 	}
 
@@ -72,11 +69,11 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 		// if volatile found, then announce that it found vol
 		// And start finding volatile on its own without supervisor
 		// telling what to do (cause its obvious)
-		if(output)
+		if (output)
 		{
-		feedback.volatile_found = true;
-		as->publishFeedback(feedback);
-		output = sm->locateVolatile();
+			feedback.volatile_found = true;
+			as->publishFeedback(feedback);
+			output = sm->locateVolatile();
 		}
 		break;
 	case STATE_MACHINE_TASK::SCOUT_STOP_SEARCH:
@@ -88,14 +85,26 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
 	case STATE_MACHINE_TASK::SCOUT_UNDOCK:
 		output = sm->undockRobot();
 		break;
+	case STATE_MACHINE_TASK::SCOUT_RESET_ODOM_GROUND_TRUTH:
+		output = sm->resetOdometry();
+		break;
+	case STATE_MACHINE_TASK::SCOUT_RESET_ODOM:
+		output = sm->resetOdometry(resetPose);
+		break;
+	case STATE_MACHINE_TASK::SCOUT_FACE_PROCESSING_PLANT:
+		output = sm->faceProcessingPlant();
+		break;
+	case STATE_MACHINE_TASK::SCOUT_SYNC_ODOM:
+		output = sm->syncOdometry(resetPose);
+		break;
 	default:
-		ROS_ERROR_STREAM(sm->robot_name_ + " state machine encountered unhandled state!");
+		ROS_ERROR_STREAM("[STATE_MACHINES | start_scout_sm.cpp | " << sm->robot_name_ + "]: state machine encountered unhandled state!");
 		break;
 	}
 	result.result = output ? COMMON_NAMES::COMMON_RESULT::SUCCESS : COMMON_NAMES::COMMON_RESULT::FAILED;
 	as->setSucceeded(result);
 
-	ROS_INFO_STREAM(g_robot_name << "Goal Finished "<< output);
+	ROS_INFO_STREAM("[STATE_MACHINES | start_scout_sm.cpp | " << g_robot_name << "]: Goal Finished " << output);
 
 	return;
 }
@@ -106,15 +115,15 @@ void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_S
  */
 void cancelGoal(ScoutStateMachine *sm)
 {
-	ROS_INFO_STREAM("Cancelling " << g_robot_name << "  State Machine Goal");
-  sm->stopSearchingVolatile();
+	ROS_INFO_STREAM("[STATE_MACHINES | start_scout_sm.cpp]: Cancelling " << g_robot_name << "  State Machine Goal");
+	sm->stopSearchingVolatile();
 }
 
 int main(int argc, char *argv[])
 {
 	if (argc != 2 && argc != 4)
 	{
-		ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
+		ROS_ERROR_STREAM("[STATE_MACHINES | start_scout_sm.cpp | " << g_robot_name << "]: This node must be launched with the robotname passed as a command line argument!");
 		return -1;
 	}
 
@@ -124,15 +133,17 @@ int main(int argc, char *argv[])
 	ros::NodeHandle nh;
 
 	ScoutStateMachine *sm = new ScoutStateMachine(nh, g_robot_name);
-
+	
 	SM_SERVER server(nh, g_robot_name + COMMON_NAMES::STATE_MACHINE_ACTIONLIB, boost::bind(&execute, _1, &server, sm), false);
 	server.registerPreemptCallback(boost::bind(&cancelGoal, sm));
 	server.start();
 
-	ROS_INFO("Started Scout State Machine Actionlib Server");
+	ROS_INFO_STREAM("[STATE_MACHINES | start_scout_sm.cpp | " << g_robot_name << "]: State Machine Server started");
+
+	ROS_INFO_STREAM("[STATE_MACHINES | start_scout_sm.cpp | " << g_robot_name << "]: Started Scout State Machine Actionlib Server");
 	ros::spin();
 
-	ROS_WARN("Scout state machine died!\n");
+	ROS_WARN_STREAM("[STATE_MACHINES | start_scout_sm.cpp | " << g_robot_name << "]: Scout state machine died!\n");
 
 	return 0;
 }

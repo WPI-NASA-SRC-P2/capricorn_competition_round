@@ -40,7 +40,9 @@ const std::set<STATE_MACHINE_TASK> HAULER_TASKS = {
     STATE_MACHINE_TASK::HAULER_UNDOCK_HOPPER,
     STATE_MACHINE_TASK::HAULER_DUMP_VOLATILE_TO_PROC_PLANT,
     STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR,
-    STATE_MACHINE_TASK::HAULER_RESET_ODOM};
+    STATE_MACHINE_TASK::HAULER_RESET_ODOM,
+    STATE_MACHINE_TASK::HAULER_RESET_ODOM_AT_HOPPER,
+    STATE_MACHINE_TASK::HAULER_FACE_PROCESSING_PLANT};
 
 class HaulerStateMachine
 {
@@ -158,7 +160,6 @@ private:
    */
   bool goBackToExcavator(const geometry_msgs::PoseStamped &loc);
 
-
   /**
    * @brief resets odometry, used after parking is done for hauler. 
    * 
@@ -166,6 +167,24 @@ private:
    * @return false : if task is failed or aborted or interrupted, or if the service is called for a second time in one simulation session. 
    */
   bool resetOdometry();
+
+  /**
+   * @brief Conducts a series of states, go to proc plant, park at hopper, reset odom and Undock
+   * 
+   * @return true 
+   * @return false 
+   */
+  bool resetOdometryAtHopper();
+
+  bool faceProcessingPlant();
+
+  bool goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object);
+  /**
+   * @brief Goes to location with a combination of navigation and navigation vision 
+   * 
+   * @return true 
+   * @return false 
+   */
 
 public:
   HaulerStateMachine(ros::NodeHandle nh, const std::string &robot_name);

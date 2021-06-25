@@ -16,7 +16,7 @@
     <node if="$(arg launch_stereo_proc)" pkg="stereo_image_proc" ns="/small_excavator_$(arg team_number)/camera" output="log" type="stereo_image_proc" name="small_excavator_$(arg team_number)_stereo_image_proc" />	
     <node if="$(arg launch_stereo_proc)" pkg="stereo_image_proc" ns="/small_hauler_$(arg team_number)/camera" output="log" type="stereo_image_proc" name="small_hauler_$(arg team_number)_stereo_image_proc" />	
 
-    <node name="three_object_detection_team_$(arg team_number)" pkg="perception" type="three_object_detection.py" output="log" args="$(arg path_to_model) $(arg path_to_labelmap) $(arg team_number)" />
+    <node name="three_object_detection_team_$(arg team_number)" pkg="perception" type="three_object_detection.py" output="screen" args="$(arg path_to_model) $(arg path_to_labelmap) $(arg team_number)" />
 
     <node if="$(arg rviz)" pkg="rviz" type="rviz" name="object_detection_rviz_team_$(arg team_number)" args="-d $(find utils)/rviz/object_detection.rviz"/>
 </launch>

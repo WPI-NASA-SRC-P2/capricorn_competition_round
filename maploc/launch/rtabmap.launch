@@ -10,10 +10,10 @@
     <arg name="use_rtabmap" default="false" />
     <arg name="rtabmapviz" default="false" />    
     <arg name="rviz" default="false" />
+    <arg name="use_robot_localization" default="false"/>
     <param name="use_sim_time" type="bool" value="true"/>
 
-    <!-- changing namespace to have /capricorn/rover_name/camera since we produce all of these messages-->
-    <!--<arg name="namespace" value="/capricorn/$(arg robot_name)/camera" />-->
+    <!-- RTABMAP NOW OUTPUTS TO /capricorn/robotname/camera/odom -->
     <arg name="namespace" value="/$(arg robot_name)/camera" />
     <arg name="launch_stereo_proc" default="false" />
     <arg name="output" default="screen" />
@@ -29,7 +29,7 @@
             <param name="approx_sync" type="bool" value="true"/>
             <param name="queue_size" type="int" value="5"/>
 	    	<param name="odom_frame_id" type="string" value="odom"/>
-            <param name="publish_tf"  type="bool"   value="true"/>
+            <param name="publish_tf"  type="bool"   value="$(eval not arg('use_robot_localization'))"/>
         
             <param name="Vis/MinInliers" value="12"/>
             <param name="Vis/RoiRatios"  value="0.03 0.03 0.04 0.04"/> 
@@ -38,11 +38,12 @@
 			<param name="Odom/ResetCountdown" value="1"/>
 	
 			<!-- <remap from="/odom" to="capricorn/$(arg robot_name)/odom/stereo_odom"/> -->
-   	<!--    <remap from="odom" to="/$(arg robot_name)/stereo_odom" /> -->
+   	        <!--    <remap from="odom" to="/$(arg robot_name)/stereo_odom" /> -->
+            <remap from="odom" to="/$(arg robot_name)/camera/odom/localization" if="$(arg use_robot_localization)"/>
         </node>     
 
         <!-- Visual SLAM: args: "delete_db_on_start" and "udebug" -->
-        <node if="$(arg use_rtabmap)" name="rtabmap" pkg="rtabmap_ros" type="rtabmap" output="screen" args="--delete_db_on_start">
+        <node if="$(arg use_rtabmap)" name="rtabmap" pkg="rtabmap_ros" type="rtabmap" output="log" args="--delete_db_on_start">
             <param name="frame_id" type="string" value="$(arg robot_name)_base_footprint"/>
             <param name="subscribe_stereo" type="bool" value="true"/>
             <param name="subscribe_depth" type="bool" value="false"/>
@@ -66,7 +67,7 @@
         </node>
         
         <!-- Visualisation RTAB-Map -->
-        <node if="$(arg rtabmapviz)" pkg="rtabmap_ros" type="rtabmapviz" name="rtabmapviz" args="-d $(find rtabmap_ros)/launch/config/rgbd_gui.ini" output="screen">
+        <node if="$(arg rtabmapviz)" pkg="rtabmap_ros" type="rtabmapviz" name="rtabmapviz" args="-d $(find rtabmap_ros)/launch/config/rgbd_gui.ini" output="log">
             <param name="subscribe_stereo" type="bool" value="true"/>
             <param name="subscribe_odom_info" type="bool" value="true"/>
             <param name="queue_size" type="int" value="10"/>

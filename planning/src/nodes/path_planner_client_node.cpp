@@ -25,14 +25,15 @@ int main(int argc, char **argv)
 
   //probably needs to not use argument
   geometry_msgs::PoseStamped pose;
-  pose.pose.position.x = 1.2;
-  pose.pose.position.y = 0;
+  ROS_WARN("New Changes");
+  pose.header.frame_id = robot_name + "_small_chassis";
+  pose.pose.position.x = std::stof(argv[2]);
+  pose.pose.position.y = std::stof(argv[3]);
   pose.pose.position.z = 0;
   pose.pose.orientation.x = 0;
   pose.pose.orientation.y = 0;
   pose.pose.orientation.z = 0;
-  pose.pose.orientation.w = 0;
-
+  pose.pose.orientation.w = 1;
   srv.request.targetPose = pose;
 
   //printf(client.isValid());

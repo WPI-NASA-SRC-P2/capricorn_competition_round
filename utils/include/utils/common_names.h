@@ -65,6 +65,7 @@ namespace COMMON_NAMES
   const std::string TRUE_POSE_SRV = "/get_true_pose";
   const std::string RESET_ODOMETRY = "reset_rover_odom_srv";
   const std::string RTAB_ODOM_TOPIC = "/camera/odom";
+  // const std::string RTAB_ODOM_TOPIC = "/camera/odom/localization";
 
   /****** ROS NODE NAMES ******/
   const std::string NAVIGATION_VISION_SERVER_NODE_NAME = "_navigation_vision_server";
@@ -100,6 +101,7 @@ namespace COMMON_NAMES
   const std::string LOOKOUT_LOCATION_TOPIC = "/lookout_location";
   const std::string PARK_HAULER = "/park_hauler";
   const std::string HAULER_PARKED_TOPIC = "/hauler_parked";
+  const std::string NAV_TYPE_TOPIC = "/nav_type_topic";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
@@ -115,6 +117,7 @@ namespace COMMON_NAMES
   const std::string SET_SENSOR_YAW_TOPIC = "/sensor/yaw/command/position";
   const std::string OBJECT_DETECTION_OBJECTS_TOPIC = "/object_detection/objects";
   const std::string VOLATILE_SENSOR_TOPIC = "/volatile_sensor";
+  const std::string SCOUT_LOC_TOPIC = "/scout_loc";
 
   // Used to communicate between excavators and scouts when the excavator is ready to move in to pick up a volatile
   // TODO: Choose a real message type for this topic, instead of std_msgs::Empty
@@ -142,6 +145,7 @@ namespace COMMON_NAMES
     V_CENTER = 2,        // Centers the robot to a given class
     V_UNDOCK = 3,        // Undocks from given class
     V_OBS_GOTO_GOAL = 4, // Uses go to goal with obstacle avoidance
+    V_NAV_AND_NAV_VISION = 5, // Navigation which switches to vision based navigation when robot can see target and target location is near the robot
   };
 
   /****** NAVIGATION ENUMS ******/
@@ -167,20 +171,29 @@ namespace COMMON_NAMES
   enum STATE_MACHINE_TASK
   {
     /**************SCOUT STATES**************/
-    SCOUT_SEARCH_VOLATILE = 0, // Execute spiral motion to search for the volatiles.
-    SCOUT_STOP_SEARCH = 1,     // Stop executing the search algorithm.
-    SCOUT_LOCATE_VOLATILE = 2, // Pinpoint the location of the volatile
-    SCOUT_UNDOCK = 3,          // Move the Scout away from the Excavator
+    SCOUT_SEARCH_VOLATILE = 42,         // Execute spiral motion to search for the volatiles.
+    SCOUT_STOP_SEARCH = 1,              // Stop executing the search algorithm.
+    SCOUT_LOCATE_VOLATILE = 2,          // Pinpoint the location of the volatile
+    SCOUT_UNDOCK = 3,                   // Move the Scout away from the Excavator
+    SCOUT_RESET_ODOM_GROUND_TRUTH = 20, // Reset scout odometry with ground truth
+    SCOUT_RESET_ODOM = 21,              // Reset scout odometry without ground truth
+    SCOUT_SYNC_ODOM = 24,               //Centers wrt processing plant and resets odometry
+    SCOUT_FACE_PROCESSING_PLANT = 26,   //Centers wrt processing plant
 
     /**************EXCAVATOR STATES**************/
-    EXCAVATOR_GO_TO_LOC = 4,             // Takes Excavator to a location from which it will
-                                         // be quicker to get to the digging location
-    EXCAVATOR_GO_TO_SCOUT = 5,           // Get close to the volatile when it is detected
-    EXCAVATOR_PARK_AND_PUB = 6,          // Publish a message that excavator has reached,
-                                         // And park where the scout was located.
-    EXCAVATOR_DIG_AND_DUMP_VOLATILE = 7, // Takes care of digging, and dumping
-                                         // the volatile in hauler if volatile is found
-    EXCAVATOR_GOTO_DEFAULT_ARM_POSE = 8, // Moves excavator's arm to a default position used for object detection
+    EXCAVATOR_GO_TO_LOC = 4,                // Takes Excavator to a location from which it will
+                                            // be quicker to get to the digging location
+    EXCAVATOR_GO_TO_SCOUT = 5,              // Get close to the volatile when it is detected
+    EXCAVATOR_PARK_AND_PUB = 6,             // Publish a message that excavator has reached,
+                                            // And park where the scout was located.
+    EXCAVATOR_DIG_AND_DUMP_VOLATILE = 7,    // Takes care of digging, and dumping
+                                            // the volatile in hauler if volatile is found
+    EXCAVATOR_GOTO_DEFAULT_ARM_POSE = 8,    // Moves excavator's arm to a default position used for object detection
+    EXCAVATOR_RESET_ODOM_GROUND_TRUTH = 22, // Reset excavator odometry
+    EXCAVATOR_RESET_ODOM = 23,              // Reset excavator odometry
+    EXCAVATOR_SYNC_ODOM = 25,               //Centers wrt processing plant and resets odometry
+    EXCAVATOR_FACE_PROCESSING_PLANT = 27,   //Centers wrt processing plant
+    EXCAVATOR_GO_TO_REPAIR = 29,            // sends excavator to repair station using visual navigation
 
     /**************HAULER STATES**************/
     HAULER_GO_TO_LOC = 9,                    // Takes Hauler to a location
@@ -190,14 +203,16 @@ namespace COMMON_NAMES
     HAULER_GO_BACK_TO_EXCAVATOR = 11,        // Takes hauler from any location to excavator and parks
     HAULER_PARK_AT_EXCAVATOR = 12,           // Hauler parks at excavator
     HAULER_FOLLOW_EXCAVATOR = 13,            // Hauler follows excavator
-    HAULER_RESET_ODOM = 14,
+    HAULER_RESET_ODOM = 14,                  // Reset Odom 
+    HAULER_RESET_ODOM_AT_HOPPER = 30,        // Whole sequence of parking and resetting odom
 
     // redundant modes for hauler (everything is taken care by above modes)
-    HAULER_GO_TO_PROC_PLANT = 15, // Hauler goes to processing plant
-    HAULER_PARK_AT_HOPPER = 16,   // Parks hauler wrt hopper
-    HAULER_DUMP_VOLATILE = 17,    // Empty hauler's bin
-    HAULER_UNDOCK_EXCAVATOR = 18, // undock from excavator (basically backward motion from excavator)
-    HAULER_UNDOCK_HOPPER = 19    // undock from hopper (backward motion from hopper)
+    HAULER_GO_TO_PROC_PLANT = 15,     // Hauler goes to processing plant
+    HAULER_PARK_AT_HOPPER = 16,       // Parks hauler wrt hopper
+    HAULER_DUMP_VOLATILE = 17,        // Empty hauler's bin
+    HAULER_UNDOCK_EXCAVATOR = 18,     // undock from excavator (basically backward motion from excavator)
+    HAULER_UNDOCK_HOPPER = 19,        // undock from hopper (backward motion from hopper)
+    HAULER_FACE_PROCESSING_PLANT = 28 //Hauler rotates until it sees processing plant
   };
 
 } // namespace CAPRICORN_COMMON_NAMES

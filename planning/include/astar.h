@@ -59,8 +59,10 @@ private:
    * @param oGrid The occupancy grid that the point lies in
    * @return A 2d point conversion of the given index
    */
-  static geometry_msgs::PoseStamped poseStampedFromIndex(int ind, nav_msgs::OccupancyGrid const &oGrid);
+  static geometry_msgs::PoseStamped poseStampedFromIndex(int ind, nav_msgs::OccupancyGrid const &oGrid, std::string & robot_name);
 
+
+  
   /**
    * @brief Reconstructs the path from map of least costly nodes
    * @param current The node to start the reverse list of
@@ -69,7 +71,7 @@ private:
    * @param oGrid The occupancy grid (only for header and other metadata)
    * @return A Path message of the shortest path, including the current robot location and the target location.
    */
-  static nav_msgs::Path reconstructPath(int current, int last, std::unordered_map<int, int> &reverse_list, const nav_msgs::OccupancyGrid &oGrid);
+  static nav_msgs::Path reconstructPath(int current, int last, std::unordered_map<int, int> &reverse_list, const nav_msgs::OccupancyGrid &oGrid, std::string & robot_name);
 
   /**
    * @brief Gets distance between an index and a point
@@ -93,5 +95,5 @@ public:
      * @return A ROS Path message containing the points in the shortest path, including the robot's current location.
     **/
 
-  static nav_msgs::Path findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, geometry_msgs::Point target, int threshold = 50);
+  static nav_msgs::Path findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, geometry_msgs::Point target, int threshold, std::string & robot_name);
 };

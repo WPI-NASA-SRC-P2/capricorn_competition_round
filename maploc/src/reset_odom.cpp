@@ -59,10 +59,10 @@ geometry_msgs::PoseStamped getTruePose(std::string robot_name){
     // obtain the true pose of the rover using the service if possible
     if(get_true_pose_client.call(loc_pose)){
         pose_wrt_heightmap = loc_pose.response.pose;
-        ROS_INFO("True Pose Obtained");
+        ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + robot_name + "]: " + "True Pose Obtained");
     }
     else {
-        ROS_ERROR("True Pose Not Obtained, we'll get em next time");
+        ROS_ERROR_STREAM("[MAPLOC | reset_odom.cpp | " + robot_name + "]: " + "True Pose Not Obtained, we'll get em next time");
         // return an empty pose (TODO: proper exception thrown)
     }        
 
@@ -99,11 +99,11 @@ bool resetOdomPose(std::string robot_name, geometry_msgs::PoseStamped stamped_po
     pose.request.yaw = y;
 
     // ensure that the rtabmap odom client is ready for reset
-    ROS_INFO("Waiting for rtabmap client");
+    ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + robot_name + "]: " + "Waiting for rtabmap client");
     
     rtabmap_client.waitForExistence();
 
-    ROS_INFO("Rtabmap client loaded");
+    ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + robot_name + "]: " + "Rtabmap client loaded");
 
     // debugging info to double check if the pose is properly being converted
     // ROS_INFO("POSE = ");
@@ -111,11 +111,11 @@ bool resetOdomPose(std::string robot_name, geometry_msgs::PoseStamped stamped_po
 
     // reset the odometry w.r.t. the input pose
     if(rtabmap_client.call(pose)){
-        ROS_INFO("Pose initialized for rtabmap");
+        ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + robot_name + "]: " + "Pose initialized for rtabmap");
         return true;
     }
     else{
-        ROS_ERROR("RTabMap initialize pose failed.");
+        ROS_ERROR_STREAM("[MAPLOC | reset_odom.cpp | " + robot_name + "]: " + "RTabMap initialize pose failed.");
         return false;
     }
     
@@ -137,7 +137,7 @@ bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res
     // if the robot called does not exist, throw an exception
     // TODO: make sure this throws an exception 
     if (it == robot_first.end()) {
-        ROS_ERROR("No robot was found with input target robot name!");
+        ROS_ERROR_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: " + "No robot was found with input target robot name!");
         // response for service returns false
         res.success = false;
         return false;
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
     ros::ServiceServer service = nh.advertiseService(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY, resetOdom);
 
     // indicate that reset is complete
-    ROS_INFO("reset rover odometry service, online");
+    ROS_INFO("[MAPLOC | reset_odom.cpp | SERVICE]: reset rover odometry service, online");
 
     ros::spin();
     return 0;

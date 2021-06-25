@@ -185,6 +185,12 @@ target_link_libraries(odom_error
   ${catkin_LIBRARIES}
 )
 
+add_executable(localization_odom_encoders src/localization_odom_encoders.cpp)
+add_dependencies(localization_odom_encoders ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(localization_odom_encoders
+  ${catkin_LIBRARIES}
+)
+
 add_executable(ground_truth_pr src/ground_truth_pr.cpp)
 add_dependencies(ground_truth_pr ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(ground_truth_pr
