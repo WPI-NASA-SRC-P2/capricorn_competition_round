@@ -686,7 +686,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 					ROS_INFO("[operations | nav_server | %s]: Sharp turn detected, using small reset distance", robot_name_.c_str());
 				}
 
-				if (delta_heading > MAX_TURNING_RAD || delta_heading < MIN_TURNING_RAD)
+				if (delta_heading >= MAX_TURNING_RAD || delta_heading <= MIN_TURNING_RAD)
 				{
 					bool turned_successfully;
 
