@@ -8,12 +8,11 @@
 ///////////////////////////////////// H A U L E R   B A S E   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HaulerState::HaulerState(uint32_t un_id, uint32_t un_max_count) :
-    State(un_id, ToString("mystate_", un_id)),
-    m_unMaxCount(un_max_count)
+HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_name) :
+    State(un_id, ToString("mystate_", un_id), nh, robot_name)
 {
   /** @todo: FIX SO THAT CAN USE ANY EXCAVATOR NAME, SO NO NAMESPACE ISSUES */
-  robot_name_ = COMMON_NAMES::HAULER_1;
+  robot_name_ = robot_name;
   navigation_vision_client_ = new NavigationVisionClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
   navigation_client_ = new NavigationClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
   hauler_client_ = new HaulerClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::HAULER_ACTIONLIB, true);
@@ -71,10 +70,7 @@ void GoToProcPlant::entryPoint()
     first_ = true;
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Going to Processing Plant");
    
-    target_loc_.pose.position.x = -6.0;
-    target_loc_.pose.position.y = 7.0;
-    target_loc_.pose.position.z = 1.6;
-    target_loc_.header.frame_id = "map";
+    target_loc_ = m_pcRobotScheduler->getDesiredPose();
 }
 
 State& GoToProcPlant::transition()
@@ -103,6 +99,17 @@ void GoToProcPlant::step()
     }
     else
         ROS_INFO("going to processing plant");
+}
+
+bool GoToProcPlant::isDone() {
+   current_state_done_ = navigation_vision_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool GoToProcPlant::hasSucceeded() {
+
+   last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
 }
 
 void GoToProcPlant::exitPoint()
@@ -147,6 +154,17 @@ void ParkAtHopper::step()
         ROS_INFO("Parking at hopper");
 }
 
+bool ParkAtHopper::isDone() {
+   current_state_done_ = park_robot_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool ParkAtHopper::hasSucceeded() {
+
+   last_state_succeeded_ = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
+}
+
 void ParkAtHopper::exitPoint()
 {
     // cleanup (cancel goal)
@@ -183,6 +201,18 @@ void ResetOdom::step()
         resetHaulerOdometryClient_.call(reset_srv_);
         first_ = false;
     }
+}
+
+// isDone uses first_ to determine completion as there's no feedback provided by a client
+bool ResetOdom::isDone() {
+   current_state_done_ = !first_;
+   return current_state_done_;
+} 
+
+// hasSucceeded uses first_ to determine success as there's no feedback provided by a client
+bool ResetOdom::hasSucceeded() {
+   last_state_succeeded_ = !first_;
+   return last_state_succeeded_;
 }
 
 void ResetOdom::exitPoint()
@@ -234,6 +264,18 @@ void UndockHopper::step()
     
 }
 
+bool UndockHopper::isDone() {
+   current_state_done_ = navigation_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool UndockHopper::hasSucceeded() {
+
+   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
+}
+
+
 void UndockHopper::exitPoint()
 {
     // cleanup (cancel goal)
@@ -263,6 +305,13 @@ void ResetOdomMacro::step()
     ROS_INFO("MACROSTEPPING");
 }
 
+bool ResetOdomMacro::isDone() {
+   return true;
+} 
+
+bool ResetOdomMacro::hasSucceeded() {
+   return true;
+}
 
 void ResetOdomMacro::exitPoint()
 {
@@ -278,10 +327,7 @@ void GoToExcavator::entryPoint()
     // declare entrypoint variables
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Going Back to Excavator (High Level Goal)");
     // pose of the excavator, supposed to be provided by scheduler
-    target_loc_.pose.position.x = 10.0;
-    target_loc_.pose.position.y = 25.0;
-    target_loc_.pose.position.z = 1.6;
-    target_loc_.header.frame_id = "map";
+    target_loc_ = m_pcRobotScheduler->getDesiredPose();
     
     first_ = true;
 }
@@ -310,6 +356,17 @@ void GoToExcavator::step()
     }
     else   
         ROS_INFO("Moving towards excavator");
+}
+
+bool GoToExcavator::isDone() {
+   current_state_done_ = navigation_vision_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool GoToExcavator::hasSucceeded() {
+
+   last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
 }
 
 void GoToExcavator::exitPoint()
@@ -352,6 +409,17 @@ void ParkAtExcavator::step()
     }
     else
         ROS_INFO("Parking at excavator");
+}
+
+bool ParkAtExcavator::isDone() {
+   current_state_done_ = park_robot_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool ParkAtExcavator::hasSucceeded() {
+
+   last_state_succeeded_ = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
 }
 
 void ParkAtExcavator::exitPoint()
@@ -407,6 +475,17 @@ void UndockExcavator::step()
     ROS_INFO("Undocking from excavator");
 }
 
+bool UndockExcavator::isDone() {
+   current_state_done_ = navigation_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool UndockExcavator::hasSucceeded() {
+
+   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
+}
+
 void UndockExcavator::exitPoint()
 {
     // cleanup (cancel goal)
@@ -448,13 +527,50 @@ void DumpVolatile::step()
         ROS_INFO("Dumping volatile");
 }
 
+bool DumpVolatile::isDone() {
+   current_state_done_ = hauler_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool DumpVolatile::hasSucceeded() {
+
+   last_state_succeeded_ = (hauler_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
+}
+
 void DumpVolatile::exitPoint()
 {
     // cleanup (cancel goal)
-    park_robot_client_->cancelGoal();
+    hauler_client_->cancelGoal();
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Finished dumping volatile");
 }
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// H A U L E R _ I D L E   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// void HaulerIdle::entryPoint()
+// {
+//     // declare entrypoint variables
+// }
+
+// State& HaulerIdle::transition()
+// {
+//     // transition to next state
+// }
+
+// void HaulerIdle::step()
+// {
+//     // do the thing
+// }
+
+// void HaulerIdle::exitPoint()
+// {
+//     // clean up 
+// }
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// F O L L O W _ E X C A V A T O R   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -477,59 +593,4 @@ void DumpVolatile::exitPoint()
 // void FollowExcavator::exitPoint()
 // {
 //     // clean up 
-// }
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////// F O L L O W _ E X C A V A T O R   S T A T E   C L A S S ////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// void FollowExcavator::entryPoint()
-// {
-//     // declare entrypoint variables
-// }
-
-// State& FollowExcavator::transition()
-// {
-//     // transition to next state
-// }
-
-// void FollowExcavator::step()
-// {
-//     // do the thing
-// }
-
-// void FollowExcavator::exitPoint()
-// {
-//     // clean up 
-// }
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////// M A I N ////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-// int main(int argc, char** argv)
-// {
-//    ros::init(argc, argv, "hauler_state_machine");
-//    ros::NodeHandle nh;
-
-//    try {
-//       HaulerScheduler cSchd(700);
-      
-//       cSchd.addState(new GoToProcPlant());
-//       cSchd.addState(new ParkAtHopper());
-//       cSchd.addState(new ResetOdom());
-//       cSchd.addState(new UndockHopper());
-//       cSchd.addState(new ResetOdomMacro());
-//       cSchd.addState(new GoToExcavator());
-//       cSchd.addState(new ParkAtExcavator());
-//       cSchd.addState(new UndockExcavator());
-//       cSchd.addState(new DumpVolatile());
-//       cSchd.setInitialState(HAULER_PARK_AT_HOPPER);
-//       cSchd.exec();
-//       return 0;
-//    }
-//    catch(StateMachineException& ex) {
-//       std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
-//    }
 // }

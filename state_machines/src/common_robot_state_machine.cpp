@@ -143,9 +143,8 @@ void RobotScheduler::step() {
          m_pcCurrent = cNewState;
       }
       /* Execute current state */
-      if(!m_pcCurrent->isDone())
          m_pcCurrent->step();
-      m_pcCurrent->updateStatus();
+         m_pcCurrent->updateStatus();
    }
    else {
       ROS_ERROR("The RobotScheduler has not been initialized, you must call SetInitialState()");

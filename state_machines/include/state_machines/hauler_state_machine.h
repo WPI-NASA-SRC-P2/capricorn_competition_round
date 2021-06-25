@@ -33,35 +33,35 @@ using namespace COMMON_NAMES;
 
 typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
 
-class HaulerScheduler : public RobotScheduler {
-public:
-   HaulerScheduler(uint32_t un_max_t) :
-      m_unT(0),
-      m_unMaxT(un_max_t) {}
+// class HaulerScheduler : public RobotScheduler {
+// public:
+//    HaulerScheduler(uint32_t un_max_t) :
+//       m_unT(0),
+//       m_unMaxT(un_max_t) {}
 
-   void step() override {
-      /* Increase time counter */
-      ++m_unT;
-      //std::cout << "t = " << m_unT << std::endl;
-      /* Call parent class step */
-      RobotScheduler::step();
-   }
+//    void step() override {
+//       /* Increase time counter */
+//       ++m_unT;
+//       //std::cout << "t = " << m_unT << std::endl;
+//       /* Call parent class step */
+//       RobotScheduler::step();
+//    }
    
-   bool done() override {
-      // return m_unT >= m_unMaxT;
-      return false;
-   }
+//    bool done() override {
+//       // return m_unT >= m_unMaxT;
+//       return false;
+//    }
 
-   // void setInterrupt(STATE_MACHINE_TASK interrupt_state) override{
-   //    interrupt_state_ = interrupt_state;
-   //    m_bInterrupt = true;
-   // }
+//    // void setInterrupt(STATE_MACHINE_TASK interrupt_state) override{
+//    //    interrupt_state_ = interrupt_state;
+//    //    m_bInterrupt = true;
+//    // }
 
-private:
+// private:
 
-   uint32_t m_unT;
-   uint32_t m_unMaxT;
-};
+//    uint32_t m_unT;
+//    uint32_t m_unMaxT;
+// };
 
 const std::set<STATE_MACHINE_TASK> HAULER_TASKS = {
     STATE_MACHINE_TASK::HAULER_GO_TO_LOC,         
@@ -76,7 +76,8 @@ const std::set<STATE_MACHINE_TASK> HAULER_TASKS = {
     STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR,
     STATE_MACHINE_TASK::HAULER_RESET_ODOM,
     STATE_MACHINE_TASK::HAULER_RESET_ODOM_AT_HOPPER,         // -> 1
-    STATE_MACHINE_TASK::HAULER_FACE_PROCESSING_PLANT};
+    STATE_MACHINE_TASK::HAULER_FACE_PROCESSING_PLANT,
+    STATE_MACHINE_TASK::ROBOT_IDLE_STATE}; 
 
 class HaulerState : public State {
    
@@ -88,8 +89,7 @@ private:
 
 public:
    
-   HaulerState(uint32_t un_id,
-           uint32_t un_max_count);
+   HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_name);
    
    ~HaulerState();
 
@@ -144,11 +144,16 @@ protected:
 
 class GoToProcPlant : public HaulerState {
 public:   
-   GoToProcPlant() : HaulerState(HAULER_GO_TO_PROC_PLANT, 10) {}
+   GoToProcPlant(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_TO_PROC_PLANT, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
    
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
@@ -161,11 +166,16 @@ private:
 
 class ParkAtHopper : public HaulerState {
 public:   
-   ParkAtHopper() : HaulerState(HAULER_PARK_AT_HOPPER, 10) {}
+   ParkAtHopper(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_PARK_AT_HOPPER, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
    
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
@@ -177,11 +187,16 @@ private:
 
 class ResetOdom : public HaulerState {
 public:   
-   ResetOdom() : HaulerState(HAULER_RESET_ODOM, 10) {}
+   ResetOdom(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_RESET_ODOM, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
-   
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
@@ -194,11 +209,16 @@ private:
 
 class UndockHopper : public HaulerState {
 public:   
-   UndockHopper() : HaulerState(HAULER_UNDOCK_HOPPER, 10) {}
+   UndockHopper(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_UNDOCK_HOPPER, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
-   
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
@@ -230,11 +250,16 @@ private:
 
 class GoToExcavator : public HaulerState {
 public:   
-   GoToExcavator() : HaulerState(HAULER_GO_BACK_TO_EXCAVATOR, 10) {}
+   GoToExcavator(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_BACK_TO_EXCAVATOR, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
-   
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
@@ -247,11 +272,16 @@ private:
 
 class ParkAtExcavator : public HaulerState {
 public:   
-   ParkAtExcavator() : HaulerState(HAULER_PARK_AT_EXCAVATOR, 10) {}
+   ParkAtExcavator(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_PARK_AT_EXCAVATOR, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
    
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
@@ -264,11 +294,16 @@ private:
 
 class UndockExcavator : public HaulerState {
 public:   
-   UndockExcavator() : HaulerState(HAULER_UNDOCK_EXCAVATOR, 10) {}
+   UndockExcavator(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_UNDOCK_EXCAVATOR, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
-   
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
@@ -283,11 +318,16 @@ private:
 
 class DumpVolatile : public HaulerState {
 public:   
-   DumpVolatile() : HaulerState(HAULER_DUMP_VOLATILE, 10) {}
+   DumpVolatile(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_DUMP_VOLATILE, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
-   
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
@@ -300,11 +340,16 @@ private:
 
 class ResetOdomMacro : public HaulerState {
 public:   
-   ResetOdomMacro() : HaulerState(HAULER_RESET_ODOM_AT_HOPPER, 10) {}
+   ResetOdomMacro(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_RESET_ODOM_AT_HOPPER, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
-   
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
@@ -313,5 +358,26 @@ public:
 private: 
    bool first_;
 };
+
+// class HaulerIdle : public HaulerState {
+// public:   
+//    HaulerIdle(ros::NodeHandle nh, std::string robot_name) : HaulerState(ROBOT_IDLE_STATE, nh, robot_name) {}
+
+//    // define transition check conditions for the state (transition() is overriden by each individual state)
+//    State& transition() override ;
+
+//    // define transition check conditions for the state (isDone() is overriden by each individual state)
+//    bool isDone() override;
+//    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+//    bool hasSucceeded() override;
+
+//    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+//    void entryPoint() override;
+//    void step() override;
+//    void exitPoint() override;
+
+// private: 
+//    bool first_;
+// };
 
 #endif // HAULER_STATE_MACHINE_H
