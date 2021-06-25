@@ -143,9 +143,14 @@ void RobotScheduler::step() {
          m_pcCurrent = cNewState;
       }
       /* Execute current state */
+<<<<<<< HEAD
       if(!m_pcCurrent->isDone())
          m_pcCurrent->step();
       m_pcCurrent->updateStatus();
+=======
+      m_pcCurrent->publishStatus();
+      m_pcCurrent->step();
+>>>>>>> 2b0dcae5a34eb9065d97f5c737d03ea911149199
    }
    else {
       ROS_ERROR("The RobotScheduler has not been initialized, you must call SetInitialState()");
@@ -160,6 +165,7 @@ void RobotScheduler::exec() {
    while(!done() && ros::ok()) 
    {
       step();
+      ros::Duration(0.5).sleep();
       ros::spinOnce();
    }
 }

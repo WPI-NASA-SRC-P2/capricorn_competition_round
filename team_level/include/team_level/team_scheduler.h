@@ -1,7 +1,6 @@
 #pragma once
 
 #include <utils/common_names.h>
-#include <team_level/robot_state_register.h>
 #include <team_level/team_state.h>
 #include <unordered_map>
 

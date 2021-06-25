@@ -128,6 +128,7 @@ include
 # Declare a C++ library
 add_library(${PROJECT_NAME}
   src/robot_state_register.cpp
+  src/robot_pose_register.cpp
   src/team_scheduler.cpp
   src/team_state.cpp
   src/team_manager.cpp

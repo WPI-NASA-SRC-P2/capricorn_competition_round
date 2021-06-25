@@ -65,6 +65,21 @@ void RobotStateRegister::setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK des
    }
 }
 
+void RobotStateRegister::setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_task, geometry_msgs::PoseStamped target_pose)
+{
+   if(ROBOT_ENUM_NAME_MAP.find(robot) != ROBOT_ENUM_NAME_MAP.end()) {
+    state_machines::robot_desired_state desired_state_msg;
+    desired_state_msg.robot_name = ROBOT_ENUM_NAME_MAP[robot];
+    desired_state_msg.robot_desired_state = desired_task;
+    desired_state_msg.goal_pose = target_pose;
+    robot_state_publisher.publish(desired_state_msg);
+    ros::Duration(0.1).sleep();
+   }
+   else{
+      ROS_ERROR_STREAM("Robot enum "<<robot<<" not found in map ROBOT_ENUM_NAME_MAP");
+   }
+}
+
 // int main(int argc, char** argv)
 // {
 //    ros::init(argc, argv, "scout_state_machine");

@@ -3,6 +3,7 @@
 #include "ros/ros.h"
 #include <state_machines/set_robot_state.h>
 #include <team_level/robot_state_register.h>
+#include <team_level/robot_pose_register.h>
 
 // #include <team_level/team_scheduler.h>
 
@@ -87,6 +88,8 @@ protected:
    std::string m_strName;
    ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
    RobotStateRegister *robot_state_register;
+   RobotPoseRegister *robot_pose_register;
+   geometry_msgs::PoseStamped volatile_site_location;
 };
 
 // // All the states as per the diagram
