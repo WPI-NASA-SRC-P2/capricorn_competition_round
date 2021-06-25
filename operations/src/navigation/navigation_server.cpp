@@ -959,6 +959,12 @@ void NavigationServer::followDriving(const operations::NavigationGoalConstPtr &g
 
 void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 {
+	if(goal->pose.header.frame_id.empty())
+	{
+		ROS_ERROR("[operations | nav_server | %s]: Empty frame_id!", robot_name_.c_str());
+		return;
+	}
+
   	ROS_INFO("[operations | nav_server | %s]: Received NavigationGoal, dispatching", robot_name_.c_str());
 	if(goal->epsilon == 0.0)
 	{
