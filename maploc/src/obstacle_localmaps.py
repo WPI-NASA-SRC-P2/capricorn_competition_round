@@ -64,7 +64,7 @@ class ObjectPlotter:
         metadata = MapMetaData()
         # define dimensions of blank occupancy grid
         # resolution units are (m/pixel), value of 0.05 matches rtabmap resolution
-        metadata.resolution = 0.05  
+        metadata.resolution = 0.25
         # sets the map to be 20m x 20m regardless of resolution
         metadata.width = int(40 / metadata.resolution)  
         metadata.height = int(20 / metadata.resolution)
