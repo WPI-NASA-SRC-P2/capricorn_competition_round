@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
   std::string robot_name(argv[1]);   
 
   //ROS Topic names
-  std::string system_monitor_topic_ = "/capricorn/" + robot_name + "/system_monitor";
+  //std::string system_monitor_topic_ = "/capricorn/" + robot_name + "/system_monitor";
 
   //create a nodehandle
   ros::NodeHandle nh;
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
   //operations::SolarChargeResponse res;
   if(client.call(solarCharge))
   {
-    ROS_INFO("Call succeeded! -> %s", solarCharge.response.result.data);
+    ROS_INFO("Call succeeded! -> %s", solarCharge.response.result.data.c_str());
   }
   else
   {
