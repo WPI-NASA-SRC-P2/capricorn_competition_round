@@ -231,6 +231,8 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 
   //Get the change in yaw between the two poses with atan2
 	double change_in_yaw = atan2(waypoint_relative_to_robot.pose.position.y, waypoint_relative_to_robot.pose.position.x);
+
+  //ROS_ERROR("[operations | nav_algo | %s]: Change in yaw before calculations %f", robot_name.c_str(), change_in_yaw);
 	
 	// We want the robot to turn in the direction of the smallest angle change, so if abs(change) > 180, flip its direction
 	if(change_in_yaw >= M_PI)
@@ -243,6 +245,8 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 		change_in_yaw += 2*M_PI;
 	}
 
+  //ROS_ERROR("[operations | nav_algo | %s]: Change in yaw after calculations %f", robot_name.c_str(), change_in_yaw);
+	
 	return change_in_yaw;
 }
 

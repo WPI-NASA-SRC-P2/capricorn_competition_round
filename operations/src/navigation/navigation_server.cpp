@@ -428,7 +428,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 	double distance_traveled = 0;
 
 	// While we have not traveled the desired distance, keep driving.
-	while (abs(distance_traveled - delta_distance) > DIST_EPSILON && ros::ok())
+	while (abs(distance_traveled - delta_distance) > c_dist_epsilon_ && ros::ok())
 	{
 		if(manual_driving_)
 		{
@@ -443,7 +443,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 
 		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
 		// we want to get a new trajectory from the planner.
-		if(distance_traveled + total_distance_traveled_ > TRAJECTORY_RESET_DIST)
+		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
 		{
 			ROS_INFO("[operations | nav_server | %s]: driveDistance detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
 
@@ -491,7 +491,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	double distance_traveled = 0;
 
 	// While we're not at the waypoint
-	while((distance_to_waypoint > DIST_EPSILON) && ros::ok())
+	while((distance_to_waypoint > c_dist_epsilon_) && ros::ok())
 	{
 		// If we are interrupted, stop.
 		if(manual_driving_)
@@ -507,7 +507,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 
 		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
 		// we want to get a new trajectory from the planner.
-		if(distance_traveled + total_distance_traveled_ > TRAJECTORY_RESET_DIST)
+		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
 		{
 			ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
 			ROS_WARN("Current distance traveled %f", distance_traveled);
@@ -529,11 +529,13 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		double delta_heading, center_radius;
 
 		// Start steering towards the next waypoint's heading when the robot is half its length away from it
-		// NOTE: Add DIST_EPSILON to calculation if we want to start turning torwards the next heading sooner
+		// NOTE: Add c_dist_epsilon_ to calculation if we want to start turning torwards the next heading sooner
 		if (current_distance_to_waypoint < (current_distance_to_waypoint - NavigationAlgo::wheel_sep_length_/2))
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), future_waypoint, robot_name_, buffer_);
 		else
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
+
+		//ROS_WARN("[operations | nav_server | %s]: Delta heading %f", robot_name_.c_str(), delta_heading);
 
 		// Calculate center of radius of turn for Ackermann steering
 		// If delta heading is 0 (aka no change in heading) then we rotate about an infite center radius (aka we drive straight)
@@ -548,6 +550,8 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		center_of_rotation.x = -NavigationAlgo::wheel_sep_length_/2;
 
 		// Steering of the front wheels depends on the center radius previously calculated
+		//ROS_ERROR("[operations | nav_server | %s]: Center radius %f", robot_name_.c_str(), center_radius);
+
 		center_of_rotation.y = center_radius;
 
 		std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesRadialTurn(center_of_rotation);
@@ -667,12 +671,22 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			future_waypoint.header.stamp = ros::Time(0);
 			NavigationAlgo::transformPose(future_waypoint, MAP, buffer_, 0.1);
 
+			trajectory_reset_dist = LARGE_TRAJECTORY_REST_DIST;
+
 			if(smooth)
 			{
 				// Initial check for delta heading in case it is above the max turning limit for ackermann steering
 				double delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), current_waypoint, robot_name_, buffer_);
 
-				if (delta_heading > MAX_TURNING_RAD || delta_heading < MIN_TURNING_RAD)
+				//Kludge for reducing reset distance after hard turns. Gets reset
+				// on receiving a new trajectory.
+				if(abs(delta_heading) > HALF_VIEWING)
+				{
+					trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
+					ROS_INFO("[operations | nav_server | %s]: Sharp turn detected, using small reset distance", robot_name_.c_str());
+				}
+
+				if (delta_heading >= MAX_TURNING_RAD || delta_heading <= MIN_TURNING_RAD)
 				{
 					bool turned_successfully;
 
@@ -945,7 +959,26 @@ void NavigationServer::followDriving(const operations::NavigationGoalConstPtr &g
 
 void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 {
-  ROS_INFO("[operations | nav_server | %s]: Received NavigationGoal, dispatching", robot_name_.c_str());
+	if(goal->pose.header.frame_id.empty())
+	{
+		ROS_ERROR("[operations | nav_server | %s]: Empty frame_id!", robot_name_.c_str());
+		operations::NavigationResult res;
+		res.result = COMMON_RESULT::FAILED;
+		server_->setSucceeded(res);
+		return;
+	}
+
+  	ROS_INFO("[operations | nav_server | %s]: Received NavigationGoal, dispatching", robot_name_.c_str());
+	if(goal->epsilon == 0.0)
+	{
+		c_dist_epsilon_ = DIST_EPSILON;
+		ROS_INFO("[operations | nav_server | %s]: Default epsilon", robot_name_.c_str());
+	}
+	else
+	{
+		c_dist_epsilon_ = goal->epsilon;
+		ROS_INFO("[operations | nav_server | %s]: Got epsilon of %f", robot_name_.c_str(), c_dist_epsilon_);
+	}
 
 	// Zero out the total distance traveled when we receive a new goal
 	total_distance_traveled_ = 0;
