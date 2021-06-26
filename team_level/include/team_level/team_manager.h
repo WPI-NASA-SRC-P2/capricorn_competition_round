@@ -14,7 +14,7 @@ using namespace COMMON_NAMES;
 #define MAX_SCOUTS 1
 #define MAX_EXCAVATORS 1
 #define MAX_HAULERS 1
-#define MAX_TEAMS 4
+#define MAX_TEAMS 1
 
 class TeamManager {
    

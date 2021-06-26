@@ -73,7 +73,7 @@ void navigationCB(const geometry_msgs::Point::ConstPtr &goal_point)
     
     //Simple waypoint x meters in front of the robot
     geometry_msgs::PoseStamped t1;
-    t1.header.frame_id = "map";
+    t1.header.frame_id = robot_name + ROBOT_CHASSIS;
     t1.header.stamp = ros::Time::now();
     t1.pose.position.x = goal_point->x;
     t1.pose.position.y = goal_point->y;
@@ -92,6 +92,7 @@ void navigationCB(const geometry_msgs::Point::ConstPtr &goal_point)
     // goal.point.header.frame_id = robot_name + ROBOT_CHASSIS;
 
     goal.drive_mode = NAV_TYPE::GOAL_SMOOTH;
+    // goal.epsilon = 0.1;
 
     printf("Sending auto goal to actionlib server\n");
     client->sendGoal(goal);

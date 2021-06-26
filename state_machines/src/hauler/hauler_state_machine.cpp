@@ -260,7 +260,7 @@ void UndockHopper::step()
     navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
     navigation_action_goal_.forward_velocity = -0.6;
     navigation_client_->sendGoal(navigation_action_goal_);
-    navigation_client_->waitForResult();
+    // navigation_client_->waitForResult();
     current_ = ros::Time::now().toSec();
     ROS_INFO("Undocking from hopper");
     
@@ -407,7 +407,7 @@ void ParkAtExcavator::step()
     {
         // park at the excavator using vnav
         park_robot_client_->sendGoal(park_robot_goal_);
-        park_robot_client_->waitForResult();
+        // park_robot_client_->waitForResult();
         first_ = false;
     }
     else
@@ -473,7 +473,7 @@ void UndockExcavator::step()
     navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
     navigation_action_goal_.forward_velocity = -0.6;
     navigation_client_->sendGoal(navigation_action_goal_);
-    navigation_client_->waitForResult();
+    // navigation_client_->waitForResult();
     current_ = ros::Time::now().toSec();
     ROS_INFO("Undocking from excavator");
 }
@@ -523,7 +523,7 @@ void DumpVolatile::step()
     {   
         hauler_goal_.desired_state = true;
         hauler_client_->sendGoal(hauler_goal_);
-        hauler_client_->waitForResult();
+        // hauler_client_->waitForResult();
         first_ = false;
     }
     else
