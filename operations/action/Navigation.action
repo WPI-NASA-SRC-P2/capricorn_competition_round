@@ -2,7 +2,8 @@
 float32 forward_velocity  # NAV_TYPE::MANUAL and NAV_TYPE::REVOLVE
 float32 angular_velocity  # Positive is counterclockwise, negative is clockwise
 float32 direction         # For use with forward_velocity. Direction to point the robot. 0-2PI, where 0 is straight forwards relative to the robot, CCW from above.
-float32 epsilon           # Distance in m to accept as being "equal" to prevent zeno's paradox/float comparison problems. Defaults to 0.5
+float32 epsilon           # Distance in m to be used as a threshold to determine whether or not the robot has reached a given waypoint. Defaults to 0.5
+bool final_rotate         # Choice to whether or not the robot needs to face the goal's final heading. Deafults to false
 
 geometry_msgs/PoseStamped pose   # NAV_TYPE::GOAL
 

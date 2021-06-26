@@ -150,8 +150,8 @@ namespace COMMON_NAMES
   enum NAV_TYPE
   {
     MANUAL,      // Manual driving
-    GOAL,        // Trajectory generation with the planner from a goal
-    GOAL_SMOOTH, // Follow a path, but do it smoothly instead of turn-in-place
+    GOAL_OLD,    // Trajectory generation with the planner from a goal (using turn-in-place)
+    GOAL,        // Follow a path, but do it smoothly instead of turn-in-place
     REVOLVE,     // Revolve the robot around a fixed point
     SPIRAL,      // Archimedean spiral (scout finding volatiles)
     FOLLOW,      // Follow an object in frame
