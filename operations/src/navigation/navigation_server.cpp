@@ -962,6 +962,9 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 	if(goal->pose.header.frame_id.empty())
 	{
 		ROS_ERROR("[operations | nav_server | %s]: Empty frame_id!", robot_name_.c_str());
+		operations::NavigationResult res;
+		res.result = COMMON_RESULT::FAILED;
+		server_->setSucceeded(res);
 		return;
 	}
 
