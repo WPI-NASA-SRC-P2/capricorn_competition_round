@@ -13,14 +13,14 @@ int main(int argc, char *argv[])
   std::string robot_name(argv[1]);   
 
   //ROS Topic names
-  //std::string system_monitor_topic_ = "/capricorn/" + robot_name + "/system_monitor";
+  std::string solar_charger = "/capricorn/" + robot_name + "/solar_charger";
 
   //create a nodehandle
   ros::NodeHandle nh;
 
   ROS_INFO("Client is not broken, before starting service client");
 
-  ros::ServiceClient client = nh.serviceClient<operations::SolarCharge>("solar_charger");
+  ros::ServiceClient client = nh.serviceClient<operations::SolarCharge>(solar_charger);
   client.waitForExistence();
 
   
