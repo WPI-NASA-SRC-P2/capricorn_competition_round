@@ -127,11 +127,12 @@ int main(int argc, char *argv[])
   //std::string robot_name = "small_scout_1";
 
   //ROS Topic names
-  //std::string system_monitor_topic_ = "/capricorn/" + robot_name + "/system_monitor";
-  std::string system_monitor_topic_ = robot_name + "/system_monitor";
+  //b/c of namespaces robot_name will be in the form of "small_scout_1", different from "/small_scout_1"
+  std::string system_monitor_topic_ = "/" + robot_name + "/system_monitor";
+  //std::string system_monitor_topic_ = robot_name + "/system_monitor";
 
   //ROS ServerService
-  std::string power_saver_service_ =  robot_name + "/system_monitor/power_saver";
+  std::string power_saver_service_ =  "/" + robot_name + "/system_monitor/power_saver";
  
   SolarChargingServer server;
 
