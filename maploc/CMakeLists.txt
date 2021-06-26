@@ -16,10 +16,18 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_msgs
   rtabmap_ros
   tf
+  tf2
+  tf2_ros
   utils
+  # operations
   perception
   srcp2_msgs
   message_generation
+  # actionlib_msgs
+  # genmsg
+  # actionlib
+
+  
 )
 
 ## System dependencies are found with CMake's conventions
@@ -80,6 +88,7 @@ add_service_files(
    DEPENDENCIES
    geometry_msgs
    std_msgs
+  #  operations
  )
 
 ################################################
@@ -112,10 +121,14 @@ add_service_files(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- INCLUDE_DIRS include
+#  INCLUDE_DIRS include
 #  LIBRARIES maploc
- CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf utils std_msgs message_runtime rtabmap_ros perception srcp2_msgs
-#  DEPENDS system_lib
+ CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf tf2 tf2_ros utils std_msgs message_runtime rtabmap_ros perception srcp2_msgs 
+#  operations 
+#  actionlib_msgs
+#  genmsg
+#  actionlib
+ #  DEPENDS system_lib
 ) 
 
 ###########
