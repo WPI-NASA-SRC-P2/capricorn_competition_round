@@ -228,9 +228,13 @@ class IdleState : public ExcavatorState {
 public:   
    IdleState(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(ROBOT_IDLE_STATE, nh, robot_name) {}
 
-   bool isDone() override{ return true; }
+   bool isDone() override{ 
+      current_state_done_ = true;
+      return true; }
    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
-   bool hasSucceeded() override{return true;}
+   bool hasSucceeded() override{ 
+      last_state_succeeded_ = true;
+      return true; }
 
    void entryPoint() override{}
    void step() override{}
