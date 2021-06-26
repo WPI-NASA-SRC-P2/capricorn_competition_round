@@ -177,7 +177,7 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
       bool excav_in_process = excavator_task == EXCAVATOR_GO_TO_SCOUT;
       bool excav_absent = excavator_task == ROBOT_IDLE_STATE;
 
-      bool hauler_in_process = hauler_task == HAULER_GO_TO_LOC;
+      bool hauler_in_process = hauler_task == HAULER_GO_BACK_TO_EXCAVATOR;
       bool hauler_absent = hauler_task == ROBOT_IDLE_STATE;
       
       if(!(excav_in_process || excav_absent))
@@ -235,7 +235,7 @@ void ScoutWaiting::stepRobotsToGoal()
    robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_GO_TO_SCOUT, volatile_site_location);
 
    // Hauler Goal
-   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOC, volatile_site_location);
+   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_BACK_TO_EXCAVATOR, volatile_site_location);
 }
 
 void ScoutWaiting::stepUndockScout()
@@ -295,14 +295,14 @@ TEAM_MICRO_STATE Excavating::getMicroState()
 
    if(hauler_in_team == NONE)
       return WAIT_FOR_HAULER;
-   if(hauler_task == ROBOT_IDLE_STATE || hauler_task == HAULER_GO_TO_LOC)
+   if(hauler_task == ROBOT_IDLE_STATE || hauler_task == HAULER_GO_BACK_TO_EXCAVATOR)
       if(!hauler_done_and_succeeded)
          return WAIT_FOR_HAULER;
    if(hauler_task == HAULER_PARK_AT_EXCAVATOR && hauler_done_and_succeeded)
       return DIG_AND_DUMP;
-   if(excavator_task == EXCAVATOR_PRE_PARK_MANEUVER && excavator_done_and_succeeded)
+   if(excavator_task == ROBOT_IDLE_STATE && excavator_done_and_succeeded) //ROBOT_IDLE_STATE -> EXCAVATOR_PRE_PARK_MANEUVER
       return PARK_AT_EXCAVATOR_HAULER;
-   if(hauler_task == HAULER_GO_TO_LOC && hauler_done_and_succeeded)
+   if(hauler_task == HAULER_GO_BACK_TO_EXCAVATOR && hauler_done_and_succeeded)
       return PRE_PARK_MANEUVER_EXCAVATOR;
 
    ROS_WARN("Unknown Combination of the robot states found!");
@@ -348,12 +348,12 @@ void Excavating::step()
 
 void Excavating::stepWaitForHauler()
 {
-   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOC, volatile_site_location);
+   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_BACK_TO_EXCAVATOR, volatile_site_location);
 }
 
 void Excavating::stepPreParkManeuverExcavator()
 {
-   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_PRE_PARK_MANEUVER);
+   robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE); //ROBOT_IDLE_STATE -> EXCAVATOR_PRE_PARK_MANEUVER
 }
 
 void Excavating::stepParkHauler()

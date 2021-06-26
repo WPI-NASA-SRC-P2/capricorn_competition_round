@@ -61,6 +61,7 @@ void TeamManager::recruitment()
    for(int i = 0; i < MAX_TEAMS; i++)
    {
       ROS_INFO_STREAM(all_teams.at(i)->getScout()<<"  "<<all_teams.at(i)->getExcavator()<<"  "<<all_teams.at(i)->getHauler());
+      ROS_WARN_STREAM("Team "<<i<<" task "<<all_teams.at(i)->getTeamMacroState());
       switch (all_teams.at(i)->getTeamMacroState())
       {
       case STANDBY:

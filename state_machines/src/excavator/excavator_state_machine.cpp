@@ -219,16 +219,16 @@ void ParkAndPub::step()
    navigation_action_goal_.forward_velocity = 0.6;   
    navigation_action_goal_.angular_velocity = 0;
    navigation_client_->sendGoal(navigation_action_goal_);
-   ros::Duration(0.1).sleep();
-   // ros::Duration(4).sleep();
+   // ros::Duration(0.1).sleep();
+   ros::Duration(2).sleep();
    // current time (to ensure duration of action is only 4 seconds)
    current_ = ros::Time::now().toSec();
 
-   // navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-   // navigation_action_goal_.forward_velocity = 0.0;   
-   // navigation_action_goal_.angular_velocity = 0;
-   // navigation_client_->sendGoal(navigation_action_goal_);
-   // ros::Duration(0.5).sleep();
+   navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+   navigation_action_goal_.forward_velocity = 0.0;   
+   navigation_action_goal_.angular_velocity = 0;
+   navigation_client_->sendGoal(navigation_action_goal_);
+   ros::Duration(0.5).sleep();
 
    // return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
