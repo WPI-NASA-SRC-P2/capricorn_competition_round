@@ -5,6 +5,19 @@ TeamManager::TeamManager(ros::NodeHandle nh)
    initTeams(nh);
 }
 
+TeamManager::~TeamManager()
+{
+   deleteTeams();
+}
+
+void TeamManager::deleteTeams()
+{
+   for(int i = 0; i < MAX_TEAMS; i++)
+   {
+      delete all_teams.at(i);
+   }
+}
+
 void TeamManager::initTeams(ros::NodeHandle nh)
 {
    initTeamArray(nh);

@@ -306,5 +306,8 @@ int main(int argc, char **argv)
   ros::ServiceServer service = nh.advertiseService(COMMON_NAMES::SCOUT_SEARCH_SERVICE, serviceCB);
   ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Starting Searching - " << robot_name_);
   execute();
+
+  delete g_client;
+
   return 0;
 }

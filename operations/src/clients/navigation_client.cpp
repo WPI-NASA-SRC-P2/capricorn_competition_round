@@ -144,6 +144,9 @@ int main(int argc, char **argv)
     printf("Done waiting. Spinning\n");
 
     ros::spin();
+
+    delete client;
+    
     return 0;
   }
 }

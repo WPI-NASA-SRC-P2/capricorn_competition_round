@@ -59,7 +59,9 @@ public:
 
    TeamState(uint64_t un_id, const std::string& str_name, ros::NodeHandle &nh);
 
-   virtual ~TeamState() {}
+   ~TeamState() {
+      delete robot_state_register;
+      delete robot_pose_register;}
 
    uint64_t getId() const { return m_unId; }
 

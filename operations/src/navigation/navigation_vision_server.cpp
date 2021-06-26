@@ -802,5 +802,8 @@ int main(int argc, char **argv)
     server.start();
     ROS_INFO_STREAM(getString("Starting Navigation Vision Server"));
     ros::spin();
+
+    delete g_client;
+    
     return 0;
 }

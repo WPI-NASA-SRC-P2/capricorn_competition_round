@@ -21,7 +21,7 @@ class TeamManager {
 public:
 
    TeamManager(ros::NodeHandle nh);
-   ~TeamManager(){}
+   ~TeamManager();
    
    void step();
 
@@ -38,6 +38,8 @@ private:
    std::array<bool, MAX_TEAMS> hauler_for_sale;
 
    void initTeams(ros::NodeHandle nh);
+
+   void deleteTeams();
 
    void initTeamArray(ros::NodeHandle nh);
 
