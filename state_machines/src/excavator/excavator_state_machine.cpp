@@ -149,7 +149,7 @@ void GoToDefaultArmPosition::step()
     goal.task = GO_TO_DEFAULT;
 
     excavator_arm_client_->sendGoal(goal);
-    excavator_arm_client_->waitForResult();
+   //  excavator_arm_client_->waitForResult();
     return true;
 */
 
@@ -298,7 +298,7 @@ void DigAndDump::step()
 
       excavator_arm_client_->sendGoal(excavator_arm_goal_);
       digging_attempt_++;
-      excavator_arm_client_->waitForResult();
+      // excavator_arm_client_->waitForResult();
       dump_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);   
       if(dump_)
          dig_ = false;
@@ -321,7 +321,7 @@ void DigAndDump::step()
       excavator_arm_goal_.target.z = 0;
 
       excavator_arm_client_->sendGoal(excavator_arm_goal_);
-      excavator_arm_client_->waitForResult();
+      // excavator_arm_client_->waitForResult();
       volatile_found_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    }
 }

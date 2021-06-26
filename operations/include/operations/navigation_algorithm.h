@@ -19,10 +19,10 @@ class NavigationAlgo
 {
 private:
   static constexpr float arc_spiral_a_1 = 20, arc_spiral_a_2 = 15;    // Inner radius (starting radius of the spiral)
-  static constexpr int init_theta_1 = 8, init_theta_2 = 18;
+  static constexpr int init_theta_1 = 0, init_theta_2 = 5;
   static constexpr float arc_spiral_b = 10;   // Incerement per rev
-  static constexpr float arc_spiral_incr = 5; // Distance between two points
-  static constexpr int N = 500;
+  static constexpr float arc_spiral_incr = 25; // Distance between two points
+  static constexpr int N = 120;
   /**
    * @brief Calculates variables needed for calculation of center and radius of the three point circle
    * 
