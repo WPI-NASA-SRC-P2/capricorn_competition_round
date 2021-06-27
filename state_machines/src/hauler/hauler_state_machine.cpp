@@ -19,10 +19,12 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   navigation_client_ = new NavigationClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
   hauler_client_ = new HaulerClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::HAULER_ACTIONLIB, true);
   park_robot_client_ = new ParkRobotClient(COMMON_NAMES::CAPRICORN_TOPIC +  robot_name_ + "/" + robot_name_ + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true); 
-  /** TODO:fix the common names PARK_HAULER, ALso 2 actions being published, 1 of them is running but not working.*/ 
-
-  ROS_INFO("Waiting for the hauler action servers...");
-  navigation_vision_client_->waitForServer();
+  /** TODO:fix the common names PARK_H[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Parking at Excavator");
+    park_robot_goal_.hopper_or_excavator = excavator_name;
+    park_robot_client_->sendGoal(park_robot_goal_);
+    park_robot_client_->waitForResult();
+    return (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}rver();
   navigation_client_->waitForServer(); 
   hauler_client_->waitForServer(); 
   park_robot_client_->waitForServer(); 
@@ -43,10 +45,12 @@ HaulerState::~HaulerState()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// C A L L B A C K S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** TODO: Check if the object detection callback is needed*/
-
-/** TODO: Implememt entrypoint, transition, step and exit points for all states mentioned in the flow shown by ashay
+[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Parking at Excavator");
+    park_robot_goal_.hopper_or_excavator = excavator_name;
+    park_robot_client_->sendGoal(park_robot_goal_);
+    park_robot_client_->waitForResult();
+    return (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}tion, step and exit points for all states mentioned in the flow shown by ashay
     *   HAULER_GO_TO_LOC,                    //
     8-> HAULER_DUMP_VOLATILE_TO_PROC_PLANT, // 
     9   HAULER_GO_BACK_TO_EXCAVATOR,        // GoToExcavator
@@ -547,32 +551,6 @@ void DumpVolatile::exitPoint()
     hauler_client_->cancelGoal();
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Finished dumping volatile");
 }
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////// H A U L E R _ I D L E   S T A T E   C L A S S ////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// void HaulerIdle::entryPoint()
-// {
-//     // declare entrypoint variables
-// }
-
-// State& HaulerIdle::transition()
-// {
-//     // transition to next state
-// }
-
-// void HaulerIdle::step()
-// {
-//     // do the thing
-// }
-
-// void HaulerIdle::exitPoint()
-// {
-//     // clean up 
-// }
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// F O L L O W _ E X C A V A T O R   S T A T E   C L A S S ////////////////////////////////////

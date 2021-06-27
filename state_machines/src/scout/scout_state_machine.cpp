@@ -87,7 +87,7 @@ void Undock::entryPoint()
 bool Undock::isDone()
 {
    // update the status of current state
-   current_state_done_ = navigation_client_->getState().isDone();
+   current_state_done_ = navigation_vision_client_->getState().isDone();
 
    return current_state_done_;
 }
@@ -96,7 +96,7 @@ bool Undock::hasSucceeded()
 {
    // update the status of current state
    // last_state_succeeded_ = (navigation_client_->getState() == actionlib::status::SUCCESS);
-   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    
    return last_state_succeeded_;
 }
@@ -106,26 +106,18 @@ void Undock::step()
    if(first_)
    {
       ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from volatile");
-      geometry_msgs::PoseStamped pt;
-      pt.header.frame_id = robot_name_ + ROBOT_BASE;
-      pt.pose.position.x = -6;
-      pt.pose.orientation.w = 1;
-      
-      navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-      navigation_action_goal_.pose = pt;
-      navigation_client_->sendGoal(navigation_action_goal_);
-      ROS_INFO_STREAM("Goal sent : " << navigation_action_goal_);
-      // navigation_client_->waitForResult();
-      first_ = false;
-   }   
-   else
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
+      navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      first_ = false; 
       ROS_INFO_STREAM("Undock stepping, first_ = false now");
+   }
 }
 
 void Undock::exitPoint() 
 {
    ROS_INFO("exitpoint of undock, cancelling undock goal");
-   navigation_client_->cancelGoal();
+   navigation_vision_client_->cancelGoal();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
