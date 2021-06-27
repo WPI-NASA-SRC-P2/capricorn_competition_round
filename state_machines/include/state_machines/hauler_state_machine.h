@@ -212,7 +212,7 @@ public:
    UndockHopper(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_UNDOCK_HOPPER, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
-   State& transition() override ;
+   State& transition() override {} ;
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
@@ -297,7 +297,7 @@ public:
    UndockExcavator(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_UNDOCK_EXCAVATOR, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
-   State& transition() override ;
+   State& transition() override {} ;
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;

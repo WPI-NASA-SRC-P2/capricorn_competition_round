@@ -224,65 +224,55 @@ void ResetOdom::exitPoint()
     
 }
 
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////// U N D O C K  H O P P E R  S T A T E   C L A S S ////////////////////////////////////
+///////////////////////////////////// U N D O C K _ H O P P E R   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void UndockHopper::entryPoint()
 {
-    // set entry variables
-    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Undocking from Hopper");
-    // target_loc_.header.frame_id = robot_name_ + ROBOT_BASE;
-    // target_loc_.pose.position.x = -5;
-    // target_loc_.pose.orientation.w = 1;
-    begin_ = ros::Time::now().toSec();
-    current_ = ros::Time::now().toSec();
-    // first_ = true;
+   //Set to true to avoid repeatedly giving the goal.
+   first_ = true;
+   ROS_INFO("entrypoint of undock");
+   
+   // update the current status of the robot and publish it
+   
 }
 
-State& UndockHopper::transition()
+bool UndockHopper::isDone()
 {
-    // transition to 
-    if(current_ <= (begin_ + 4.0))
-        return *this;
-    // return getState(HAULER_UNDOCK_EXCAVATOR);
-    return getState(HAULER_GO_BACK_TO_EXCAVATOR);
+   // update the status of current state
+   current_state_done_ = navigation_vision_client_->getState().isDone();
+
+   return current_state_done_;
+}
+
+bool UndockHopper::hasSucceeded()
+{
+   // update the status of current state
+   // last_state_succeeded_ = (navigation_client_->getState() == actionlib::status::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   
+   return last_state_succeeded_;
 }
 
 void UndockHopper::step()
 {
-    // undock at the hopper using vnav
-    // if(first_)
-    // {      
-            // first_ = false;
-    // }
-    // else
-    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-    navigation_action_goal_.forward_velocity = -0.6;
-    navigation_client_->sendGoal(navigation_action_goal_);
-    // navigation_client_->waitForResult();
-    current_ = ros::Time::now().toSec();
-    ROS_INFO("Undocking from hopper");
-    
+   if(first_)
+   {
+      ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from volatile");
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
+      navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      first_ = false; 
+      ROS_INFO_STREAM("Undock stepping, first_ = false now");
+   }
 }
 
-bool UndockHopper::isDone() {
-   current_state_done_ = navigation_client_->getState().isDone();
-   return current_state_done_;
-} 
-
-bool UndockHopper::hasSucceeded() {
-
-   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   return last_state_succeeded_;
-}
-
-
-void UndockHopper::exitPoint()
+void UndockHopper::exitPoint() 
 {
-    // cleanup (cancel goal)
-    navigation_client_->cancelGoal();
-    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Finished undocking from hopper");
+   ROS_INFO("exitpoint of undock, cancelling undock goal");
+   navigation_vision_client_->cancelGoal();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -438,62 +428,48 @@ void ParkAtExcavator::exitPoint()
 
 void UndockExcavator::entryPoint()
 {
-    // set entry variables
-    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Undocking from Excavator");
-    // navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
-    // navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
-    begin_ = ros::Time::now().toSec();
-    current_ = ros::Time::now().toSec();
-    first_ = true;
+   //Set to true to avoid repeatedly giving the goal.
+   first_ = true;
+   ROS_INFO("entrypoint of undock");
+   
+   // update the current status of the robot and publish it
+   
 }
 
-State& UndockExcavator::transition()
+bool UndockExcavator::isDone()
 {
-    // transition to 
-    // if(!(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED))
-    if(current_ <= (begin_ + 4.0))
-        return *this;
-        
-    return getState(HAULER_GO_TO_PROC_PLANT);
+   // update the status of current state
+   current_state_done_ = navigation_vision_client_->getState().isDone();
+
+   return current_state_done_;
+}
+
+bool UndockExcavator::hasSucceeded()
+{
+   // update the status of current state
+   // last_state_succeeded_ = (navigation_client_->getState() == actionlib::status::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   
+   return last_state_succeeded_;
 }
 
 void UndockExcavator::step()
 {
-    // undock at the excavator using vnav
-    // if(first_)
-    // {      
-    //     first_ = false;
-    //     navigation_vision_client_->sendGoal(navigation_vision_goal_);
-    //     navigation_vision_client_->waitForResult();
-    //     ROS_INFO("Undocking from excavator");
-        
-    // }
-    // else
-    //     ROS_INFO("Nothing can be done about this :(");
-    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-    navigation_action_goal_.forward_velocity = -0.6;
-    navigation_client_->sendGoal(navigation_action_goal_);
-    // navigation_client_->waitForResult();
-    current_ = ros::Time::now().toSec();
-    ROS_INFO("Undocking from excavator");
+   if(first_)
+   {
+      ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from volatile");
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
+      navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      first_ = false; 
+      ROS_INFO_STREAM("Undock stepping, first_ = false now");
+   }
 }
 
-bool UndockExcavator::isDone() {
-   current_state_done_ = navigation_client_->getState().isDone();
-   return current_state_done_;
-} 
-
-bool UndockExcavator::hasSucceeded() {
-
-   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   return last_state_succeeded_;
-}
-
-void UndockExcavator::exitPoint()
+void UndockExcavator::exitPoint() 
 {
-    // cleanup (cancel goal)
-    navigation_client_->cancelGoal();
-    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Finished undocking from excavator");
+   ROS_INFO("exitpoint of undock, cancelling undock goal");
+   navigation_vision_client_->cancelGoal();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
