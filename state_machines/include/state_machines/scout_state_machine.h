@@ -151,6 +151,7 @@ public:
 private: 
    bool first_;
    operations::NavigationGoal navigation_action_goal_;
+   operations::NavigationVisionGoal navigation_vision_goal_;
 };
 
 class Search : public ScoutState {
