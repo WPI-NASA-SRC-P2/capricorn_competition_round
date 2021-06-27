@@ -833,39 +833,44 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 	// This final logic shouldn't be run more than once, so it is outside of the get_new_trajectory_ loop.
 
-	geometry_msgs::PoseStamped current_robot_pose = *getRobotPose();
-
-	// The final pose is on top of the robot, we only care about orientation
-	final_pose.pose.position.x = current_robot_pose.pose.position.x;
-	final_pose.pose.position.y = current_robot_pose.pose.position.y;
-
-	final_pose.header.stamp = ros::Time(0);
-
-	ROS_INFO("[operations | nav_server | %s]: Final rotate", robot_name_.c_str());
-
-	//Turn to heading
-	bool turned_successfully = rotateRobot(final_pose);
-
-	if (!turned_successfully)
+	if(goal->final_rotate)
 	{
-		operations::NavigationResult res;
+		geometry_msgs::PoseStamped current_robot_pose = *getRobotPose();
 
-		if(manual_driving_)
-		{
-			ROS_ERROR("[operations | nav_server | %s]: Overridden by manual driving! Exiting.", robot_name_.c_str());
-			res.result = COMMON_RESULT::INTERRUPTED;
-		}
-		else
-		{
-			//AAAH ERROR
-			ROS_ERROR("[operations | nav_server | %s]: Final turn did not succeed. Exiting.", robot_name_.c_str());
-			res.result = COMMON_RESULT::FAILED;
-			
-		}
-		action_server->setAborted(res);
+		// The final pose is on top of the robot, we only care about orientation
+		final_pose.pose.position.x = current_robot_pose.pose.position.x;
+		final_pose.pose.position.y = current_robot_pose.pose.position.y;
 
-		return;
+		final_pose.header.stamp = ros::Time(0);
+
+		ROS_INFO("[operations | nav_server | %s]: Final rotate", robot_name_.c_str());
+
+		//Turn to heading
+		bool turned_successfully = rotateRobot(final_pose);
+
+		if (!turned_successfully)
+		{
+			operations::NavigationResult res;
+
+			if(manual_driving_)
+			{
+				ROS_ERROR("[operations | nav_server | %s]: Overridden by manual driving! Exiting.", robot_name_.c_str());
+				res.result = COMMON_RESULT::INTERRUPTED;
+			}
+			else
+			{
+				//AAAH ERROR
+				ROS_ERROR("[operations | nav_server | %s]: Final turn did not succeed. Exiting.", robot_name_.c_str());
+				res.result = COMMON_RESULT::FAILED;
+				
+			}
+			action_server->setSucceeded(res);
+
+			return;
+		}
 	}
+
+	
 
 	ROS_INFO("[operations | nav_server | %s]: Finished automatic goal!", robot_name_.c_str());
 
@@ -968,6 +973,8 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 		return;
 	}
 
+	ROS_ERROR("[operations | nav_server | %s]: Bool for final rotate: %d", robot_name_.c_str(), goal->final_rotate);
+
   	ROS_INFO("[operations | nav_server | %s]: Received NavigationGoal, dispatching", robot_name_.c_str());
 	if(goal->epsilon == 0.0)
 	{
@@ -999,14 +1006,14 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 
 			break;
 		
-		case NAV_TYPE::GOAL:
+		case NAV_TYPE::GOAL_OLD:
 
 			manual_driving_ = false;
 			automaticDriving(goal, server_, false);
 
 			break;
 
-		case NAV_TYPE::GOAL_SMOOTH:
+		case NAV_TYPE::GOAL:
 
 			manual_driving_ = false;
 			automaticDriving(goal, server_, true);
