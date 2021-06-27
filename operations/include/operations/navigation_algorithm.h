@@ -137,6 +137,14 @@ public:
   static std::vector<geometry_msgs::PointStamped> getNArchimedeasSpiralPoints(const int scout_number = 1);
 
   /**
+   * @brief Returns the points on a rectangular path
+   * 
+   * @param scout_number Number of the scout for which points are needed. Only works with 1 or 2. 
+   * @return std::vector<geometry_msgs::Point> 
+   */  
+  static std::vector<geometry_msgs::PointStamped> getRectangularScanningPoints(const int scout_number);
+
+  /**
    * @brief Get the Kinetic Energy object
    * 
    * @param vel           Velociry of the robot

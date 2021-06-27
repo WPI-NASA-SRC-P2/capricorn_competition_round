@@ -139,6 +139,65 @@ float NavigationAlgo::getRadiusInArchimedeanSpiral(const float t)
   return radius;
 }
 
+std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRectangularScanningPoints(const int scout_number)
+{
+  float radius = 80;
+  float start_pt_x = scout_number == 1 ? 35 : -35, theta_x = scout_number == 1 ? 5 : -5;
+  int max_x = scout_number == 1 ? 80 : -80;
+
+  std::vector<geometry_msgs::PointStamped> points;
+
+  auto getY = [&radius](float x)->float
+  {
+    return abs(sqrt((radius * radius) - (x * x)));
+  };
+
+  auto getPoint = [](float x, float y)->geometry_msgs::PointStamped
+  {
+    geometry_msgs::PointStamped msg;
+    msg.header.frame_id = MAP;
+    msg.point.x = x;
+    msg.point.y = y;
+    return msg;
+  };
+
+  points.push_back(getPoint(0, 0));
+  points.push_back(getPoint(0, 0));
+  points.push_back(getPoint(start_pt_x, 0));
+
+  while (abs(start_pt_x) < abs(max_x))
+  {
+    float y = getY(start_pt_x);
+    if(points.back().point.y == 0)
+    {
+      points.push_back(getPoint(start_pt_x, y));
+    }
+    else
+    {
+      if(points.back().point.y < 0)
+      {
+        points.push_back(getPoint(start_pt_x, -y));
+      points.push_back(getPoint(start_pt_x, 0));
+        points.push_back(getPoint(start_pt_x, y));
+      }
+      else
+      {
+        points.push_back(getPoint(start_pt_x, y));
+        points.push_back(getPoint(start_pt_x, 0));
+        points.push_back(getPoint(start_pt_x, -y));
+      }
+    }
+    start_pt_x += theta_x;
+  }
+
+  for (auto pt : points)
+  {
+    ROS_INFO_STREAM("X: " + std::to_string(pt.point.x) + ", Y: " + std::to_string(pt.point.y));
+  }
+
+  return points;
+}
+
 /**
  * @brief 
  * 
