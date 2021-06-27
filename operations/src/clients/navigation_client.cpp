@@ -91,8 +91,11 @@ void navigationCB(const geometry_msgs::Point::ConstPtr &goal_point)
 
     // goal.point.header.frame_id = robot_name + ROBOT_CHASSIS;
 
-    goal.drive_mode = NAV_TYPE::GOAL_SMOOTH;
+    goal.drive_mode = NAV_TYPE::GOAL;
     // goal.epsilon = 0.1;
+    // goal.final_rotate = true;
+
+    ROS_WARN("[operations | nav_client | %s]: Final rotate: %d", robot_name.c_str(), goal.final_rotate);
 
     printf("Sending auto goal to actionlib server\n");
     client->sendGoal(goal);
@@ -144,6 +147,9 @@ int main(int argc, char **argv)
     printf("Done waiting. Spinning\n");
 
     ros::spin();
+
+    delete client;
+    
     return 0;
   }
 }

@@ -144,6 +144,8 @@ int main(int argc, char *argv[])
 	ROS_INFO_STREAM("[STATE_MACHINES | start_excavator_sm_server.cpp | " << g_robot_name << "]: State Machine: Started");
 	ros::spin();
 
+	delete sm;
+
 	ROS_WARN_STREAM("[STATE_MACHINES | start_excavator_sm_server.cpp | " << g_robot_name << "]: State Machine: Died!\n");
 
 	return 0;

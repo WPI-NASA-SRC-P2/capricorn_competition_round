@@ -595,5 +595,9 @@ int main(int argc, char *argv[])
     ros::spin();
 
     ROS_INFO_STREAM(getString("Exiting"));
+
+    delete g_nav_client;
+    delete g_navigation_vision_client;
+    
     return 0;
 }

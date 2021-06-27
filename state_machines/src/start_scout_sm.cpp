@@ -143,6 +143,8 @@ int main(int argc, char *argv[])
 	ROS_INFO_STREAM("[STATE_MACHINES | start_scout_sm.cpp | " << g_robot_name << "]: Started Scout State Machine Actionlib Server");
 	ros::spin();
 
+	delete sm;
+
 	ROS_WARN_STREAM("[STATE_MACHINES | start_scout_sm.cpp | " << g_robot_name << "]: Scout state machine died!\n");
 
 	return 0;

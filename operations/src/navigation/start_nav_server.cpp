@@ -26,5 +26,7 @@ int main(int argc, char* argv[])
 
     ros::spin();
 
+    delete ns;
+
     ROS_WARN("[operations | start_nav_server]: NavigationServer died!", robot_name);
 }
