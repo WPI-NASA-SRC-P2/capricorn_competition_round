@@ -167,11 +167,12 @@ void driveSprial()
 
       ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: ");// << "Going to goal dist:" << dist);
 
-      g_nav_goal.drive_mode = NAV_TYPE::GOAL_SMOOTH;
+      g_nav_goal.drive_mode = NAV_TYPE::GOAL;
       g_nav_goal.pose.pose.position = g_spiral_points.at(1).point;
       g_nav_goal.pose.pose.orientation = getOrientation(point_0, point_2);
       g_nav_goal.pose.header.frame_id = MAP;
       g_nav_goal.epsilon = 1;
+      g_nav_goal.final_rotate = false;
       // g_client->sendGoal(g_nav_goal);
       // g_going_to_goal = true;
       g_new_trajectory = true;

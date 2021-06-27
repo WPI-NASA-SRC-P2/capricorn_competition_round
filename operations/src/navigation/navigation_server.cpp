@@ -964,7 +964,7 @@ void NavigationServer::followDriving(const operations::NavigationGoalConstPtr &g
 
 void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 {
-	if(goal->pose.header.frame_id.empty())
+	if(goal->pose.header.frame_id.empty() && goal->drive_mode == NAV_TYPE::GOAL)
 	{
 		ROS_ERROR("[operations | nav_server | %s]: Empty frame_id!", robot_name_.c_str());
 		operations::NavigationResult res;

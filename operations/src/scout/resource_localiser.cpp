@@ -24,7 +24,7 @@ double ROTATION_VELOCITY = 0.2;
 double DRIVING_VELOCITY = 0.2;
 double MAX_DETECT_DIST = 2.0;
 double VOLATILE_DISTANCE_THRESHOLD = 0.005;
-int FLIP_ROTATION_COUNT_MAX = 2;
+int FLIP_ROTATION_COUNT_MAX = 3;
 int REPEAT_COUNT_MAX = 2;
 bool near_volatile_ = false;
 bool new_message_received = false;
@@ -145,7 +145,10 @@ void getBestPose()
   double best_volatile_distance = last_volatile_distance;
 
   // Start rotating the robot to minimise distance
+  // Sometimes the goal is skipped, and robot doesn't move. So sending consequitive orders.
   rotateRobot(driving_direction, 1.0);
+  rotateRobot(driving_direction, 1.0);
+  DrivingMode driving_execution;
 
   while (rotate_robot && ros::ok())
   {
@@ -172,9 +175,11 @@ void getBestPose()
           ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Flipping Direction");
           driving_direction = (driving_direction == POSITIVE) ? NEGATIVE : POSITIVE;
           if (driving_mode == ROTATE_ROBOT)
-            rotateRobot(driving_direction, 1 / (flip_rotation_count + 1));
+            // rotateRobot(driving_direction, 1 / (flip_rotation_count + 1));
+            driving_execution = ROTATE_ROBOT;
           else
-            driveRobotStraight(driving_direction, 1 / (flip_rotation_count + 1));
+            // driveRobotStraight(driving_direction, 1 / (flip_rotation_count + 1));
+            driving_execution = DRIVE_ROBOT_STRAIGHT;
           flip_rotation_count++;
         }
         else
@@ -189,14 +194,16 @@ void getBestPose()
             {
               ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Now linear optimisation");
               driving_mode = DRIVE_ROBOT_STRAIGHT;
-              driveRobotStraight(driving_direction, 1);
+              // driveRobotStraight(driving_direction, 1);
+              driving_execution = DRIVE_ROBOT_STRAIGHT;
               repeat_count++;
             }
             else
             {
               ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Now Rotational optimisation");
               driving_mode = ROTATE_ROBOT;
-              rotateRobot(driving_direction, 1);
+              // rotateRobot(driving_direction, 1);
+              driving_execution = ROTATE_ROBOT;
             }
           }
           else
@@ -209,10 +216,16 @@ void getBestPose()
         }
       }
 
+      if (driving_execution == ROTATE_ROBOT)
+        rotateRobot(driving_direction, 1 / (flip_rotation_count + 1));
+      else 
+        driveRobotStraight(driving_direction, 1 / (flip_rotation_count + 1));
+      
       last_volatile_distance = volatile_distance_;
     }
     else
     {
+      ROS_ERROR("Ohh noo ERRROR IN RESOURCE LOCALISE");
       // TODO: What is new message is not received?
       // This case may not arise normally, but can arise during battery low situation
       // as volatile sensor stops working in battery low mode
