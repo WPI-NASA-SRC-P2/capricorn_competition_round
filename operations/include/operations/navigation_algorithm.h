@@ -145,6 +145,14 @@ public:
   static std::vector<geometry_msgs::PointStamped> getRectangularScanningPoints(const int scout_number);
 
   /**
+   * @brief Returns the points on a straight path
+   * 
+   * @param scout_number Number of the scout for which points are needed. Only works with 1 or 2. 
+   * @return std::vector<geometry_msgs::Point> 
+   */  
+  static std::vector<geometry_msgs::PointStamped> getStraightScanningPoints(const int scout_number);
+
+  /**
    * @brief Get the Kinetic Energy object
    * 
    * @param vel           Velociry of the robot
