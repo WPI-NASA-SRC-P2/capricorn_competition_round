@@ -128,6 +128,7 @@ protected:
   typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> NavigationVisionClient;
   NavigationVisionClient *navigation_vision_client_;
   operations::NavigationVisionGoal navigation_vision_goal_;
+  operations::NavigationVisionResult navigation_vision_result_;
 
   typedef actionlib::SimpleActionClient<operations::HaulerAction> HaulerClient;
   HaulerClient *hauler_client_;
@@ -148,6 +149,28 @@ public:
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
    State& transition() override ;
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+   bool first_;
+   geometry_msgs::PoseStamped target_loc_;
+};
+
+class HaulerGoToScout : public HaulerState {
+public:   
+   HaulerGoToScout(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_TO_SCOUT, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
    
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
@@ -230,7 +253,6 @@ private:
    double begin_;
    double current_;
 };
-
 // class FollowExcavator : public HaulerState {
 // public:   
 //    FollowExcavator() : HaulerState(HAULER_FOLLOW_EXCAVATOR, 10) {}
@@ -335,6 +357,28 @@ public:
 
 private: 
    bool first_;
+};
+
+class HaulerGoToLoc : public HaulerState {
+public:   
+   HaulerGoToLoc(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_TO_LOC, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+   bool first_;
+   geometry_msgs::PoseStamped target_loc_;
 };
 
 class IdleState : public HaulerState {
