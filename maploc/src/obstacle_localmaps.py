@@ -64,7 +64,7 @@ class ObjectPlotter:
         metadata = MapMetaData()
         # define dimensions of blank occupancy grid
         # resolution units are (m/pixel), value of 0.05 matches rtabmap resolution
-        metadata.resolution = 0.25     
+        metadata.resolution = 0.20 
         # sets the map to be 20m x 20m regardless of resolution
         metadata.width = int(40 / metadata.resolution)  
         metadata.height = int(20 / metadata.resolution)
@@ -217,8 +217,11 @@ class ObjectPlotter:
     def gridPublisher(self):
         self.occGridPub.publish(self.occ_grid)
 
+
     # overall map editing function:
     def updateMap(self):
+        now = rospy.get_rostime()
+        rospy.loginfo("Current time %i %i", now.secs, now.nsecs)
         # set up and clear the 20x20 map
         self.resetOccGrid()
         # populate the map with the observed obstacles
@@ -228,14 +231,17 @@ class ObjectPlotter:
         # rospy.loginfo("Obstacle Added")
         # publish the mroap
         self.gridPublisher()
+        rospy.get_rostime()
+        then = rospy.get_rostime()
+        rospy.loginfo("Current time %i %i", then.secs, then.nsecs)
 
 
 # set up the node and then spin to operate on callbacks
 if __name__ == "__main__":
     # initialize node
     rospy.init_node("Ground_Truth_Localmaps")
+    rospy.loginfo("[MAPLOC | obstacle_localmaps.py | " + str(sys.argv[1]) + "]: ground_truth_localmaps node, online")
     # instantiate the object plotter to begin mapping
-    rospy.loginfo("[MAPLOC | obstacle_localmaps.py | " + str(sys.argv[1]) + "]: ground_truth_localmaps node, online") 
     ObstacleMap = ObjectPlotter()
     # this node works entirely based on the callback functions, thus just need to spin in main loop after creating the plotter object
     rospy.spin()

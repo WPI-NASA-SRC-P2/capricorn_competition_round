@@ -28,9 +28,9 @@
     <group ns="/capricorn/$(arg robot_name)">      
         <param name="cheat_odom" value="$(arg use_cheat_odom)"/>
           
-        <include file="$(find planning)/launch/planner.launch">
+        <!-- <include file="$(find planning)/launch/planner.launch">
 			<arg name="robot_name" value="$(arg robot_name)" />
-	    </include>
+	    </include> -->
 <!-- 
         <include file="$(find operations)/launch/navigation.launch">
             <arg name="robot_name" value="$(arg robot_name)" />
