@@ -30,11 +30,11 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   ROS_INFO("map mutex unlocked - 3");
 
   CSpace::getCSpace(global_oGrid_, 50, 5); 
-  while(ros::ok())
-  {
-    ROS_INFO("something");
-    ros::Duration(0.1).sleep();
-  }
+  // while(ros::ok())
+  // {
+  //   ROS_INFO("something");
+  //   ros::Duration(0.1).sleep();
+  // }
   ROS_INFO("padded map generated - 4");
 
   #ifdef DEBUG_INSTRUMENTATION

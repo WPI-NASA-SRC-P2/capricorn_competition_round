@@ -209,7 +209,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
       {
         if(oGrid.data[i * oGrid.info.width] > threshold) continue;
         minDist = distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height);
-        distFromRobot = distGridToPoint(i, robotLocation, oGrid.info.width, oGrid.info.height);
+        distFromRobot = distGridToPoint(oGrid.info.width * i, robotLocation, oGrid.info.width, oGrid.info.height);
         optmlDist = minDist + distFromRobot;
         bestIndex = oGrid.info.width * i;
       }
@@ -218,7 +218,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
       {
         if(oGrid.data[oGrid.info.width * (i + 1)] > threshold) continue;
         minDist = distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height);
-        distFromRobot = distGridToPoint(i, robotLocation, oGrid.info.width, oGrid.info.height);
+        distFromRobot = distGridToPoint((oGrid.info.width * (i + 1)) - 1, robotLocation, oGrid.info.width, oGrid.info.height);
         optmlDist = minDist + distFromRobot;
         bestIndex = (oGrid.info.width * (i + 1)) - 1;
       }
@@ -227,7 +227,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
       {
         if(oGrid.data[oGrid.data.size() - 1 - i] > threshold) continue;
         minDist = distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height);
-        distFromRobot = distGridToPoint(i, robotLocation, oGrid.info.width, oGrid.info.height);
+        distFromRobot = distGridToPoint(oGrid.data.size() - 1 - i, robotLocation, oGrid.info.width, oGrid.info.height);
         optmlDist = minDist + distFromRobot;
         bestIndex = oGrid.data.size() - 1 - i;
       }
