@@ -264,8 +264,17 @@ public:
    void step() override;
    void exitPoint() override;
    State& transition() override{}; 
+
+   //helper functions to navigate to toward Scout 
+   void navToScout();
+   void closeInToScout();
 private:
    bool first_;
+   int step_;
+   bool preParking_nav_vision_succeeded_;
+   bool preParking_nav_succeeded_;
+
+
 };
 
 class ExcavatorGoToLoc : public ExcavatorState {
