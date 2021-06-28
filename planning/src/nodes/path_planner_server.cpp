@@ -20,19 +20,38 @@ std::string robot_name_ = "";
 bool map_received_ = false;
 
 bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
-{
-  std::lock_guard<std::mutex> lock(oGrid_mutex_);
-  auto paddedGrid = CSpace::getCSpace(global_oGrid_, 50, 10);
+{ 
+  ROS_INFO("generator started - 1");
+  std::unique_lock<std::mutex> locationLock(oGrid_mutex_);
+  // nav_msgs::OccupancyGrid global_oGrid_CPY = global_oGrid_;
+  ROS_INFO("occgrid assigned - 2");
+  locationLock.unlock();
+
+  ROS_INFO("map mutex unlocked - 3");
+
+  CSpace::getCSpace(global_oGrid_, 50, 5); 
+  while(ros::ok())
+  {
+    ROS_INFO("something");
+    ros::Duration(0.1).sleep();
+  }
+  ROS_INFO("padded map generated - 4");
 
   #ifdef DEBUG_INSTRUMENTATION
-  debug_oGridPublisher.publish(paddedGrid);
+  ROS_INFO("before");
+  debug_oGridPublisher.publish(global_oGrid_);
+  ROS_INFO("after");
   #endif
+  ROS_INFO("padded ogrid published - 5");
 
-  auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, 50, robot_name_);
+  ROS_INFO("Path is being calculated .... - 6");
+  nav_msgs::Path path = AStar::findPathOccGrid(global_oGrid_, req.targetPose.pose.position, 50, robot_name_);
+  ROS_INFO("Path is calculated - 7");
 
   #ifdef DEBUG_INSTRUMENTATION
   debug_pathPublisher.publish(path);
   #endif
+  ROS_INFO("Path is published - 8");
 
   if(path.poses.size() > 0) {
     planning::TrajectoryWithVelocities trajectory;
@@ -44,14 +63,18 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
     return true;
   } else {
     ROS_WARN("[planning | path_planner_server | %s]: No Poses Set.", robot_name_);
+    return false;
   }
+
   return false;
+ 
 }
 
-void PathServer::oGridCallback(nav_msgs::OccupancyGrid::ConstPtr oGrid)
+void PathServer::oGridCallback(const nav_msgs::OccupancyGrid& oGrid)
 {
   std::lock_guard<std::mutex> lock(oGrid_mutex_);
-  global_oGrid_ = *oGrid;
+  global_oGrid_ = oGrid;
+  ROS_INFO(" new map received");
   map_received_ = true;
 }
 
@@ -81,6 +104,7 @@ int main(int argc, char *argv[])
 
   while(!map_received_ && ros::ok())
   {
+    ROS_INFO("Map Not Received");
     ros::Duration(0.1).sleep();
     ros::spinOnce();
   }
