@@ -179,9 +179,6 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   // }
 
   auto origin = std::make_pair<double, int>(0, std::move(centerIndex));
-  Point robotLocation;
-  robotLocation.y = 0;
-  robotLocation.x = 0;
 
   // Check if the target is outside of the current occupancy grid
   // If it is, we need to find the closest point on the edge of the occupancy grid to the target.
@@ -189,46 +186,36 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   {
 	  std::cout << (" index outside. finding closest edge ....- \n");
     ROS_INFO("[planning | astar | %s]: Finding New index...", robot_name);
-    float distFromRobot = INFINITY;
     float minDist = INFINITY;
-    float optmlDist = INFINITY;
     int bestIndex = centerIndex;
     for (int i = 0; i < oGrid.info.width; ++i)
     {
       // Loop through the bottom edge
-      if ((distGridToPoint(i, target, oGrid.info.width, oGrid.info.height) < optmlDist))
+      if ((distGridToPoint(i, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
         if(oGrid.data[i] > threshold) continue;
         minDist = distGridToPoint(i, target, oGrid.info.width, oGrid.info.height);
-        distFromRobot = distGridToPoint(i, robotLocation, oGrid.info.width, oGrid.info.height);
-        optmlDist = minDist + distFromRobot;
         bestIndex = i;
       }
       // Loop through the right edge
-      if ((distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height) < optmlDist))
+      if ((distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
         if(oGrid.data[i * oGrid.info.width] > threshold) continue;
         minDist = distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height);
-        distFromRobot = distGridToPoint(i, robotLocation, oGrid.info.width, oGrid.info.height);
-        optmlDist = minDist + distFromRobot;
         bestIndex = oGrid.info.width * i;
       }
       // Loop through the left edge
-      if ((distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height) < optmlDist))
+      if ((distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
         if(oGrid.data[oGrid.info.width * (i + 1)] > threshold) continue;
         minDist = distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height);
-        distFromRobot = distGridToPoint(i, robotLocation, oGrid.info.width, oGrid.info.height);
-        optmlDist = minDist + distFromRobot;
         bestIndex = (oGrid.info.width * (i + 1)) - 1;
       }
       // Loop through the top
-      if ((distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height) < optmlDist))
+      if ((distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height) < minDist))
       {
         if(oGrid.data[oGrid.data.size() - 1 - i] > threshold) continue;
         minDist = distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height);
-        distFromRobot = distGridToPoint(i, robotLocation, oGrid.info.width, oGrid.info.height);
-        optmlDist = minDist + distFromRobot;
         bestIndex = oGrid.data.size() - 1 - i;
       }
     }
