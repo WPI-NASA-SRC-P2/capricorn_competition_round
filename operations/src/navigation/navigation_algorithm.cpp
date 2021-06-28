@@ -198,7 +198,7 @@ std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRectangularScanningP
   return points;
 }
 
-std::vector<geometry_msgs::PointStamped> NavigationAlgo::getStraightScanningPoints(const int scout_number)
+std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRadialScanningPoints(const int scout_number)
 {
   #define PI 3.14159265
 
