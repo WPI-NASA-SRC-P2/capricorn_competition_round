@@ -62,10 +62,10 @@ void RobotScheduler::desiredStateCB(const state_machines::robot_desired_state::C
       new_state_request = true;
       new_state_ = (STATE_MACHINE_TASK) msg->robot_desired_state;
       goal_pose_ = msg->goal_pose;
-      ROS_INFO_STREAM(" state_machines | common_robot_state_machine.h | RobotScheduler | Pose RECEIVED = " << goal_pose_);
-      ROS_INFO_STREAM("New state received: " << new_state_);             //Checking if the casting isn't messed up. 
+      // ROS_INFO_STREAM(" state_machines | common_robot_state_machine.h | RobotScheduler | Pose RECEIVED = " << goal_pose_);
+      // ROS_INFO_STREAM("New state received: " << new_state_);             //Checking if the casting isn't messed up. 
    }  
-   ROS_WARN_STREAM("New state received: " << new_state_ << "but nothing happens! Robot name = " << msg->robot_name<< "Our own robot name = " << robot_name_);               
+   // ROS_WARN_STREAM("New state received: " << new_state_ << "but nothing happens! Robot name = " << msg->robot_name<< "Our own robot name = " << robot_name_);               
     
 }
 
