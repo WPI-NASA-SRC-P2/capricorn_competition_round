@@ -44,7 +44,6 @@ std::array<int, 8> AStar::getNeighborsIndiciesArray(int pt, int widthOfGrid, int
   neighbors[5] = ((pt - widthOfGrid) < 0)     || ((pt - widthOfGrid) > sizeOfGrid) ? -1     : pt - widthOfGrid;
   neighbors[6] = ((pt - widthOfGrid + 1) < 0) || ((pt - widthOfGrid + 1) > sizeOfGrid) ? -1 : pt - widthOfGrid + 1;
   neighbors[7] = ((pt - widthOfGrid - 1) < 0) || ((pt - widthOfGrid - 1) > sizeOfGrid) ? -1 : pt - widthOfGrid - 1;
-  std::cout << ("target index calculated .....- \n");
 
   return neighbors;
 }
@@ -111,7 +110,6 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
   }
 
   p.poses.push_back(lastPs);
-	std::cout << ("list of waypoints generated .....- \n");
   return p;
 }
 
@@ -126,23 +124,12 @@ float AStar::distGridToPoint(int index, Point p1, int width, int height)
 
 Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, int threshold, std::string & robot_name)
 {
-
-	std::cout << ("started Astar - 1\n");
-
-	std::cout << ("oGrid - 1\n");
-
-	ROS_INFO_STREAM("res = "<<  oGrid.info.resolution);
-
   // Convert meters -> grid units
   target.x = target.x/oGrid.info.resolution;
   target.y = std::round(target.y/oGrid.info.resolution); //ROUNDING OPERATION NECESSARY - DO NOT CHANGE
 
-	std::cout << ("x = %f \n",  target.x );
-	std::cout << ("y= %f \n",  target.y );
-
   if (oGrid.data.size() == 0)
   {
-	  std::cout << (" OGrid is empty - 2\n");
     ROS_WARN("[planning | astar | %s]: Occupancy Grid is Empty.", robot_name);
     return Path();
   }
@@ -154,29 +141,28 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   int endIndex = 0;
   int centerIndex = (oGrid.info.height / 2) * oGrid.info.width + oGrid.info.width / 2;
 
-	std::cout << ("calculated index");
 
-  ROS_INFO("centerIndex calculated");
+  ROS_WARN("centerIndex calculated");
 
-  // if(oGrid.data[centerIndex] > threshold)
-  // {
-  //   ROS_INFO("Start pose in the padding...");
-  //   PoseStamped firstPoint;
-  //   firstPoint.pose.position.x = 0.0;
-  //   firstPoint.pose.position.y = 0.0;
+  if(oGrid.data[centerIndex] > threshold)
+  {
+    ROS_WARN("Start pose in the padding...");
+    PoseStamped firstPoint;
+    firstPoint.pose.position.x = 0.0;
+    firstPoint.pose.position.y = 0.0;
     
-  //   PoseStamped secondPoint;
-  //   secondPoint.pose.position.x = 2.0;
-  //   secondPoint.pose.position.y  = 0;
+    PoseStamped secondPoint;
+    secondPoint.pose.position.x = 2.0;
+    secondPoint.pose.position.y  = 0;
 
-  //   //new path if the robot's index in
-  //   Path path;
-  //   path.poses.push_back(firstPoint);
-  //   path.poses.push_back(secondPoint);
+    //new path if the robot's index in
+    Path path;
+    path.poses.push_back(firstPoint);
+    path.poses.push_back(secondPoint);
 
-  //   return path;
+    return path;
 
-  // }
+  }
 
   auto origin = std::make_pair<double, int>(0, std::move(centerIndex));
 
@@ -184,8 +170,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   // If it is, we need to find the closest point on the edge of the occupancy grid to the target.
   if ((int)target.x > (int)oGrid.info.width / 2 || (int)target.x < (int)-(oGrid.info.width / 2) || (int)target.y > (int)oGrid.info.height / 2 || (int)target.y < (int)-(oGrid.info.height / 2))
   {
-	  std::cout << (" index outside. finding closest edge ....- \n");
-    ROS_INFO("[planning | astar | %s]: Finding New index...", robot_name);
+    ROS_WARN("[planning | astar | %s]: Finding New index...", robot_name);
     float minDist = INFINITY;
     int bestIndex = centerIndex;
     for (int i = 0; i < oGrid.info.width; ++i)
@@ -221,27 +206,17 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
     }
     // Set end to the new closest point
     endIndex = bestIndex;
-
-	  std::cout << ("target index calculated .....- \n");
-
   }
   else
   {
-	  std::cout << ("target index on the occgrid.....- \n");
-
     // If the target point was on the grid, just calculate the index of the point (with the center being 0,0)
     endIndex = (target.y + (oGrid.info.height / 2)) * oGrid.info.width + (target.x + (oGrid.info.width / 2));
-    ROS_INFO("[planning | astar | %s]: Calculated Index: %d", robot_name, endIndex);
-
-	  std::cout << ("target index calculated .....- \n");
-
+    ROS_WARN("[planning | astar | %s]: Calculated Index: %d", robot_name, endIndex);
   }
   // Check if the final destination is occupied.
   if (oGrid.data[endIndex] > threshold)
   {
-	  std::cout << ("target index on obstacle - no path found - \n");
-
-    ROS_INFO("[planning | astar | %s]: TARGET IN OCCUPIED SPACE, UNREACHABLE", robot_name);
+    ROS_WARN("[planning | astar | %s]: TARGET IN OCCUPIED SPACE, UNREACHABLE", robot_name);
     return Path();
   }
 
@@ -267,7 +242,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
     }
 
     // If the node is occupied, we can't travel through it so skip it
-    if (oGrid.data[current.second] > threshold)
+    if (oGrid.data[current.second] >= threshold)
       continue;
 
     // Search the neighbors, and set the heuristic scores
@@ -287,6 +262,6 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
     }
   }
 
-  ROS_INFO("[planning | astar | %s]: Call to navigation failed to find valid path.\n", robot_name);
+  ROS_WARN("[planning | astar | %s]: Call to navigation failed to find valid path.\n", robot_name);
   return Path();
 }

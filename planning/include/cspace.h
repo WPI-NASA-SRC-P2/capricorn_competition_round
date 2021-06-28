@@ -35,5 +35,5 @@ public:
 	 * @param radius the radius in cell units of the CSpace
 	 * @return OccupancyGrid The Occupancy Grid with the CSpace included
 	 */
-	static void getCSpace(nav_msgs::OccupancyGrid &grid, int threshold, int paddingRadius);
+	static nav_msgs::OccupancyGrid getCSpace(nav_msgs::OccupancyGrid &grid, int threshold, int paddingRadius);
 };
