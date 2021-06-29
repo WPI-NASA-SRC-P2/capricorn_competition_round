@@ -206,29 +206,31 @@ public:
 
 private: 
    bool first_;
-};
-
-class ResetOdom : public HaulerState {
-public:   
-   ResetOdom(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_RESET_ODOM, nh, robot_name) {}
-
-   // define transition check conditions for the state (transition() is overriden by each individual state)
-   State& transition() override ;
-
-   // define transition check conditions for the state (isDone() is overriden by each individual state)
-   bool isDone() override;
-   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
-   bool hasSucceeded() override;
-
-   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
-   void entryPoint() override;
-   void step() override;
-   void exitPoint() override;
-
-private: 
-   bool first_;
+   // reset odom service is called in the exitstate
    maploc::ResetOdom reset_srv_;
 };
+
+// class ResetOdom : public HaulerState {
+// public:   
+//    ResetOdom(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_RESET_ODOM, nh, robot_name) {}
+
+//    // define transition check conditions for the state (transition() is overriden by each individual state)
+//    State& transition() override ;
+
+//    // define transition check conditions for the state (isDone() is overriden by each individual state)
+//    bool isDone() override;
+//    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+//    bool hasSucceeded() override;
+
+//    // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+//    void entryPoint() override;
+//    void step() override;
+//    void exitPoint() override;
+
+// private: 
+//    bool first_;
+//    maploc::ResetOdom reset_srv_;
+// };
 
 class UndockHopper : public HaulerState {
 public:   

@@ -39,7 +39,7 @@ std::string g_robot_name;
 geometry_msgs::PoseStamped g_robot_pose;
 
 const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
-const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05, TIMER_THRESH = 20.0;
+const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 1, g_angular_vel_step_size = 0.05, TIMER_THRESH = 20.0;
 const double NOT_AVOID_OBSTACLE_THRESHOLD = 5.0;
 std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex, g_clock_mutex;
 std::string g_desired_label;
@@ -49,7 +49,7 @@ int g_height_threshold = 400;
 enum HEIGHT_THRESHOLD
 {
     EXCAVATOR = 170,
-    SCOUT = 200,
+    SCOUT = 220,
     HAULER = 200,
     PROCESSING_PLANT = 340,
     REPAIR_STATION = 340,
