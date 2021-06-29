@@ -9,7 +9,7 @@
 <launch>
 
     <!-- target_robot_name is the robot that is being used as goal pose, driving_robot_name is the robot that is receiving the desired pose -->
-    <arg name="target_robot_name" /> 
+    <arg name="target_robot_name" default="none"/> 
     <arg name="driving_robot_name" default="small_hauler_1" />
     <arg name="desired_state" default="32" />
     

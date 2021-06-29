@@ -274,11 +274,24 @@ public:
    void exitPoint() override;
    State& transition() override{}; 
 
+   // movements for getting into position at volatile w.r.t. hauler
+   void goToVolatile();
+   void centerHauler();
+   void getInArmPosition();
+
 private:
    bool first_;
-   
+   int goal_;
+   enum goal_states_
+   {
+      GO_TO_VOLATILE = 1,
+      CENTER_TO_HAULER = 2,
+      GET_IN_DIGGING_POSITION = 3
+   };
 
-
+   bool goToVolatileDone_;
+   bool centerHaulerDone_;
+   bool getInArmPositionDone_;
 };
 
 class ExcavatorGoToLoc : public ExcavatorState {
