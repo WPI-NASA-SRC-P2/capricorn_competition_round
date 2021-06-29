@@ -17,7 +17,7 @@ private:
 public:
   ros::Subscriber oGrid_subscriber;
 
-  void oGridCallback(nav_msgs::OccupancyGrid::ConstPtr oGrid);
+  void oGridCallback(const nav_msgs::OccupancyGrid oGrid);
   void locationCallback(nav_msgs::Odometry location);
   bool trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res);
 };
