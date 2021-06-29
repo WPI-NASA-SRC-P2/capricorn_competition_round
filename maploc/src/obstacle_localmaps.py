@@ -66,6 +66,7 @@ class ObjectPlotter:
 
         # set up the 2D OccupancyGrid with robot base frame as origin
         # - the origin is at bottom left. The origin will be translated to the center of the map in plotting function and publishing
+        self.occ_grid.header.frame_id = "small_scout_1_base_footprint"
         self.occ_grid.info = metadata
         # initialize map data as all zeros
         UNOCCUPIED = 0

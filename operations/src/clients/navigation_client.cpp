@@ -73,7 +73,7 @@ void navigationCB(const geometry_msgs::Point::ConstPtr &goal_point)
     
     //Simple waypoint x meters in front of the robot
     geometry_msgs::PoseStamped t1;
-    t1.header.frame_id = "map";
+    t1.header.frame_id =  "map";
     t1.header.stamp = ros::Time::now();
     t1.pose.position.x = goal_point->x;
     t1.pose.position.y = goal_point->y;

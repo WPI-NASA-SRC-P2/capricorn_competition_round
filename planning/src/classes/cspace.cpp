@@ -38,23 +38,23 @@ void CSpace::recursiveSearchNeighbors(const int pt, const int radius, const int 
 	}
 }
 
-void CSpace::getCSpace(nav_msgs::OccupancyGrid &oGrid, const int threshold, const int radius)
+nav_msgs::OccupancyGrid CSpace::getCSpace(nav_msgs::OccupancyGrid &oGrid, const int threshold, const int radius)
 {
 
-	//OccupancyGrid paddedGrid = oGrid;
+	OccupancyGrid paddedGrid = oGrid;
 
 	for (int i = 0; i < oGrid.data.size(); ++i)
 	{
 		if (oGrid.data[i] > threshold)
 		{
-			recursiveSearchNeighbors(i, radius, threshold, oGrid, oGrid);
+			recursiveSearchNeighbors(i, radius, threshold, paddedGrid, oGrid);
 		}
 		if (oGrid.data[i] == -1)
-			oGrid.data[i] = 0;
+			paddedGrid.data[i] = 0;
 
 	std::cout << ("end of for loop - 3\n");
 		
 	}
 	//std::cout << ("out of for loop - 4\n");
-	//return oGrid;
+	return paddedGrid;
 }
