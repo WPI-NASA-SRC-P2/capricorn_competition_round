@@ -52,16 +52,16 @@ class ObjectPlotter:
     def resetOccGrid(self):
         metadata = MapMetaData()
         # define dimensions of blank occupancy grid
-        metadata.resolution = .20 # (m/pixel) 0.05 matches rtabmap resolution
-        metadata.width = int(60/metadata.resolution) # sets the map to be 20m x 20m regardless of resolution
-        metadata.height = int(60/metadata.resolution)
+        metadata.resolution = 0.05 # (m/pixel) 0.05 matches rtabmap resolution
+        metadata.width = int(20/metadata.resolution) # sets the map to be 20m x 20m regardless of resolution
+        metadata.height = int(20/metadata.resolution)
 
         # we use a blank pose centered in the map as opposed to the robot pose from odom at the moment. Everything is still w.r.t. robot base frame so the relative positions are correct
         base_frame = Pose()
         # offset the map such that the bottom left of the map is -10m x -10m to the bottom left of the robot
         # thus making the robot pose be the center of the map
-        base_frame.position.x = -30
-        base_frame.position.y = -30
+        base_frame.position.x = -10
+        base_frame.position.y = -10
         metadata.origin = base_frame 
 
         # set up the 2D OccupancyGrid with robot base frame as origin
@@ -93,8 +93,8 @@ class ObjectPlotter:
     # 100 = obstacle, -1 = unexplored, 0 = free
     def addObstacle(self, obx, oby, radius):
         # plot everything w.r.t. center of the grid
-        obx = obx + 30
-        oby = oby + 30
+        obx = obx + 10
+        oby = oby + 10
         # convert meters to pixels
         no_zeroes_here = 0.0
         if(self.occ_grid.info.resolution == 0):                           #HOTFIX: TO PREVENT DIVIDE-BY-ZERO-ERROR
