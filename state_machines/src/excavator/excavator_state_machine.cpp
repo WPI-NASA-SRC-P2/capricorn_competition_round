@@ -253,6 +253,7 @@ void ParkAndPub::closeInToScout()
    navigation_client_->sendGoal(navigation_action_goal_);
    ros::Duration(0.5).sleep();
    //first_ = true;
+   //hello, you don't see this line at all :D
 }
 
 // void ParkAndPub::entryPoint()
