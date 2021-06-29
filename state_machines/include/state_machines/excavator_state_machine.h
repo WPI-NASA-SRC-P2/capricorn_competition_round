@@ -210,7 +210,7 @@ private:
   double begin_;
   double current_;
    //   int step_;
-   const float crash_time_ = 2.7;  //time to move forward
+   //const float crash_time_ = 2.0;  //time to move forward
 };
 
 class DigAndDump : public ExcavatorState {

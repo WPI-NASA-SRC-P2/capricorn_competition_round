@@ -11,7 +11,7 @@
     <!-- target_robot_name is the robot that is being used as goal pose, driving_robot_name is the robot that is receiving the desired pose -->
     <arg name="target_robot_name" default="none"/> 
     <arg name="driving_robot_name" default="small_hauler_1" />
-    <arg name="desired_state" default="32" />
+    <arg name="desired_state" default="33" />
     
     <!-- Launch the publisher -->
     <node name="$(arg driving_robot_name)_desired_state_node_publisher" pkg="state_machines" type="desired_state_node.py" output="screen" args="$(arg target_robot_name) $(arg driving_robot_name) $(arg desired_state)" />
