@@ -270,7 +270,7 @@ class ObjectPlotter:
                 #obx, oby = self.transform(obx, oby, self.robot_name)
                 
                 # set radius of object to be plotted based on the width of the bounding box observed
-                radius = (obj.width)/2
+                radius = (obj.width+2)/2 ####increasing the obstacle size
                 # plot the obstacle onto the occupancy grid
                 self.addObstacle(obx, oby, radius)      
         
