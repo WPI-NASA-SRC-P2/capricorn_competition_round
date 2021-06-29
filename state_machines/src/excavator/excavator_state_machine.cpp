@@ -196,16 +196,10 @@ void ParkAndPub::entryPoint()
 
 void ParkAndPub::step()
 {
-   if(first_)
-   {
-    // centers excavator to scout to ensure proper scout undock/reset (excavator already reaches close to scout in GoToScout)
-    navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS;
-    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
-    navigation_vision_client_->sendGoal(navigation_vision_goal_);
-    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "NAV VISION GOAL SENT");
-    // once at centering, keep centering until finished, then will exit the state 
-    first_ = false;
-   }
+      if(first_){
+         closeInToScout();
+         first_ = false;
+      }
 }
 
 void ParkAndPub::exitPoint()
@@ -229,6 +223,36 @@ bool ParkAndPub::hasSucceeded()
    if(last_state_succeeded_)
       ROS_WARN_STREAM("Park and Pub to Scout Completed Successfully");
    return last_state_succeeded_;
+}
+
+void ParkAndPub::navToScout()
+{
+   //use vision nav to get to scout
+   navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS;
+   navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
+   navigation_vision_client_->sendGoal(navigation_vision_goal_);
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "NAV VISION GOAL SENT");
+    // once at centering, keep centering until finished, then will exit the state 
+   //first_ = false;
+}
+
+
+void ParkAndPub::closeInToScout()
+{
+   //move closer toward scout
+   navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+   navigation_action_goal_.forward_velocity = 0.6;   
+   navigation_action_goal_.angular_velocity = 0;
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
+   navigation_client_->sendGoal(navigation_action_goal_);
+   ros::Duration(crash_time_).sleep();
+   navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+   navigation_action_goal_.forward_velocity = 0.0;   
+   navigation_action_goal_.angular_velocity = 0;
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
+   navigation_client_->sendGoal(navigation_action_goal_);
+   ros::Duration(0.5).sleep();
+   //first_ = true;
 }
 
 // void ParkAndPub::entryPoint()
@@ -306,22 +330,32 @@ void PreParkHauler::entryPoint()
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Pre-parking to Hauler");
    // begin_ = ros::Time::now().toSec();
    // current_ = ros::Time::now().toSec();
-   //first_ = true;
-   step_ = 1;  //
-   step_ = 3;  //
+   first_ = true;
+   // step_ = 1;  //
+   // step_ = 3;  //
 
-   //navVision_ = true;
-   //nav_ = true;
-   preParking_nav_vision_succeeded_ = false;
-   preParking_nav_succeeded_ = false;
+   // //navVision_ = true;
+   // //nav_ = true;
+   // preParking_nav_vision_succeeded_ = false;
+   // preParking_nav_succeeded_ = false;
    
 }
 
 /** TODO: Fix step() to actually park/pub, not just drive straight */ 
 void PreParkHauler::step()
 {
-   // test 1;
-      navToScout();
+   if(first_)
+   {
+    // centers excavator to scout to ensure proper scout undock/reset (excavator already reaches close to scout in GoToScout)
+    navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS;
+    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
+    navigation_vision_client_->sendGoal(navigation_vision_goal_);
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "NAV VISION GOAL SENT");
+    // once at centering, keep centering until finished, then will exit the state 
+    first_ = false;
+   }
+   // test 1; Succeeded
+      //navToScout();
    // test 2;
       //closeInToScout();
    // test 3;
@@ -439,37 +473,7 @@ void PreParkHauler::step()
    // }
 }
 
-void PreParkHauler::navToScout()
-{
-   //use vision nav to get to scout
-   navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS;
-   navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
-   navigation_vision_client_->sendGoal(navigation_vision_goal_);
-   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "NAV VISION GOAL SENT");
-    // once at centering, keep centering until finished, then will exit the state 
-   //first_ = false;
-}
 
-
-void PreParkHauler::closeInToScout()
-{
-   //move closer toward scout
-   navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-   navigation_action_goal_.forward_velocity = -0.6;   
-   navigation_action_goal_.angular_velocity = 0;
-   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
-   navigation_client_->sendGoal(navigation_action_goal_);
-   ros::Duration(1).sleep();
-   navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-   navigation_action_goal_.forward_velocity = 0.0;   
-   navigation_action_goal_.angular_velocity = 0;
-   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
-   navigation_client_->sendGoal(navigation_action_goal_);
-   ros::Duration(0.5).sleep();
-   //first_ = true;
-   
-   
-}
 
 void PreParkHauler::exitPoint()
 {

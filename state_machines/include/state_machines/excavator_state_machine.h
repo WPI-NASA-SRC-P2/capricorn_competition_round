@@ -181,6 +181,9 @@ private:
   bool first_;
 };
 
+/**
+ * @brief the previous state "go to scout" needs to be centered with the scout for this statemachine to work successfully 
+ */
 class ParkAndPub : public ExcavatorState {
 public:
    ParkAndPub(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_PARK_AND_PUB, nh, robot_name) {}
@@ -197,11 +200,17 @@ public:
    void step() override;
    void exitPoint() override;
 
+   //helper functions to navigate to toward Scout 
+   void navToScout();       //centering code (isnt really needed if the previous state is already centering)
+   void closeInToScout();   //moves forward for X duration
+
 private: 
   bool first_;
   /** only used for timed stuff-- TODO: delete when no longer needed*/
   double begin_;
   double current_;
+   //   int step_;
+   const float crash_time_ = 2.7;  //time to move forward
 };
 
 class DigAndDump : public ExcavatorState {
@@ -265,14 +274,9 @@ public:
    void exitPoint() override;
    State& transition() override{}; 
 
-   //helper functions to navigate to toward Scout 
-   void navToScout();
-   void closeInToScout();
 private:
    bool first_;
-   int step_;
-   bool preParking_nav_vision_succeeded_;
-   bool preParking_nav_succeeded_;
+   
 
 
 };
