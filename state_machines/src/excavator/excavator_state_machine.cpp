@@ -225,6 +225,7 @@ bool ParkAndPub::hasSucceeded()
    return last_state_succeeded_;
 }
 
+/**Kind of unnecessary because when the excavator arrives at the scout, it is already centered*/
 void ParkAndPub::navToScout()
 {
    //use vision nav to get to scout
@@ -255,71 +256,6 @@ void ParkAndPub::closeInToScout()
    //first_ = true;
 }
 
-// void ParkAndPub::entryPoint()
-// {
-//    //set entry variables
-//    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Parking to Excavator");
-//    begin_ = ros::Time::now().toSec();
-//    current_ = ros::Time::now().toSec();
-// }
-
-// State& ParkAndPub::transition()
-// {
-//    // set transition condition (after 4 seconds, finish parking)
-//    if(current_ <= (begin_ + 4.0))
-//    {
-//       // ROS_INFO("remaining in park and pub state");
-//       return *this;
-//    }
-//    else
-//    {
-//       return getState(EXCAVATOR_DIG_AND_DUMP_VOLATILE);
-//    }   
-// }
-
-// /** TODO: Fix step() to actually park/pub, not just drive straight */ 
-// void ParkAndPub::step()
-// {
-//    /////////////////////////////////////////////
-//    //// Hardcoded straigh walk for 1.5 meters ////
-//    /////////////////////////////////////////////EXCAVATOR_PRE_PARK_MANEUVER
-//    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-//    navigation_action_goal_.forward_velocity = 0.6;   
-//    navigation_action_goal_.angular_velocity = 0;
-//    navigation_client_->sendGoal(navigation_action_goal_);
-//    // ros::Duration(0.1).sleep();
-//    ros::Duration(2).sleep();
-//    // current time (to ensure duration of action is only 4 seconds)
-//    current_ = ros::Time::now().toSec();
-
-//    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-//    navigation_action_goal_.forward_velocity = 0.0;   
-//    navigation_action_goal_.angular_velocity = 0;
-//    navigation_client_->sendGoal(navigation_action_goal_);
-//    ros::Duration(0.5).sleep();
-
-//    // return (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-// }
-
-// void ParkAndPub::exitPoint()
-// {
-//    // cleanup the state (cancel nav goal)
-//    ROS_INFO("Excavator Parking Completed");
-//    navigation_client_->cancelGoal();
-// }
-
-// bool ParkAndPub::isDone() {
-//    current_state_done_ = navigation_client_->getState().isDone();
-//    return current_state_done_;
-// } 
-
-// bool ParkAndPub::hasSucceeded() {
-
-//    last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-//    return last_state_succeeded_;
-// }
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// P R E _ P A R K _ H A U L E R   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -328,149 +264,45 @@ void PreParkHauler::entryPoint()
 {
    //set entry variables
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Pre-parking to Hauler");
-   // begin_ = ros::Time::now().toSec();
-   // current_ = ros::Time::now().toSec();
    first_ = true;
-   // step_ = 1;  //
-   // step_ = 3;  //
-
-   // //navVision_ = true;
-   // //nav_ = true;
-   // preParking_nav_vision_succeeded_ = false;
-   // preParking_nav_succeeded_ = false;
-   
+   goToVolatileDone_ = false;
+   centerHaulerDone_ = false;
+   getInArmPositionDone_ = false;
+   goal_= goal_states_::GO_TO_VOLATILE;
 }
 
-/** TODO: Fix step() to actually park/pub, not just drive straight */ 
+/** TODO: 
+ * Drive on top of volatile using NAV::MANUAL
+ * Center it to the hauler
+ * Finally, move the excavator back a little to make sure thearm digsa right at the volatile. 
+ * And set up an enum of goals and check for their completion and set flags. 
+ * Set up seperate functions for all goals. 
+ * */ 
 void PreParkHauler::step()
-{
-   if(first_)
+{  
+   switch (goal_)
    {
-    // centers excavator to scout to ensure proper scout undock/reset (excavator already reaches close to scout in GoToScout)
-    navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS;
-    navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
-    navigation_vision_client_->sendGoal(navigation_vision_goal_);
-    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "NAV VISION GOAL SENT");
-    // once at centering, keep centering until finished, then will exit the state 
-    first_ = false;
+   case GO_TO_VOLATILE:
+      goToVolatile();
+      if(goToVolatileDone_){
+         goal_ = goal_states_::CENTER_TO_HAULER;
+         first_ = true;
+      }
+      break;
+   case CENTER_TO_HAULER:
+      centerHauler();
+      if(centerHaulerDone_){
+         goal_ = goal_states_::GET_IN_DIGGING_POSITION;
+         first_ = true;
+      }
+      break;
+   case GET_IN_DIGGING_POSITION:
+      getInArmPosition();
+      break;
+   default:
+      ROS_WARN_STREAM("Incorrect goal found:"<<goal_);
+      break;
    }
-   // test 1; Succeeded
-      //navToScout();
-   // test 2;
-      //closeInToScout();
-   // test 3;
-      // step_ = 3 in setup
-   // test 4;
-      // step_ = 1 in setup
-
-                  // if(first_ && preParking_nav_vision_succeeded_)
-                  // {
-                  //    if(nav_){
-                  //       navtoScout();
-                  //       nav_ = false;
-                  //    }
-                  // }
-                  // else if(!first_ && preParking_nav_succeeded_)
-                  // {
-                  //    if(stepIn_){
-                  //       closeInToScout();
-                  //       stepIn_ = false;
-                  //    }
-                  // }
-
-   // switch(step_)
-   // {
-   //    case 1:
-   //       navToScout();
-   //       step_++;
-   //       break;
-   //    case 2:
-   //       preParking_nav_vision_succeeded_ = navigation_vision_client_->getState() == actionLib::SimpleClientGoalState::SUCCEEDED;
-   //       ROS_INFO_STREAM("PreParking Naviagtion Vision Server succeeded = " << preParking_nav_vision_succeeded_);
-   //       if(preParking_nav_vision_succeeded_){
-   //          step_++;
-   //       }
-   //       break;
-   //    case 3:
-   //       closeInToScout();  //treat as blocking code (good amount of delays)
-   //       step_++;
-   //       break;
-   //    case 4:
-   //       preParking_nav_succeeded_ = navigation_client_->getState() == actionLib::SimpleClientGoalState::SUCCEEDED;
-   //       ROS_INFO_STREAM("PreParking Naviagtion Server Succeeded = " << preParking_nav_succeeded_);
-   //       if(preParking_nav_succeeded_){
-   //          step_++;
-   //       }
-   //       break;
-   //    case 5:
-   //       ROS_INFO_STREAM("PreParking : Reached Step 5");
-   //       break;
-   // }
-
-   //what code was used before to get these two states
-   //digging_server_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   //preParking_nav_vision_succeeded = navigation_vision_client_->getState() == actionLib::SimpleClientGoalState::SUCCEEDED;
-   //preParking_nav_succeeded = navigation_client_->getState() == actionLib::SimpleClientGoalState::SUCCEEDED;
-
-   //ROS_INFO_STREAM("Digging server succeeded = " << preParking_nav_vision_succeeded_);
-   //ROS_INFO_STREAM("Digging server succeeded = " << preParking_nav_succeeded_);
-  
-   // if(first_)
-   // switch(step_)
-   // {
-   // case 1:
-
-   //    break;
-   // case 2:
-   //    stepUndockScout();
-   //    break;
-   // case 3:
-   //    stepParkExcavatorAtScout();
-   //    break;
-    ///////////////////////////////
-    /// WALK ON TOP OF VOLATILE ///
-    ///////////////////////////////
-
-   //  navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-   //  navigation_action_goal_.forward_velocity = 0.6;   
-   //  navigation_action_goal_.angular_velocity = 0;
-   //  ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
-   //  navigation_client_->sendGoal(navigation_action_goal_);
-   //  ros::Duration(1).sleep();
-
-   //  navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-   //  navigation_action_goal_.forward_velocity = 0.0;   
-   //  navigation_action_goal_.angular_velocity = 0;
-   //  ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
-   //  navigation_client_->sendGoal(navigation_action_goal_);
-   //  ros::Duration(0.5).sleep();
-   //  navigation_client_->cancelGoal();
-    //////////////////////////////
-    /// FIND AND CENTER HAULER ///
-    //////////////////////////////
-   
-    
-    
-    //  navigation_vision_client_->waitForResult();
-
-    ///////////////////////////////////////
-    /// WALKING BACK TILL EXCAVATOR ARM ///
-    ///////////////////////////////////////
-
-   //  navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-   //  navigation_action_goal_.forward_velocity = -0.6;   
-   //  navigation_action_goal_.angular_velocity = 0;
-   //  ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
-   //  navigation_client_->sendGoal(navigation_action_goal_);
-   //  ros::Duration(1).sleep();
-
-   //  navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-   //  navigation_action_goal_.forward_velocity = 0.0;   
-   //  navigation_action_goal_.angular_velocity = 0;
-   //  ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
-   //  navigation_client_->sendGoal(navigation_action_goal_);
-   //  ros::Duration(0.5).sleep();
-   // }
 }
 
 
@@ -479,7 +311,8 @@ void PreParkHauler::exitPoint()
 {
    // cleanup the state (cancel nav goal)
    ROS_INFO("Excavator Parking Completed");
-   // navigation_client_->cancelGoal();
+   navigation_action_goal_.epsilon = 0.5;
+   navigation_client_->cancelGoal();
    navigation_vision_client_->cancelGoal();
 }
 
@@ -487,7 +320,7 @@ bool PreParkHauler::isDone() {
    // bool nav_done = navigation_client_->getState().isDone();
    
    // current_state_done_ = vis_nav_done && nav_done;
-   current_state_done_ = navigation_vision_client_->getState().isDone();
+   current_state_done_ = getInArmPositionDone_;
    if(current_state_done_)
       ROS_WARN_STREAM("PreParkHauler Completed");
    return current_state_done_;
@@ -496,17 +329,64 @@ bool PreParkHauler::isDone() {
 
 bool PreParkHauler::hasSucceeded() {
 
-   // bool vis_nav_success = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   // bool nav_success = navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
-   // last_state_succeeded_ = vis_nav_success && nav_success;
-   // ROS_INFO_STREAM("Vis_nav_success = " << last_state_succeeded_);
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = getInArmPositionDone_ && centerHaulerDone_;
    if(last_state_succeeded_)
       ROS_WARN_STREAM("PreParkHauler Completed Successfully");
    return last_state_succeeded_;
    // return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
+void PreParkHauler::goToVolatile() {
+   //use manual nav goal to get on top of the volatile (with epsilon of 0.1 for higher accuracy)
+   if(first_){
+      navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+      navigation_action_goal_.epsilon = 0.1;                      //TUNABLE
+      navigation_action_goal_.pose.header.frame_id = robot_name_+"_base_footprint";
+      navigation_action_goal_.pose.pose.position.x = 1.0;         //TUNABLE->Should sit as close to the volatile as possible. 
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "driving on top of volatile");
+      navigation_client_->sendGoal(navigation_action_goal_);
+      first_ = false;
+   }
+   else
+      goToVolatileDone_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}
+
+void PreParkHauler::centerHauler() {
+   // centers excavator to scout to ensure proper scout undock/reset (excavator already reaches close to scout in GoToScout)
+   if(first_) {
+      navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS;
+      navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_CENTER;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "NAV VISION GOAL SENT");
+      // once at centering, keep centering until finished, then will exit the state 
+      first_ = false;
+   }
+   else
+      centerHaulerDone_ = navigation_vision_client_->getState().isDone();
+      // centerHaulerDone_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+}
+
+void PreParkHauler::getInArmPosition() {
+   //use manual nav goal to get to good dig position
+   if(first_){
+      navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+      navigation_action_goal_.forward_velocity = -0.6;
+      navigation_action_goal_.angular_velocity = 0;
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "driving to digging position");
+      navigation_client_->sendGoal(navigation_action_goal_);
+      ros::Duration(0.5).sleep();
+      navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+      navigation_action_goal_.forward_velocity = 0.0;   
+      navigation_action_goal_.angular_velocity = 0;
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
+      navigation_client_->sendGoal(navigation_action_goal_);
+      ros::Duration(0.5).sleep();
+      first_ = false;
+   }
+   else
+      getInArmPositionDone_ = true;
+      // getInArmPositionDone_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// D I G  A N D  D U M P  C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
