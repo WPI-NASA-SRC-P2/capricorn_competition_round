@@ -38,7 +38,7 @@ void CSpace::recursiveSearchNeighbors(const int pt, const int radius, const int 
 	}
 }
 
-OccupancyGrid CSpace::getCSpace(nav_msgs::OccupancyGrid &oGrid, const int threshold, const int radius)
+nav_msgs::OccupancyGrid CSpace::getCSpace(nav_msgs::OccupancyGrid &oGrid, const int threshold, const int radius)
 {
 
 	OccupancyGrid paddedGrid = oGrid;
@@ -51,9 +51,10 @@ OccupancyGrid CSpace::getCSpace(nav_msgs::OccupancyGrid &oGrid, const int thresh
 		}
 		if (oGrid.data[i] == -1)
 			paddedGrid.data[i] = 0;
+
+	std::cout << ("end of for loop - 3\n");
+		
 	}
-
-
-	paddedGrid.header.frame_id = "odom";
+	//std::cout << ("out of for loop - 4\n");
 	return paddedGrid;
 }
