@@ -70,6 +70,7 @@ const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
     STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOC,
     STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT,
     STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB,
+    STATE_MACHINE_TASK::EXCAVATOR_PRE_HAULER_PARK_MANEUVER,
     STATE_MACHINE_TASK::EXCAVATOR_DIG_AND_DUMP_VOLATILE,
     STATE_MACHINE_TASK::EXCAVATOR_GOTO_DEFAULT_ARM_POSE,
     STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM_GROUND_TRUTH,
@@ -126,6 +127,7 @@ protected:
   typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> NavigationVisionClient;
   NavigationVisionClient *navigation_vision_client_;
   operations::NavigationVisionGoal navigation_vision_goal_;
+  operations::NavigationVisionResult navigation_vision_result_;
 
   typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
   NavigationClient *navigation_client_;
@@ -184,7 +186,7 @@ public:
    ParkAndPub(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_PARK_AND_PUB, nh, robot_name) {}
 
    // define transition check conditions for the state (transition() is overriden by each individual state)
-   State& transition() override ;
+   State& transition() override {};
    
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
@@ -196,6 +198,8 @@ public:
    void exitPoint() override;
 
 private: 
+  bool first_;
+  /** only used for timed stuff-- TODO: delete when no longer needed*/
   double begin_;
   double current_;
 };
@@ -216,8 +220,14 @@ public:
    void step() override;
    void exitPoint() override;
 
+   // helper functions for digging and dumping the volatile
+   void digVolatile();
+   void dumpVolatile();
+
 private: 
    bool volatile_found_;
+   bool digging_server_succeeded_;
+   bool last_state_dig_;
    bool dig_;
    bool dump_;
    int new_vol_loc_flag_;
@@ -240,6 +250,44 @@ public:
    void step() override{}
    void exitPoint() override{}
    State& transition() override{} 
+};
+
+class PreParkHauler : public ExcavatorState {
+public:   
+   PreParkHauler(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_PRE_HAULER_PARK_MANEUVER, nh, robot_name) {}
+
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+   State& transition() override{}; 
+private:
+   bool first_;
+};
+
+class ExcavatorGoToLoc : public ExcavatorState {
+public:   
+   ExcavatorGoToLoc(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_LOC, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+   bool first_;
+   geometry_msgs::PoseStamped target_loc_;
 };
 // #endif
 

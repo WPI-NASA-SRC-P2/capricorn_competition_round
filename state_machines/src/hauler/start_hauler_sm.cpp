@@ -45,7 +45,9 @@ int main(int argc, char *argv[])
       cSchd.addState(new ParkAtExcavator(nh, g_robot_name));
       cSchd.addState(new UndockExcavator(nh, g_robot_name));
       cSchd.addState(new DumpVolatile(nh, g_robot_name));
-	  cSchd.addState(new IdleState(nh, g_robot_name));
+			cSchd.addState(new HaulerGoToScout(nh, g_robot_name));
+			cSchd.addState(new HaulerGoToLoc(nh, g_robot_name));
+			cSchd.addState(new IdleState(nh, g_robot_name));
       cSchd.setInitialState(ROBOT_IDLE_STATE);
       cSchd.exec();
       return 0;

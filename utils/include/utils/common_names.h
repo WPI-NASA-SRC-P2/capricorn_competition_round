@@ -194,7 +194,7 @@ namespace COMMON_NAMES
     EXCAVATOR_GO_TO_SCOUT,           // Get close to the volatile when it is detected
     EXCAVATOR_PARK_AND_PUB,          // Publish a message that excavator has reached,
                                          // And park where the scout was located.
-    EXCAVATOR_PRE_PARK_MANEUVER,     // Centering the hauler for ease of parking
+    EXCAVATOR_PRE_HAULER_PARK_MANEUVER,     // Centering the hauler for ease of parking
     EXCAVATOR_DIG_AND_DUMP_VOLATILE, // Takes care of digging, and dumping
                                          // the volatile in hauler if volatile is found
     EXCAVATOR_GOTO_DEFAULT_ARM_POSE, // Moves excavator's arm to a default position used for object detection
@@ -223,6 +223,7 @@ namespace COMMON_NAMES
     HAULER_UNDOCK_HOPPER,    // undock from hopper (backward motion from hopper)
     HAULER_RESET_ODOM_AT_HOPPER, //face processing plant, park at hopper and then reset odom with ground truth
     HAULER_FACE_PROCESSING_PLANT, //face the processinf plant using NAV_VISION_TYPE::V_CENTER
+    HAULER_GO_TO_SCOUT,      // Hauler goes to the scout using NAV_VISION_TYPE::V_NAV_AND_NAV_VISION
     ROBOT_IDLE_STATE,
 
 

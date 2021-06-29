@@ -143,6 +143,8 @@ bool ScoutWaiting::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_E
       return false;
    }
 
+   micro_state = ROBOTS_TO_GOAL;
+
    volatile_site_location = robot_pose_register->getRobotPose(scout_in_team);
    return true;
 }

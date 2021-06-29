@@ -74,7 +74,6 @@ void TeamManager::recruitment()
    for(int i = 0; i < MAX_TEAMS; i++)
    {
       ROS_INFO_STREAM(all_teams.at(i)->getScout()<<"  "<<all_teams.at(i)->getExcavator()<<"  "<<all_teams.at(i)->getHauler());
-      ROS_WARN_STREAM("Team "<<i<<" task "<<all_teams.at(i)->getTeamMacroState());
       switch (all_teams.at(i)->getTeamMacroState())
       {
       case STANDBY:
@@ -104,6 +103,7 @@ void TeamManager::recruitment()
 
 bool TeamManager::hasScout(int team_index)
 {
+   scout_for_sale.at(team_index) = false;
    if(all_teams.at(team_index)->isScoutHired())
    {
       teams_need_scout.at(team_index) = false;
@@ -119,6 +119,7 @@ bool TeamManager::hasScout(int team_index)
 
 bool TeamManager::hasExcavator(int team_index)
 {
+   excavator_for_sale.at(team_index) = false;
    if(all_teams.at(team_index)->isExcavatorHired())
    {
       teams_need_excavator.at(team_index) = false;
@@ -134,6 +135,7 @@ bool TeamManager::hasExcavator(int team_index)
 
 bool TeamManager::hasHauler(int team_index)
 {
+   hauler_for_sale.at(team_index) = false;
    if(all_teams.at(team_index)->isHaulerHired())
    {
       teams_need_hauler.at(team_index) = false;
@@ -182,7 +184,7 @@ void TeamManager::fireHauler(int team_index)
    }
    else
    {
-      hauler_for_sale.at(team_index) = true;
+      hauler_for_sale.at(team_index) = false;
    }
 }
 

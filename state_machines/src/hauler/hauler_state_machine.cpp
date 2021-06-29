@@ -122,6 +122,55 @@ void GoToProcPlant::exitPoint()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// G O _ T O _ S C O U T   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HaulerGoToScout::entryPoint()
+{
+    // declare entrypoint variables
+    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Going to Scout (High Level Goal)");
+    // pose of the excavator, supposed to be provided by scheduler
+    target_loc_ = m_pcRobotScheduler->getDesiredPose();
+    
+    first_ = true;
+}
+
+void HaulerGoToScout::step()
+{
+    // go to excavator using planner+vision goal
+    if(first_)
+    {
+        
+        navigation_vision_goal_.mode = NAV_VISION_TYPE::V_NAV_AND_NAV_VISION;
+        navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_SCOUT_CLASS;
+        navigation_vision_goal_.goal_loc = target_loc_;
+        navigation_vision_client_->sendGoal(navigation_vision_goal_);
+        first_ = false;
+    }
+    // else   
+    //     ROS_INFO("Moving towards excavator");
+}
+
+bool HaulerGoToScout::isDone() {
+   current_state_done_ = navigation_vision_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool HaulerGoToScout::hasSucceeded() {
+   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   if(last_state_succeeded_)
+      ROS_WARN_STREAM("Go to Scout Completed Successfully");
+   return last_state_succeeded_;
+}
+
+void HaulerGoToScout::exitPoint()
+{
+    // clean up (cancel goals)
+    navigation_vision_client_->cancelGoal();
+    ROS_INFO("Reached scout, preparing to park");
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// P A R K _ A T _ H O P P E R   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -522,4 +571,48 @@ void DumpVolatile::exitPoint()
     // cleanup (cancel goal)
     hauler_client_->cancelGoal();
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Finished dumping volatile");
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// G O _ T O _ L O C   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HaulerGoToLoc::entryPoint()
+{
+    // declare entrypoint variables
+    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Go To Loc");
+    // pose of the excavator, supposed to be provided by scheduler
+    target_loc_ = m_pcRobotScheduler->getDesiredPose();    
+    first_ = true;
+}
+
+void HaulerGoToLoc::step()
+{
+    // go to excavator using planner+vision goal
+    if(first_)
+    {
+        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+        navigation_action_goal_.pose = target_loc_;
+        navigation_client_->sendGoal(navigation_action_goal_);
+        first_ = false;
+    }
+}
+
+bool HaulerGoToLoc::isDone() {
+   current_state_done_ = navigation_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool HaulerGoToLoc::hasSucceeded() {
+   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(last_state_succeeded_)
+      ROS_WARN_STREAM("Go to Scout Completed Successfully");
+   return last_state_succeeded_;
+}
+
+void HaulerGoToLoc::exitPoint()
+{
+    // clean up (cancel goals)
+    navigation_client_->cancelGoal();
+    ROS_INFO("Reached scout, preparing to park");
 }
