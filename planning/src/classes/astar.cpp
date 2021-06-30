@@ -198,7 +198,6 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
     float distFromRobot = INFINITY;
     float minDist = INFINITY;
     float optmlDist = INFINITY;
-    std::vector<int> localBestIndexList;
     int bestIndex = centerIndex;
     for (int i = 0; i < oGrid.info.width; ++i)
     {
