@@ -330,6 +330,43 @@ void undock()
 }
 
 /**
+ * @brief Function for undock hardcoded code at the proc plant
+ * 
+ * Steps:
+ * 1. Rotate robot util the desired object detection class has its bounding box in the center of the frame
+ * 2. Drive back from the object
+ */
+void hardcodedUndock()
+{
+    g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+    g_nav_goal.forward_velocity = 0;
+    g_nav_goal.direction = 0;
+    g_nav_goal.angular_velocity = -0.5;
+    g_nav_goal.angular_velocity = 0;
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    ros::Duration(0.5).sleep();
+    g_nav_goal.forward_velocity = 0;
+    g_nav_goal.direction = 0;
+    g_nav_goal.angular_velocity = 0.0;
+    g_nav_goal.angular_velocity = 0.5;
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    ros::Duration(0.5).sleep();
+    g_nav_goal.forward_velocity = 0;
+    g_nav_goal.direction = 0;
+    g_nav_goal.angular_velocity = 0.0;
+    g_nav_goal.angular_velocity = 0;
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    ros::Duration(0.01).sleep();
+    g_reached_goal = true;
+}
+
+/**
  * @brief Function for navigating a robot near to an object detection based class
  * 
  * Steps:
@@ -713,6 +750,13 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
             break;
         case NAV_VISION_TYPE::V_UNDOCK:
             undock();
+            if (g_send_nav_goal)
+            {
+                g_client->sendGoal(g_nav_goal);
+            }
+            break;
+        case NAV_VISION_TYPE::V_HARDCODED_UNDOCK:
+            hardcodedUndock();
             if (g_send_nav_goal)
             {
                 g_client->sendGoal(g_nav_goal);

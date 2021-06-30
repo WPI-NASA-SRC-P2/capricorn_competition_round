@@ -198,7 +198,7 @@ private:
 
 class ResetOdomAtHopper : public ScoutState {
 public:   
-   ResetOdomAtHopper(ros::NodeHandle nh, std::string robot_name) : ScoutState(ROBOT_IDLE_STATE, nh, robot_name) {}
+   ResetOdomAtHopper(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_RESET_ODOM, nh, robot_name) {}
 
    bool isDone() override;
    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
@@ -213,6 +213,7 @@ private:
    void parkAtHopper();
    void undockFromHopper();
    void resetOdom();
+   void idleScout(){}
 
    bool first_GTPP, first_PAH, first_UFH, macro_state_succeeded, macro_state_done;
    
@@ -220,7 +221,8 @@ private:
       GO_TO_PROC_PLANT,
       PARK_AT_HOPPER,
       UNDOCK_FROM_HOPPER,
-      RESET_ODOM_AT_HOPPER
+      RESET_ODOM_AT_HOPPER,
+      SCOUT_IDLE
    };
 
    bool state_done = false;
