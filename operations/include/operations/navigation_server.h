@@ -37,20 +37,26 @@ public:
     ~NavigationServer();
 
 private:
+    bool initial_turn_completed = false;
+
+    // Tolerances for linear and angular moves
+    const float DIST_EPSILON = 0.5;
+    const float ANGLE_EPSILON = 0.1;
+    float c_dist_epsilon_ = DIST_EPSILON;
+
     // Delta heading limits for smooth drive
-    const float MAX_TURNING_RAD = M_PI/2;
-    const float MIN_TURNING_RAD = -M_PI/2;
+    const float MAX_TURNING_RAD = M_PI/2 - ANGLE_EPSILON;
+    const float MIN_TURNING_RAD = -M_PI/2 + ANGLE_EPSILON;
+    const float HALF_VIEWING = M_PI/6;
 
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
     const float BASE_DRIVE_SPEED = 0.6;
     const float BASE_SPIN_SPEED = 0.3;
 
-    // Tolerances for linear and angular moves
-    const float DIST_EPSILON = 1.0;
-    const float ANGLE_EPSILON = 0.1;
-
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
-    const double TRAJECTORY_RESET_DIST = 5;
+    const double LARGE_TRAJECTORY_REST_DIST = 8; 
+    const double SMALL_TRAJECTORY_REST_DIST = 5; 
+    double trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
 
     std::string robot_name_;
 
@@ -236,6 +242,12 @@ private:
      * @return false Failed in driving the robot to the specified distance.
      */
     bool driveDistance(double delta_distance);
+
+    /**
+     * @brief Only used to request a new trajectory after the robot has performed the inital turn upon receiving new goal. Helps with obstacle detection.
+     *
+     */
+    void requestNewTrajectory(void);
 
     /**
      * @brief Execute a smooth drive to a waypoint. WARNING: Will keep moving after termination.
