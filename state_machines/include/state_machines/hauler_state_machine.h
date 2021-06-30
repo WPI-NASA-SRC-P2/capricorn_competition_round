@@ -249,11 +249,16 @@ public:
    void step() override;
    void exitPoint() override;
 
+   // reset odometry helper function
+   void resetOdom();
+
 private: 
    bool first_;
    geometry_msgs::PoseStamped target_loc_;
    double begin_;
    double current_;
+   bool reset_succeeded_;
+   bool undock_done_;
 };
 // class FollowExcavator : public HaulerState {
 // public:   
