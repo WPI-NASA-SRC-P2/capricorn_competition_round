@@ -140,31 +140,52 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
 
   int endIndex = 0;
   int centerIndex = (oGrid.info.height / 2) * oGrid.info.width + oGrid.info.width / 2;
-
+  
 
   ROS_WARN("centerIndex calculated");
 
+
+  //this code takes care of the case when the starting pose is in the padding area
   if(oGrid.data[centerIndex] > threshold)
   {
     ROS_WARN("Start pose in the padding...");
+   
     PoseStamped firstPoint;
+    firstPoint.header.frame_id = robot_name + "_small_chassis";
     firstPoint.pose.position.x = 0.0;
-    firstPoint.pose.position.y = 0.0;
-    
+    firstPoint.pose.position.y  = -1.6;
+
     PoseStamped secondPoint;
-    secondPoint.pose.position.x = 2.0;
-    secondPoint.pose.position.y  = 0;
+    secondPoint.header.frame_id = robot_name + "_small_chassis";
+    secondPoint.pose.position.x = 0.0;
+    secondPoint.pose.position.y  = 0.0;
+
+    PoseStamped thirdPoint;
+    thirdPoint.header.frame_id = robot_name + "_small_chassis";
+    thirdPoint.pose.position.x = 0.0;
+    thirdPoint.pose.position.y  = 0.0;
+
 
     //new path if the robot's index in
     Path path;
+
+    path.header = oGrid.header;
+  // TODO: Tell albert to properly set the frame id in map generation.
+    path.header.frame_id = robot_name + "_small_chassis";
     path.poses.push_back(firstPoint);
     path.poses.push_back(secondPoint);
+    path.poses.push_back(thirdPoint);
 
+
+    ROS_WARN("Path sent...");
+    ROS_WARN("SEND THE GOAL AGAIN...");
     return path;
 
   }
 
   auto origin = std::make_pair<double, int>(0, std::move(centerIndex));
+  int bestDistance = INFINITY;
+
   Point robotLocation;
   robotLocation.y = 0;
   robotLocation.x = 0;
@@ -187,7 +208,11 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
         minDist = distGridToPoint(i, target, oGrid.info.width, oGrid.info.height);
         distFromRobot = distGridToPoint(i, robotLocation, oGrid.info.width, oGrid.info.height);
         optmlDist = minDist + distFromRobot;
-        bestIndex = i;
+        if(optmlDist < bestDistance)
+        {
+          bestIndex = i;
+          bestDistance = optmlDist;
+        }
       }
       // Loop through the right edge
       if ((distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height) < minDist))
@@ -196,7 +221,11 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
         minDist = distGridToPoint(oGrid.info.width * i, target, oGrid.info.width, oGrid.info.height);
         distFromRobot = distGridToPoint(oGrid.info.width * i, robotLocation, oGrid.info.width, oGrid.info.height);
         optmlDist = minDist + distFromRobot;
-        bestIndex = oGrid.info.width * i;
+        if(optmlDist < bestDistance)
+        {
+          bestIndex = oGrid.info.width * i;
+          bestDistance = optmlDist;
+        }
       }
       // Loop through the left edge
       if ((distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height) < minDist))
@@ -205,7 +234,11 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
         minDist = distGridToPoint((oGrid.info.width * (i + 1)) - 1, target, oGrid.info.width, oGrid.info.height);
         distFromRobot = distGridToPoint((oGrid.info.width * (i + 1)) - 1, robotLocation, oGrid.info.width, oGrid.info.height);
         optmlDist = minDist + distFromRobot;
-        bestIndex = (oGrid.info.width * (i + 1)) - 1;
+        if(optmlDist < bestDistance)
+        {
+          bestIndex = (oGrid.info.width * (i + 1)) - 1;
+          bestDistance = optmlDist;
+        }
       }
       // Loop through the top
       if ((distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height) < minDist))
@@ -214,7 +247,11 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
         minDist = distGridToPoint(oGrid.data.size() - 1 - i, target, oGrid.info.width, oGrid.info.height);
         distFromRobot = distGridToPoint(oGrid.data.size() - 1 - i, robotLocation, oGrid.info.width, oGrid.info.height);
         optmlDist = minDist + distFromRobot;
-        bestIndex = oGrid.data.size() - 1 - i;
+        if(optmlDist < bestDistance)
+        {
+          bestIndex = oGrid.data.size() - 1 - i;
+          bestDistance = optmlDist;
+        }
       }
     }
     // Set end to the new closest point

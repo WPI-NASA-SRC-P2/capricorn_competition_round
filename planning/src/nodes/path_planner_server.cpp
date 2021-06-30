@@ -23,7 +23,7 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   auto global_oGrid_CPY = global_oGrid_;
   locationLock.unlock();
 
-  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 8);
+  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 6);
 
   #ifdef DEBUG_INSTRUMENTATION
   debug_oGridPublisher.publish(paddedGrid);
