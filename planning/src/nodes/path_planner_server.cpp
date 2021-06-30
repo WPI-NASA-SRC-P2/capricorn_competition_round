@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
   robot_name_ = robot_name;
 
   //ROS Topic names
-  std::string oGrid_topic_ = "/capricorn/small_scout_1/object_detection_map";
+  std::string oGrid_topic_ = "/capricorn/"+robot_name_+"/object_detection_map";
 
   //create a nodehandle
   ros::NodeHandle nh;
