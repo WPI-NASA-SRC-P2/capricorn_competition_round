@@ -65,7 +65,10 @@ void TeamManager::setSearchStates()
    for(int i = 0; i < MAX_TEAMS; i++)
    {
       if(all_teams.at(i)->isScoutHired())
+      {
          all_teams.at(i)->setTeamMacroState(SEARCH);
+         all_teams.at(i)->setResetRobot(true);
+      }
    }
 }
 
@@ -199,6 +202,7 @@ void TeamManager::recruitScout(int team_index)
          all_teams.at(i)->disbandScout();
 
          all_teams.at(team_index)->setTeamMacroState(SEARCH);
+         all_teams.at(team_index)->setResetRobot(false);
 
          scout_for_sale.at(i) = false;
          teams_need_scout.at(team_index) = false;

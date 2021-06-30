@@ -30,6 +30,7 @@ enum TEAM_MACRO_STATE{
 enum TEAM_MICRO_STATE{
    // SEARCH
    SEARCH_FOR_VOLATILE,
+   RESET_ODOMETRY_AT_HOPPER,
 
    // SCOUT_WAITING
    ROBOTS_TO_GOAL,
@@ -83,6 +84,10 @@ public:
    
    virtual TEAM_MICRO_STATE getMicroState() = 0;
 
+   void setResetRobot(bool reset_needed){
+      reset_robot_odometry = reset_needed;
+   }
+
 protected:
 
    TeamScheduler* m_pcTeam;
@@ -92,6 +97,7 @@ protected:
    RobotStateRegister *robot_state_register;
    RobotPoseRegister *robot_pose_register;
    geometry_msgs::PoseStamped volatile_site_location;
+   bool reset_robot_odometry = false;
 };
 
 // // All the states as per the diagram
@@ -127,11 +133,14 @@ public:
    bool isDone() override ;
 
    TeamState& transition() override;
-   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
+   TEAM_MICRO_STATE getMicroState();
    
    bool entryPoint(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override;
    void step() override;
    void exitPoint() override;
+
+private:
+   TEAM_MICRO_STATE micro_state;
 };
 
 class ScoutWaiting: public TeamState{

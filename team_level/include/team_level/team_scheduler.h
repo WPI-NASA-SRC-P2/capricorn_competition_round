@@ -30,6 +30,10 @@ public:
          macro_state = team_state; 
          new_state_request = true;}
 
+   void setResetRobot(bool reset_needed){
+      current_state_ptr->setResetRobot(reset_needed);
+   }
+
    void exec();
    void step();
 
