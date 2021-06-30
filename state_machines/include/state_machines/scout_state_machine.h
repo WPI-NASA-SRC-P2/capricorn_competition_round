@@ -23,8 +23,6 @@
 #include <state_machines/robot_state_status.h>
 #include <state_machines/robot_desired_state.h>
 #include <maploc/ResetOdom.h>
-#include <operations/ParkRobotAction.h>
-#include <maploc/ResetOdom.h>
 
 using namespace COMMON_NAMES;
 
@@ -135,9 +133,6 @@ protected:
   typedef actionlib::SimpleActionClient<operations::ResourceLocaliserAction> ResourceLocaliserClient_;
   ResourceLocaliserClient_ *resource_localiser_client_;
 
-  typedef actionlib::SimpleActionClient<operations::ParkRobotAction> ParkRobotClient;
-  ParkRobotClient *park_robot_client_;
-  operations::ParkRobotGoal park_robot_goal_;
 };
 
 class Undock : public ScoutState {
@@ -196,37 +191,6 @@ private:
 };
 
 
-class ResetOdomAtHopper : public ScoutState {
-public:   
-   ResetOdomAtHopper(ros::NodeHandle nh, std::string robot_name) : ScoutState(ROBOT_IDLE_STATE, nh, robot_name) {}
-
-   bool isDone() override;
-   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
-   bool hasSucceeded() override;
-
-   void entryPoint() override;
-   void step() override;
-   void exitPoint() override;
-
-private:
-   void goToProcPlant();
-   void parkAtHopper();
-   void undockFromHopper();
-   void resetOdom();
-
-   bool first_GTPP, first_PAH, first_UFH, macro_state_succeeded, macro_state_done;
-   
-   enum RESET_ODOM_MICRO_STATES{
-      GO_TO_PROC_PLANT,
-      PARK_AT_HOPPER,
-      UNDOCK_FROM_HOPPER,
-      RESET_ODOM_AT_HOPPER
-   };
-
-   bool state_done = false;
-   RESET_ODOM_MICRO_STATES micro_state;
-};
-
 class IdleState : public ScoutState {
 public:   
    IdleState(ros::NodeHandle nh, std::string robot_name) : ScoutState(ROBOT_IDLE_STATE, nh, robot_name) {}
@@ -239,55 +203,3 @@ public:
    void step() override{}
    void exitPoint() override{}
 };
-
-// class Undock: public ScoutState
-// {
-// public:
-//   Undock();
-//   bool entryPoint();
-//   bool exec();
-//   bool exitPoint();
-// };
-
-// class Search: public ScoutState
-// {
-// public:
-//   Search();
-//   bool entryPoint();
-//   bool exec();
-//   bool exitPoint();
-//   bool resumeSearchingVolatile(bool resume);
-// };
-
-// class Locate: public ScoutState
-// {
-// public:
-//   Locate();
-//   bool entryPoint();
-//   bool exec();
-//   bool exitPoint();
-// };
-
-// class SolarCharge: public ScoutState
-// {
-// public:
-//   bool entryPoint();
-//   bool exec();
-//   bool exitPoint();
-// };
-
-// class RepairRobot: public ScoutState
-// {
-// public:
-//   bool entryPoint();
-//   bool exec();
-//   bool exitPoint();
-// };
-
-// class ResetOdom: public ScoutState
-// {
-// public:
-//   bool entryPoint();
-//   bool exec();
-//   bool exitPoint();
-// };
