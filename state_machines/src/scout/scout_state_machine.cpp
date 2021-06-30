@@ -246,23 +246,18 @@ void ResetOdomAtHopper::step()
    switch (micro_state)
    {
    case GO_TO_PROC_PLANT: 
-      ROS_INFO("Go To Proc Plant");
       goToProcPlant();
       break;
    case PARK_AT_HOPPER:
-      ROS_INFO("Park at Hopper");
       parkAtHopper();
       break;
    case UNDOCK_FROM_HOPPER:
-      ROS_INFO("Undock from Hopper");
       undockFromHopper();
       break;
    case RESET_ODOM_AT_HOPPER:
-      ROS_INFO("Reset Odom at Hopper");
       resetOdom();
       break;
    case SCOUT_IDLE:
-      ROS_INFO("Idle");
       idleScout();
       break;
    default:
@@ -305,7 +300,6 @@ void ResetOdomAtHopper::parkAtHopper()
    bool is_done = (park_robot_client_->getState().isDone());
    if (is_done)
    {
-      ROS_WARN("Parking thinks its done");
       if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
          micro_state = UNDOCK_FROM_HOPPER;
       else
@@ -320,12 +314,10 @@ void ResetOdomAtHopper::undockFromHopper()
 {
    if (first_UFH)
    {
-      ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from volatile");
       operations::NavigationVisionGoal navigation_vision_goal;
       navigation_vision_goal.desired_object_label = OBJECT_DETECTION_HOPPER_CLASS;
       navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_HARDCODED_UNDOCK;
       navigation_vision_client_->sendGoal(navigation_vision_goal);
-      ROS_INFO_STREAM("Undock stepping, first_ = false now");
       first_UFH = false;
       return;
    }

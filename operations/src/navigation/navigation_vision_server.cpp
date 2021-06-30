@@ -339,25 +339,29 @@ void undock()
 void hardcodedUndock()
 {
     g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
-    g_nav_goal.forward_velocity = 0;
     g_nav_goal.direction = 0;
-    g_nav_goal.angular_velocity = -0.5;
+    g_nav_goal.forward_velocity = -0.5;
     g_nav_goal.angular_velocity = 0;
     g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
-    ros::Duration(0.5).sleep();
-    g_nav_goal.forward_velocity = 0;
+    ros::Duration(2).sleep();
     g_nav_goal.direction = 0;
-    g_nav_goal.angular_velocity = 0.0;
+    g_nav_goal.forward_velocity = 0.0;
     g_nav_goal.angular_velocity = 0.5;
     g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
-    ros::Duration(0.5).sleep();
-    g_nav_goal.forward_velocity = 0;
+    ros::Duration(4.75).sleep();
+    // g_nav_goal.direction = 0;
+    // g_nav_goal.forward_velocity = 0.5;
+    // g_nav_goal.angular_velocity = 0;
+    // g_client->sendGoal(g_nav_goal);
+    // g_client->sendGoal(g_nav_goal);
+    // g_client->sendGoal(g_nav_goal);
+    // ros::Duration(2).sleep();
     g_nav_goal.direction = 0;
-    g_nav_goal.angular_velocity = 0.0;
+    g_nav_goal.forward_velocity = 0.0;
     g_nav_goal.angular_velocity = 0;
     g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
