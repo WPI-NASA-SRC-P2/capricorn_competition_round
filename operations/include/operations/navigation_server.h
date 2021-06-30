@@ -37,6 +37,8 @@ public:
     ~NavigationServer();
 
 private:
+    bool initial_turn_completed = false;
+
     // Tolerances for linear and angular moves
     const float DIST_EPSILON = 0.5;
     const float ANGLE_EPSILON = 0.1;
@@ -240,6 +242,12 @@ private:
      * @return false Failed in driving the robot to the specified distance.
      */
     bool driveDistance(double delta_distance);
+
+    /**
+     * @brief Only used to request a new trajectory after the robot has performed the inital turn upon receiving new goal. Helps with obstacle detection.
+     *
+     */
+    void requestNewTrajectory(void);
 
     /**
      * @brief Execute a smooth drive to a waypoint. WARNING: Will keep moving after termination.

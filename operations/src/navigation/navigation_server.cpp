@@ -580,6 +580,19 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	return true;
 }
 
+void NavigationServer::requestNewTrajectory(void)
+{
+	ROS_WARN("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
+
+	moveRobotWheels(0);
+	brakeRobot(true);
+
+	// Reset the distance traveled
+	total_distance_traveled_ = 0;
+
+	get_new_trajectory_ = true;
+}
+
 void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server, bool smooth)
 {
 	ROS_INFO("[operations | nav_server | %s]: Beginning auto drive", robot_name_.c_str());
@@ -705,6 +718,15 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 					ros::Duration(1.0).sleep();
 
+					if(initial_turn_completed == false)
+					{
+						//Request new trajectory after inital turn in case new obstacles have appeared
+						requestNewTrajectory();
+						initial_turn_completed = true;
+						break;
+						
+					}
+
 					if (!turned_successfully)
 					{
 						operations::NavigationResult res;
@@ -729,6 +751,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 				bool drove_successfully = smoothDriving(current_waypoint, future_waypoint);
 
+				// Reset initial turn flag
+				initial_turn_completed = false;
 
 				if (!drove_successfully)
 				{
@@ -973,7 +997,7 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 		return;
 	}
 
-	ROS_ERROR("[operations | nav_server | %s]: Bool for final rotate: %d", robot_name_.c_str(), goal->final_rotate);
+	ROS_INFO("[operations | nav_server | %s]: Bool for final rotate: %d", robot_name_.c_str(), goal->final_rotate);
 
   	ROS_INFO("[operations | nav_server | %s]: Received NavigationGoal, dispatching", robot_name_.c_str());
 	if(goal->epsilon == 0.0)
