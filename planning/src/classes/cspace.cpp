@@ -51,10 +51,7 @@ nav_msgs::OccupancyGrid CSpace::getCSpace(nav_msgs::OccupancyGrid &oGrid, const 
 		}
 		if (oGrid.data[i] == -1)
 			paddedGrid.data[i] = 0;
-
-	std::cout << ("end of for loop - 3\n");
 		
 	}
-	//std::cout << ("out of for loop - 4\n");
 	return paddedGrid;
 }

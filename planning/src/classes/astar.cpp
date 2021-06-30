@@ -144,22 +144,41 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
 
   ROS_WARN("centerIndex calculated");
 
+
+  //this code takes care of the case when the starting pose is in the padding area
   if(oGrid.data[centerIndex] > threshold)
   {
     ROS_WARN("Start pose in the padding...");
+   
     PoseStamped firstPoint;
-    firstPoint.pose.position.x = 0.0;
-    firstPoint.pose.position.y = 0.0;
-    
+    thirdPoint.header.frame_id = robot_name + "_small_chassis";
+    thirdPoint.pose.position.x = 0.0;
+    thirdPoint.pose.position.y  = -1.6;
+
     PoseStamped secondPoint;
-    secondPoint.pose.position.x = 2.0;
-    secondPoint.pose.position.y  = 0;
+    fourthPoint.header.frame_id = robot_name + "_small_chassis";
+    fourthPoint.pose.position.x = 0.0;
+    fourthPoint.pose.position.y  = 0.0;
+
+    PoseStamped thirdPoint;
+    fifthPoint.header.frame_id = robot_name + "_small_chassis";
+    fifthPoint.pose.position.x = 0.0;
+    fifthPoint.pose.position.y  = 0.0;
+
 
     //new path if the robot's index in
     Path path;
+
+    path.header = oGrid.header;
+  // TODO: Tell albert to properly set the frame id in map generation.
+    path.header.frame_id = robot_name + "_small_chassis";
     path.poses.push_back(firstPoint);
     path.poses.push_back(secondPoint);
+    path.poses.push_back(thirdPoint);
 
+
+    ROS_WARN("Path sent...");
+    ROS_WARN("SEND THE GOAL AGAIN...");
     return path;
 
   }
