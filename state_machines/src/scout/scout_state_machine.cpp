@@ -20,10 +20,12 @@ ScoutState::ScoutState(uint32_t un_id, ros::NodeHandle nh, std::string robot_nam
   /** @todo: FIX NAVIGATIONVISIONCLIENT TO BE CORRECT TOPIC */
   navigation_vision_client_ = new NavigationVisionClient(CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + NAVIGATION_VISION_ACTIONLIB, true);
   navigation_client_ = new NavigationClient(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB, true);
+  park_robot_client_ = new ParkRobotClient(robot_name_ + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true);
   ROS_INFO("Waiting for the scout action servers...");
   navigation_vision_client_->waitForServer();
   navigation_client_->waitForServer();
   resource_localiser_client_->waitForServer();
+  park_robot_client_->waitForServer();
   
   ROS_INFO("All scout action servers started!");
 
@@ -42,6 +44,7 @@ ScoutState::~ScoutState()
   delete resource_localiser_client_;
   delete navigation_vision_client_;
   delete navigation_client_;
+  delete park_robot_client_;
 }
 
 /****************************************/
@@ -106,9 +109,10 @@ void Undock::step()
    if(first_)
    {
       ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from volatile");
-      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
-      navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
-      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
+      navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
       first_ = false; 
       ROS_INFO_STREAM("Undock stepping, first_ = false now");
    }
@@ -200,6 +204,140 @@ void Locate::step()
 }
 
 void Locate::exitPoint()
+{
+   // none at the moment
+   resource_localiser_client_->cancelGoal();
+   near_volatile_ = false;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  R E S E T _ O D O M   C L A S S ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ResetOdomAtHopper::entryPoint()
+{
+   // we assume we are near the volatile
+   near_volatile_ = true;
+   first_GTPP = true;
+   first_PAH = true;
+   first_UFH = true;
+   micro_state = GO_TO_PROC_PLANT;
+   macro_state_succeeded = false;
+   macro_state_done = false;
+}
+
+bool ResetOdomAtHopper::isDone()
+{
+   // switch states once completed with locating the volatile
+   current_state_done_ = macro_state_done;
+   return current_state_done_;
+}
+
+bool ResetOdomAtHopper::hasSucceeded()
+{
+   // state succeeded once rover is parked on top of volatile
+   // last_state_succeeded_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   last_state_succeeded_ = macro_state_succeeded;
+   return last_state_succeeded_;
+}
+
+void ResetOdomAtHopper::step()
+{
+   switch (micro_state)
+   {
+   case GO_TO_PROC_PLANT:
+      goToProcPlant();
+      break;
+   case PARK_AT_HOPPER:
+      parkAtHopper();
+   case UNDOCK_FROM_HOPPER:
+      undockFromHopper();
+   case RESET_ODOM_AT_HOPPER:
+      resetOdom();
+   default:
+      break;
+   }
+}
+
+void ResetOdomAtHopper::goToProcPlant()
+{
+   if (first_GTPP)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
+      navigation_vision_goal.mode = V_REACH;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      first_GTPP = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         micro_state = PARK_AT_HOPPER;
+      // else
+         // state go to 0 0
+   }
+}
+
+void ResetOdomAtHopper::parkAtHopper()
+{
+   if (first_PAH)
+   {
+      park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_HOPPER_CLASS;
+      park_robot_client_->sendGoal(park_robot_goal_);
+      first_PAH = false;
+      return;
+   }
+
+   bool is_done = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if (is_done)
+   {
+      if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         micro_state = UNDOCK_FROM_HOPPER;
+      else
+      {
+         first_PAH = true;
+         micro_state = PARK_AT_HOPPER;
+      }
+   }
+}
+
+void ResetOdomAtHopper::undockFromHopper()
+{
+   if (first_UFH)
+   {
+      ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from volatile");
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_HOPPER_CLASS;
+      navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      ROS_INFO_STREAM("Undock stepping, first_ = false now");
+      first_UFH = false;
+      return;
+   }
+
+   bool is_done = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if (is_done)
+   {
+      if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         micro_state = RESET_ODOM_AT_HOPPER;
+      // Dont find a reason it should fail,
+   }
+}
+
+void ResetOdomAtHopper::resetOdom()
+{
+   ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+   maploc::ResetOdom srv;
+   srv.request.target_robot_name = robot_name_;
+   srv.request.at_hopper = true;
+   macro_state_succeeded = resetOdometryClient.call(srv);
+   macro_state_done = true;
+}
+
+void ResetOdomAtHopper::exitPoint()
 {
    // none at the moment
    resource_localiser_client_->cancelGoal();
