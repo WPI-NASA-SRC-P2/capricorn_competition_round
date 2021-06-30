@@ -43,6 +43,5 @@
         <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
         <node pkg="operations" type="resource_localiser" name="scout_1_localiser" args="$(arg robot_name)" output="screen" />
         <node pkg="operations" type="scout_search" name="scout_1_search" args="$(arg robot_name)" output="screen" />
-        <node name="park_hauler_server" pkg="operations" type="park_hauler_server" args="$(arg robot_name)" output="screen"/>
     </group>
 </launch>
