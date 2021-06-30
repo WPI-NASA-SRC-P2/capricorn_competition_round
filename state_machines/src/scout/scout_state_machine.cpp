@@ -213,7 +213,7 @@ void Locate::exitPoint()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////  R E S E T _ O D O M   C L A S S ////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+/** TODO: should be reseting at processing plant instead */
 void ResetOdomAtHopper::entryPoint()
 {
    // we assume we are near the volatile
@@ -356,6 +356,90 @@ void ResetOdomAtHopper::exitPoint()
    navigation_vision_client_->cancelGoal();
    park_robot_client_->cancelGoal();
    near_volatile_ = false;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  G O  TO  R E P A I R  S T A T I O N  S T A T E  C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void GoToRepairStation::entryPoint()
+{
+   first_ = true;
+}
+
+bool GoToRepairStation::isDone()
+{
+   current_state_done_ = navigation_vision_client_->getState().isDone();
+   return current_state_done_;
+}
+
+bool GoToRepairStation::hasSucceeded()
+{
+   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   if(last_state_succeeded_)
+      ROS_WARN_STREAM("Scout Go to Repair Station Completed Successfully");
+   return last_state_succeeded_;
+}
+
+void GoToRepairStation::step()
+{
+
+   if (first_)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_REACH;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      first_ = false;
+   }
+   ROS_INFO_STREAM("Going to repair station Step Function!");
+}
+
+void GoToRepairStation::exitPoint()
+{
+   // none at the moment
+   navigation_vision_client_->cancelGoal();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  P A R K  A T  R E P A I R  S T A T I O N  S T A T E  C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ParkAtRepairStation::entryPoint()
+{
+   first_ = true;
+}
+
+bool ParkAtRepairStation::isDone()
+{
+   current_state_done_ = park_robot_client_->getState().isDone();
+   return current_state_done_;
+}
+
+bool ParkAtRepairStation::hasSucceeded()
+{
+   last_state_succeeded_ = (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   if(last_state_succeeded_)
+      ROS_WARN_STREAM("Scout Park at Repair Station Completed Successfully");
+   return last_state_succeeded_;
+}
+
+void ParkAtRepairStation::step()
+{
+
+   if (first_)
+   {
+      park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      park_robot_client_->sendGoal(park_robot_goal_);
+      first_ = false;
+   }
+   ROS_INFO_STREAM("Going to repair station Step Function!");
+}
+
+void ParkAtRepairStation::exitPoint()
+{
+   // none at the moment
+   park_robot_client_->cancelGoal();
 }
 
 //////////////////////////////////////////////////////////////////////////////////

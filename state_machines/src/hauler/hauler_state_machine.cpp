@@ -19,7 +19,7 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   navigation_client_ = new NavigationClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
   hauler_client_ = new HaulerClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::HAULER_ACTIONLIB, true);
   park_robot_client_ = new ParkRobotClient(COMMON_NAMES::CAPRICORN_TOPIC +  robot_name_ + "/" + robot_name_ + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true); 
-  resetHaulerOdometryClient_ = nh.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+//   resetHaulerOdometryClient_ = nh.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
 
   /** TODO:fix the common names PARK_HAULER, ALso 2 actions being published, 1 of them is running but not working.*/ 
 
@@ -223,11 +223,12 @@ void ParkAtHopper::exitPoint()
     // cleanup (cancel goal)
     park_robot_client_->cancelGoal();
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Finished parking at hopper");
-    // reset hauler odometry after finishing parking at the hopper
-    reset_srv_.request.target_robot_name = robot_name_;
-    reset_srv_.request.use_ground_truth = true;
-    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " Hauler odometry reset service called!");
+    // // reset hauler odometry after finishing parking at the hopper
+    // reset_srv_.request.target_robot_name = robot_name_;
+    // reset_srv_.request.use_ground_truth = true;
+    // ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " Hauler odometry reset service called!");
 }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// R E S E T _ O D O M   S T A T E   C L A S S ////////////////////////////////////
@@ -289,7 +290,8 @@ void UndockHopper::entryPoint()
    //Set to true to avoid repeatedly giving the goal.
    first_ = true;
    ROS_INFO("entrypoint of undock");
-   
+   reset_succeeded_ = false;
+   undock_done_ = false;
    // update the current status of the robot and publish it
    
 }
@@ -297,7 +299,7 @@ void UndockHopper::entryPoint()
 bool UndockHopper::isDone()
 {
    // update the status of current state
-   current_state_done_ = navigation_vision_client_->getState().isDone();
+   current_state_done_ = reset_succeeded_;
 
    return current_state_done_;
 }
@@ -306,8 +308,8 @@ bool UndockHopper::hasSucceeded()
 {
    // update the status of current state
    // last_state_succeeded_ = (navigation_client_->getState() == actionlib::status::SUCCESS);
-   last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   
+//    last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = reset_succeeded_;
    return last_state_succeeded_;
 }
 
@@ -322,12 +324,29 @@ void UndockHopper::step()
       first_ = false; 
       ROS_INFO_STREAM("Undock stepping, first_ = false now");
    }
+   // check if undocking is finished before reseting odometry
+   undock_done_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   
+   if(undock_done_ && !first_){
+       resetOdom();
+   }
 }
 
 void UndockHopper::exitPoint() 
 {
    ROS_INFO("exitpoint of undock, cancelling undock goal");
    navigation_vision_client_->cancelGoal();
+}
+
+
+void UndockHopper::resetOdom()
+{
+   ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+   maploc::ResetOdom srv;
+   srv.request.target_robot_name = robot_name_;
+   srv.request.at_hopper = true;
+   reset_succeeded_ = resetOdometryClient.call(srv);
+//    micro_state = SCOUT_IDLE;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -382,7 +401,7 @@ void GoToExcavator::entryPoint()
 State& GoToExcavator::transition()
 {
     // transition to parking at the excavator
-    if(!(navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED))
+    if(!(navigation_vision_result_.result == COMMON_RESULT::SUCCESS))
     {
         return *this;
     }

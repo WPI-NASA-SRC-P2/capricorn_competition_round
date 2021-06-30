@@ -128,6 +128,8 @@ protected:
 
   typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> NavigationVisionClient;
   NavigationVisionClient *navigation_vision_client_;
+  operations::NavigationVisionResult navigation_vision_result_;
+  operations::NavigationVisionGoal navigation_vision_goal_;
 
   typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
   NavigationClient *navigation_client_;
@@ -242,33 +244,39 @@ public:
    void exitPoint() override{}
 };
 
-// class Undock: public ScoutState
-// {
-// public:
-//   Undock();
-//   bool entryPoint();
-//   bool exec();
-//   bool exitPoint();
-// };
+class GoToRepairStation : public ScoutState {
+public:   
+   GoToRepairStation(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_GOTO_REPAIR_STATION, nh, robot_name) {}
 
-// class Search: public ScoutState
-// {
-// public:
-//   Search();
-//   bool entryPoint();
-//   bool exec();
-//   bool exitPoint();
-//   bool resumeSearchingVolatile(bool resume);
-// };
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
 
-// class Locate: public ScoutState
-// {
-// public:
-//   Locate();
-//   bool entryPoint();
-//   bool exec();
-//   bool exitPoint();
-// };
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private:
+   bool first_;
+};
+
+class ParkAtRepairStation : public ScoutState {
+public:   
+   ParkAtRepairStation(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_PARK_REPAIR_STATION, nh, robot_name) {}
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private:
+   bool first_;
+};
 
 // class SolarCharge: public ScoutState
 // {

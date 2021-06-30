@@ -240,20 +240,12 @@ void ParkAndPub::navToScout()
 
 void ParkAndPub::closeInToScout()
 {
-   //move closer toward scout
-   navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-   navigation_action_goal_.forward_velocity = 0.6;   
-   navigation_action_goal_.angular_velocity = 0;
-   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
+   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+   navigation_action_goal_.epsilon = 0.1;                      //TUNABLE
+   navigation_action_goal_.pose.header.frame_id = robot_name_+"_base_footprint";
+   navigation_action_goal_.pose.pose.position.x = PARAM_EXCAVATOR_HIT_SCOUT;        
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "driving on top of volatile");
    navigation_client_->sendGoal(navigation_action_goal_);
-   ros::Duration(crash_time_).sleep();
-   navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
-   navigation_action_goal_.forward_velocity = 0.0;   
-   navigation_action_goal_.angular_velocity = 0;
-   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
-   navigation_client_->sendGoal(navigation_action_goal_);
-   ros::Duration(0.5).sleep();
-   //first_ = true;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////

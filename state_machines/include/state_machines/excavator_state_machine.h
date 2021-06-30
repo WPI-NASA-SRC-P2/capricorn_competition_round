@@ -137,6 +137,10 @@ protected:
   ExcavatorClient *excavator_arm_client_;
   operations::NavigationGoal navigation_action_goal_;
 
+/** @brief:
+ * Parameters that have to be tuned through testing.*/ 
+   float PARAM_EXCAVATOR_HIT_SCOUT = 1.2;  //In STATE 10: EXCAVATOR_PARK_AND_PUB, how far the excavator should go so that it 'just touches' the scout, assuming it is centered to scout.
+
 };
 
 class GoToScout : public ExcavatorState {

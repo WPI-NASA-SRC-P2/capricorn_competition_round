@@ -187,9 +187,11 @@ namespace COMMON_NAMES
     SCOUT_SYNC_ODOM,       // synchronize odometry of scout with excavator 
     SCOUT_RESET_ODOM,      // reset odometry state for scout (calls the reset service)
     SCOUT_RESET_ODOM_GROUND_TRUTH, // reset odometry of scout w.r.t. its starting position in sim
+    SCOUT_GOTO_REPAIR_STATION,   // Scout goes to repair station
+    SCOUT_PARK_REPAIR_STATION,   // Scout parks at repair station
 
     /**************EXCAVATOR STATES**************/  
-    //8
+    //10
     EXCAVATOR_GO_TO_LOC,             // Takes Excavator to a location from which it will
                                          // be quicker to get to the digging location
     EXCAVATOR_GO_TO_SCOUT,           // Get close to the volatile when it is detected
@@ -206,7 +208,7 @@ namespace COMMON_NAMES
     EXCAVATOR_GO_TO_REPAIR,           //Go to repair station using NAV_VISION
     
     /**************HAULER STATES**************/
-    //19
+    //21
     HAULER_GO_TO_LOC,                    // Takes Hauler to a location
     HAULER_DUMP_VOLATILE_TO_PROC_PLANT, // Undocks hauler from excavator, goes to processing plant,
                                              // parks hauler to processing plant, dumps volatile and
@@ -229,7 +231,7 @@ namespace COMMON_NAMES
 
 
     /***************ROBOTS MACRO STATES***************/
-    //32
+    //36
     SCOUT_MACRO_UNDOCK,
     EXCAVATOR_MACRO_GO_TO_SCOUT,
     EXCAVATOR_MACRO_DIG,
