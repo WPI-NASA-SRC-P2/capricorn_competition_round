@@ -151,19 +151,19 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
     ROS_WARN("Start pose in the padding...");
    
     PoseStamped firstPoint;
-    thirdPoint.header.frame_id = robot_name + "_small_chassis";
-    thirdPoint.pose.position.x = 0.0;
-    thirdPoint.pose.position.y  = -1.6;
+    firstPoint.header.frame_id = robot_name + "_small_chassis";
+    firstPoint.pose.position.x = 0.0;
+    firstPoint.pose.position.y  = -1.6;
 
     PoseStamped secondPoint;
-    fourthPoint.header.frame_id = robot_name + "_small_chassis";
-    fourthPoint.pose.position.x = 0.0;
-    fourthPoint.pose.position.y  = 0.0;
+    secondPoint.header.frame_id = robot_name + "_small_chassis";
+    secondPoint.pose.position.x = 0.0;
+    secondPoint.pose.position.y  = 0.0;
 
     PoseStamped thirdPoint;
-    fifthPoint.header.frame_id = robot_name + "_small_chassis";
-    fifthPoint.pose.position.x = 0.0;
-    fifthPoint.pose.position.y  = 0.0;
+    thirdPoint.header.frame_id = robot_name + "_small_chassis";
+    thirdPoint.pose.position.x = 0.0;
+    thirdPoint.pose.position.y  = 0.0;
 
 
     //new path if the robot's index in
