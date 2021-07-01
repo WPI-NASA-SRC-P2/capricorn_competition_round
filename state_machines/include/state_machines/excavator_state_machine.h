@@ -77,12 +77,6 @@ private:
   bool digVolatile();
 
   /**
-   * @brief Excavatory recovery if volatile not found in first try
-   * 
-   */
-  void excavatorRecovery(int trial_number);
-
-  /**
    * @brief Dump the volatile at Hauler Location
    * 
    */

@@ -10,13 +10,21 @@
 #include <mutex>
 #include <vector>
 
+#include <actionlib/client/simple_action_client.h>
 #include <perception/ObjectArray.h>
 #include <perception/Object.h>
 #include <operations/navigation_algorithm.h>
+#include <operations/NavigationAction.h>
 
 #include <tf/transform_listener.h>
 
+typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
+
 using namespace COMMON_NAMES;
+
+Client *g_client;
+
+operations::NavigationGoal g_nav_goal;
 
 // Initialization for joint angle publishers
 typedef actionlib::SimpleActionServer<operations::ExcavatorAction> Server;
@@ -171,6 +179,13 @@ std::vector<float> getDepthHeight(geometry_msgs::Point hauler_center)
     theta3 = -theta3;
   }
 
+  if(std::to_string(theta2) == "nan" || std::to_string(theta3) == "nan")
+  {
+    ROS_INFO("Invalid values obtained, passing default values");
+    theta2 = -1.17;
+    theta3 = 1.39;
+  }
+
   thetas.push_back(theta2);
   thetas.push_back(theta3);
   ROS_INFO_STREAM("Degrees: " << 180/M_PI*(theta2)<< "\t Radian: "<< theta2);
@@ -189,8 +204,8 @@ std::vector<float> getDumpAngleInBase(int tries)
 {
   tf::TransformListener tf_listener_; // For transformation from camera frame to shoulder frame
   
-  std::string base_frame = "small_excavator_1" + ROBOT_BASE; //change to robot name
-  std::string left_camera_frame = "small_excavator_1" + LEFT_CAMERA_ROBOT_LINK;
+  std::string base_frame = robot_name_ + ROBOT_BASE; //change to robot name
+  std::string left_camera_frame = robot_name_ + LEFT_CAMERA_ROBOT_LINK;
 
   bool transformSet = false; // flag to keep track of when valid frames are found
   int countTries = 0; // counter to keep track of tries
@@ -273,6 +288,75 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
   excavator_wrist_pitch_publisher_.publish(wrist_pitch_msg);
 }
 
+void excavatorRecovery(const int& trial_number)
+{   
+    ROS_INFO("Inside excavator recovery function");
+    g_nav_goal.point.header.frame_id = robot_name_ + ROBOT_BASE;
+    g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+    g_nav_goal.angular_velocity = 0;
+
+    if(trial_number == 1)
+    {
+        //move straight
+        ROS_INFO("Inside if of excavator recovery function");
+        g_nav_goal.direction = 0;
+        ROS_INFO("Before send goal");
+        g_client->sendGoal(g_nav_goal);
+        ROS_INFO("After send goal");
+        ros::Duration(0.5).sleep();
+        g_nav_goal.forward_velocity = 0.6;
+        ROS_INFO("Go Forward with trial: [%d]", trial_number);
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(2).sleep();
+
+        g_nav_goal.forward_velocity = 0.0;
+        ROS_INFO("Stop with trial: [%d]", trial_number);
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+    }
+    else if(trial_number == 2)
+    {
+        //move back
+        g_nav_goal.forward_velocity = -0.6;   
+        ROS_INFO("Go back with trial: [%d]", trial_number);
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(4).sleep();
+
+        g_nav_goal.forward_velocity = 0.0;
+        ROS_INFO("Stop with trail: [%d]", trial_number);
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+    }
+    else if(trial_number == 3)
+    {
+        //move diagonal left
+        g_nav_goal.direction = 0.75;
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+        g_nav_goal.forward_velocity = 0.6;
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(3).sleep();
+
+        g_nav_goal.forward_velocity = 0.0;
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+    }
+    else
+    {
+        //move right
+        g_nav_goal.direction = -1.57;
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+        g_nav_goal.forward_velocity = 0.6;  
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(4).sleep();
+
+        g_nav_goal.forward_velocity = 0.0;
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+    }
+}  
+
 /**
  * @brief publishes the excavator angles to the rostopics small_excavator_1/arm/*joint_name/position
  * 
@@ -280,8 +364,13 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
  * @param target the target x, y coordinates in terms of the body frame
  * @param shoulder the fixed coordinates of the shoulder joint in body frame
  */
-bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
+bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, const geometry_msgs::Point &shoulder)
 {
+
+  int task = goal->task;
+  geometry_msgs::Point target = goal->target;
+  int trial = goal->trial;
+
   std::vector<float> thetas = getDumpAngleInBase(3); // Get dumping angle based on hauler position from object detection using three tries for transformation
 
   float theta = -1.5; // Rightmost arm position
@@ -363,7 +452,11 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
     publishAngles(thetas[0], -2, 1, -0.7786); // This set of values moves the scoop to the front center
     ros::Duration(3).sleep();
   }
-  else if (task == GO_TO_DEFAULT) // dumping angles
+  else if (task == RECOVERY)
+  {
+    excavatorRecovery(trial);
+  }
+  else if(task == GO_TO_DEFAULT) // dumping angles
   {
     publishAngles(-1, -1, 1.5792, -0.7786);
   }
@@ -387,7 +480,7 @@ void execute(const operations::ExcavatorGoalConstPtr &goal, Server *action_serve
   shoulder_wrt_base_footprint.y = 0.0;
   shoulder_wrt_base_footprint.z = 0.1;
 
-  bool dig_dump_result = publishExcavatorMessage(goal->task, goal->target, shoulder_wrt_base_footprint);
+  bool dig_dump_result = publishExcavatorMessage(goal, shoulder_wrt_base_footprint);
   ros::Duration(SLEEP_DURATION).sleep();
   // action_server->working(); // might use for feedback
 
@@ -444,6 +537,13 @@ int main(int argc, char **argv)
     // server.registerPreemptCallback(&cancelGoal);
     server.start();
     ROS_INFO("[operations | excavator_server | %s]: STARTED EXCAVATOR SERVER", robot_name_.c_str());
+
+    g_client = new Client(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
+    
+    ROS_INFO("Waiting for server to start");
+    g_client->waitForServer();
+    ROS_INFO("Server has started");
+
     ros::spin();
 
     return 0;

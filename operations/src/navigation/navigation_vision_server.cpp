@@ -694,80 +694,6 @@ void odomCallback(const nav_msgs::Odometry::ConstPtr &msg)
     g_robot_pose.pose = msg->pose.pose;
 }
 
-void excavatorRecovery()
-{   
-    static int trial_number = 1;
-    //geometry_msgs::PoseStamped pt;
-    ROS_INFO("Inside excavator recovery function");
-    g_nav_goal.point.header.frame_id = g_robot_name + ROBOT_BASE;
-    g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
-    g_nav_goal.angular_velocity = 0;
-
-    if(trial_number == 1)
-    {
-        //move straight
-        //ROS_INFO("Inside if of excavator recovery function");
-        
-        g_nav_goal.direction = 0;
-        g_client->sendGoal(g_nav_goal);
-        ros::Duration(0.5).sleep();
-        g_nav_goal.forward_velocity = 0.6;
-        ROS_INFO("Go Forward with trial: [%d]", trial_number);
-        g_client->sendGoal(g_nav_goal);
-        ros::Duration(2).sleep();
-
-        g_nav_goal.forward_velocity = 0.0;
-        ROS_INFO("Stop with trial: [%d]", trial_number);
-        g_client->sendGoal(g_nav_goal);
-        ros::Duration(0.5).sleep();
-        trial_number++;
-    }
-    else if(trial_number == 2)
-    {
-        //move left
-        g_nav_goal.forward_velocity = -0.6;   
-        ROS_INFO("Go back with trial: [%d]", trial_number);
-        g_client->sendGoal(g_nav_goal);
-        ros::Duration(4).sleep();
-
-        g_nav_goal.forward_velocity = 0.0;
-        ROS_INFO("Stop with trail: [%d]", trial_number);
-        g_client->sendGoal(g_nav_goal);
-        ros::Duration(0.5).sleep();
-        trial_number++;
-    }
-    else if(trial_number == 3)
-    {
-        //move diagonal left
-        g_nav_goal.direction = 0.75;
-        g_client->sendGoal(g_nav_goal);
-        ros::Duration(0.5).sleep();
-        g_nav_goal.forward_velocity = 0.6;
-        g_client->sendGoal(g_nav_goal);
-        ros::Duration(3).sleep();
-
-        g_nav_goal.forward_velocity = 0.0;
-        g_client->sendGoal(g_nav_goal);
-        ros::Duration(0.5).sleep();
-        trial_number++;
-    }
-    else
-    {
-        //move right
-        g_nav_goal.direction = -1.57;
-        g_client->sendGoal(g_nav_goal);
-        ros::Duration(0.5).sleep();
-        g_nav_goal.forward_velocity = 0.6;  
-        g_client->sendGoal(g_nav_goal);
-        ros::Duration(4).sleep();
-
-        g_nav_goal.forward_velocity = 0.0;
-        g_client->sendGoal(g_nav_goal);
-        ros::Duration(0.5).sleep();
-        trial_number = 0;
-    }
-}
-
 int main(int argc, char **argv)
 {
     if (argc != 2 && argc != 4)
@@ -791,13 +717,6 @@ int main(int argc, char **argv)
     server.registerPreemptCallback(&cancelGoal);
     server.start();
     ROS_INFO("Starting Navigation Vision Server");
-    g_client->waitForServer();
-    ROS_INFO("Waiting for server to start");
-
-    excavatorRecovery();
-    excavatorRecovery();
-    excavatorRecovery();
-    excavatorRecovery();
 
     ros::spin();
     return 0;

@@ -82,59 +82,6 @@ bool ExcavatorStateMachine::digVolatile()
     return (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
-void ExcavatorStateMachine::excavatorRecovery(int trial_number)
-{
-    if(trial_number == 1)
-    {
-        //move straight
-        geometry_msgs::PoseStamped pt;
-        pt.header.frame_id = robot_name_ + ROBOT_BASE;
-        pt.pose.position.y = -1;
-        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-        navigation_action_goal_.pose = pt;
-        navigation_client_->sendGoal(navigation_action_goal_);
-        //g_send_nav_goal = false;
-        trial_number++;
-    }
-    else if(trial_number == 2)
-    {
-        //move left
-        geometry_msgs::PoseStamped pt;
-        pt.header.frame_id = robot_name_ + ROBOT_BASE;
-        pt.pose.position.y = 2;
-        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-        navigation_action_goal_.pose = pt;
-        navigation_client_->sendGoal(navigation_action_goal_);
-        //g_send_nav_goal = false;
-        trial_number++;
-        trial_number++;
-    }
-    else if(trial_number == 3)
-    {
-        //move right
-        geometry_msgs::PoseStamped pt;
-        pt.header.frame_id = robot_name_ + ROBOT_BASE;
-        pt.pose.position.y = -1;
-        pt.pose.position.x = -1;
-        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-        navigation_action_goal_.pose = pt;
-        navigation_client_->sendGoal(navigation_action_goal_);
-        //g_send_nav_goal = false;
-        trial_number++;
-    }
-    else
-    {
-        //move back
-        geometry_msgs::PoseStamped pt;
-        pt.header.frame_id = robot_name_ + ROBOT_BASE;
-        pt.pose.position.x = 2;
-        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-        navigation_action_goal_.pose = pt;
-        navigation_client_->sendGoal(navigation_action_goal_);
-        //g_send_nav_goal = false;
-    }
-}    
-
 bool ExcavatorStateMachine::dumpVolatile()
 {
     ROS_INFO_STREAM(robot_name_ << " State Machine: Dumping Volatile");
