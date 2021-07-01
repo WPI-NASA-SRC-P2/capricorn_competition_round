@@ -261,22 +261,22 @@ private:
    bool first_;
 };
 
-class ParkAtRepairStation : public ScoutState {
-public:   
-   ParkAtRepairStation(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_PARK_REPAIR_STATION, nh, robot_name) {}
+// class ParkAtRepairStation : public ScoutState {
+// public:   
+//    ParkAtRepairStation(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_PARK_REPAIR_STATION, nh, robot_name) {}
 
-   // define transition check conditions for the state (isDone() is overriden by each individual state)
-   bool isDone() override;
-   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
-   bool hasSucceeded() override;
+//    // define transition check conditions for the state (isDone() is overriden by each individual state)
+//    bool isDone() override;
+//    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+//    bool hasSucceeded() override;
 
-   void entryPoint() override;
-   void step() override;
-   void exitPoint() override;
+//    void entryPoint() override;
+//    void step() override;
+//    void exitPoint() override;
 
-private:
-   bool first_;
-};
+// private:
+//    bool first_;
+// };
 
 // class SolarCharge: public ScoutState
 // {

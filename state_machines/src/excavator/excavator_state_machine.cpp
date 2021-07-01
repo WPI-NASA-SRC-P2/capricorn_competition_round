@@ -269,9 +269,7 @@ void PreParkHauler::entryPoint()
 
 /** TODO: 
  * Drive on top of volatile using NAV::MANUAL
- * Center it to the hauler
- * Finally, move the excavator back a little to make sure thearm digsa right at the volatile. 
- * And set up an enum of goals and check for their completion and set flags. 
+ * Center it to the haulerbot_letion and set flags. 
  * Set up seperate functions for all goals. 
  * */ 
 void PreParkHauler::step()

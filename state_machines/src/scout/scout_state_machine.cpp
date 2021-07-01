@@ -358,6 +358,8 @@ void ResetOdomAtHopper::exitPoint()
 void GoToRepairStation::entryPoint()
 {
    first_ = true;
+   /** TODO: add scheduler functionality  */
+   // target_loc_ = m_pcRobotScheduler->getDesiredPose();
 }
 
 bool GoToRepairStation::isDone()
@@ -381,6 +383,7 @@ void GoToRepairStation::step()
    {
       navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
       navigation_vision_goal_.mode = V_REACH;
+      // navigation_vision_goal_.target_loc = target_loc_;
       navigation_vision_client_->sendGoal(navigation_vision_goal_);
       first_ = false;
    }
@@ -397,42 +400,42 @@ void GoToRepairStation::exitPoint()
 /////////////////////////////////////  P A R K  A T  R E P A I R  S T A T I O N  S T A T E  C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ParkAtRepairStation::entryPoint()
-{
-   first_ = true;
-}
+// void ParkAtRepairStation::entryPoint()
+// {
+//    first_ = true;
+// }
 
-bool ParkAtRepairStation::isDone()
-{
-   current_state_done_ = park_robot_client_->getState().isDone();
-   return current_state_done_;
-}
+// bool ParkAtRepairStation::isDone()
+// {
+//    current_state_done_ = park_robot_client_->getState().isDone();
+//    return current_state_done_;
+// }
 
-bool ParkAtRepairStation::hasSucceeded()
-{
-   last_state_succeeded_ = (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS);
-   if(last_state_succeeded_)
-      ROS_WARN_STREAM("Scout Park at Repair Station Completed Successfully");
-   return last_state_succeeded_;
-}
+// bool ParkAtRepairStation::hasSucceeded()
+// {
+//    last_state_succeeded_ = (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+//    if(last_state_succeeded_)
+//       ROS_WARN_STREAM("Scout Park at Repair Station Completed Successfully");
+//    return last_state_succeeded_;
+// }
 
-void ParkAtRepairStation::step()
-{
+// void ParkAtRepairStation::step()
+// {
 
-   if (first_)
-   {
-      park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_REPAIR_STATION_CLASS;
-      park_robot_client_->sendGoal(park_robot_goal_);
-      first_ = false;
-   }
-   ROS_INFO_STREAM("Going to repair station Step Function!");
-}
+//    if (first_)
+//    {
+//       park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+//       park_robot_client_->sendGoal(park_robot_goal_);
+//       first_ = false;
+//    }
+//    ROS_INFO_STREAM("Going to repair station Step Function!");
+// }
 
-void ParkAtRepairStation::exitPoint()
-{
-   // none at the moment
-   park_robot_client_->cancelGoal();
-}
+// void ParkAtRepairStation::exitPoint()
+// {
+//    // none at the moment
+//    park_robot_client_->cancelGoal();
+// }
 
 //////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// M A I N ////////////////////////////////////
