@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
       cSchd.addState(new ParkAtHopper(nh, g_robot_name));
       // cSchd.addState(new ResetOdom(nh, g_robot_name));
       cSchd.addState(new UndockHopper(nh, g_robot_name));
-      cSchd.addState(new ResetOdomMacro(nh, g_robot_name));
+      cSchd.addState(new DumpVolatileAtHopper(nh, g_robot_name));
       cSchd.addState(new GoToExcavator(nh, g_robot_name));
       cSchd.addState(new ParkAtExcavator(nh, g_robot_name));
       cSchd.addState(new UndockExcavator(nh, g_robot_name));

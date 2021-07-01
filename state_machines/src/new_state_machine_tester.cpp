@@ -24,7 +24,7 @@ int main(int argc, char** argv)
       hSchd.addState(new ParkAtHopper());
       hSchd.addState(new ResetOdom());
       hSchd.addState(new UndockHopper());
-      hSchd.addState(new ResetOdomMacro());
+      hSchd.addState(new DumpVolatileAtHopper());
       hSchd.addState(new GoToExcavator());
       hSchd.addState(new ParkAtExcavator());
       hSchd.addState(new UndockExcavator());

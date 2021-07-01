@@ -407,26 +407,40 @@ public:
 
 };
 
-
-class ResetOdomMacro : public HaulerState {
+class DumpVolatileAtHopper : public HaulerState {
 public:   
-   ResetOdomMacro(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_RESET_ODOM_AT_HOPPER, nh, robot_name) {}
+   DumpVolatileAtHopper(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_DUMP_VOLATILE_TO_PROC_PLANT, nh, robot_name) {}
 
-   // define transition check conditions for the state (transition() is overriden by each individual state)
-   State& transition() override ;
-
-   // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
    bool hasSucceeded() override;
+   State& transition() override {}
 
-   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
 
-private: 
-   bool first_;
+private:
+   void goToProcPlant();
+   void parkAtHopper();
+   void dumpVolatile();
+   void undockFromHopper();
+   void resetOdom();
+   void idleScout(){}
+
+   bool first_GTPP, first_PAH, first_UFH, first_DV, macro_state_succeeded, macro_state_done;
+   
+   enum RESET_ODOM_MICRO_STATES{
+      GO_TO_PROC_PLANT,
+      PARK_AT_HOPPER,
+      DUMP_VOLATILE,
+      UNDOCK_FROM_HOPPER,
+      RESET_ODOM_AT_HOPPER,
+      HAULER_IDLE
+   };
+
+   bool state_done = false;
+   RESET_ODOM_MICRO_STATES micro_state;
 };
 
 // class HaulerIdle : public HaulerState {

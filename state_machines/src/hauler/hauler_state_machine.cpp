@@ -350,41 +350,6 @@ void UndockHopper::resetOdom()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////// R E S E T _ O D O M _ A T _ H O P P E R   S T A T E   C L A S S ////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void ResetOdomMacro::entryPoint()
-{
-    // declare entrypoint variables
-    ROS_INFO("RESET ODOM AT HOPPER MACROSTATE");
-}
-
-State& ResetOdomMacro::transition()
-{
-    // transition to first state of reset odom at hopper (HAULER_PARK_AT_HOPPER)
-    return getState(HAULER_GO_TO_PROC_PLANT);
-}
-
-void ResetOdomMacro::step()
-{
-    // I don't think there is a step here actually
-    ROS_INFO("MACROSTEPPING");
-}
-
-bool ResetOdomMacro::isDone() {
-   return true;
-} 
-
-bool ResetOdomMacro::hasSucceeded() {
-   return true;
-}
-
-void ResetOdomMacro::exitPoint()
-{
-    ROS_INFO("MOVING TO MICROSTATES");
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// G O _ T O _ E X C A V A T O R   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -641,3 +606,169 @@ void HaulerGoToLoc::exitPoint()
     navigation_client_->cancelGoal();
     ROS_INFO("Reached scout, preparing to park");
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  R E S E T _ O D O M   C L A S S ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/** TODO: should be reseting at processing plant instead */
+void DumpVolatileAtHopper::entryPoint()
+{
+   // we assume we are near the volatile
+   first_GTPP = true;
+   first_PAH = true;
+   first_UFH = true;
+   first_DV = true;
+   micro_state = GO_TO_PROC_PLANT;
+   macro_state_succeeded = false;
+   macro_state_done = false;
+}
+
+bool DumpVolatileAtHopper::isDone()
+{
+   // switch states once completed with locating the volatile
+   current_state_done_ = macro_state_done;
+   return current_state_done_;
+}
+
+bool DumpVolatileAtHopper::hasSucceeded()
+{
+   // state succeeded once rover is parked on top of volatile
+   // last_state_succeeded_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   last_state_succeeded_ = macro_state_succeeded;
+   return last_state_succeeded_;
+}
+
+void DumpVolatileAtHopper::step()
+{
+   switch (micro_state)
+   {
+   case GO_TO_PROC_PLANT: 
+      goToProcPlant();
+      break;
+   case PARK_AT_HOPPER:
+      parkAtHopper();
+      break;
+   case DUMP_VOLATILE:
+      dumpVolatile();
+      break;
+   case UNDOCK_FROM_HOPPER:
+      undockFromHopper();
+      break;
+   case RESET_ODOM_AT_HOPPER:
+      resetOdom();
+      break;
+   case HAULER_IDLE:
+      idleScout();
+      break;
+   default:
+      break;
+   }
+}
+
+void DumpVolatileAtHopper::goToProcPlant()
+{
+   if (first_GTPP)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
+      navigation_vision_goal.mode = V_REACH;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      first_GTPP = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         micro_state = PARK_AT_HOPPER;
+      // else
+         // state go to 0 0
+   }
+}
+
+void DumpVolatileAtHopper::parkAtHopper()
+{
+   if (first_PAH)
+   {
+      park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_HOPPER_CLASS;
+      park_robot_client_->sendGoal(park_robot_goal_);
+      first_PAH = false;
+      return;
+   }
+
+   bool is_done = (park_robot_client_->getState().isDone());
+   if (is_done)
+   {
+      if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         micro_state = DUMP_VOLATILE;
+      else
+      {
+         first_PAH = true;
+         micro_state = PARK_AT_HOPPER;
+      }
+   }
+}
+
+void DumpVolatileAtHopper::dumpVolatile()
+{
+    if (first_DV)
+    {
+        hauler_goal_.desired_state = true;
+        hauler_client_->sendGoal(hauler_goal_);
+        first_DV = false;
+    }
+       
+    bool is_done = (hauler_client_->getState().isDone());
+    if (is_done)
+    {
+        if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+            micro_state = UNDOCK_FROM_HOPPER;
+        else
+        {
+            first_DV = true;
+            micro_state = DUMP_VOLATILE;
+        }
+    }
+}
+void DumpVolatileAtHopper::undockFromHopper()
+{
+   if (first_UFH)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_HOPPER_CLASS;
+      navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_HARDCODED_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      first_UFH = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         micro_state = RESET_ODOM_AT_HOPPER;
+      // Dont find a reason it should fail,
+   }
+}
+
+void DumpVolatileAtHopper::resetOdom()
+{
+   ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+   maploc::ResetOdom srv;
+   srv.request.target_robot_name = robot_name_;
+   srv.request.at_hopper = true;
+   macro_state_succeeded = resetOdometryClient.call(srv);
+   macro_state_done = true;
+   micro_state = HAULER_IDLE;
+}
+
+void DumpVolatileAtHopper::exitPoint()
+{
+   // none at the moment
+   navigation_vision_client_->cancelGoal();
+   park_robot_client_->cancelGoal();
+   hauler_client_->cancelGoal();
+}
+

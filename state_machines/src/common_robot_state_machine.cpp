@@ -163,7 +163,7 @@ void RobotScheduler::exec() {
    while(!done() && ros::ok()) 
    {
       step();
-      ros::Duration(0.5).sleep();
+      ros::Duration(0.05).sleep();
       ros::spinOnce();
    }
 }
