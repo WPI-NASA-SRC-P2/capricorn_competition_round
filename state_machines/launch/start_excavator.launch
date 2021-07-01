@@ -3,7 +3,7 @@
     <arg name="output" default="screen" />
     <arg name="use_cheat_odom" default="false" />
     <arg name="use_crab_drive" default="false" />
-    <arg name="get_true_pose" default="true"/>             <!--Doubtful-->
+    <arg name="get_true_pose" default="false"/>             <!--Doubtful-->
     <arg name="node_start_delay" default="5.0" /> 
     <arg name="use_robot_localization" default="false" />
 
@@ -32,5 +32,6 @@
         <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
         <node pkg="operations" type="excavator_pid_node" name="excavator_pid_node" args="$(arg robot_name)" output="screen" />
         <node pkg="operations" type="excavator_actionlib_server" name="excavator_actionlib_server" args="$(arg robot_name)" output="screen" />
+         <node name="park_hauler_server" pkg="operations" type="park_hauler_server" args="$(arg robot_name)" output="screen"/>
     </group>
 </launch>

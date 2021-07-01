@@ -206,6 +206,7 @@ namespace COMMON_NAMES
     EXCAVATOR_SYNC_ODOM,              // reset excavator odometry w.r.t. hauler odometry 
     EXCAVATOR_FACE_PROCESSING_PLANT,  //Face processing plant using NAV_VISION::V_CENTER
     EXCAVATOR_GO_TO_REPAIR,           //Go to repair station using NAV_VISION
+    EXCAVATOR_RESET_ODOM_AT_HOPPER,    // Excavator resets odometry at hopper
     
     /**************HAULER STATES**************/
     //21
