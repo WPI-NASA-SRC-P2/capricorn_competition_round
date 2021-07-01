@@ -120,8 +120,8 @@ void objectsCallback(const perception::ObjectArray &objs)
  */
 void driveSprial()
 {
-  // if (g_spiral_points.size() >= 3)
-  // {
+  if (g_spiral_points.size() > 1)
+  {
     // double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
     bool done_driving = g_client->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
     // bool failed_driving = g_client->getState() == actionlib::SimpleClientGoalState::ABORTED;
@@ -184,7 +184,11 @@ void driveSprial()
   //     g_last_dist = dist;
   //     g_new_trajectory = false;
   //   }
-  // }
+  }
+  else
+  {
+    g_spiral_points = NavigationAlgo::getRadialScanningPoints(ROBOT_NUMBER);
+  }
 }
 
 /**
@@ -294,7 +298,7 @@ int main(int argc, char **argv)
 
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = MAP;
-  g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(ROBOT_NUMBER);
+  g_spiral_points = NavigationAlgo::getRadialScanningPoints(ROBOT_NUMBER);
 
   while (ros::ok() && !cb_init)
   {

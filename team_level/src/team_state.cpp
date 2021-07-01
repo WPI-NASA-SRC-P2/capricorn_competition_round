@@ -146,6 +146,7 @@ void Search::step()
 void Search::exitPoint() 
 {
    ROS_INFO("exitpoint of SEARCH, cancelling SEARCH goal");
+   robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -160,7 +161,7 @@ bool ScoutWaiting::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_E
    excavator_in_team = excavator;
    hauler_in_team = hauler;
 
-   if(scout_in_team == NONE || excavator_in_team == NONE || hauler_in_team == NONE )
+   if(scout_in_team == NONE || excavator_in_team == NONE)
    {
       ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR SCOUT WAITING!");
       return false;
@@ -292,7 +293,7 @@ bool Excavating::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENU
 
    if(excavator_in_team == NONE || hauler_in_team == NONE )
    {
-      ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR SCOUT WAITING!");
+      ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR Excavating!");
       return false;
    }
 
@@ -408,9 +409,9 @@ bool Dumping::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM h
    excavator_in_team = excavator;
    hauler_in_team = hauler;
 
-   if(excavator_in_team == NONE || hauler_in_team == NONE )
+   if(hauler_in_team == NONE )
    {
-      ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR SCOUT WAITING!");
+      ROS_ERROR_STREAM("HAULER IS UNSET FOR DUMPING!");
       return false;
    }
    return true;

@@ -239,7 +239,7 @@ public:
    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
    bool hasSucceeded() override{};
 
-   void entryPoint() override{}
+   void entryPoint() override;
    void step() override{}
    void exitPoint() override{}
 };

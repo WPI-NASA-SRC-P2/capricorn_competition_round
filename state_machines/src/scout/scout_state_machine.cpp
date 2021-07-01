@@ -134,7 +134,6 @@ void Search::entryPoint()
    // start off with spiraling
    srv.request.resume_spiral_motion = true;
    near_volatile_ = false;
-   ROS_INFO("entering scout_search state");
 }
 
 bool Search::isDone()
@@ -163,7 +162,6 @@ void Search::exitPoint()
    // cancel spiral motion 
    srv.request.resume_spiral_motion = false;
    spiralClient_.call(srv);
-   ROS_INFO("Exited spiral search.");
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -432,6 +430,22 @@ void ParkAtRepairStation::exitPoint()
 {
    // none at the moment
    park_robot_client_->cancelGoal();
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// M A I N ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+
+void IdleState::entryPoint()
+{
+   resource_localiser_client_->cancelGoal();
+   navigation_vision_client_->cancelGoal();
+   navigation_client_->cancelGoal();
+   park_robot_client_->cancelGoal();
+   
+   operations::Spiral srv;
+   srv.request.resume_spiral_motion = false;
+   spiralClient_.call(srv);
 }
 
 //////////////////////////////////////////////////////////////////////////////////

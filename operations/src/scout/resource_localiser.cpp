@@ -56,6 +56,7 @@ enum DrivingMode
  */
 void rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier)
 {
+  // ROS_INFO("Rotating the robot");
   operations::NavigationGoal goal;
 
   // Manual driving
@@ -95,11 +96,18 @@ void getOnTopOfVolatile()
   goal.forward_velocity = 0.6;   
   goal.angular_velocity = 0;
   navigation_client_->sendGoal(goal);
-  ros::Duration(2).sleep();
+  navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal);
+  ros::Duration(1).sleep();
 
   goal.drive_mode = NAV_TYPE::MANUAL;
   goal.forward_velocity = 0.0;   
   goal.angular_velocity = 0;
+  navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal); 
+  navigation_client_->sendGoal(goal);
   navigation_client_->sendGoal(goal);
   ros::Duration(0.5).sleep();
 }
@@ -112,6 +120,7 @@ void getOnTopOfVolatile()
  */
 void driveRobotStraight(DrivingDirection rotate_direction, const float rotational_velocity_multiplier)
 {
+  // ROS_INFO("Driving the robot");
   operations::NavigationGoal goal;
 
   // Manual driving

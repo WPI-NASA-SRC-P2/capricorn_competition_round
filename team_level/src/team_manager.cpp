@@ -23,6 +23,8 @@ void TeamManager::initTeams(ros::NodeHandle nh)
    initTeamArray(nh);
    addRobots();
    setSearchStates();
+   setEmptyTeamsStandby();
+   setHaulerForReset();
 }
 
 void TeamManager::initTeamArray(ros::NodeHandle nh)
@@ -51,7 +53,9 @@ void TeamManager::addRobots()
       all_teams.at(i)->setTeamMacroState(IDLE);
    }
    
-   for(int i = 0; i < MAX_HAULERS; i++)
+   // HACK !!
+   // First hauler is sent to reset the odom
+   for(int i = 1; i < MAX_HAULERS; i++)
    {
       int robot_index = (int) HAULER_1 + i;
       ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
@@ -68,6 +72,36 @@ void TeamManager::setSearchStates()
       {
          all_teams.at(i)->setTeamMacroState(SEARCH);
          all_teams.at(i)->setResetRobot(true);
+      }
+   }
+}
+
+void TeamManager::setHaulerForReset()
+{
+   for(int i = 0; i < MAX_TEAMS; i++)
+   {
+      if(all_teams.at(i)->getTeamMacroState() == STANDBY)
+      {      
+         int robot_index = (int) HAULER_1;
+         ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
+         all_teams.at(i)->setHauler(robot);
+         all_teams.at(i)->setTeamMacroState(DUMPING);
+         return;
+      }
+   }
+}
+
+void TeamManager::setEmptyTeamsStandby()
+{
+   for(int i = 0; i < MAX_TEAMS; i++)
+   {
+      bool scout_in_team = all_teams.at(i)->isScoutHired();
+      bool excavator_in_team = all_teams.at(i)->isExcavatorHired();
+      bool hauler_in_team = all_teams.at(i)->isHaulerHired();
+
+      if(!scout_in_team && !excavator_in_team && !hauler_in_team)
+      {      
+         all_teams.at(i)->setTeamMacroState(STANDBY);
       }
    }
 }
@@ -295,9 +329,7 @@ void TeamManager::checkAndRecruitForIdle(int team_index)
 
 void TeamManager::checkAndRecruitForStandby(int team_index)
 {
-   if(!hasScout(team_index))
-      recruitScout(team_index);
-   
+   fireScout(team_index);
    fireExcavator(team_index);
    fireHauler(team_index);
 }
@@ -317,6 +349,6 @@ void TeamManager::exec()
       recruitment();
       step();
       ros::spinOnce();
-      ros::Duration(0.5).sleep();
+      ros::Duration(0.05).sleep();
    }
 }

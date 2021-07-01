@@ -14,7 +14,7 @@ using namespace COMMON_NAMES;
 #define MAX_SCOUTS 1
 #define MAX_EXCAVATORS 1
 #define MAX_HAULERS 1
-#define MAX_TEAMS 2
+#define MAX_TEAMS 5
 
 class TeamManager {
    
@@ -46,6 +46,10 @@ private:
    void addRobots();
    
    void setSearchStates();
+
+   void setHaulerForReset();
+
+   void setEmptyTeamsStandby();
 
    void recruitment();
 
