@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
 		cSchd.addState(new Locate(nh, g_robot_name));
 		cSchd.addState(new ResetOdomAtHopper(nh, g_robot_name));
 		cSchd.addState(new IdleState(nh, g_robot_name));
+		cSchd.addState(new GoToRepairStation(nh, g_robot_name));
 		cSchd.setInitialState(ROBOT_IDLE_STATE);
 		// cSchd.setInitialState(SCOUT_UNDOCK);
 		cSchd.exec();

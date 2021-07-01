@@ -301,7 +301,11 @@ bool UndockHopper::isDone()
    // update the status of current state
    current_state_done_ = reset_succeeded_;
 
-   return current_state_done_;bot_
+   return current_state_done_;
+}
+
+bool UndockHopper::hasSucceeded()
+{
    // update the status of current state
    // last_state_succeeded_ = (navigation_client_->getState() == actionlib::status::SUCCESS);
 //    last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
