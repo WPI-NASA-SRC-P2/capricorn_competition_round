@@ -18,10 +18,12 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   navigation_vision_client_ = new NavigationVisionClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
   navigation_client_ = new NavigationClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
   excavator_arm_client_ = new ExcavatorClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::EXCAVATOR_ACTIONLIB, true);
+  park_robot_client_ = new ParkRobotClient(CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true);
   ROS_INFO("Waiting for the excavator action servers...");
   navigation_vision_client_->waitForServer();
   navigation_client_->waitForServer();
   excavator_arm_client_->waitForServer();
+  park_robot_client_->waitForServer();
   
   ROS_INFO("All excavator action servers started!");
 
@@ -33,6 +35,7 @@ ExcavatorState::~ExcavatorState()
   delete navigation_vision_client_;
   delete navigation_client_;
   delete excavator_arm_client_;
+  delete park_robot_client_;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -206,12 +209,12 @@ void ParkAndPub::exitPoint()
 {
    // cleanup the state (cancel nav goal)
    ROS_INFO("Excavator Parking Completed");
-   navigation_vision_client_->cancelGoal();
+   navigation_client_->cancelGoal();
 }
 
 bool ParkAndPub::isDone() 
 {
-   current_state_done_ = navigation_vision_client_->getState().isDone();
+   current_state_done_ = navigation_client_->getState().isDone();
    // if(current_state_done_)
       // ROS_WARN_STREAM("Park and Pub Done");
    return current_state_done_;
@@ -219,7 +222,8 @@ bool ParkAndPub::isDone()
 
 bool ParkAndPub::hasSucceeded() 
 {
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   // last_state_succeeded_ = (navigation_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    if(last_state_succeeded_)
       ROS_WARN_STREAM("Park and Pub to Scout Completed Successfully");
    return last_state_succeeded_;
@@ -550,6 +554,152 @@ void ExcavatorGoToLoc::exitPoint()
     navigation_client_->cancelGoal();
     ROS_INFO("Reached scout, preparing to park");
 }
+
+/** @TODO: Add resetodom macrostate from when it finally dumps the volatile till it parks at processing plant and then resets odometry */
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  R E S E T _ O D O M   C L A S S ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+void ExcavatorResetOdomAtHopper::entryPoint()
+{
+   // we assume we are near the volatile
+   first_GTPP = true;
+   first_PAH = true;
+   first_UFH = true;
+   micro_state = GO_TO_PROC_PLANT;
+   macro_state_succeeded = false;
+   macro_state_done = false;
+   state_done =false;
+}
+
+bool ExcavatorResetOdomAtHopper::isDone()
+{
+   // switch states once completed with locating the volatile
+   current_state_done_ = macro_state_done;
+   return current_state_done_;
+}
+
+bool ExcavatorResetOdomAtHopper::hasSucceeded()
+{
+   // state succeeded once rover is parked on top of volatile
+   // last_state_succeeded_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   last_state_succeeded_ = macro_state_succeeded;
+   return last_state_succeeded_;
+}
+
+void ExcavatorResetOdomAtHopper::step()
+{
+   switch (micro_state)
+   {
+   case GO_TO_PROC_PLANT: 
+      goToProcPlant();
+      break;
+   case PARK_AT_HOPPER:
+      parkAtHopper();
+      break;
+   case UNDOCK_FROM_HOPPER:
+      undockFromHopper();
+      break;
+   case RESET_ODOM_AT_HOPPER:
+      resetOdom();
+      break;
+   case EXCAVATOR_IDLE:
+      idleExcavator();
+      break;
+   default:
+      break;
+   }
+}
+
+void ExcavatorResetOdomAtHopper::goToProcPlant()
+{
+   if (first_GTPP)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
+      navigation_vision_goal.mode = V_REACH;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      first_GTPP = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         micro_state = PARK_AT_HOPPER;
+      // else
+         // state go to 0 0
+   }
+}
+
+void ExcavatorResetOdomAtHopper::parkAtHopper()
+{
+   if (first_PAH)
+   {
+      park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_HOPPER_CLASS;
+      park_robot_client_->sendGoal(park_robot_goal_);
+      first_PAH = false;
+      return;
+   }
+
+   bool is_done = (park_robot_client_->getState().isDone());
+   if (is_done)
+   {
+      if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         micro_state = UNDOCK_FROM_HOPPER;
+      else
+      {
+         first_PAH = true;
+         micro_state = PARK_AT_HOPPER;
+      }
+   }
+}
+
+void ExcavatorResetOdomAtHopper::undockFromHopper()
+{
+   if (first_UFH)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_HOPPER_CLASS;
+      navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_HARDCODED_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      first_UFH = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         micro_state = RESET_ODOM_AT_HOPPER;
+      // Dont find a reason it should fail,
+   }
+}
+
+void ExcavatorResetOdomAtHopper::resetOdom()
+{
+   ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+   maploc::ResetOdom srv;
+   srv.request.target_robot_name = robot_name_;
+   srv.request.at_hopper = true;
+   macro_state_succeeded = resetOdometryClient.call(srv);
+   macro_state_done = true;
+   micro_state = EXCAVATOR_IDLE;
+}
+
+void ExcavatorResetOdomAtHopper::exitPoint()
+{
+   // none at the moment
+   navigation_vision_client_->cancelGoal();
+   park_robot_client_->cancelGoal();
+}
+
+
 
 // int main(int argc, char** argv)
 // {

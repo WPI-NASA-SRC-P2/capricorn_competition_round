@@ -232,7 +232,7 @@ void ParkAtHopper::exitPoint()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// R E S E T _ O D O M   S T A T E   C L A S S ////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////bot_////////////////////////////////////////////////////////////
 
 // void ResetOdom::entryPoint()
 // {
@@ -301,11 +301,7 @@ bool UndockHopper::isDone()
    // update the status of current state
    current_state_done_ = reset_succeeded_;
 
-   return current_state_done_;
-}
-
-bool UndockHopper::hasSucceeded()
-{
+   return current_state_done_;bot_
    // update the status of current state
    // last_state_succeeded_ = (navigation_client_->getState() == actionlib::status::SUCCESS);
 //    last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);

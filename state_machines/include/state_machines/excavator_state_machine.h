@@ -1,4 +1,4 @@
-/**
+#include <operations/ParkRobotAction.h>/**
  * @file hauler_state_machine.h
  * @author Team Bebop(mmuqeetjibran@wpi.edu)
  * @brief Hauler state machine which controls all the operations done by hauler
@@ -27,6 +27,7 @@
 // #include <operations/obstacle_avoidance.h>
 #include <maploc/ResetOdom.h>
 #include "perception/ObjectArray.h"                    //Not sure why this had to be added, wasnt needed in scout sm, including the obstacle_avoidance header causes problems
+#include <operations/ParkRobotAction.h>
 
 using namespace COMMON_NAMES;
 
@@ -136,6 +137,10 @@ protected:
   typedef actionlib::SimpleActionClient<operations::ExcavatorAction> ExcavatorClient;
   ExcavatorClient *excavator_arm_client_;
   operations::NavigationGoal navigation_action_goal_;
+
+  typedef actionlib::SimpleActionClient<operations::ParkRobotAction> ParkRobotClient;
+  ParkRobotClient *park_robot_client_;
+  operations::ParkRobotGoal park_robot_goal_;
 
 /** @brief:
  * Parameters that have to be tuned through testing.*/ 
@@ -319,5 +324,48 @@ private:
    bool first_;
    geometry_msgs::PoseStamped target_loc_;
 };
+
+class ExcavatorResetOdomAtHopper: public ExcavatorState {
+public:   
+   ExcavatorResetOdomAtHopper(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_RESET_ODOM_AT_HOPPER, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+   bool first_;
+   geometry_msgs::PoseStamped target_loc_;
+   void goToProcPlant();
+   void parkAtHopper();
+   void undockFromHopper();
+   void resetOdom();
+   void idleExcavator(){}
+
+   bool first_GTPP, first_PAH, first_UFH, macro_state_succeeded, macro_state_done;
+   
+   bool state_done;
+
+   enum RESET_ODOM_MICRO_STATES{
+      GO_TO_PROC_PLANT,
+      PARK_AT_HOPPER,
+      UNDOCK_FROM_HOPPER,
+      RESET_ODOM_AT_HOPPER,
+      EXCAVATOR_IDLE 
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
+
+};
+   
 // #endif
 
