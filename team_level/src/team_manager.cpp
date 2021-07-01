@@ -108,6 +108,7 @@ void TeamManager::setEmptyTeamsStandby()
 
 void TeamManager::recruitment()
 {
+   setEmptyTeamsStandby();
    for(int i = 0; i < MAX_TEAMS; i++)
    {
       ROS_INFO_STREAM(all_teams.at(i)->getScout()<<"  "<<all_teams.at(i)->getExcavator()<<"  "<<all_teams.at(i)->getHauler());

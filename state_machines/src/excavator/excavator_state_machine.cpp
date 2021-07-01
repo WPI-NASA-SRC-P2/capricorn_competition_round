@@ -224,8 +224,8 @@ bool ParkAndPub::hasSucceeded()
 {
    // last_state_succeeded_ = (navigation_result_.result == COMMON_RESULT::SUCCESS);
    last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   if(last_state_succeeded_)
-      ROS_WARN_STREAM("Park and Pub to Scout Completed Successfully");
+   // if(last_state_succeeded_)
+   //    ROS_WARN_STREAM("Park and Pub to Scout Completed Successfully");
    return last_state_succeeded_;
 }
 

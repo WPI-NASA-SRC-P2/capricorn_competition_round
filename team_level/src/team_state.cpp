@@ -188,7 +188,7 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
    STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
 
    bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team) && robot_state_register->hasSucceeded(scout_in_team);
-   bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
+   bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team);// && robot_state_register->hasSucceeded(excavator_in_team);
    bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
 
    if (scout_task == SCOUT_SEARCH_VOLATILE)
@@ -277,6 +277,9 @@ void ScoutWaiting::stepParkExcavatorAtScout()
 void ScoutWaiting::exitPoint() 
 {
    ROS_INFO("exitpoint of ScoutWaiting, cancelling ScoutWaiting goal");
+   robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -319,14 +322,11 @@ TEAM_MICRO_STATE Excavating::getMicroState()
    bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
    bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
 
-   if(hauler_in_team == NONE)
-      return WAIT_FOR_HAULER;
-   if(hauler_task == ROBOT_IDLE_STATE || hauler_task == HAULER_GO_BACK_TO_EXCAVATOR)
-      if(!hauler_done_and_succeeded)
+   if(hauler_task == ROBOT_IDLE_STATE && excavator_task == ROBOT_IDLE_STATE)
          return WAIT_FOR_HAULER;
    if(hauler_task == HAULER_PARK_AT_EXCAVATOR && hauler_done_and_succeeded)
       return DIG_AND_DUMP;
-   if(excavator_task == ROBOT_IDLE_STATE && excavator_done_and_succeeded) //ROBOT_IDLE_STATE -> EXCAVATOR_PRE_PARK_MANEUVER
+   if(excavator_task == EXCAVATOR_PRE_HAULER_PARK_MANEUVER && excavator_done_and_succeeded)
       return PARK_AT_EXCAVATOR_HAULER;
    if(hauler_task == HAULER_GO_BACK_TO_EXCAVATOR && hauler_done_and_succeeded)
       return PRE_PARK_MANEUVER_EXCAVATOR;
@@ -379,7 +379,7 @@ void Excavating::stepWaitForHauler()
 
 void Excavating::stepPreParkManeuverExcavator()
 {
-   robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE); //ROBOT_IDLE_STATE -> EXCAVATOR_PRE_PARK_MANEUVER
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_PRE_HAULER_PARK_MANEUVER); 
 }
 
 void Excavating::stepParkHauler()
@@ -395,6 +395,8 @@ void Excavating::stepDigAndDump()
 void Excavating::exitPoint() 
 {
    ROS_INFO("exitpoint of Excavating, cancelling Excavating goal");
+   robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -446,6 +448,7 @@ void Dumping::step()
 void Dumping::exitPoint() 
 {
    ROS_INFO("exitpoint of Dumping, cancelling Dumping goal");
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
 }
 
 // int main(int argc, char** argv)

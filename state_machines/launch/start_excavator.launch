@@ -3,7 +3,7 @@
     <arg name="output" default="screen" />
     <arg name="use_cheat_odom" default="false" />
     <arg name="use_crab_drive" default="false" />
-    <arg name="get_true_pose" default="false"/>             <!--Doubtful-->
+    <arg name="get_true_pose" default="true"/>             <!--Doubtful-->
     <arg name="node_start_delay" default="5.0" /> 
     <arg name="use_robot_localization" default="false" />
 

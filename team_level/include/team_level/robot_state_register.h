@@ -47,6 +47,7 @@ class RobotStateRegister
                                     {EXCAVATOR_3, EXCAVATOR_3_NAME},
                                     {HAULER_1, HAULER_1_NAME},
                                     {HAULER_2, HAULER_2_NAME},
-                                    {HAULER_3, HAULER_3_NAME}};
+                                    {HAULER_3, HAULER_3_NAME},
+                                    {NONE, "NONE"}};
 };
 
