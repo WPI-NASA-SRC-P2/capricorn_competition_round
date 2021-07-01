@@ -443,6 +443,23 @@ private:
    RESET_ODOM_MICRO_STATES micro_state;
 };
 
+class HaulerGoToRepairStation : public HaulerState {
+public:   
+   HaulerGoToRepairStation(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GOTO_REPAIR_STATION, nh, robot_name) {}
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private:
+   bool first_;
+};
 // class HaulerIdle : public HaulerState {
 // public:   
 //    HaulerIdle(ros::NodeHandle nh, std::string robot_name) : HaulerState(ROBOT_IDLE_STATE, nh, robot_name) {}

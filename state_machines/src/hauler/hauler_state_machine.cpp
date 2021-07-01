@@ -229,58 +229,6 @@ void ParkAtHopper::exitPoint()
     // ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " Hauler odometry reset service called!");
 }
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////// R E S E T _ O D O M   S T A T E   C L A S S ////////////////////////////////////
-////////////////////////////////////////////////bot_////////////////////////////////////////////////////////////
-
-// void ResetOdom::entryPoint()
-// {
-//     // set entry variables
-//     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Reseting odom with GT");
-//     first_ = true;
-// }
-
-// State& ResetOdom::transition()
-// {
-//     // transition to reset odometry state when complete
-//     if(first_)
-//         return *this;
-//     return getState(HAULER_DUMP_VOLATILE);
-// }
-
-// void ResetOdom::step()
-// {
-//     // reset odometry (at the hopper) using reset odom service
-//     if(first_)
-//     {
-//         reset_srv_.request.target_robot_name = robot_name_;
-//         reset_srv_.request.use_ground_truth = true;
-//         resetHaulerOdometryClient_.call(reset_srv_);
-//         first_ = false;
-//     }
-// }
-
-// // isDone uses first_ to determine completion as there's no feedback provided by a client
-// bool ResetOdom::isDone() {
-//    current_state_done_ = !first_;
-//    return current_state_done_;
-// } 
-
-// // hasSucceeded uses first_ to determine success as there's no feedback provided by a client
-// bool ResetOdom::hasSucceeded() {
-//    last_state_succeeded_ = !first_;
-//    return last_state_succeeded_;
-// }
-
-// void ResetOdom::exitPoint()
-// {
-//     // cleanup (cancel goal)
-//     ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << "Hauler odometry has been reset");
-    
-// }
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// U N D O C K _ H O P P E R   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -770,5 +718,48 @@ void DumpVolatileAtHopper::exitPoint()
    navigation_vision_client_->cancelGoal();
    park_robot_client_->cancelGoal();
    hauler_client_->cancelGoal();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  G O  TO  R E P A I R  S T A T I O N  S T A T E  C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HaulerGoToRepairStation::entryPoint()
+{
+   first_ = true;
+}
+
+bool HaulerGoToRepairStation::isDone()
+{
+   current_state_done_ = navigation_vision_client_->getState().isDone();
+   return current_state_done_;
+}
+
+bool HaulerGoToRepairStation::hasSucceeded()
+{
+   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   if(last_state_succeeded_)
+      ROS_WARN_STREAM("Scout Go to Repair Station Completed Successfully");
+   return last_state_succeeded_;
+}
+
+void HaulerGoToRepairStation::step()
+{
+
+   if (first_)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_REACH;
+      // navigation_vision_goal_.target_loc = target_loc_;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      first_ = false;
+   }
+   ROS_INFO_STREAM("Going to repair station Step Function!");
+}
+
+void HaulerGoToRepairStation::exitPoint()
+{
+   // none at the moment
+   navigation_vision_client_->cancelGoal();
 }
 

@@ -697,7 +697,48 @@ void ExcavatorResetOdomAtHopper::exitPoint()
    park_robot_client_->cancelGoal();
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  G O  TO  R E P A I R  S T A T I O N  S T A T E  C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void ExcavatorGoToRepairStation::entryPoint()
+{
+   first_ = true;
+}
+
+bool ExcavatorGoToRepairStation::isDone()
+{
+   current_state_done_ = navigation_vision_client_->getState().isDone();
+   return current_state_done_;
+}
+
+bool ExcavatorGoToRepairStation::hasSucceeded()
+{
+   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   if(last_state_succeeded_)
+      ROS_WARN_STREAM("Excavator Go to Repair Station Completed Successfully");
+   return last_state_succeeded_;
+}
+
+void ExcavatorGoToRepairStation::step()
+{
+
+   if (first_)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_REACH;
+      // navigation_vision_goal_.target_loc = target_loc_;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      first_ = false;
+   }
+   ROS_INFO_STREAM("Going to repair station Step Function!");
+}
+
+void ExcavatorGoToRepairStation::exitPoint()
+{
+   // none at the moment
+   navigation_vision_client_->cancelGoal();
+}
 
 // int main(int argc, char** argv)
 // {
