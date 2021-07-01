@@ -94,6 +94,18 @@ void NavigationServer::updateRobotPose(const nav_msgs::Odometry::ConstPtr& msg)
 	return;
 }
 
+/**
+ * @brief Subscribes to the ramping topic and updates whether the robot is still ramping
+ * No mutex because of how inconsequential this is
+ * 
+ * @param msg bool indicating if ramp has finished
+ */
+void NavigationServer::updateRobotRamping(const std_msgs::Bool::ConstPtr& msg)
+{
+	ramp_finished_ = msg->data;
+	return;
+}
+
 geometry_msgs::PoseStamped* NavigationServer::getRobotPose()
 {
 	std::lock_guard<std::mutex> pose_lock(pose_mutex_);
@@ -131,6 +143,8 @@ void NavigationServer::initSubscribers(ros::NodeHandle& nh, std::string& robot_n
 	nh.getParam("cheat_odom", odom_flag);
 
 	update_current_robot_pose_ = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
+
+	ramp_finished_client_ = nh.subscribe("/" + robot_name + RAMP_DONE_TOPIC, 50, &NavigationServer::updateRobotPose, this);
 
 	if (odom_flag)
 	{
@@ -322,6 +336,13 @@ void NavigationServer::brakeRobot(bool brake)
 
 	// Its better to stop wheels from rotating if we are braking
 	moveRobotWheels(0);
+	ramp_finished_ = false;
+
+	while(!ramp_finished_)
+	{
+		ros::spinOnce();
+		update_rate_->sleep();
+	}
 
 	if(brake)
 		srv.request.brake_force = 1000;
@@ -443,7 +464,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 
 		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
 		// we want to get a new trajectory from the planner.
-		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
+		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist_)
 		{
 			ROS_INFO("[operations | nav_server | %s]: driveDistance detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
 
@@ -507,7 +528,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 
 		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
 		// we want to get a new trajectory from the planner.
-		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
+		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist_)
 		{
 			ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
 			ROS_WARN("Current distance traveled %f", distance_traveled);
@@ -531,6 +552,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		// Start steering towards the next waypoint's heading when the robot is half its length away from it
 		// NOTE: Add c_dist_epsilon_ to calculation if we want to start turning torwards the next heading sooner
 		if (current_distance_to_waypoint < (current_distance_to_waypoint - NavigationAlgo::wheel_sep_length_/2))
+		{
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), future_waypoint, robot_name_, buffer_);
 		else
 			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
@@ -684,7 +706,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			future_waypoint.header.stamp = ros::Time(0);
 			NavigationAlgo::transformPose(future_waypoint, MAP, buffer_, 0.1);
 
-			trajectory_reset_dist = LARGE_TRAJECTORY_REST_DIST;
+			trajectory_reset_dist_ = LARGE_TRAJECTORY_RESET_DIST;
 
 			if(smooth)
 			{
@@ -695,7 +717,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				// on receiving a new trajectory.
 				if(abs(delta_heading) > HALF_VIEWING)
 				{
-					trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
+					trajectory_reset_dist_ = SMALL_TRAJECTORY_RESET_DIST;
 					ROS_INFO("[operations | nav_server | %s]: Sharp turn detected, using small reset distance", robot_name_.c_str());
 				}
 

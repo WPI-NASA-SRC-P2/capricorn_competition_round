@@ -2,6 +2,7 @@
 
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/Bool.h>
 #include <sensor_msgs/Imu.h>
 #include <planning/TrajectoryWithVelocities.h>
 #include <planning/trajectory.h>
@@ -54,9 +55,9 @@ private:
     const float BASE_SPIN_SPEED = 0.3;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
-    const double LARGE_TRAJECTORY_REST_DIST = 8; 
-    const double SMALL_TRAJECTORY_REST_DIST = 5; 
-    double trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
+    const double LARGE_TRAJECTORY_RESET_DIST = 8; 
+    const double SMALL_TRAJECTORY_RESET_DIST = 5; 
+    double trajectory_reset_dist_ = SMALL_TRAJECTORY_RESET_DIST;
 
     std::string robot_name_;
 
@@ -75,6 +76,9 @@ private:
 
     // Used to get the current robot pose
     ros::Subscriber update_current_robot_pose_;
+
+    // Check if the current ramp is done yet
+    ros::Subscriber ramp_finished_client_;
 
     ros::ServiceClient brake_client_;
 
@@ -98,6 +102,7 @@ private:
 
     // Whether we should get a new trajectory from the planner. Set by driveDistance in automaticDriving.
     bool get_new_trajectory_ = false;
+    bool ramp_finished_ = false;
 
     /**
      * @brief Uses waypoint_pub_ to publish poses to be visualized in Gazebo.
@@ -134,6 +139,14 @@ private:
     * @param msg The odometry message to process
     */
     void updateRobotPose(const nav_msgs::Odometry::ConstPtr &msg);
+
+    /**
+    * @brief Subscribes to the ramping topic and updates whether the robot is still ramping
+    * No mutex because of how inconsequential this is
+    * 
+    * @param msg bool indicating if ramp has finished
+    */
+    void updateRobotRamping(const std_msgs::Bool::ConstPtr& msg);
 
     geometry_msgs::PoseStamped *getRobotPose();
 

@@ -103,6 +103,7 @@ namespace COMMON_NAMES
   const std::string PARK_HAULER = "/park_hauler";
   const std::string HAULER_PARKED_TOPIC = "/hauler_parked";
   const std::string NAV_TYPE_TOPIC = "/nav_type_topic";
+  const std::string RAMP_DONE_TOPIC = "/ramp_done";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
