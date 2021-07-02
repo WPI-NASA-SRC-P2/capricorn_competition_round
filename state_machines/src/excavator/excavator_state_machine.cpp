@@ -315,8 +315,8 @@ bool PreParkHauler::isDone() {
    
    // current_state_done_ = vis_nav_done && nav_done;
    current_state_done_ = getInArmPositionDone_;
-   if(current_state_done_)
-      ROS_WARN_STREAM("PreParkHauler Completed");
+   // if(current_state_done_)
+   //    ROS_WARN_STREAM("PreParkHauler Completed");
    return current_state_done_;
 
 } 
@@ -324,8 +324,8 @@ bool PreParkHauler::isDone() {
 bool PreParkHauler::hasSucceeded() {
 
    last_state_succeeded_ = getInArmPositionDone_ && centerHaulerDone_;
-   if(last_state_succeeded_)
-      ROS_WARN_STREAM("PreParkHauler Completed Successfully");
+   // if(last_state_succeeded_)
+   //    ROS_WARN_STREAM("PreParkHauler Completed Successfully");
    return last_state_succeeded_;
    // return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
@@ -542,8 +542,8 @@ bool ExcavatorGoToLoc::isDone() {
 
 bool ExcavatorGoToLoc::hasSucceeded() {
    last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   if(last_state_succeeded_)
-      ROS_WARN_STREAM("Go to Scout Completed Successfully");
+   // if(last_state_succeeded_)
+   //    ROS_WARN_STREAM("Go to Scout Completed Successfully");
    return last_state_succeeded_;
 }
 
@@ -716,8 +716,8 @@ bool ExcavatorGoToRepairStation::isDone()
 bool ExcavatorGoToRepairStation::hasSucceeded()
 {
    last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
-   if(last_state_succeeded_)
-      ROS_WARN_STREAM("Excavator Go to Repair Station Completed Successfully");
+   // if(last_state_succeeded_)
+   //    ROS_WARN_STREAM("Excavator Go to Repair Station Completed Successfully");
    return last_state_succeeded_;
 }
 
