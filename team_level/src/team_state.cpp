@@ -94,7 +94,7 @@ bool Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM ha
    }
 
    micro_state = reset_robot_odometry ? RESET_ODOMETRY_AT_HOPPER : SEARCH_FOR_VOLATILE;
-
+   ROS_INFO_STREAM("Reset odom "<<reset_robot_odometry<<" micro_state:"<<micro_state);
    return true;
 }
 
@@ -111,14 +111,19 @@ TEAM_MICRO_STATE Search::getMicroState()
    STATE_MACHINE_TASK scout_task = robot_state_register->currentState(scout_in_team);
    bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team) && robot_state_register->hasSucceeded(scout_in_team);
    bool done_reset = scout_task == SCOUT_RESET_ODOM && scout_done_and_succeeded;
-   if(done_reset || !reset_robot_odometry)
+   if(!done_reset && reset_robot_odometry)
+   {
       return  RESET_ODOMETRY_AT_HOPPER;
+   }
    else 
+   {
       return SEARCH_FOR_VOLATILE;
+   }
 }
 
 TeamState& Search::transition()
 {
+   micro_state = getMicroState();
    if(isDone())
    {
       ROS_INFO("volatile detected, transitioning to scout_undock state");
@@ -130,17 +135,19 @@ TeamState& Search::transition()
    
 void Search::step()
 {
-   switch (micro_state)
-   {
-   case RESET_ODOMETRY_AT_HOPPER:
-      robot_state_register->setRobotState(scout_in_team, SCOUT_RESET_ODOM);      
-      break;
-   case SEARCH_FOR_VOLATILE:
-      robot_state_register->setRobotState(scout_in_team, SCOUT_SEARCH_VOLATILE);      
-      break;
-   default:
-      break;
-   }
+   robot_state_register->setRobotState(scout_in_team, SCOUT_SEARCH_VOLATILE);      
+   // ROS_INFO_STREAM("micro_state:"<<micro_state);
+   // switch (micro_state)
+   // {
+   // case RESET_ODOMETRY_AT_HOPPER:
+   //    robot_state_register->setRobotState(scout_in_team, SCOUT_RESET_ODOM);      
+   //    break;
+   // case SEARCH_FOR_VOLATILE:
+   //    robot_state_register->setRobotState(scout_in_team, SCOUT_SEARCH_VOLATILE);      
+   //    break;
+   // default:
+   //    break;
+   // }
 }
 
 void Search::exitPoint() 
