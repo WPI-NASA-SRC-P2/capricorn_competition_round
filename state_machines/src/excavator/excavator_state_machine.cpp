@@ -453,6 +453,7 @@ bool DigAndDump::isDone() {
 bool DigAndDump::hasSucceeded() {
 
    last_state_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   // last_state_succeeded_ = (excavator_arm_client_->getResult() == COMMON_RESULT::SUCCESS);
    return last_state_succeeded_;
 }
 

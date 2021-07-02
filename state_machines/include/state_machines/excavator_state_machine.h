@@ -133,6 +133,7 @@ protected:
   typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
   NavigationClient *navigation_client_;
   operations::ExcavatorGoal excavator_arm_goal_;
+//   operations::ExcavatorResult excavator_arm_result_;
 
   typedef actionlib::SimpleActionClient<operations::ExcavatorAction> ExcavatorClient;
   ExcavatorClient *excavator_arm_client_;
