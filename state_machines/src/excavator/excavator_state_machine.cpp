@@ -389,6 +389,7 @@ void DigAndDump::entryPoint()
 {
    // initialize required variables
    volatile_found_ = false;
+   done_digging_ = false;
    dig_ = true;
    dump_ = true;
    last_state_dig_ = false;
@@ -419,6 +420,7 @@ void DigAndDump::step()
          dumpVolatile();
          dump_ = false;
          digging_attempt_ = 0;
+         volatile_found_ = true;
       }
    }
    else if(!last_state_dig_ && digging_server_succeeded_)
@@ -432,6 +434,7 @@ void DigAndDump::step()
    // else if(!last_state_dig_ && (digging_server_succeeded_ || digging_attempt < 2))
 
    digging_server_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   done_digging_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::ABORTED);
    // digging_attempt_ += (excavator_arm_client_->getState().isDone();
    ROS_INFO_STREAM("Digging server succeeded = " << digging_server_succeeded_);
    // ROS_INFO_STREAM("Digging server succeeded = " << digging_server_succeeded_);
@@ -446,13 +449,13 @@ void DigAndDump::exitPoint()
 }
 
 bool DigAndDump::isDone() {
-   current_state_done_ = excavator_arm_client_->getState().isDone();
+   current_state_done_ = done_digging_;
    return current_state_done_;
 } 
 
 bool DigAndDump::hasSucceeded() {
 
-   last_state_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   last_state_succeeded_ = volatile_found_;
    return last_state_succeeded_;
 }
 

@@ -246,6 +246,7 @@ public:
 
 private: 
    bool volatile_found_;
+   bool done_digging_;
    bool digging_server_succeeded_;
    bool last_state_dig_;
    bool dig_;
