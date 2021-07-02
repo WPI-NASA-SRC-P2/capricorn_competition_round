@@ -140,6 +140,12 @@ bool Search::isDone()
 {
    // if near the volatile, then the state is done
    current_state_done_ = near_volatile_;
+
+   if(current_state_done_) {   /** @TEST: Remove thsi if running the scheduler */
+   srv.request.resume_spiral_motion = false;
+   spiralClient_.call(srv);
+   }
+
    return (current_state_done_);
 }
 
