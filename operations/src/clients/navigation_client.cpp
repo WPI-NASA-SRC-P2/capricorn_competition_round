@@ -143,7 +143,7 @@ int main(int argc, char **argv)
       ROS_ERROR_STREAM("Server does not exist! Exiting.\n");
       return -1;
     }
-
+    
     printf("Done waiting. Spinning\n");
 
     ros::spin();

@@ -78,10 +78,12 @@ const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
     STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM,
     STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM,
     STATE_MACHINE_TASK::EXCAVATOR_FACE_PROCESSING_PLANT,
+    STATE_MACHINE_TASK::EXCAVATOR_VOLATILE_RECOVERY,
     STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR};
 
 /****************************************/
 /****************************************/
+};
 
 class ExcavatorState : public State {
    
