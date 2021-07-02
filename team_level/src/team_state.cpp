@@ -17,11 +17,11 @@ void TeamState::setTeam(TeamScheduler& c_robot_scheduler) {
 ///////////////////////////////////// S T A N D B Y   S T A T E   C L A S S ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Standby::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+bool Standby::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of Standby");
-   if(!(scout == NONE && excavator == NONE && hauler == NONE))
+   if(!(scout_in_team == NONE && excavator_in_team == NONE && hauler_in_team == NONE))
    {
       ROS_ERROR_STREAM("STANDBY STATE CALLED, BUT AT LEAST ONE ROBOT IS NOT UNSET");
       return false;
@@ -48,11 +48,11 @@ void Standby::exitPoint()
 ///////////////////////////////////// I D L E   S T A T E   C L A S S ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Idle::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+bool Idle::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of Idle");
-   if(scout == NONE && excavator == NONE && hauler == NONE)
+   if(scout_in_team == NONE && excavator_in_team == NONE && hauler_in_team == NONE)
    {
       ROS_ERROR_STREAM("IDLE STATE CALLED, BUT NO ROBOT IS SET");
       return false;
@@ -79,14 +79,11 @@ void Idle::exitPoint()
 ///////////////////////////////////// S E A R C H   S T A T E   C L A S S ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+bool Search::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of Search");
-   scout_in_team = scout;
-   excavator_in_team = excavator;
-   hauler_in_team = hauler;
-
+   ROS_ERROR_STREAM("Current scout:"<<scout_in_team);
    if(scout_in_team == NONE)
    {
       ROS_ERROR_STREAM("SCOUT IS UNSET, BUT STILL ENTRY POINT HAS BEEN CALLED!");
@@ -96,6 +93,14 @@ bool Search::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM ha
    micro_state = reset_robot_odometry ? RESET_ODOMETRY_AT_HOPPER : SEARCH_FOR_VOLATILE;
    ROS_INFO_STREAM("Reset odom "<<reset_robot_odometry<<" micro_state:"<<micro_state);
    return true;
+}
+
+void Search::updateRobots(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler) {
+   ROS_ERROR_STREAM("New Input scout:"<<scout);
+   scout_in_team = scout;
+   ROS_ERROR_STREAM("Set scout:"<<scout_in_team);
+   excavator_in_team = excavator;
+   hauler_in_team = hauler;
 }
 
 bool Search::isDone()
@@ -135,6 +140,7 @@ TeamState& Search::transition()
    
 void Search::step()
 {
+   ROS_ERROR_STREAM("Actual scout:"<<scout_in_team);
    robot_state_register->setRobotState(scout_in_team, SCOUT_SEARCH_VOLATILE);      
    // ROS_INFO_STREAM("micro_state:"<<micro_state);
    // switch (micro_state)
@@ -160,13 +166,10 @@ void Search::exitPoint()
 ///////////////////////////////////// S C O U T _ W A I T I N G   S T A T E   C L A S S ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool ScoutWaiting::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+bool ScoutWaiting::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of ScoutWaiting");
-   scout_in_team = scout;
-   excavator_in_team = excavator;
-   hauler_in_team = hauler;
 
    if(scout_in_team == NONE || excavator_in_team == NONE)
    {
@@ -293,13 +296,10 @@ void ScoutWaiting::exitPoint()
 ///////////////////////////////////// E X C A V A T I N G   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Excavating::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+bool Excavating::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of Excavating");
-   scout_in_team = scout;
-   excavator_in_team = excavator;
-   hauler_in_team = hauler;
 
    if(excavator_in_team == NONE || hauler_in_team == NONE )
    {
@@ -410,13 +410,10 @@ void Excavating::exitPoint()
 ///////////////////////////////////// D U M P I N G   S T A T E   C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Dumping::entryPoint(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler)
+bool Dumping::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of Dumping");
-   scout_in_team = scout;
-   excavator_in_team = excavator;
-   hauler_in_team = hauler;
 
    if(hauler_in_team == NONE )
    {

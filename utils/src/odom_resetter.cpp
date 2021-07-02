@@ -33,6 +33,18 @@ void imu_callback(sensor_msgs::Imu imu_data)
     imu_message_received = true;
 }
 
+void getInitRPY(double &init_r, double &init_p, double &init_y)
+{
+    geometry_msgs::Quaternion init_quat = global_odometry.pose.pose.orientation;//pose.pose.orientation from odom
+    tf2::Quaternion init_tf_quat(init_quat.x,
+                                 init_quat.y,
+                                 init_quat.z,
+                                 init_quat.w);
+    
+    tf2::Matrix3x3 init_m(init_tf_quat);
+    init_m.getRPY(init_r, init_p, init_y);
+}
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "odom_corrector");
@@ -52,15 +64,13 @@ int main(int argc, char** argv)
         ros::spinOnce();
     }
 
-    geometry_msgs::Quaternion init_quat = global_odometry.pose.pose.orientation;//pose.pose.orientation from odom
-    tf2::Quaternion init_tf_quat(init_quat.x,
-                                 init_quat.y,
-                                 init_quat.z,
-                                 init_quat.w);
-    
-    tf2::Matrix3x3 init_m(init_tf_quat);
     double init_r, init_p, init_y;
-    init_m.getRPY(init_r, init_p, init_y);
+    do
+    {
+        getInitRPY(init_r, init_p, init_y);
+        ros::spinOnce();
+    } while ((init_r != init_r || init_p != init_p || init_y != init_y) && ros::ok());
+    
 
     while(ros::ok())
     {
@@ -102,7 +112,7 @@ int main(int argc, char** argv)
             ROS_ERROR_STREAM("[UTILS | odom_resetter.cpp | " + robot_name + "]: " + "RTabMap initialize pose failed.");
         }
 
-        ros::Duration(1).sleep();
+        ros::Duration(10).sleep();
         ros::spinOnce();
     }
 

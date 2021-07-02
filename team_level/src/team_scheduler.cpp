@@ -51,8 +51,10 @@ void TeamScheduler::setInitialState(uint64_t un_state) {
    if(pcState != MACRO_STATE_PTR_MAP.end()) {
       // acquire value of the state (every map has a key(first) and a value(second))
       current_state_ptr = pcState->second;
+      current_state_ptr->updateRobots(hired_scout, hired_excavator, hired_hauler);
+
       // completes entry point of the initial state
-      current_state_ptr->entryPoint(hired_scout, hired_excavator, hired_hauler);
+      current_state_ptr->entryPoint();
       setTeamMacroState((TEAM_MACRO_STATE) un_state);
    }
    else {
@@ -74,10 +76,12 @@ void TeamScheduler::step() {
          new_state_request = false;
       }
 
+      ROS_ERROR_STREAM("Output scout:"<<hired_scout);
+      current_state_ptr->updateRobots(hired_scout, hired_excavator, hired_hauler);
       if(cNewState != current_state_ptr) {
          /* Perform transition */
          current_state_ptr->exitPoint();
-         bool entry = cNewState->entryPoint(hired_scout, hired_excavator, hired_hauler);
+         bool entry = cNewState->entryPoint();
          
          setTeamMacroState((TEAM_MACRO_STATE) cNewState->getId());
          if(!entry)

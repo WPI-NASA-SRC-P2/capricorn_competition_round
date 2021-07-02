@@ -703,11 +703,11 @@ void DumpVolatileAtHopper::undockFromHopper()
 
 void DumpVolatileAtHopper::resetOdom()
 {
-   ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
-   maploc::ResetOdom srv;
-   srv.request.target_robot_name = robot_name_;
-   srv.request.at_hopper = true;
-   macro_state_succeeded = resetOdometryClient.call(srv);
+   // ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+   // maploc::ResetOdom srv;
+   // srv.request.target_robot_name = robot_name_;
+   // srv.request.at_hopper = true;
+   // macro_state_succeeded = resetOdometryClient.call(srv);
    macro_state_done = true;
    micro_state = HAULER_IDLE;
 }
