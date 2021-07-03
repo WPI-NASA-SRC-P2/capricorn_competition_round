@@ -83,7 +83,19 @@ private:
    */
   static float distGridToPoint(int index, geometry_msgs::Point p1, int width, int height);
 
+
+
 public:
+  /**
+   * @brief 
+   * 
+   * @param index 
+   * @param oGrid 
+   * @param threshold 
+   * @return int 
+   */
+  static int adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold);
+  
   /**
      * @brief Calculated the shortest path using an occupancy grid based approach.
      * 

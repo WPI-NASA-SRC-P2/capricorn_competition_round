@@ -122,6 +122,69 @@ float AStar::distGridToPoint(int index, Point p1, int width, int height)
   return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 }
 
+int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
+{   int newGoalIndex = index;
+
+    ROS_WARN("[planning | astar ]: end Index: %d", index);
+
+    std::vector<int> unVisitedIndexes;
+    std::vector<int> visitedIndexes;
+
+    std::array<int, 8> indexNeighbors = getNeighborsIndiciesArray(index, oGrid.info.width, oGrid.info.height);
+    for (int i = 0; i < indexNeighbors.size(); i++)
+    {
+     ROS_WARN("putting neighbors");
+     ROS_WARN("[planning | astar ]: index: %d", indexNeighbors[i]);
+     unVisitedIndexes.push_back(indexNeighbors[i]); 
+    }
+      
+      ROS_WARN("while loop");
+    
+    while(oGrid.data[newGoalIndex] > threshold && unVisitedIndexes.size()!= 0)
+    {
+      ROS_WARN("inside while loop");
+      ROS_WARN("inside while loop");
+      ROS_WARN("[planning | astar ]: end Index: %d", unVisitedIndexes.size());
+
+        for (int i = unVisitedIndexes.size(); i > -1 ; i--)
+        {
+          ROS_WARN("for loop");
+
+          visitedIndexes.push_back(unVisitedIndexes[i]);
+          ROS_WARN("[planning | astar ]: end Index: %d", unVisitedIndexes[i]);
+          ROS_WARN("[planning | astar ]: data size: %d", oGrid.data.size());
+
+          if(oGrid.data[unVisitedIndexes[i]] < threshold)
+          {
+            ROS_WARN("found the new index");
+            newGoalIndex = unVisitedIndexes[i];
+            return newGoalIndex;
+          }
+
+          ROS_WARN("for loop - 2");
+
+          
+          std::array<int, 8> neighbors = getNeighborsIndiciesArray(unVisitedIndexes[i], oGrid.info.width, oGrid.info.height);
+          for (int j = 0; j < neighbors.size(); j++)
+          {
+            std::vector<int>::iterator it = find(unVisitedIndexes.begin(),unVisitedIndexes.end(), neighbors[j]);  // ref. https://www.includehelp.com/stl/check-whether-an-element-exists-in-a-vector-in-cpp-stl.aspx
+            if(it != unVisitedIndexes.end())
+            {
+              unVisitedIndexes.push_back(neighbors[j]);     
+            }
+          }
+          unVisitedIndexes.pop_back();
+        }
+    }
+
+  ROS_WARN("[planning | astar ]: new end Index: %d", newGoalIndex);
+
+
+  return newGoalIndex;
+}
+
+
+
 Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, int threshold, std::string & robot_name)
 {
   // Convert meters -> grid units
@@ -266,8 +329,10 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   // Check if the final destination is occupied.
   if (oGrid.data[endIndex] > threshold)
   {
-    ROS_WARN("[planning | astar | %s]: TARGET IN OCCUPIED SPACE, UNREACHABLE", robot_name);
-    return Path();
+    ROS_WARN("[planning | astar | %s]: TARGET IN OCCUPIED SPACE, RESETTING THE INDEX", robot_name);
+
+    endIndex = adjustIndex(endIndex, oGrid, threshold);
+    //return Path();
   }
 
   std::set<std::pair<double, int>> open_set;
