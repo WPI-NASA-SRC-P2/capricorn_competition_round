@@ -84,7 +84,12 @@ public:
    
    virtual TEAM_MICRO_STATE getMicroState() = 0;
 
-   virtual void updateRobots(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) = 0;
+   void updateRobots(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) {
+   scout_in_team = scout;
+   excavator_in_team = excavator;
+   hauler_in_team = hauler;
+}
+
 
    void setResetRobot(bool reset_needed){
       // ROS_WARN_STREAM(reset_needed);
@@ -97,7 +102,7 @@ protected:
    TeamScheduler* m_pcTeam;
    uint64_t m_unId;
    std::string m_strName;
-   // ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
+   ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
    RobotStateRegister *robot_state_register;
    RobotPoseRegister *robot_pose_register;
    geometry_msgs::PoseStamped volatile_site_location;
@@ -113,20 +118,9 @@ public:
    TeamState& transition() override {return *this;}
    TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
    
-   void updateRobots(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override {
-      ROS_ERROR_STREAM("Input scout:"<<scout);
-      scout_in_team = scout;
-      ROS_ERROR_STREAM("Set scout:"<<scout_in_team);
-      excavator_in_team = excavator;
-      hauler_in_team = hauler;
-   }
-
    bool entryPoint() override;
    void step() override;
    void exitPoint() override;
-
-private:
-   ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
 };
 
 class Idle: public TeamState{
@@ -137,19 +131,9 @@ public:
    TeamState& transition() override {return *this;}
    TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
    
-   void updateRobots(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override {
-      ROS_ERROR_STREAM("Input scout:"<<scout);
-      scout_in_team = scout;
-      ROS_ERROR_STREAM("Set scout:"<<scout_in_team);
-      excavator_in_team = excavator;
-      hauler_in_team = hauler;
-   }
-
    bool entryPoint() override;
    void step() override;
    void exitPoint() override;
-private:
-   ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
 };
 
 class Search: public TeamState{
@@ -164,11 +148,8 @@ public:
    void step() override;
    void exitPoint() override;
 
-   void updateRobots(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override ;
-
 private:
    TEAM_MICRO_STATE micro_state;
-   ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
 };
 
 class ScoutWaiting: public TeamState{
@@ -183,20 +164,11 @@ public:
    void step() override;
    void exitPoint() override;
 
-   void updateRobots(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override {
-      ROS_ERROR_STREAM("Input scout:"<<scout);
-      scout_in_team = scout;
-      ROS_ERROR_STREAM("Set scout:"<<scout_in_team);
-      excavator_in_team = excavator;
-      hauler_in_team = hauler;
-   }
-
 private:
    TEAM_MICRO_STATE micro_state;
    void stepRobotsToGoal();
    void stepUndockScout();
    void stepParkExcavatorAtScout();
-   ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
 };
 
 class Excavating: public TeamState{
@@ -210,13 +182,6 @@ public:
    bool entryPoint() override;
    void step() override;
    void exitPoint() override;
-   void updateRobots(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override {
-      ROS_ERROR_STREAM("Input scout:"<<scout);
-      scout_in_team = scout;
-      ROS_ERROR_STREAM("Set scout:"<<scout_in_team);
-      excavator_in_team = excavator;
-      hauler_in_team = hauler;
-   }
 
 private:
    TEAM_MICRO_STATE micro_state;
@@ -224,7 +189,6 @@ private:
    void stepPreParkManeuverExcavator();
    void stepParkHauler();
    void stepDigAndDump();
-   ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
 };
 
 class Dumping: public TeamState{
@@ -238,15 +202,4 @@ public:
    bool entryPoint() override;
    void step() override;
    void exitPoint() override;
-
-   void updateRobots(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) override {
-      ROS_ERROR_STREAM("Input scout:"<<scout);
-      scout_in_team = scout;
-      ROS_ERROR_STREAM("Set scout:"<<scout_in_team);
-      excavator_in_team = excavator;
-      hauler_in_team = hauler;
-   }
-
-private:
-   ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
 };

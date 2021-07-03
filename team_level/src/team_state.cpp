@@ -83,7 +83,6 @@ bool Search::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("entrypoint of Search");
-   ROS_ERROR_STREAM("Current scout:"<<scout_in_team);
    if(scout_in_team == NONE)
    {
       ROS_ERROR_STREAM("SCOUT IS UNSET, BUT STILL ENTRY POINT HAS BEEN CALLED!");
@@ -91,16 +90,8 @@ bool Search::entryPoint()
    }
 
    micro_state = reset_robot_odometry ? RESET_ODOMETRY_AT_HOPPER : SEARCH_FOR_VOLATILE;
-   ROS_INFO_STREAM("Reset odom "<<reset_robot_odometry<<" micro_state:"<<micro_state);
+   // ROS_INFO_STREAM("Reset odom "<<reset_robot_odometry<<" micro_state:"<<micro_state);
    return true;
-}
-
-void Search::updateRobots(ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler) {
-   ROS_ERROR_STREAM("New Input scout:"<<scout);
-   scout_in_team = scout;
-   ROS_ERROR_STREAM("Set scout:"<<scout_in_team);
-   excavator_in_team = excavator;
-   hauler_in_team = hauler;
 }
 
 bool Search::isDone()
@@ -140,7 +131,6 @@ TeamState& Search::transition()
    
 void Search::step()
 {
-   ROS_ERROR_STREAM("Actual scout:"<<scout_in_team);
    robot_state_register->setRobotState(scout_in_team, SCOUT_SEARCH_VOLATILE);      
    // ROS_INFO_STREAM("micro_state:"<<micro_state);
    // switch (micro_state)
@@ -201,7 +191,7 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
    bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team);// && robot_state_register->hasSucceeded(excavator_in_team);
    bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
 
-   if (scout_task == SCOUT_SEARCH_VOLATILE)
+   if (scout_task == ROBOT_IDLE_STATE)
       return ROBOTS_TO_GOAL;
    if (excavator_task == EXCAVATOR_GO_TO_SCOUT && excavator_done_and_succeeded)
       if (scout_task == SCOUT_LOCATE_VOLATILE && scout_done_and_succeeded)

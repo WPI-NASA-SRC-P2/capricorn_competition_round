@@ -21,6 +21,17 @@ if __name__=="__main__":
   desired_state.last_state_succeeded = True
   desired_state_pub.publish(desired_state)
 
+  input("MACRO STATE CHANGED TO SCOUT_WAITING")
+
+  desired_state = robot_state_status()
+  desired_state.robot_name = "small_scout_1"
+  desired_state.robot_current_state = 38
+  desired_state.current_state_done = True
+  desired_state.last_state_succeeded = True
+  desired_state_pub.publish(desired_state)
+
+#####################################################################################
+
   input('Enter for Locate Function')
   desired_state = robot_state_status()
   desired_state.robot_name = "small_scout_1"
@@ -29,7 +40,7 @@ if __name__=="__main__":
   desired_state.last_state_succeeded = True
   desired_state_pub.publish(desired_state)
   
-  input('Enter for Excavator ')
+  input('Enter for Excavator Go to Loc')
   desired_state = robot_state_status()
   desired_state.robot_name = "small_excavator_1"
   desired_state.robot_current_state = 11
@@ -53,7 +64,27 @@ if __name__=="__main__":
   desired_state.last_state_succeeded = True
   desired_state_pub.publish(desired_state)
   
-  input('Enter for Locate Function')
+  input("MACRO STATE CHANGED TO EXCAVATING")
+
+  desired_state = robot_state_status()
+  desired_state.robot_name = "small_scout_1"
+  desired_state.robot_current_state = 38
+  desired_state.current_state_done = True
+  desired_state.last_state_succeeded = True
+  desired_state_pub.publish(desired_state)
+
+  desired_state = robot_state_status()
+  desired_state.robot_name = "small_excavator_1"
+  desired_state.robot_current_state = 38
+  desired_state.current_state_done = True
+  desired_state.last_state_succeeded = True
+  desired_state_pub.publish(desired_state)
+
+
+#####################################################################################
+
+
+  input('Enter for Hauler finish Dumping')
   desired_state = robot_state_status()
   desired_state.robot_name = "small_hauler_1"
   desired_state.robot_current_state = 24
@@ -61,5 +92,19 @@ if __name__=="__main__":
   desired_state.last_state_succeeded = True
   desired_state_pub.publish(desired_state)
   
+  input("MACRO STATE DUMPING FINISHED")
+
+  input('Enter for Locate Function')
+  desired_state = robot_state_status()
+  desired_state.robot_name = "small_hauler_1"
+  desired_state.robot_current_state = 38
+  desired_state.current_state_done = True
+  desired_state.last_state_succeeded = True
+  desired_state_pub.publish(desired_state)
+  
+
+#####################################################################################
+
+
 
   # this node works entirely based on the callback functions, thus just need to spin in main loop after initializing    

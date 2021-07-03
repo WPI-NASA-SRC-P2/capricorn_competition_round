@@ -76,11 +76,11 @@ void TeamScheduler::step() {
          new_state_request = false;
       }
 
-      ROS_ERROR_STREAM("Output scout:"<<hired_scout);
       current_state_ptr->updateRobots(hired_scout, hired_excavator, hired_hauler);
       if(cNewState != current_state_ptr) {
          /* Perform transition */
          current_state_ptr->exitPoint();
+         cNewState->updateRobots(hired_scout, hired_excavator, hired_hauler);
          bool entry = cNewState->entryPoint();
          
          setTeamMacroState((TEAM_MACRO_STATE) cNewState->getId());
