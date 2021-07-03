@@ -31,7 +31,7 @@ public:
          new_state_request = true;}
 
    void setResetRobot(bool reset_needed){
-      current_state_ptr->setResetRobot(reset_needed);
+      reset_robot_odometry = reset_needed;
    }
 
    void exec();
@@ -49,7 +49,7 @@ private:
 
    void setInitialState(uint64_t un_state);
 
-   bool new_state_request;
+   bool new_state_request, reset_robot_odometry;
 
    TeamState* current_state_ptr;
    std::unordered_map<uint64_t, TeamState*> MACRO_STATE_PTR_MAP;

@@ -81,6 +81,7 @@ void TeamScheduler::step() {
          /* Perform transition */
          current_state_ptr->exitPoint();
          cNewState->updateRobots(hired_scout, hired_excavator, hired_hauler);
+         cNewState->setResetRobot(reset_robot_odometry);
          bool entry = cNewState->entryPoint();
          
          setTeamMacroState((TEAM_MACRO_STATE) cNewState->getId());
