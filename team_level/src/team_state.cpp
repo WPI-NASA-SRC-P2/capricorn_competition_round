@@ -336,12 +336,19 @@ TEAM_MICRO_STATE Excavating::getMicroState()
 
 TeamState& Excavating::transition()
 {
+   STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
+   bool excavator_done_and_failed = robot_state_register->isDone(excavator_in_team) && !(robot_state_register->hasSucceeded(excavator_in_team));
+   
    if(isDone())
    {
       ROS_INFO("Excavator reached, Shifting to DUMPING");
       return getState(DUMPING);
    }
-   else
+   else if (excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_failed)
+   {
+      ROS_INFO("Excavation FAILED! Shifting to IDLE");
+      return getState(IDLE);
+   }
    {
       micro_state = getMicroState();
       return *this;
