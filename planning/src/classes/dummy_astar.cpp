@@ -122,6 +122,7 @@ float AStar::distGridToPoint(int index, Point p1, int width, int height)
   return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 }
 
+
 int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
 { 
     int newGoalIndex = index;
@@ -135,53 +136,50 @@ int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
     for (int i = 0; i < indexNeighbors.size(); i++)
     {
       unVisitedIndexes.push_back(indexNeighbors[i]); 
-      visitedIndexes.push_back(indexNeighbors[i]);
     }
-
-    for (int k = 0; k < unVisitedIndexes.size(); k++)
+    
+    for (int k = 0; k < unvisitedIndexes.size(); k++)
     { 
-
-            ROS_WARN("[planning | astar ]: current index of unvisited vector: %d", oGrid.data[unVisitedIndexes[k]]);
-
-
-            ROS_WARN("[planning | astar ]: current index of unvisited vector: %d", k);
-
-     
-            ROS_WARN("[planning | astar ]: current element: %d", unVisitedIndexes[k]);
+    //while loop to iterate over unvisted neighbors
+    if(oGrid.data[newGoalIndex] > threshold && unVisitedIndexes.size()!= 0)
+    {     
+       
+          ROS_WARN("[planning | astar ]: current element: %d", unVisitedIndexes[k]);
+         
+       //checks if the current element is an obstacle or not
+          if(oGrid.data[unVisitedIndexes[k]] < threshold)
+          {
+            ROS_WARN("found the new index");
+            newGoalIndex = unVisitedIndexes[k];
+            visitedIndexes.push_back(newGoalIndex);
+            //return newGoalIndex;
+          }
+          else
+          {
+            visitedIndexes.push_back(unVisitedIndexes[k]);
+          }
+          //gets the neighbors of the current element         
+          std::array<int, 8> neighbors = getNeighborsIndiciesArray(unVisitedIndexes[k], oGrid.info.width, oGrid.data.size());
+          for (int j = 0; j < neighbors.size(); j++)
+          {
+            std::vector<int>::iterator it_1 = find(unVisitedIndexes.begin(),unVisitedIndexes.end(), neighbors[j]);  // ref. https://www.includehelp.com/stl/check-whether-an-element-exists-in-a-vector-in-cpp-stl.aspx
+            std::vector<int>::iterator it_2 = find(visitedIndexes.begin(),visitedIndexes.end(), neighbors[j]);  // ref. https://www.includehelp.com/stl/check-whether-an-element-exists-in-a-vector-in-cpp-stl.aspx
+            //adding current element's neighbors to the unvisitedIndexes vector
+            if(it_1 != unVisitedIndexes.end())// && it_2 != visitedIndexes.end())
+            {
+              unVisitedIndexes.push_back(neighbors[j]);                  
+            }
+          }
           
-        //checks if the current element is an obstacle or not
-            if(oGrid.data[unVisitedIndexes[k]] < threshold)
-            {
-              ROS_INFO("found the new index");
-              newGoalIndex = unVisitedIndexes[k];
-              return newGoalIndex;
-            }
-            // else
-            // {
-            //   visitedIndexes.push_back(unVisitedIndexes[k]);
-            // }
-            //gets the neighbors of the current element         
-            std::array<int, 8> currentIndexNeighbors = getNeighborsIndiciesArray(unVisitedIndexes[k], oGrid.info.width, oGrid.data.size());
-            for (int j = 0; j < currentIndexNeighbors.size(); j++)
-            {
-              std::vector<int>::iterator it_1 = find(unVisitedIndexes.begin(),unVisitedIndexes.end(), currentIndexNeighbors[j]);  // ref. https://www.includehelp.com/stl/check-whether-an-element-exists-in-a-vector-in-cpp-stl.aspx
-              std::vector<int>::iterator it_2 = find(visitedIndexes.begin(),visitedIndexes.end(), currentIndexNeighbors[j]);  // ref. https://www.includehelp.com/stl/check-whether-an-element-exists-in-a-vector-in-cpp-stl.aspx
-              // //adding current element's neighbors to the unvisitedIndexes vector
-              if(it_1 != unVisitedIndexes.end() && it_2 != visitedIndexes.end())
-              {
-                ROS_INFO("added the index");
-                unVisitedIndexes.push_back(currentIndexNeighbors[j]);                 
-              }
-            }
-            // unVisitedIndexes.erase(unVisitedIndexes.begin());
-            
-      
+        //   unVisitedIndexes.erase(unVisitedIndexes.begin());
+          
+    }
     }
 
   ROS_WARN("[planning | astar ]: new end Index: %d", newGoalIndex);
 
 
-  // return newGoalIndex;
+  return newGoalIndex;
 }
 
 
