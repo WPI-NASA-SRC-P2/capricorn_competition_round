@@ -135,7 +135,7 @@ private:
     */
     void updateRobotPose(const nav_msgs::Odometry::ConstPtr &msg);
 
-    geometry_msgs::PoseStamped *getRobotPose();
+    geometry_msgs::PoseStamped getRobotPose();
 
     /**
     * @brief Initialize the subscriber for robot position
