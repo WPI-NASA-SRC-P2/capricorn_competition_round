@@ -95,6 +95,16 @@ public:
    * @return int 
    */
   static int adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold);
+
+  /**
+   * @brief 
+   * 
+   * @param vector 
+   * @param element 
+   * @return true 
+   * @return false 
+   */
+  static bool elementExists(std::vector<int> vector, int element);
   
   /**
      * @brief Calculated the shortest path using an occupancy grid based approach.
