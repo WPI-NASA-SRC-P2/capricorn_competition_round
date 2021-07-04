@@ -13,6 +13,7 @@ NASA SPACE ROBOTICS CHALLENGE
 #include <sensor_msgs/Imu.h>
 #include <rtabmap_ros/ResetPose.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include <state_machines/robot_state_status.h>
 
 bool imu_message_received = false;
 bool odom_message_received = false;
@@ -25,17 +26,29 @@ double pitch_avg;
 double yaw_avg;
 int reading_count = 0;
 
+std::string curr_bot;
+int curr_state;
+bool curr_state_done = false;
+bool last_state_succeeded = false;
+
 void odom_callback(nav_msgs::Odometry odom_data) 
 {   
     global_odometry = odom_data;
     odom_message_received = true;
-
 }
 
 void imu_callback(sensor_msgs::Imu imu_data) 
 {   
     global_imu = imu_data;
     imu_message_received = true;
+}
+
+void robot_state_callback(state_machines::robot_state_status robot_state_info) 
+{   
+    curr_bot = robot_state_info.robot_name;
+    curr_state = robot_state_info.robot_current_state;
+    curr_state_done = robot_state_info.current_state_done;
+    last_state_succeeded = robot_state_info.last_state_succeeded;
 }
 
 void getInitRPY(double &init_r, double &init_p, double &init_y)
@@ -56,18 +69,6 @@ void getInitRPY(double &init_r, double &init_p, double &init_y)
     reading_count++;
 }
 
-void updateAverages(double r, double p, double y){
-
-    roll_avg = (roll_avg * (reading_count - 1) + r) / reading_count;
-    pitch_avg = (pitch_avg * (reading_count - 1) + p) / reading_count;
-    yaw_avg = (yaw_avg * (reading_count - 1) + y) / reading_count;
-}
-
-double lowPassExponential(double input, double average, double factor) 
-{  
-    double retVal = input*factor + (1-factor)*average;  // ensure factor belongs to  [0,1]
-} 
-
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "odom_corrector");
@@ -77,11 +78,16 @@ int main(int argc, char** argv)
     
     ros::Subscriber camera_odom_sub = nh.subscribe("/"+ robot_name + "/camera/odom", 223, odom_callback);
     ros::Subscriber imu_odom_sub = nh.subscribe("/"+ robot_name + "/imu", 223, imu_callback);
+    ros::Subscriber robot_state_sub = nh.subscribe("/capricorn/robot_state_status", 223, robot_state_callback);
 
     ros::ServiceClient reset_odom_to_pose_client = nh.serviceClient<rtabmap_ros::ResetPose>(robot_name + COMMON_NAMES::RESET_POSE_CLIENT);
 
     // Wait until we have received a message from both odom and imu
-    while(ros::ok() && !imu_message_received && !odom_message_received)
+    while(ros::ok() && !imu_message_received && !odom_message_received &&
+             (robot_name != "small_hauler_1" || (curr_bot == "small_hauler_1" && 
+                                                 curr_state == 24 && 
+                                                 curr_state_done == true && 
+                                                 last_state_succeeded == true)))
     {
         ros::Duration(0.1).sleep();
         ros::spinOnce();
@@ -117,12 +123,9 @@ int main(int argc, char** argv)
         
         // Use low pass filter to get new filtered values of rpy
         double new_r, new_p, new_y;
-        new_r = lowPassExponential(r, roll_avg, 0.2);
-        new_p = lowPassExponential(p, pitch_avg, 0.2);
-        new_y = lowPassExponential(y, yaw_avg, 0.2);
-
-        // Update averages for future filtering
-        updateAverages(r, p, y);   
+        new_r = init_r + r;
+        new_p = init_p + p;
+        new_y = init_y + y;  
 
         // Assemble data into pose for Rosservice call 
         rtabmap_ros::ResetPose pose;

@@ -160,12 +160,6 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
-add_executable(odom_resetter src/odom_resetter.cpp)
-add_dependencies(odom_resetter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(odom_resetter
-${catkin_LIBRARIES}
-)
-
 #############
 ## Install ##
 #############
