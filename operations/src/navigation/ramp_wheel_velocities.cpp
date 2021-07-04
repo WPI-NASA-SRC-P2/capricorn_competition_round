@@ -237,7 +237,13 @@ int main(int argc, char *argv[])
                 // Update current_velocities_
                 current_velocities = temp_goal_vels;
             }
-
+            else
+            {
+                // ROS_INFO("[operations | ramp_wheel_velocities | %s]: No ramp to do.", robot_name.c_str());
+                finished_data.data = true;
+                finished_pub_.publish(finished_data);
+                ros::Duration(0.05).sleep();
+            }
             ros::spinOnce();
         }
     }

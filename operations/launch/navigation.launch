@@ -14,7 +14,7 @@
 
         <node name="publish_cheat_odom" pkg="maploc" type="publish_cheat_odom" args="$(arg robot_name)" if="$(arg use_cheat_odom)"/>
         <node name="start_nav_server" pkg="operations" type="start_nav_server" args="$(arg robot_name)" output="$(arg output)"/>
-        <node name="wheel_speed_processing" pkg="operations" type="wheel_speed_processing" args="$(arg robot_name)" />
-        <node name="ramp_wheel_velocities" pkg="operations" type="ramp_wheel_velocities" args="$(arg robot_name)" output="log" />
+        <node name="wheel_speed_processing" pkg="operations" type="wheel_speed_processing" args="$(arg robot_name)" output="screen"/>
+        <node name="ramp_wheel_velocities" pkg="operations" type="ramp_wheel_velocities" args="$(arg robot_name)" output="screen" />
     </group>
 </launch>
