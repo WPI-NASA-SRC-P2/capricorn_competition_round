@@ -12,8 +12,6 @@ using nav_msgs::Path;
 
 geometry_msgs::Point point;
 
-int abandonedIndex;
-
 #define RVIZ_COMPATABILITY
 
 Point AStar::getPoint(double x, double y)
@@ -112,26 +110,6 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
   }
 
   p.poses.push_back(lastPs);
-
-  if(abandonedIndex != 0)
-  { 
-    ROS_INFO("Adding the padded point to the A* path");
-    std::vector<geometry_msgs::PoseStamped> paddingPath;
-
-
-    for (int i = 0; i < p.poses.size(); i++)
-    {
-      paddingPath.push_back(p.poses[i]);
-
-    }
-    paddingPath.push_back(poseStampedFromIndex(abandonedIndex, oGrid, robot_name));
-    
-    p.poses = paddingPath;
-    ROS_INFO("Returning the completed path");
-    return p;
-    
-  }
-
   return p;
 }
 
@@ -144,17 +122,6 @@ float AStar::distGridToPoint(int index, Point p1, int width, int height)
   return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 }
 
-bool AStar::elementExists(std::vector<int> vector, int element)
-{
-  for (int i = 0; i < vector.size(); i++)
-  {
-    if(vector[i] == element)
-    {
-      return false;
-    }
-  }
-   return true;
-}
 
 int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
 { 
@@ -170,39 +137,48 @@ int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
     {
       unVisitedIndexes.push_back(indexNeighbors[i]); 
     }
-
-    for (int k = 0; k < unVisitedIndexes.size(); k++)
+    
+    for (int k = 0; k < unvisitedIndexes.size(); k++)
     { 
+    //while loop to iterate over unvisted neighbors
+    if(oGrid.data[newGoalIndex] > threshold && unVisitedIndexes.size()!= 0)
+    {     
+       
+          ROS_WARN("[planning | astar ]: current element: %d", unVisitedIndexes[k]);
+         
+       //checks if the current element is an obstacle or not
+          if(oGrid.data[unVisitedIndexes[k]] < threshold)
+          {
+            ROS_WARN("found the new index");
+            newGoalIndex = unVisitedIndexes[k];
+            visitedIndexes.push_back(newGoalIndex);
+            //return newGoalIndex;
+          }
+          else
+          {
             visitedIndexes.push_back(unVisitedIndexes[k]);
-
-            ROS_WARN("[planning | astar ]: current index of unvisited vector: %d", oGrid.data[unVisitedIndexes[k]]);
-
-
-            ROS_WARN("[planning | astar ]: current index of unvisited vector: %d", k);
-
-     
-            ROS_WARN("[planning | astar ]: current element: %d", unVisitedIndexes[k]);
-          
-        //checks if the current element is an obstacle or not
-            if(oGrid.data[unVisitedIndexes[k]] < threshold)
+          }
+          //gets the neighbors of the current element         
+          std::array<int, 8> neighbors = getNeighborsIndiciesArray(unVisitedIndexes[k], oGrid.info.width, oGrid.data.size());
+          for (int j = 0; j < neighbors.size(); j++)
+          {
+            std::vector<int>::iterator it_1 = find(unVisitedIndexes.begin(),unVisitedIndexes.end(), neighbors[j]);  // ref. https://www.includehelp.com/stl/check-whether-an-element-exists-in-a-vector-in-cpp-stl.aspx
+            std::vector<int>::iterator it_2 = find(visitedIndexes.begin(),visitedIndexes.end(), neighbors[j]);  // ref. https://www.includehelp.com/stl/check-whether-an-element-exists-in-a-vector-in-cpp-stl.aspx
+            //adding current element's neighbors to the unvisitedIndexes vector
+            if(it_1 != unVisitedIndexes.end())// && it_2 != visitedIndexes.end())
             {
-              ROS_INFO("found the new index");
-              newGoalIndex = unVisitedIndexes[k];
-              return newGoalIndex;
+              unVisitedIndexes.push_back(neighbors[j]);                  
             }
-                     
-            std::array<int, 8> currentIndexNeighbors = getNeighborsIndiciesArray(unVisitedIndexes[k], oGrid.info.width, oGrid.data.size());
-            for (int j = 0; j < currentIndexNeighbors.size(); j++)
-            {
-              if(elementExists(unVisitedIndexes, currentIndexNeighbors[j]) && elementExists(visitedIndexes, currentIndexNeighbors[j]))
-              {
-                ROS_INFO("added the index");
-                unVisitedIndexes.push_back(currentIndexNeighbors[j]);                 
-              }
-            }        
+          }
+          
+        //   unVisitedIndexes.erase(unVisitedIndexes.begin());
+          
+    }
     }
 
-  ROS_WARN("[planning | astar ]: new goal index found");
+  ROS_WARN("[planning | astar ]: new end Index: %d", newGoalIndex);
+
+
   return newGoalIndex;
 }
 
@@ -235,18 +211,43 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   if(oGrid.data[centerIndex] > threshold)
   {
     ROS_WARN("Start pose in the padding...");
-    abandonedIndex = centerIndex;
-    centerIndex = adjustIndex(centerIndex, oGrid, threshold);
+   
+    PoseStamped firstPoint;
+    firstPoint.header.frame_id = robot_name + "_small_chassis";
+    firstPoint.pose.position.x = 0.0;
+    firstPoint.pose.position.y  = -1.6;
+
+    PoseStamped secondPoint;
+    secondPoint.header.frame_id = robot_name + "_small_chassis";
+    secondPoint.pose.position.x = 0.0;
+    secondPoint.pose.position.y  = 0.0;
+
+    PoseStamped thirdPoint;
+    thirdPoint.header.frame_id = robot_name + "_small_chassis";
+    thirdPoint.pose.position.x = 0.0;
+    thirdPoint.pose.position.y  = 0.0;
+
+
+    //new path if the robot's index in
+    Path path;
+
+    path.header = oGrid.header;
+  // TODO: Tell albert to properly set the frame id in map generation.
+    path.header.frame_id = robot_name + "_small_chassis";
+    path.poses.push_back(firstPoint);
+    path.poses.push_back(secondPoint);
+    path.poses.push_back(thirdPoint);
+
+
+    ROS_WARN("Path sent...");
+    ROS_WARN("SEND THE GOAL AGAIN...");
+    return path;
 
   }
 
   auto origin = std::make_pair<double, int>(0, std::move(centerIndex));
-  
-  
-
-  /***************************  Calculating end index ***************************************************/
-
   int bestDistance = INFINITY;
+
   Point robotLocation;
   robotLocation.y = 0;
   robotLocation.x = 0;
@@ -332,10 +333,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
     endIndex = adjustIndex(endIndex, oGrid, threshold);
     //return Path();
   }
-  /*************************** Finished Calculating end index ***************************************************/
 
-
-  /*************************** Beginning of the Astar ***************************************************/
   std::set<std::pair<double, int>> open_set;
   open_set.insert(origin);
 

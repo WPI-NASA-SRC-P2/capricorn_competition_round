@@ -150,6 +150,7 @@ public:
 
 private:
    TEAM_MICRO_STATE micro_state;
+   bool reset_once;
 };
 
 class ScoutWaiting: public TeamState{
