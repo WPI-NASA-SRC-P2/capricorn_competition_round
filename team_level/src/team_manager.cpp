@@ -71,7 +71,7 @@ void TeamManager::setSearchStates()
       if(all_teams.at(i)->isScoutHired())
       {
          all_teams.at(i)->setTeamMacroState(SEARCH);
-         all_teams.at(i)->setResetRobot(true);
+         all_teams.at(i)->setResetRobot(false);
       }
    }
 }
@@ -237,7 +237,7 @@ void TeamManager::recruitScout(int team_index)
          all_teams.at(i)->disbandScout();
 
          all_teams.at(team_index)->setTeamMacroState(SEARCH);
-         all_teams.at(team_index)->setResetRobot(false);
+         all_teams.at(team_index)->setResetRobot(true);
 
          scout_for_sale.at(i) = false;
          teams_need_scout.at(team_index) = false;
@@ -330,7 +330,9 @@ void TeamManager::checkAndRecruitForIdle(int team_index)
 
 void TeamManager::checkAndRecruitForStandby(int team_index)
 {
-   fireScout(team_index);
+   if(!hasScout(team_index))
+      recruitScout(team_index);
+      
    fireExcavator(team_index);
    fireHauler(team_index);
 }
@@ -339,6 +341,7 @@ void TeamManager::step()
 {
    for(int i = 0; i < MAX_TEAMS; i++)
    {
+      ROS_WARN_STREAM("Team "<<i<<" Task:"<<all_teams.at(i)->getTeamMacroState());
       all_teams.at(i)->step();
    }
 }
