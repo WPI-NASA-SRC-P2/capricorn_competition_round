@@ -45,8 +45,8 @@
         <rosparam param="imu0_config" if="$(arg use_imu)">
                                     [false, false, false, <!-- X, Y, Z-->
                                     true, true, true,    <!-- Roll, Pitch, Yaw-->
-                                    false, true, false, <!-- Vel[X, Y, Z]-->
-                                    false, false, true,  <!-- Vel[Roll, Pitch, Yaw]-->
+                                    false, false, false, <!-- Vel[X, Y, Z]-->
+                                    false, false, false,  <!-- Vel[Roll, Pitch, Yaw]-->
                                     true, true, false] <!-- Accel[X, Y, Z]-->
         </rosparam>
 
