@@ -70,6 +70,7 @@ private:
 
     // Publishers for each wheel velocity and steering controller
     ros::Publisher wheel_ramp_pub_;
+    ros::Publisher front_left_vel_pub_, front_right_vel_pub_, back_left_vel_pub_, back_right_vel_pub_;
     ros::Publisher front_left_steer_pub_, front_right_steer_pub_, back_left_steer_pub_, back_right_steer_pub_;
 
     // Debug publisher. Used to visualize poses in gazebo with utils/render_poses.py
@@ -121,6 +122,12 @@ private:
      * 
      */
     void initVelocityPublisher(ros::NodeHandle &nh, const std::string &robot_name);
+
+    /**
+     * @brief Initialize the publishers for wheel speeds
+     * 
+     */
+    void initVelocityPublisherNew(ros::NodeHandle &nh, const std::string &robot_name);
 
     /**
     * @brief Initialise the publishers for wheel steering angles
@@ -223,6 +230,27 @@ private:
     void moveRobotWheels(const double velocity);
 
     /**
+    * @brief Ramp robot wheels to the given velocity .
+    * 
+    * @param velocity Wheel Velocities
+        *                  The vector will be in order:
+        *                  Clockwise from top, starting with FRONT_LEFT
+        * 
+        *          element 0: Front Left Wheel
+        *          element 1: Front Right Wheel
+        *          element 2: Back Right Wheel
+        *          element 3: Back Left Wheel
+    */
+    void moveRobotWheelsNew(const std::vector<double> velocity);
+
+    /**
+    * @brief Ramp robot wheels to the given velocity .
+    * 
+    * @param velocity velocity for the wheels.
+    */
+    void moveRobotWheelsNew(const double velocity);
+
+    /**
      * @brief 
      * 
      * @param desired_velocity 
@@ -252,6 +280,13 @@ private:
      * @param brake True if the brake should be set, false, if it should be released.
      */
     void brakeRobot(bool brake);
+
+    /**
+     * @brief Set the manual brake on the robot w/ smooth ramping.
+     * 
+     * @param brake True if the brake should be set, false, if it should be released.
+     */
+    void brakeRobotNew(bool brake);
 
     /**
      * @brief Rotates the wheels to point at a target pose.
