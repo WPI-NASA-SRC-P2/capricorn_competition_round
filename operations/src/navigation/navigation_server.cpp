@@ -514,7 +514,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 		if(manual_driving_)
 		{
 			// Stop moving the robot, as we were interrupted.
-			moveRobotWheels(0);
+			// moveRobotWheels(0);
 			brakeRobot(true);
 
 			return false;
@@ -528,7 +528,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 		{
 			ROS_INFO("[operations | nav_server | %s]: driveDistance detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
 
-			moveRobotWheels(0);
+			// moveRobotWheels(0);
 			brakeRobot(true);
 
 			// Reset the distance traveled
@@ -554,7 +554,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 	printf("Done driving forwards\n");
 
 	// Stop moving the robot after we are done moving
-	moveRobotWheels(0);
+	// moveRobotWheels(0);
 	brakeRobot(true);
 
 	return true;
@@ -578,7 +578,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		if(manual_driving_)
 		{	
 			// Stop moving the robot, as we were interrupted.
-			moveRobotWheelsNew(0);
+			// moveRobotWheelsNew(0);
 			brakeRobotNew(true);
 
 			return false;
@@ -593,7 +593,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 			ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
 			ROS_WARN("Current distance traveled %f", distance_traveled);
 
-			moveRobotWheelsNew(0);
+			// moveRobotWheelsNew(0);
 			brakeRobotNew(true);
 
 			// Reset the distance traveled
@@ -655,7 +655,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	total_distance_traveled_ += distance_traveled;
 
 	// Stop moving the robot after we are done moving
-	moveRobotWheelsNew(0);
+	// moveRobotWheelsNew(0);
 	brakeRobotNew(true);
 
 	return true;
@@ -665,7 +665,7 @@ void NavigationServer::requestNewTrajectory(void)
 {
 	ROS_WARN("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
 
-	moveRobotWheels(0);
+	// moveRobotWheels(0);
 	brakeRobot(true);
 
 	// Reset the distance traveled

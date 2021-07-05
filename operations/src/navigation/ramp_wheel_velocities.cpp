@@ -5,7 +5,7 @@
 #include <utils/common_names.h>
 
 //How fast the main loop of the node will run.
-#define UPDATE_HZ 10
+#define UPDATE_HZ 50
 
 using namespace COMMON_NAMES;
 
