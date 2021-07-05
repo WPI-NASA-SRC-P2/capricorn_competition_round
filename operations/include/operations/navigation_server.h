@@ -44,6 +44,7 @@ private:
     // Tolerances for linear and angular moves
     const float DIST_EPSILON = 0.5;
     const float ANGLE_EPSILON = 0.1;
+    const float ODOM_EPSILON = 0.001;
     float c_dist_epsilon_ = DIST_EPSILON;
 
     // Delta heading limits for smooth drive
@@ -102,8 +103,13 @@ private:
     // How much distance the robot has traveled since the last planner call. Compared against TRAJECTORY_RESET_DIST.
     double total_distance_traveled_ = 0;
 
+    // How much distance the robot has traveled since the last pose update. Used to determine if the robot is stuck.
+    double odom_distance_change_ = 0;
+
     // Whether we should get a new trajectory from the planner. Set by driveDistance in automaticDriving.
     bool get_new_trajectory_ = false;
+
+    // Whether the ramp has finished and brakes can be applied.
     bool ramp_finished_ = false;
 
     // The current and most recent drive mode the wheels were following
@@ -380,6 +386,11 @@ private:
      * @param action_server The action server that this function is operating on.
      */
     void followDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server);
+
+    /**
+     * @brief Fixes detected errors. NOT YET IMPLEMENTED
+     */
+    bool errorCorrection();
 
     /**
      * @brief Perform navigation operations.

@@ -99,8 +99,11 @@ void NavigationServer::initPublishers(ros::NodeHandle& nh, const std::string& ro
 void NavigationServer::updateRobotPose(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	std::lock_guard<std::mutex> pose_lock(pose_mutex_);
+	geometry_msgs::PoseStamped starting_pose = robot_pose_;
 	robot_pose_.header = msg->header;
 	robot_pose_.pose = msg->pose.pose;
+	odom_distance_change_ = abs(NavigationAlgo::changeInPosition(robot_pose_, starting_pose));
+	// ROS_INFO("[operations | nav_server | %s]: delta odom = %.4f", robot_name_.c_str(), odom_distance_change_);
 	return;
 }
 
@@ -1065,6 +1068,14 @@ void NavigationServer::followDriving(const operations::NavigationGoalConstPtr &g
 	res.result = COMMON_RESULT::SUCCESS;
 	action_server->setSucceeded(res);
 	return;
+}
+
+bool NavigationServer::errorCorrection()
+{
+	ROS_INFO("[operations | nav_server | %s]: Attempting to correct error...", robot_name_.c_str());
+	ros::Rate(1).sleep();
+	ROS_INFO("[operations | nav_server | %s]: Error correction complete", robot_name_.c_str());
+	return true;
 }
 
 void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
