@@ -4,6 +4,7 @@
 #include <astar.h>
 #include "planning/TrajectoryWithVelocities.h"
 #include <geometry_msgs/Point.h>
+#include "dyn_planning.h"
 
 //Setting the node's update rate
 #define UPDATE_HZ 10
@@ -31,7 +32,6 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   #endif
 
   auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, 50, robot_name_);
-
   
   #ifdef DEBUG_INSTRUMENTATION
   debug_pathPublisher.publish(path);
