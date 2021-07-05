@@ -115,7 +115,7 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
 
   if(abandonedIndex != 0)
   { 
-    ROS_INFO("Adding the padded point to the A* path");
+    ROS_INFO("[planning | astar ]: Adding the padded point to the A* path");
     std::vector<geometry_msgs::PoseStamped> paddingPath;
 
 
@@ -127,7 +127,7 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
     paddingPath.push_back(poseStampedFromIndex(abandonedIndex, oGrid, robot_name));
     
     p.poses = paddingPath;
-    ROS_INFO("Returning the completed path");
+    ROS_INFO("[planning | astar ]: Returning the completed path");
     return p;
     
   }
@@ -159,7 +159,6 @@ bool AStar::elementExists(std::vector<int> vector, int element)
 int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
 { 
     int newGoalIndex = index;
-    // ROS_WARN("[planning | astar ]: end Index: %d", index);
 
     std::vector<int> unVisitedIndexes;
     std::vector<int> visitedIndexes;
@@ -175,18 +174,10 @@ int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
     { 
             visitedIndexes.push_back(unVisitedIndexes[k]);
 
-            ROS_WARN("[planning | astar ]: current index of unvisited vector: %d", oGrid.data[unVisitedIndexes[k]]);
-
-
-            ROS_WARN("[planning | astar ]: current index of unvisited vector: %d", k);
-
-     
-            ROS_WARN("[planning | astar ]: current element: %d", unVisitedIndexes[k]);
-          
         //checks if the current element is an obstacle or not
             if(oGrid.data[unVisitedIndexes[k]] < threshold)
             {
-              ROS_INFO("found the new index");
+              ROS_INFO("[planning | astar ]: found the new index");
               newGoalIndex = unVisitedIndexes[k];
               return newGoalIndex;
             }
@@ -196,7 +187,7 @@ int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
             {
               if(elementExists(unVisitedIndexes, currentIndexNeighbors[j]) && elementExists(visitedIndexes, currentIndexNeighbors[j]))
               {
-                ROS_INFO("added the index");
+                ROS_INFO(" [planning | astar ]: added the index");
                 unVisitedIndexes.push_back(currentIndexNeighbors[j]);                 
               }
             }        
@@ -228,13 +219,13 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   int centerIndex = (oGrid.info.height / 2) * oGrid.info.width + oGrid.info.width / 2;
   
 
-  ROS_WARN("centerIndex calculated");
+  ROS_WARN("[planning | astar | %s]: centerIndex calculated", robot_name);
 
 
   //this code takes care of the case when the starting pose is in the padding area
   if(oGrid.data[centerIndex] > threshold)
   {
-    ROS_WARN("Start pose in the padding...");
+    ROS_WARN("[planning | astar | %s]: Start pose in the padding...", robot_name);
     abandonedIndex = centerIndex;
     centerIndex = adjustIndex(centerIndex, oGrid, threshold);
 
@@ -255,7 +246,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   // If it is, we need to find the closest point on the edge of the occupancy grid to the target.
   if ((int)target.x > (int)oGrid.info.width / 2 || (int)target.x < (int)-(oGrid.info.width / 2) || (int)target.y > (int)oGrid.info.height / 2 || (int)target.y < (int)-(oGrid.info.height / 2))
   {
-    ROS_WARN("[planning | astar | %s]: Finding New index...", robot_name);
+    ROS_WARN("[planning | astar | %s]: Finding New index...", robot_name.c_str());
     float distFromRobot = INFINITY;
     float minDist = INFINITY;
     float optmlDist = INFINITY;
@@ -322,7 +313,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   {
     // If the target point was on the grid, just calculate the index of the point (with the center being 0,0)
     endIndex = (target.y + (oGrid.info.height / 2)) * oGrid.info.width + (target.x + (oGrid.info.width / 2));
-    ROS_WARN("[planning | astar | %s]: Calculated Index: %d", robot_name, endIndex);
+    ROS_WARN("[planning | astar | %s]: Calculated Index: %d", robot_name.c_str(), endIndex);
   }
   // Check if the final destination is occupied.
   if (oGrid.data[endIndex] > threshold)
@@ -378,6 +369,6 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
     }
   }
 
-  ROS_WARN("[planning | astar | %s]: Call to navigation failed to find valid path.\n", robot_name);
+  ROS_WARN("[planning | astar | %s]: Call to navigation failed to find valid path.\n", robot_name.c_str());
   return Path();
 }
