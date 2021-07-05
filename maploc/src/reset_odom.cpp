@@ -118,20 +118,16 @@ geometry_msgs::PoseStamped getTruePose(std::string robot_name){
 // resets the rtabmap odometry based on the input PoseStamped
 bool resetOdomPose(std::string robot_name, geometry_msgs::PoseStamped stamped_pose) {
     ros::NodeHandle nh;
+    
+    // convert the poseStamped's quaternion into roll,pitch,yaw for the rtabmap reset odom service call
+    tf2::Quaternion q(stamped_pose.pose.orientation.x,
+                        stamped_pose.pose.orientation.y,
+                        stamped_pose.pose.orientation.z,
+                        stamped_pose.pose.orientation.w);
 
-
-    // ORIENTATION LEFT OUT OF RESET ODOM
-    // IF SOMETHING BREAKS LOOK OVER HERE
-
-    // // convert the poseStamped's quaternion into roll,pitch,yaw for the rtabmap reset odom service call
-    // tf2::Quaternion q(stamped_pose.pose.orientation.x,
-    //                     stamped_pose.pose.orientation.y,
-    //                     stamped_pose.pose.orientation.z,
-    //                     stamped_pose.pose.orientation.w);
-
-    // tf2::Matrix3x3 m(q);
-    // double r, p, y;
-    // m.getRPY(r, p, y);
+    tf2::Matrix3x3 m(q);
+    double r, p, y;
+    m.getRPY(r, p, y);
 
     // set up the odometry reset service client and convert the PoseStamped into the required rtabmap ResetPose
     ros::ServiceClient rtabmap_client = nh.serviceClient<rtabmap_ros::ResetPose>(robot_name + RESET_POSE_CLIENT);
@@ -139,9 +135,9 @@ bool resetOdomPose(std::string robot_name, geometry_msgs::PoseStamped stamped_po
     pose.request.x = stamped_pose.pose.position.x;
     pose.request.y = stamped_pose.pose.position.y;
     pose.request.z = stamped_pose.pose.position.z;
-    // pose.request.roll = r;
-    // pose.request.pitch = p;
-    // pose.request.yaw = y;
+    pose.request.roll = r;
+    pose.request.pitch = p;
+    pose.request.yaw = y;
 
     // ensure that the rtabmap odom client is ready for reset
     ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + robot_name + "]: " + "Waiting for rtabmap client");
