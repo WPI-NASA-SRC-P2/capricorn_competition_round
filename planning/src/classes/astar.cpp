@@ -174,14 +174,6 @@ int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
     for (int k = 0; k < unVisitedIndexes.size(); k++)
     { 
             visitedIndexes.push_back(unVisitedIndexes[k]);
-
-            ROS_WARN("[planning | astar ]: current index of unvisited vector: %d", oGrid.data[unVisitedIndexes[k]]);
-
-
-            ROS_WARN("[planning | astar ]: current index of unvisited vector: %d", k);
-
-     
-            ROS_WARN("[planning | astar ]: current element: %d", unVisitedIndexes[k]);
           
         //checks if the current element is an obstacle or not
             if(oGrid.data[unVisitedIndexes[k]] < threshold)
