@@ -44,7 +44,7 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
 
     res.trajectory = trajectory;
   } else {
-    ROS_WARN("No Poses Set.");
+    ROS_WARN("[planning | astar | %s ]: No Poses Set.", robot_name_);
   }
 
   return true;
@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
   //create a nodehandle
   ros::NodeHandle nh;
 
+  //initializing a planner server
   PathServer server;
 
   server.oGrid_subscriber = nh.subscribe(oGrid_topic_, 1000, &PathServer::oGridCallback, &server);
