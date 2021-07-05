@@ -341,7 +341,7 @@ void TeamManager::step()
 {
    for(int i = 0; i < MAX_TEAMS; i++)
    {
-      ROS_WARN_STREAM("Team "<<i<<" Task:"<<all_teams.at(i)->getTeamMacroState());
+      // ROS_WARN_STREAM("Team "<<i<<" Task:"<<all_teams.at(i)->getTeamMacroState());
       all_teams.at(i)->step();
    }
 }
