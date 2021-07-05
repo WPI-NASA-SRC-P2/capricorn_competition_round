@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
   //create a nodehandle
   ros::NodeHandle nh;
 
+  //initializing a planner server
   PathServer server;
 
   server.oGrid_subscriber = nh.subscribe(oGrid_topic_, 1000, &PathServer::oGridCallback, &server);
