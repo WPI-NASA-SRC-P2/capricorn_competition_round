@@ -209,8 +209,8 @@ class EncoderOdom
             // If yaw is taken into account, the velocity ends up being projected in world frame. We want it in the robot frame. 
             tf::Quaternion q_imu;
             q_imu.setRPY( roll_imu, pitch_imu, 0.0 ); 
-            ROS_INFO_STREAM("IMU Quaternion : " << q_imu[0] << " " << q_imu[1] << " " << q_imu[2] << " " << q_imu[3]); 
-            ROS_INFO_STREAM("ROLL: " << roll_imu << " PITCH: " << pitch_imu);
+            // ROS_INFO_STREAM("IMU Quaternion : " << q_imu[0] << " " << q_imu[1] << " " << q_imu[2] << " " << q_imu[3]); 
+            // ROS_INFO_STREAM("ROLL: " << roll_imu << " PITCH: " << pitch_imu);
             
             tf::Matrix3x3 m2;
             m2.setRotation(q_imu);
