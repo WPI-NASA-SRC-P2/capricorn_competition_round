@@ -202,7 +202,7 @@ int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
     }
   }
 
-  ROS_WARN("[planning | astar ]: new goal index found");
+  ROS_WARN("[planning | astar ]: new goal index not found");
   return newGoalIndex;
 }
 

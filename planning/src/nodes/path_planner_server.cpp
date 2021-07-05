@@ -24,6 +24,8 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   auto global_oGrid_CPY = global_oGrid_;
   locationLock.unlock();
 
+
+  // obstacle threshold = 50, Padding Radius = 6
   auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 6);
 
   #ifdef DEBUG_INSTRUMENTATION
