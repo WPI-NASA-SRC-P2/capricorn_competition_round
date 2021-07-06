@@ -69,6 +69,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, robot_name + COMMON_NAMES::INITALIZE_ODOM_NODE_NAME);
     ros::NodeHandle nh;
 
+    ros::Duration(0.1).sleep();
+
     ros::ServiceClient nasa_client;
 
     // initialize the rtabmap with the true pose to have unified coordinates
