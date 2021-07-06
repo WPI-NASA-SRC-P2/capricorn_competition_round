@@ -42,5 +42,3 @@ class FixedTFBroadcaster:
 if __name__ == '__main__':
     rospy.init_node('fixed_tf2_broadcaster')
     tfb = FixedTFBroadcaster()
-
-    rospy.spin()

@@ -5,7 +5,7 @@ from nav_msgs.msg import Odometry
 from state_machines.msg import robot_state_status
 import sys
 
-if __name__=="__main__":
+if __name__ == "__main__":
   # initialize node
   rospy.init_node("desired_state_node")
   # instantiate the object plotter to begin mapping
