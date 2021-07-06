@@ -60,7 +60,7 @@ class ObjectPlotter:
         #rospy.loginfo(f'Map has updated: First object at {self.obj_list.obj[0].center}, No. of objects: {len(self.obj_list.obj)}')
     
     # initialize/refresh the blank 20x20 map centered on the robot 
-    def resetOccGrid(self, robotname):
+    def resetOccGrid(self):
         global MAP_RESOLUTION                         # (m/pixel) 0.05 matches rtabmap resolution
         global MAP_WIDTH
         global MAP_HEIGHT
@@ -85,7 +85,7 @@ class ObjectPlotter:
 
         # set up the 2D OccupancyGrid with robot base frame as origin
         # - the origin is at bottom left. The origin will be translated to the center of the map in plotting function and publishing
-        self.occ_grid.header.frame_id = robotname + '_base_footprint'
+        self.occ_grid.header.frame_id = self.robot_name + '_base_footprint'
         self.occ_grid.info = metadata
         # initialize map data as all zeros
         self.occ_grid.data = [UNOCCUPIED] * self.occ_grid.info.width*self.occ_grid.info.height
