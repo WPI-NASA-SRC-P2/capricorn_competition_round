@@ -10,11 +10,32 @@
 #define UPDATE_HZ 10
 
 ros::Subscriber pathSubscriber;
-ros::Subscriber OccupancyGrid;
+ros::Subscriber oGridSubscriber;
 ros::Publisher replan_trigger;
 
 
 std::string robot_name_ = "";
+
+void oGridCB(nav_msgs::OccupancyGrid oGrid)
+{
+  global_oGrid_ = oGrid;
+}
+
+void pathCB(nav_msgs::Path path)
+{
+  std_msgs::Bool result;
+  if(DynamicPlanning::checkForObstacles(path, global_oGrid_))
+  {
+    result.data = true;
+    replan_trigger.publish(result)
+  }
+  else{
+    
+    result.data = false;
+    replan_trigger.publish(result)
+
+  })
+}
 
 
 int main(int argc, char *argv[])
@@ -35,22 +56,12 @@ int main(int argc, char *argv[])
   //initializing a planner server
   DynamicPlanning dp;
 
-  server.oGrid_subscriber = nh.subscribe(oGrid_topic_, 1000, &DynamicPlanning::oGridCallback, &server);
-  server.pathSubscriber = nh.subscribe(path_topic_, 1000, &DynamicPlanning::checkForObstacles, &server);
+  oGridSubscriber = nh.subscribe(oGrid_topic_, 1000, oGridCB);
+  pathSubscriber = nh.subscribe(path_topic_, 1000, pathCB);
 
   #ifdef DEBUG_INSTRUMENTATION
-  debug_oGridPublisher = nh.advertise<nav_msgs::OccupancyGrid>("/galaga/debug_oGrid", 1000);
-  debug_pathPublisher = nh.advertise<nav_msgs::Path>("/galaga/debug_path", 1000);
+  replan_trigger = nh.advertise<std_msgs::Bool>("/capricorn/"+ robot_name_ + "/trigger", 1000);
   #endif
-
-  while(!map_received)
-  {
-    ros::Duration(0.1).sleep();
-    ros::spinOnce();
-  }
-
-  //Instantiating ROS server for generating trajectory
-  ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &PathServer::trajectoryGeneration, &server);
 
   ros::spin();
 
