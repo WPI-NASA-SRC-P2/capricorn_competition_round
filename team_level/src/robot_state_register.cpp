@@ -10,31 +10,39 @@ RobotStateRegister::RobotStateRegister(ros::NodeHandle nh)
 void RobotStateRegister::robotStateCB(state_machines::robot_state_status msg)
 {
    std::string robot_name = msg.robot_name;
-   if(ROBOT_NAME_TO_ENUM_MAP.find(robot_name) != ROBOT_NAME_TO_ENUM_MAP.end()) {
+   if(ROBOT_NAME_TO_ENUM_MAP.find(robot_name) != ROBOT_NAME_TO_ENUM_MAP.end()) 
+   {
       ROBOTS_ENUM robot_enum = ROBOT_NAME_TO_ENUM_MAP[robot_name];
       robot_isDone_hasSucceeded_map[robot_enum] = std::pair<bool,bool>(msg.current_state_done, msg.last_state_succeeded);
       robot_state_map[robot_enum] = (STATE_MACHINE_TASK)msg.robot_current_state;
    }
-   else {
-      ROS_ERROR_STREAM(ROBOTS_CURRENT_STATE_TOPIC<<" published with an irregular robot name. Provided name: "<<msg.robot_name);
+   else 
+   {
+      ROS_ERROR_STREAM("[TEAM_LEVEL | robot_state_register.cpp ]: " << ROBOTS_CURRENT_STATE_TOPIC << " published with an irregular robot name. Provided name: " << msg.robot_name);
    }
 }
 
-bool RobotStateRegister::hasSucceeded(ROBOTS_ENUM robot){
-   if(robot_isDone_hasSucceeded_map.find(robot) != robot_isDone_hasSucceeded_map.end()) {
+bool RobotStateRegister::hasSucceeded(ROBOTS_ENUM robot)
+{
+   if(robot_isDone_hasSucceeded_map.find(robot) != robot_isDone_hasSucceeded_map.end()) 
+   {
       return robot_isDone_hasSucceeded_map[robot].second;
    }
-   else {
+   else 
+   {
       // ROS_INFO_STREAM("Haven't received any message for the robot enum"<< robot <<" yet");
       return false;
    }
 }
 
-bool RobotStateRegister::isDone(ROBOTS_ENUM robot){
-   if(robot_isDone_hasSucceeded_map.find(robot) != robot_isDone_hasSucceeded_map.end()) {
+bool RobotStateRegister::isDone(ROBOTS_ENUM robot)
+{
+   if(robot_isDone_hasSucceeded_map.find(robot) != robot_isDone_hasSucceeded_map.end()) 
+   {
       return robot_isDone_hasSucceeded_map[robot].first;
    }
-   else {
+   else 
+   {
       // ROS_INFO_STREAM("Haven't received any message for the robot enum"<< robot <<" yet");
       return false;
    }
@@ -42,10 +50,12 @@ bool RobotStateRegister::isDone(ROBOTS_ENUM robot){
 
 STATE_MACHINE_TASK RobotStateRegister::currentState(ROBOTS_ENUM robot)
 {
-   if(robot_state_map.find(robot) != robot_state_map.end()) {
+   if(robot_state_map.find(robot) != robot_state_map.end()) 
+   {
       return (STATE_MACHINE_TASK)robot_state_map[robot];
    }
-   else {
+   else 
+   {
       // ROS_INFO_STREAM("Haven't received any message for the robot enum"<< robot <<" yet");
       return ROBOT_IDLE_STATE;
    }
@@ -53,21 +63,24 @@ STATE_MACHINE_TASK RobotStateRegister::currentState(ROBOTS_ENUM robot)
 
 void RobotStateRegister::setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_task)
 {
-   if(ROBOT_ENUM_NAME_MAP.find(robot) != ROBOT_ENUM_NAME_MAP.end()) {
+   if(ROBOT_ENUM_NAME_MAP.find(robot) != ROBOT_ENUM_NAME_MAP.end()) 
+   {
     state_machines::robot_desired_state desired_state_msg;
     desired_state_msg.robot_name = ROBOT_ENUM_NAME_MAP[robot];
     desired_state_msg.robot_desired_state = desired_task;
     robot_state_publisher.publish(desired_state_msg);
     ros::Duration(0.1).sleep();
    }
-   else{
-      ROS_ERROR_STREAM("Robot enum "<<robot<<" not found in map ROBOT_ENUM_NAME_MAP");
+   else
+   {
+      ROS_ERROR_STREAM("[TEAM_LEVEL | robot_state_register.cpp ]: Robot enum " << robot << " not found in map ROBOT_ENUM_NAME_MAP");
    }
 }
 
 void RobotStateRegister::setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_task, geometry_msgs::PoseStamped target_pose)
 {
-   if(ROBOT_ENUM_NAME_MAP.find(robot) != ROBOT_ENUM_NAME_MAP.end()) {
+   if(ROBOT_ENUM_NAME_MAP.find(robot) != ROBOT_ENUM_NAME_MAP.end()) 
+   {
     state_machines::robot_desired_state desired_state_msg;
     desired_state_msg.robot_name = ROBOT_ENUM_NAME_MAP[robot];
     desired_state_msg.robot_desired_state = desired_task;
@@ -75,21 +88,8 @@ void RobotStateRegister::setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK des
     robot_state_publisher.publish(desired_state_msg);
     ros::Duration(0.1).sleep();
    }
-   else{
-      ROS_ERROR_STREAM("Robot enum "<<robot<<" not found in map ROBOT_ENUM_NAME_MAP");
+   else
+   {
+      ROS_ERROR_STREAM("[TEAM_LEVEL | robot_state_register.cpp ]: Robot enum " << robot << " not found in map ROBOT_ENUM_NAME_MAP");
    }
 }
-
-// int main(int argc, char** argv)
-// {
-//    ros::init(argc, argv, "scout_state_machine");
-//    ros::NodeHandle nh;
-
-//    RobotStateRegister robot_state_register(nh);
-//    while(ros::ok())
-//    {
-//       ROS_INFO_STREAM("Robot state done:"<<robot_state_register.isDone(SCOUT_1)<<"\tLast state failed:"<<robot_state_register.hasSucceeded(SCOUT_1));
-//       ros::Duration(1).sleep();
-//       ros::spinOnce();
-//    }
-// }

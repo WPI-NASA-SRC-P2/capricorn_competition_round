@@ -68,6 +68,7 @@ namespace COMMON_NAMES
   const std::string RESET_ODOMETRY = "reset_rover_odom_srv";
   const std::string RTAB_ODOM_TOPIC = "/camera/odom";
   const std::string LOCALIZATION_ODOM_TOPIC = "/odom/localization";
+  const std::string RESET_LOCALIZATION_POSE = "/set_pose";
   // const std::string RTAB_ODOM_TOPIC = "/camera/odom/localization";
 
   /****** ROS NODE NAMES ******/

@@ -30,7 +30,8 @@ public:
          macro_state = team_state; 
          new_state_request = true;}
 
-   void setResetRobot(bool reset_needed){
+   void setResetRobot(bool reset_needed)
+   {
       reset_robot_odometry = reset_needed;
    }
 

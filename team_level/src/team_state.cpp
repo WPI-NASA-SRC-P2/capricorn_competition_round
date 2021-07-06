@@ -20,10 +20,10 @@ void TeamState::setTeam(TeamScheduler& c_robot_scheduler) {
 bool Standby::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
-   ROS_INFO("entrypoint of Standby");
+   ROS_INFO("TEAM_LEVEL | team_state | entrypoint of Standby");
    if(!(scout_in_team == NONE && excavator_in_team == NONE && hauler_in_team == NONE))
    {
-      ROS_ERROR_STREAM("STANDBY STATE CALLED, BUT AT LEAST ONE ROBOT IS NOT UNSET");
+      ROS_ERROR_STREAM("TEAM_LEVEL | team_state | STANDBY STATE CALLED, BUT AT LEAST ONE ROBOT IS NOT UNSET");
       return false;
    }
    return true;
@@ -41,7 +41,7 @@ void Standby::step()
 
 void Standby::exitPoint() 
 {
-   ROS_INFO("exitpoint of STANDBY, cancelling STANDBY goal");
+   ROS_INFO("TEAM_LEVEL | team_state | exitpoint of STANDBY, cancelling STANDBY goal");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,10 +51,10 @@ void Standby::exitPoint()
 bool Idle::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
-   ROS_INFO("entrypoint of Idle");
+   ROS_INFO("TEAM_LEVEL | team_state | entrypoint of Idle");
    if(scout_in_team == NONE && excavator_in_team == NONE && hauler_in_team == NONE)
    {
-      ROS_ERROR_STREAM("IDLE STATE CALLED, BUT NO ROBOT IS SET");
+      ROS_ERROR_STREAM("TEAM_LEVEL | team_state | IDLE STATE CALLED, BUT NO ROBOT IS SET");
       return false;
    }
    return true;
@@ -72,7 +72,7 @@ void Idle::step()
 
 void Idle::exitPoint() 
 {
-   ROS_INFO("exitpoint of IDLE, cancelling IDLE goal");
+   ROS_INFO("TEAM_LEVEL | team_state | exitpoint of IDLE, cancelling IDLE goal");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,10 +82,10 @@ void Idle::exitPoint()
 bool Search::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
-   ROS_INFO("entrypoint of Search");
+   ROS_INFO("TEAM_LEVEL | team_state | entrypoint of Search");
    if(scout_in_team == NONE)
    {
-      ROS_ERROR_STREAM("SCOUT IS UNSET, BUT STILL ENTRY POINT HAS BEEN CALLED!");
+      ROS_ERROR_STREAM("TEAM_LEVEL | team_state | SCOUT IS UNSET, BUT STILL ENTRY POINT HAS BEEN CALLED!");
       return false;
    }
 
@@ -122,7 +122,7 @@ TeamState& Search::transition()
    micro_state = getMicroState();
    if(isDone())
    {
-      ROS_INFO("volatile detected, transitioning to scout_undock state");
+      ROS_INFO("TEAM_LEVEL | team_state | volatile detected, transitioning to scout_undock state");
       return getState(SCOUT_WAITING);
    }
    else
@@ -148,7 +148,7 @@ void Search::step()
 
 void Search::exitPoint() 
 {
-   ROS_INFO("exitpoint of SEARCH, cancelling SEARCH goal");
+   ROS_INFO("TEAM_LEVEL | team_state | exitpoint of SEARCH, cancelling SEARCH goal");
    robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
 }
 
@@ -159,11 +159,11 @@ void Search::exitPoint()
 bool ScoutWaiting::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
-   ROS_INFO("entrypoint of ScoutWaiting");
+   ROS_INFO("TEAM_LEVEL | team_state | entrypoint of ScoutWaiting");
 
    if(scout_in_team == NONE || excavator_in_team == NONE)
    {
-      ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR SCOUT WAITING!");
+      ROS_ERROR_STREAM("TEAM_LEVEL | team_state | AT LEAST ONE ROBOT IS UNSET FOR SCOUT WAITING!");
       return false;
    }
 
@@ -207,23 +207,23 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
       bool hauler_absent = hauler_task == ROBOT_IDLE_STATE;
       
       if(!(excav_in_process || excav_absent))
-         ROS_WARN_STREAM("Excavator state anomaly!"<<excavator_task);
+         ROS_WARN_STREAM("TEAM_LEVEL | team_state | Excavator state anomaly!"<<excavator_task);
       if(!(hauler_in_process || hauler_absent))
-         ROS_WARN_STREAM("Hauler state anomaly!"<<hauler_task);
+         ROS_WARN_STREAM("TEAM_LEVEL | team_state | Hauler state anomaly!"<<hauler_task);
       return ROBOTS_TO_GOAL;
    }
 
-   ROS_WARN("Unknown Combination of the robot states found!");
-   ROS_WARN_STREAM("Scout enum "<<scout_in_team<<" state:"<<scout_task);
-   ROS_WARN_STREAM("Excavator enum "<<excavator_in_team<<" state:"<<excavator_task);
-   ROS_WARN_STREAM("Hauler enum "<<hauler_in_team<<" state:"<<hauler_task);
+   ROS_WARN("TEAM_LEVEL | team_state | Unknown Combination of the robot states found!");
+   ROS_WARN_STREAM("TEAM_LEVEL | team_state | Scout enum "<<scout_in_team<<" state:"<<scout_task);
+   ROS_WARN_STREAM("TEAM_LEVEL | team_state | Excavator enum "<<excavator_in_team<<" state:"<<excavator_task);
+   ROS_WARN_STREAM("TEAM_LEVEL | team_state | Hauler enum "<<hauler_in_team<<" state:"<<hauler_task);
 }
 
 TeamState& ScoutWaiting::transition()
 {
    if(isDone())
    {
-      ROS_INFO("Excavator reached, Shifting to EXCAVATING");
+      ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to EXCAVATING");
       return getState(EXCAVATING);
    }
    else
@@ -247,7 +247,7 @@ void ScoutWaiting::step()
       stepParkExcavatorAtScout();
       break;
    default:
-      ROS_WARN_STREAM("Incorrect micro state found:"<<micro_state);
+      ROS_WARN_STREAM("TEAM_LEVEL | team_state | Incorrect micro state found:"<<micro_state);
       break;
    }
 }
@@ -276,7 +276,7 @@ void ScoutWaiting::stepParkExcavatorAtScout()
 
 void ScoutWaiting::exitPoint() 
 {
-   ROS_INFO("exitpoint of ScoutWaiting, cancelling ScoutWaiting goal");
+   ROS_INFO("TEAM_LEVEL | team_state | exitpoint of ScoutWaiting, cancelling ScoutWaiting goal");
    robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
    robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
    robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
@@ -289,11 +289,11 @@ void ScoutWaiting::exitPoint()
 bool Excavating::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
-   ROS_INFO("entrypoint of Excavating");
+   ROS_INFO("TEAM_LEVEL | team_state | entrypoint of Excavating");
 
    if(excavator_in_team == NONE || hauler_in_team == NONE )
    {
-      ROS_ERROR_STREAM("AT LEAST ONE ROBOT IS UNSET FOR Excavating!");
+      ROS_ERROR_STREAM("TEAM_LEVEL | team_state | AT LEAST ONE ROBOT IS UNSET FOR Excavating!");
       return false;
    }
 
@@ -328,10 +328,10 @@ TEAM_MICRO_STATE Excavating::getMicroState()
    if(hauler_task == HAULER_GO_BACK_TO_EXCAVATOR && hauler_done_and_succeeded)
       return PRE_PARK_MANEUVER_EXCAVATOR;
 
-   ROS_WARN("Unknown Combination of the robot states found!");
-   ROS_WARN_STREAM("Scout enum "<<scout_in_team<<" state:"<<scout_task);
-   ROS_WARN_STREAM("Excavator enum "<<excavator_in_team<<" state:"<<excavator_task);
-   ROS_WARN_STREAM("Hauler enum "<<hauler_in_team<<" state:"<<hauler_task);
+   ROS_WARN("TEAM_LEVEL | team_state | Unknown Combination of the robot states found!");
+   ROS_WARN_STREAM("TEAM_LEVEL | team_state | Scout enum "<<scout_in_team<<" state:"<<scout_task);
+   ROS_WARN_STREAM("TEAM_LEVEL | team_state | Excavator enum "<<excavator_in_team<<" state:"<<excavator_task);
+   ROS_WARN_STREAM("TEAM_LEVEL | team_state | Hauler enum "<<hauler_in_team<<" state:"<<hauler_task);
 }
 
 TeamState& Excavating::transition()
@@ -341,12 +341,12 @@ TeamState& Excavating::transition()
    
    if(isDone())
    {
-      ROS_INFO("Excavator reached, Shifting to DUMPING");
+      ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to DUMPING");
       return getState(DUMPING);
    }
    else if (excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_failed)
    {
-      ROS_INFO("Excavation FAILED! Shifting to IDLE");
+      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to IDLE");
       return getState(IDLE);
    }
    {
@@ -398,7 +398,7 @@ void Excavating::stepDigAndDump()
 
 void Excavating::exitPoint() 
 {
-   ROS_INFO("exitpoint of Excavating, cancelling Excavating goal");
+   ROS_INFO("TEAM_LEVEL | team_state | exitpoint of Excavating, cancelling Excavating goal");
    robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
    robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
 }
@@ -410,11 +410,11 @@ void Excavating::exitPoint()
 bool Dumping::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
-   ROS_INFO("entrypoint of Dumping");
+   ROS_INFO("TEAM_LEVEL | team_state | entrypoint of Dumping");
 
    if(hauler_in_team == NONE )
    {
-      ROS_ERROR_STREAM("HAULER IS UNSET FOR DUMPING!");
+      ROS_ERROR_STREAM("TEAM_LEVEL | team_state | HAULER IS UNSET FOR DUMPING!");
       return false;
    }
    return true;
@@ -432,7 +432,7 @@ TeamState& Dumping::transition()
 {
    if(isDone())
    {
-      ROS_INFO("Excavator reached, Shifting to IDLE");
+      ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to IDLE");
       return getState(IDLE);
    }
    else
@@ -448,26 +448,6 @@ void Dumping::step()
 
 void Dumping::exitPoint() 
 {
-   ROS_INFO("exitpoint of Dumping, cancelling Dumping goal");
+   ROS_INFO("TEAM_LEVEL | team_state | exitpoint of Dumping, cancelling Dumping goal");
    robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
 }
-
-// int main(int argc, char** argv)
-// {
-//    ros::init(argc, argv, "scout_state_machine");
-//    ros::NodeHandle &nh;
-
-//    try {
-//       ScoutScheduler cSchd(700);
-//       cSchd.addState(new ScoutWaiting());
-//       cSchd.addState(new STANDBY());
-//       cSchd.addState(new Locate());
-//       cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
-//       // cSchd.setInitialState(SCOUT_UNDOCK);
-//       cSchd.exec();
-//       return 0;
-//    }
-//    catch(StateMachineException& ex) {
-//       std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
-//    }
-// }

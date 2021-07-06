@@ -7,7 +7,13 @@ TeamScheduler::TeamScheduler(ros::NodeHandle &nh)
 }
 
 TeamScheduler::~TeamScheduler()
-{
+{   
+   std::for_each(
+      MACRO_STATE_PTR_MAP.begin(),
+      MACRO_STATE_PTR_MAP.end(),
+      [](std::pair<uint64_t, TeamState*> c_item){
+         delete c_item.second;
+      });
 }
 
 void TeamScheduler::addStates(ros::NodeHandle &nh)
@@ -26,7 +32,7 @@ void TeamScheduler::addState(TeamState* pc_state) {
       pc_state->setTeam(*this);
    }
    else {
-      ROS_ERROR_STREAM("Duplicated state id " << pc_state->getId());
+      ROS_ERROR_STREAM("[TEAM_LEVEL | team_scheduler ]: Duplicated state id :" << pc_state->getId());
    }
 }
 
@@ -41,7 +47,7 @@ TeamState& TeamScheduler::getState(uint64_t un_id)
       return *(pcState->second);
    }
    else {
-      ROS_ERROR_STREAM("Can't get state id " << un_id);
+      ROS_ERROR_STREAM("[TEAM_LEVEL | team_scheduler ]:Can't get state id " << un_id);
    }
 }
 
@@ -58,7 +64,7 @@ void TeamScheduler::setInitialState(uint64_t un_state) {
       setTeamMacroState((TEAM_MACRO_STATE) un_state);
    }
    else {
-      ROS_ERROR_STREAM("Can't set initial state to " << un_state);
+      ROS_ERROR_STREAM("[TEAM_LEVEL | team_scheduler ]: Can't set initial state to " << un_state);
    }
 }
 
@@ -93,7 +99,7 @@ void TeamScheduler::step() {
       current_state_ptr->step();
    }
    else {
-      ROS_ERROR_STREAM("The Team has not been initialized, you must call SetInitialState()");
+      ROS_ERROR_STREAM("[TEAM_LEVEL | team_scheduler ]: The Team has not been initialized, you must call SetInitialState()");
    }
 }
 
@@ -102,17 +108,19 @@ void TeamScheduler::step() {
 
 //UNDERSTANDING: Each robot has its own done() and this is what is checked to perform step()
 void TeamScheduler::exec() {
+   ros::Rate r(50); // 50Hz loop rate
    while(ros::ok())
    {
       step();
       ros::spinOnce();
+      r.sleep();
    }
 }
 
 
 int main(int argc, char** argv)
 {
-   ros::init(argc, argv, "scout_state_machine");
+   ros::init(argc, argv, "[TEAM_LEVEL | team_scheduler ]: scout_state_machine");
    ros::NodeHandle nh;
 
    // TeamScheduler team(nh, TEAM_MACRO_STATE::STANDBY, ROBOTS_ENUM::SCOUT_1, ROBOTS_ENUM::NONE, ROBOTS_ENUM::NONE);

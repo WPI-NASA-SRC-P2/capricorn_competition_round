@@ -10,14 +10,16 @@ StateMachineException::StateMachineException(const std::string& str_msg) :
 /****************************************/
 /****************************************/
 
-std::string StateMachineException::getMessage() const {
+std::string StateMachineException::getMessage() const 
+{
    return m_strMsg;
 }
 
 /****************************************/
 /****************************************/
 
-State& State::getState(uint32_t un_state) {
+State& State::getState(uint32_t un_state) 
+{
    return m_pcRobotScheduler->getState(un_state);
 }
 
@@ -25,7 +27,8 @@ State& State::getState(uint32_t un_state) {
 /****************************************/
 
 //UNDERSTANDING: When we add states in addState(state), the state is assigned to a scheduler. 
-void State::setRobotScheduler(RobotScheduler& c_robot_scheduler) {
+void State::setRobotScheduler(RobotScheduler& c_robot_scheduler) 
+{
    m_pcRobotScheduler = &c_robot_scheduler;
 }
 
@@ -40,7 +43,8 @@ RobotScheduler::RobotScheduler(const ros::NodeHandle &nh, std::string robot_name
    desired_state_sub_ = nh_.subscribe(CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 2, &RobotScheduler::desiredStateCB, this);
 }
 
-RobotScheduler::~RobotScheduler() {
+RobotScheduler::~RobotScheduler() 
+{
    std::for_each(
       m_mapStates.begin(),
       m_mapStates.end(),
@@ -72,26 +76,32 @@ void RobotScheduler::desiredStateCB(const state_machines::robot_desired_state::C
 
 //UNDERSTANDING: Adding states to an unordered map (map of states declared in the header).
 
-void RobotScheduler::addState(State* pc_state) {
-   if(m_mapStates.find(pc_state->getId()) == m_mapStates.end()) {
+void RobotScheduler::addState(State* pc_state) 
+{
+   if(m_mapStates.find(pc_state->getId()) == m_mapStates.end()) 
+   {
       m_mapStates[pc_state->getId()] = pc_state;
       pc_state->setRobotScheduler(*this);
    }
-   else {
-      ROS_ERROR_STREAM("Duplicated state id " << pc_state->getId());
+   else 
+   {
+      ROS_ERROR_STREAM("[ STATE_MACHINES | common_robot_state_machine | Duplicated state id " << pc_state->getId());
    }
 }
 
 /****************************************/
 /****************************************/
 
-State& RobotScheduler::getState(uint32_t un_id) {
+State& RobotScheduler::getState(uint32_t un_id) 
+{
    auto pcState = m_mapStates.find(un_id);
-   if(pcState != m_mapStates.end()) {
+   if(pcState != m_mapStates.end()) 
+   {
       return *(pcState->second);
    }
-   else {
-      ROS_ERROR_STREAM("Can't get state id "<< un_id);
+   else 
+   {
+      ROS_ERROR_STREAM("[ STATE_MACHINES | common_robot_state_machine | Can't get state id "<< un_id);
    }
 }
 
@@ -100,17 +110,20 @@ State& RobotScheduler::getState(uint32_t un_id) {
 
 //UNDERSTANDING: First finds the state in the map and then sets the entry point of the current state.
 
-void RobotScheduler::setInitialState(uint32_t un_state) {
+void RobotScheduler::setInitialState(uint32_t un_state) 
+{
    auto pcState = m_mapStates.find(un_state);
    // if state exists in map, then set it to the initial state of the scheduler
-   if(pcState != m_mapStates.end()) {
+   if(pcState != m_mapStates.end()) 
+   {
       // acquire value of the state (every map has a key(first) and a value(second))
       m_pcCurrent = pcState->second;
       // completes entry point of the initial state
       m_pcCurrent->entryPoint();
    }
-   else {
-      ROS_ERROR_STREAM("Can't set initial state to "<< un_state);
+   else 
+   {
+      ROS_ERROR_STREAM("[ STATE_MACHINES | common_robot_state_machine | Can't set initial state to "<< un_state);
    }
 }
 
@@ -118,7 +131,8 @@ void RobotScheduler::setInitialState(uint32_t un_state) {
 /****************************************/
 /****************************************/
 /** @HOTFIX:  Something has to be done about done()*/ 
-bool RobotScheduler::done(){
+bool RobotScheduler::done()
+{
    // just keep running in loop by returning false
    return false;
 }
@@ -126,9 +140,11 @@ bool RobotScheduler::done(){
 /****************************************/
 /****************************************/
 
-void RobotScheduler::step() {
+void RobotScheduler::step() 
+{
    /* Only execute if 'current' was initialized */
-   if(m_pcCurrent) {
+   if(m_pcCurrent) 
+   {
       /* Attempt a transition, every state of every rover has its own transition() */
       State* cNewState = m_pcCurrent;
       if (new_state_request)
@@ -137,7 +153,8 @@ void RobotScheduler::step() {
          new_state_request = false;
       }
 
-      if(cNewState != m_pcCurrent) {
+      if(cNewState != m_pcCurrent) 
+      {
          /* Perform transition */
          m_pcCurrent->exitPoint();
          cNewState->entryPoint();
@@ -150,8 +167,9 @@ void RobotScheduler::step() {
       // m_pcCurrent->updateStatus();
       
    }
-   else {
-      ROS_ERROR("The RobotScheduler has not been initialized, you must call SetInitialState()");
+   else 
+   {
+      ROS_ERROR("[ STATE_MACHINES | common_robot_state_machine | The RobotScheduler has not been initialized, you must call SetInitialState()");
    }
 }
 
@@ -159,7 +177,8 @@ void RobotScheduler::step() {
 /****************************************/
 
 //UNDERSTANDING: Each robot has its own done() and this is what is checked to perform step()
-void RobotScheduler::exec() {
+void RobotScheduler::exec() 
+{
    while(!done() && ros::ok()) 
    {
       step();

@@ -22,18 +22,19 @@ int main(int argc, char *argv[])
 {
 	if (argc != 2 && argc != 4)
 	{
-		ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
+		ROS_ERROR_STREAM("[STATE_MACHINES | start_hauler_sm.cpp | This node must be launched with the robotname passed as a command line argument!");
 		return -1;
 	}
 
 	g_robot_name = argv[1];
-	ROS_INFO_STREAM("Robot Name = " + g_robot_name);
+	// ROS_INFO_STREAM("Robot Name = " + g_robot_name);
 	ros::init(argc, argv, g_robot_name + "_sm");
 	ros::NodeHandle nh;
 
-	ROS_INFO("Started Hauler State Machine Actionlib Server");
+	ROS_INFO_STREAM("[STATE_MACHINES | start_hauler_sm.cpp | " << g_robot_name << "]: Started Hauler State Machine Actionlib Server");
 
-	try {
+	try 
+	{
 		RobotScheduler cSchd(nh, g_robot_name);
       
       cSchd.addState(new GoToProcPlant(nh, g_robot_name));
@@ -53,15 +54,14 @@ int main(int argc, char *argv[])
       cSchd.exec();
       return 0;
 
-
 	}
 
 	catch(StateMachineException& ex) {
-		std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
+		// std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
+		ROS_ERROR_STREAM("[STATE_MACHINES | start_hauler_sm.cpp | " << g_robot_name << "]: [ERROR] " << ex.getMessage());
 	}
 	// ros::spin();
-
-	ROS_WARN("Hauler state machine died!\n");
+	ROS_WARN_STREAM("[STATE_MACHINES | start_hauler_sm.cpp | " << g_robot_name << "]: Hauler state machine died!\n");
 
 	return 0;
 }

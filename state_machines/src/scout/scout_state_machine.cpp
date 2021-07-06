@@ -9,7 +9,7 @@ ScoutState::ScoutState(uint32_t un_id, ros::NodeHandle nh, std::string robot_nam
     State(un_id, ToString("mystate_", un_id), nh, robot_name)
 {
   robot_name_ = robot_name;
-  ROS_INFO_STREAM("SCOUT STATE MACHINE: robot_name_ = " + robot_name_);
+  // ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: " << robot_name_);
   // robot_state_status fields set to default values when state is constructed
   robot_current_state_ = un_id;
   current_state_done_ = false;
@@ -21,19 +21,19 @@ ScoutState::ScoutState(uint32_t un_id, ros::NodeHandle nh, std::string robot_nam
   navigation_vision_client_ = new NavigationVisionClient(CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + NAVIGATION_VISION_ACTIONLIB, true);
   navigation_client_ = new NavigationClient(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB, true);
   park_robot_client_ = new ParkRobotClient(CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true);
-  ROS_INFO("Waiting for the scout action servers...");
+  ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Waiting for the scout action servers...");
   navigation_vision_client_->waitForServer();
   navigation_client_->waitForServer();
   resource_localiser_client_->waitForServer();
   park_robot_client_->waitForServer();
   
-  ROS_INFO("All scout action servers started!");
-
+  ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: All scout action servers started!");
+  
   // spiral client for spiral motion
-  ROS_INFO("waiting for spiral client");
+  ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: waiting for spiral client");
   spiralClient_ = nh_.serviceClient<operations::Spiral>(CAPRICORN_TOPIC + robot_name_ + "/" + SCOUT_SEARCH_SERVICE);
   spiralClient_.waitForExistence();
-  ROS_INFO("Spiral client started");
+  ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Spiral client started");
   
   volatile_sub_ = nh_.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutState::volatileSensorCB, this);
   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ScoutState::objectsCallback, this);
@@ -81,17 +81,13 @@ void Undock::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
    first_ = true;
-   ROS_INFO("entrypoint of undock");
-   
-   // update the current status of the robot and publish it
-   
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Entrypoint of undock");   
 }
 
 bool Undock::isDone()
 {
    // update the status of current state
    current_state_done_ = navigation_vision_client_->getState().isDone();
-
    return current_state_done_;
 }
 
@@ -100,7 +96,6 @@ bool Undock::hasSucceeded()
    // update the status of current state
    // last_state_succeeded_ = (navigation_client_->getState() == actionlib::status::SUCCESS);
    last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   
    return last_state_succeeded_;
 }
 
@@ -108,19 +103,20 @@ void Undock::step()
 {
    if(first_)
    {
-      ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from volatile");
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Undocking from volatile");
+
       operations::NavigationVisionGoal navigation_vision_goal;
       navigation_vision_goal.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
       navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
       navigation_vision_client_->sendGoal(navigation_vision_goal);
       first_ = false; 
-      ROS_INFO_STREAM("Undock stepping, first_ = false now");
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Undock stepping, first_ = false now");
    }
 }
 
 void Undock::exitPoint() 
 {
-   ROS_INFO("exitpoint of undock, cancelling undock goal");
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Exitpoint of undock, cancelling undock goal");
    navigation_vision_client_->cancelGoal();
 }
 
@@ -134,6 +130,7 @@ void Search::entryPoint()
    // start off with spiraling
    srv.request.resume_spiral_motion = true;
    near_volatile_ = false;
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout is beginning to search for volatile");
 }
 
 bool Search::isDone()
@@ -159,7 +156,6 @@ bool Search::hasSucceeded()
 void Search::step()
 {
    // execute spiral motion
-   ROS_INFO("Executing spiral motion");
    spiralClient_.call(srv);
 }
 
@@ -168,6 +164,8 @@ void Search::exitPoint()
    // cancel spiral motion 
    srv.request.resume_spiral_motion = false;
    spiralClient_.call(srv);
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: search volatile finished (at exitpoint(");
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,6 +177,8 @@ void Locate::entryPoint()
    // we assume we are near the volatile
    near_volatile_ = true;
    first_ = true;
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout is beginning to locate volatile");
+
 }
 
 bool Locate::isDone()
@@ -201,10 +201,9 @@ void Locate::step()
    if(first_)
    {
       resource_localiser_client_->sendGoal(goal);
-      ROS_INFO_STREAM("Sending resource localization goal");
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Sending resource localization goal");
       first_ = false;
    }
-   ROS_INFO_STREAM("Locating Step Function!");
 }
 
 void Locate::exitPoint()
@@ -212,6 +211,7 @@ void Locate::exitPoint()
    // none at the moment
    resource_localiser_client_->cancelGoal();
    near_volatile_ = false;
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Finished locating volatile (exitpoint reached)");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -228,6 +228,7 @@ void ResetOdomAtHopper::entryPoint()
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout beginning reset odom at hopper macrostate");
 }
 
 bool ResetOdomAtHopper::isDone()
@@ -352,6 +353,7 @@ void ResetOdomAtHopper::exitPoint()
    navigation_vision_client_->cancelGoal();
    park_robot_client_->cancelGoal();
    near_volatile_ = false;
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout finished reseting odom at hopper (exitpoint)");
 }
 
 
@@ -362,6 +364,7 @@ void ResetOdomAtHopper::exitPoint()
 void GoToRepairStation::entryPoint()
 {
    first_ = true;
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout entering goToRepairStation state");
 }
 
 bool GoToRepairStation::isDone()
@@ -374,7 +377,8 @@ bool GoToRepairStation::hasSucceeded()
 {
    last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
    if(last_state_succeeded_)
-      ROS_WARN_STREAM("Scout Go to Repair Station Completed Successfully");
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout GoToRepairStation completed successfully");
+
    return last_state_succeeded_;
 }
 
@@ -388,14 +392,15 @@ void GoToRepairStation::step()
       // navigation_vision_goal_.target_loc = target_loc_;
       navigation_vision_client_->sendGoal(navigation_vision_goal_);
       first_ = false;
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Going to repair station vision goal sent");
    }
-   ROS_INFO_STREAM("Going to repair station Step Function!");
 }
 
 void GoToRepairStation::exitPoint()
 {
    // none at the moment
    navigation_vision_client_->cancelGoal();
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout finished going to repair station (exitpoint)");
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -453,6 +458,7 @@ void IdleState::entryPoint()
    operations::Spiral srv;
    srv.request.resume_spiral_motion = false;
    spiralClient_.call(srv);
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout has entered idle state, awaiting new state...");
 }
 
 //////////////////////////////////////////////////////////////////////////////////

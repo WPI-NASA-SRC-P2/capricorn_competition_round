@@ -60,9 +60,11 @@ public:
 
    TeamState(uint64_t un_id, const std::string& str_name, ros::NodeHandle &nh);
 
-   ~TeamState() {
+   ~TeamState() 
+   {
       delete robot_state_register;
-      delete robot_pose_register;}
+      delete robot_pose_register;
+   }
 
    uint64_t getId() const { return m_unId; }
 
@@ -84,14 +86,16 @@ public:
    
    virtual TEAM_MICRO_STATE getMicroState() = 0;
 
-   void updateRobots(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE) {
-   scout_in_team = scout;
-   excavator_in_team = excavator;
-   hauler_in_team = hauler;
-}
+   void updateRobots(ROBOTS_ENUM scout = NONE, ROBOTS_ENUM excavator = NONE, ROBOTS_ENUM hauler = NONE)
+   {
+      scout_in_team = scout;
+      excavator_in_team = excavator;
+      hauler_in_team = hauler;
+   }
 
 
-   void setResetRobot(bool reset_needed){
+   void setResetRobot(bool reset_needed)
+   {
       // ROS_WARN_STREAM(reset_needed);
       reset_robot_odometry = reset_needed;
       // ROS_WARN_STREAM(reset_robot_odometry);

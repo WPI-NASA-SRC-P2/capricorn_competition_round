@@ -146,8 +146,8 @@ protected:
 /**
  * @brief GoToProcPlant navigate to proccessing plant
  * 
- * @param isDone() navigation vision is done
- * @param hasSucceeded() navigation vision has succeeded
+ * @param isDone() navigation vision (NAV+NAV_VISION) attempts are done. 
+ * @param hasSucceeded() navigation vision (NAV+NAV_VISION) has succeeded
  */
 class GoToProcPlant : public HaulerState {
 public:   
@@ -174,8 +174,8 @@ private:
 /**
  * @brief HaulerGoToScout navigate to scout's location
  * 
- * @param isDone() navigation vision is done
- * @param hasSucceeded() navigation vision has succeeded
+ * @param isDone() navigation vision (NAV+NAV_VISION) is done
+ * @param hasSucceeded() navigation vision (NAV+NAV_VISION) has succeeded
  */
 class HaulerGoToScout : public HaulerState {
 public:   
@@ -307,8 +307,8 @@ private:
 /**
  * @brief GoToExcavator navigates to excavator
  * 
- * @param isDone() navigation vision is done getting to excavator
- * @param hasSucceeded() naviagtion vision succeeds at getting to excavator
+ * @param isDone() navigation vision (V_NAV_AND_NAV_VISION) is done getting to excavator
+ * @param hasSucceeded() naviagtion vision (V_NAV_AND_NAV_VISION) succeeds at getting to excavator
  * 
  */
 class GoToExcavator : public HaulerState {
@@ -394,8 +394,8 @@ private:
 /**
  * @brief DunpVolatile dumps volatiles
  * 
- * @param isDone()
- * @param hasSucceeded()
+ * @param isDone() hauler dumping of volatile is done.
+ * @param hasSucceeded() hauler dumping of volatile has succeeded.
  * 
  */
 class DumpVolatile : public HaulerState {
@@ -420,7 +420,7 @@ private:
 };
 
 /**
- * @brief HaulerGoToLoc naviagte to pose
+ * @brief HaulerGoToLoc naviagte to pose using NAV_TYPE::GOAL
  * 
  * @param isDone() navigation is done getting to position
  * @param hasSucceeded() navigation has succeeded at getting to position
@@ -448,7 +448,7 @@ private:
 };
 
 /**
- * @brief IdleState Robot should stop and do nothing
+ * @brief IdleState Robot should stop and do nothing (Useful to discontinue a bad state)
  * 
  * @param isDone() goals have been send to stop the robot
  * @param hasSucceded() goals sent have been successfull
@@ -474,9 +474,11 @@ public:
 
 /**
  * @brief DumpVolatileAtHopper Executes the following:
- *    [1] Navigates to the hopper
+ *    [0] Navigates to Proc_plant
+ *    [1] Parks to the hopper
  *    [2] Dunps volatile
- *    [2] Resets odom
+ *    [3] UNdocks from hopper to prevent drift accumulation after resetting odom due to 180 deg turn
+ *    [4] Resets odom
  * 
  * @param isDone() is done when it has reset Odom
  * @param hasSucceeded() has successfully reset odom
