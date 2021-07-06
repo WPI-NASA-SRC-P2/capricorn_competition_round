@@ -365,6 +365,7 @@ void ParkAtExcavator::entryPoint()
     // set entry variables
     first_ = true;
     park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_EXCAVATOR_CLASS;
+    excavator_name_ = m_pcRobotScheduler->getTargetRobotName();
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Parking at Excavator");
 }
 
@@ -383,6 +384,7 @@ void ParkAtExcavator::step()
     if(first_)
     {
         // park at the excavator using vnav
+        park_robot_goal_.hopper_or_excavator = excavator_name_;
         park_robot_client_->sendGoal(park_robot_goal_);
         // park_robot_client_->waitForResult();
         first_ = false;

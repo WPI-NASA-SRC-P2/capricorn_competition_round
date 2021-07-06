@@ -17,6 +17,7 @@ class RobotStateRegister
       STATE_MACHINE_TASK currentState(ROBOTS_ENUM robot);
 
       void setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_task);
+      void setRobotState(ROBOTS_ENUM robot, ROBOTS_ENUM target_robot, STATE_MACHINE_TASK desired_task);
       void setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_task, geometry_msgs::PoseStamped target_pose);
       
    private:
