@@ -170,6 +170,14 @@ target_link_libraries(trajectory_client
   ${catkin_LIBRARIES} ${PROJECT_NAME}
 )
 
+
+##dynamic planning node
+add_executable(dynamic_planning src/nodes/dynamic_planning_node.cpp)
+add_dependencies(dynamic_planning ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(dynamic_planning
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use

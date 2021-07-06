@@ -5,9 +5,12 @@
 #include "planning/TrajectoryWithVelocities.h"
 #include <geometry_msgs/Point.h>
 #include "dyn_planning.h"
+#include "std_msgs/Bool.h"
 
 //Setting the node's update rate
 #define UPDATE_HZ 10
+
+#define DEBUG_INSTRUMENTATION
 
 ros::Subscriber pathSubscriber;
 ros::Subscriber oGridSubscriber;
@@ -15,6 +18,9 @@ ros::Publisher replan_trigger;
 
 
 std::string robot_name_ = "";
+
+nav_msgs::OccupancyGrid global_oGrid_;
+
 
 void oGridCB(nav_msgs::OccupancyGrid oGrid)
 {
@@ -27,14 +33,14 @@ void pathCB(nav_msgs::Path path)
   if(DynamicPlanning::checkForObstacles(path, global_oGrid_))
   {
     result.data = true;
-    replan_trigger.publish(result)
+    replan_trigger.publish(result);
   }
   else{
     
     result.data = false;
-    replan_trigger.publish(result)
+    replan_trigger.publish(result);
 
-  })
+  }
 }
 
 

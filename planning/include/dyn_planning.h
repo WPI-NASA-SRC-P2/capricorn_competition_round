@@ -7,6 +7,5 @@ class DynamicPlanning
 private:
     
 public:
-    nav_msgs::OccupancyGrid global_oGrid;
     static bool checkForObstacles(nav_msgs::Path& path, nav_msgs::OccupancyGrid& oGrid);
 };
