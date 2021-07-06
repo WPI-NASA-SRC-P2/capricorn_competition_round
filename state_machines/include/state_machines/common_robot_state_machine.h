@@ -45,6 +45,10 @@ private:
 /****************************************/
 /****************************************/
 
+/** 
+ * @brief RobotScehduler  
+ * 
+ */ 
 class RobotScheduler {
    
 public:
@@ -90,9 +94,24 @@ protected:
    std::string robot_name_;
 };
 
-/****************************************/
-/****************************************/
-
+/** 
+ * @brief RobotState
+ * 
+ * @param: entryPoint()       : Set all flags here that will be used to execute the state and microstates within
+ * @param: exitPoint()        : Goal(s) sent are cancelled here.
+ * @param: step()             : Main part of state where goals are sent and flags are checked.
+ * @param: isDone()           : Whether the last goal is done or the state as a whole is Done(depends on how the state is implemented)
+ *                              Done NOT succeeded!
+ * @param: hasSucceeded()     : Check whether last state succeeded or the state as a whole ahas succeeded.
+ * @param: transition()       : This is deprecated. Was used for transition to a new state. 
+ *                              But that's being taken care of by the scheduler. 
+ * @param: getState()         : Provided the state ID, it returns the state class. 
+ * @param: setRobotScheduler(): Assigns the state to a scheduler object.
+ * @param: setRobotName()     : Assign the name. For eg: HAULER_1 or HAULER_2 
+ * @param: updateStatus()     : Update whether state is done and has suceeded.
+ * @param: publishStatus()    : calls updateStatus() and puclishes it to /capricorn/robot_state_status
+ * 
+ */ 
 class State {
    
 public:
@@ -159,11 +178,11 @@ protected:
   ros::NodeHandle nh_;
   std::string robot_name_;
   
-  int robot_current_state_;
-  bool current_state_done_;
-  bool last_state_succeeded_;
-  state_machines::robot_state_status status_;
-  ros::Publisher status_pub_;
+  int robot_current_state_;                   // Current state under execution
+  bool current_state_done_;                   // Whether current state done               : implemented differently for different states
+  bool last_state_succeeded_;                 // Whether the state completed successfully : implemented differently for different states         
+  state_machines::robot_state_status status_; // Message type published on /capricorn/robot_state_status.
+  ros::Publisher status_pub_;                 // Publisher that publishes status on /capricorn/robot_state_status.
   
 };
 

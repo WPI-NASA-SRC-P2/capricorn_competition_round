@@ -1,7 +1,7 @@
 /**
- * @file hauler_state_machine.h
+ * @file excavator_state_machine.h
  * @author Team Bebop(mmuqeetjibran@wpi.edu)
- * @brief Hauler state machine which controls all the operations done by hauler
+ * @brief Excavator state machine which controls all the operations done by excavator
  * @version 0.1
  * @date 2021-06-23
  * 
@@ -30,41 +30,6 @@
 #include <operations/ParkRobotAction.h>
 
 using namespace COMMON_NAMES;
-
-// typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
-
-/****************************************/
-/****************************************/
-
-// class ExcavatorScheduler : public RobotScheduler {
-// public:
-//    ExcavatorScheduler(uint32_t un_max_t) :
-//       m_unT(0),
-//       m_unMaxT(un_max_t) {}
-
-//    void step() override {
-//       /* Increase time counter */
-//       ++m_unT;
-//       //std::cout << "t = " << m_unT << std::endl;
-//       /* Call parent class step */
-//       RobotScheduler::step();
-//    }
-   
-//    bool done() override {
-//       // return m_unT >= m_unMaxT;
-//       return false;
-//    }
-
-//    // void setInterrupt(STATE_MACHINE_TASK interrupt_state) override{  //Add only if its there in the base class. 
-//    //    interrupt_state_ = interrupt_state;
-//    //    m_bInterrupt = true;
-//    // }
-
-// private:
-
-//    uint32_t m_unT;
-//    uint32_t m_unMaxT;
-// };
 
 
 const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
@@ -102,16 +67,16 @@ public:
    //UNDERSTANDING: Trigerred in the setInitialState()
    void entryPoint() override {
       m_unCount = 0;
-      ROS_INFO_STREAM("  [" << getName() << "] - entry point");
+      ROS_INFO_STREAM("[ STATE_MACHINES | excavator_state_machine |  [" << getName() << "] - entry point ]");
    }
    //UNDERSTANDING: Every state might HAVE its own exitpoint. 
    void exitPoint() override {
-      ROS_INFO_STREAM("  [" << getName() << "] - exit point");
+      ROS_INFO_STREAM("[ STATE_MACHINES | excavator_state_machine |  [" << getName() << "] - exit point ]");
    }
 
    void step() override {
       ++m_unCount;
-      ROS_INFO_STREAM("  [" << getName() << "] - count = " << m_unCount);
+      ROS_INFO_STREAM("[ STATE_MACHINES | excavator_state_machine |  [" << getName() << "] - count = " << m_unCount << " ]");
    }
 
 protected:
@@ -151,6 +116,14 @@ protected:
 
 };
 
+/**
+ * @brief GoToScout Excavator attempts to go to the scout's location by:
+ *    [1] using scout pose to get to relative location
+ *    [2] use nav vision to more reliably get within range of scout
+ * 
+ *  @param isDone() naviagtion vision completed the task
+ *  @param hasSucceeded() naviation vision succeeded in going to Scout
+ */
 class GoToScout : public ExcavatorState {
 public:   
    GoToScout(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_SCOUT, nh, robot_name) {}
@@ -173,6 +146,14 @@ private:
    geometry_msgs::PoseStamped target_loc_;
 };
 
+/**
+ * @brief GoToDefaultArmPosition send excavator's arm to our 
+ *       default position to avoid collion with other robots and 
+ *       for easier detection by other robots
+ * 
+ * @param isDone() excavator arm is done going to default position
+ * @param hasSucceded() excavator arm succeeded in going to it's default arm position
+ */
 class GoToDefaultArmPosition : public ExcavatorState {
 public:   
    GoToDefaultArmPosition(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GOTO_DEFAULT_ARM_POSE, nh, robot_name) {}
@@ -194,7 +175,13 @@ private:
 };
 
 /**
- * @brief the previous state "go to scout" needs to be centered with the scout for this statemachine to work successfully 
+ * @brief ParkAndPub docks the excavator to the scout by:   
+ *    [1] Centers the excavator to the scout
+ *    [2] Moves forward some meters 
+ *       
+ * @param isDone() navagation vision completded task as mentioned
+ * @param hasSucceded() navaigation vision succeeded in both task
+ * 
  */
 class ParkAndPub : public ExcavatorState {
 public:
@@ -225,6 +212,12 @@ private:
    const float crash_time_ = 2.7;  //time to move forward
 };
 
+/**
+ * @brief DigAndDump digs and dumps voltiles into hauler until no volatile remains in that area
+ * 
+ * @param isDone() :  when there is no volatile in scoop
+ * @param hasSucceded() : When there have been volatiles that have been dug, and no more remain
+ */
 class DigAndDump : public ExcavatorState {
 public:
    DigAndDump(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_DIG_AND_DUMP_VOLATILE, nh, robot_name) {}
@@ -256,6 +249,12 @@ private:
    int digging_attempt_ = 0;
 };
 
+/**
+ * @brief IdleState Robot should stop and do nothing
+ * 
+ * @param isDone() goals have been send to stop the robot
+ * @param hasSucceded() goals sent have been successfull
+ */
 class IdleState : public ExcavatorState {
 public:   
    IdleState(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(ROBOT_IDLE_STATE, nh, robot_name) {}
@@ -274,6 +273,17 @@ public:
    State& transition() override{} 
 };
 
+/**
+ * @brief PreParkHauler docks the excavator to the scout by: 
+ * 
+ *    [1] Moves forward some distance to be ontop of volatile
+ *    [2] Rotates until excavator's vision is centered to hauler
+ *    [3] Moves back to have excavator's arm over volatile spot
+ *     
+ *  @param isDone() if arm is above the voltile 
+ *  @param hasSucceeded() excavator is centered to hauler and arm is above volatile
+ * 
+ */
 class PreParkHauler : public ExcavatorState {
 public:   
    PreParkHauler(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_PRE_HAULER_PARK_MANEUVER, nh, robot_name) {}
@@ -307,6 +317,12 @@ private:
    bool getInArmPositionDone_;
 };
 
+/**
+ * @brief ExcavatorGoToLoc go to a pose 
+ * 
+ * @param isDone() navigation is done
+ * @param hasSucceeded()  navigation succeeds to get to pose with referance to odom
+ */
 class ExcavatorGoToLoc : public ExcavatorState {
 public:   
    ExcavatorGoToLoc(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_LOC, nh, robot_name) {}
@@ -329,6 +345,13 @@ private:
    geometry_msgs::PoseStamped target_loc_;
 };
 
+/**
+ * @brief ExcavatorResetOdomAtHopper navigates to hopper, and then resets odom
+ * 
+ * @param isDone() when naviagtion vision is complete
+ * @param hasSucceeded(); when navigation vision succeeds, and resetOdom msg was sent 
+ * 
+ */
 class ExcavatorResetOdomAtHopper: public ExcavatorState {
 public:   
    ExcavatorResetOdomAtHopper(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_RESET_ODOM_AT_HOPPER, nh, robot_name) {}
@@ -371,6 +394,13 @@ private:
 
 };
 
+/**
+ * @brief ExcavatorGoToRepairStation travel to the Repair Station
+ * 
+ * @param isDone() navigation vision is complete
+ * @param hasSucceeded() navigation succeeded in going to Repair Station
+ * 
+ */ 
 class ExcavatorGoToRepairStation : public ExcavatorState {
 public:   
    ExcavatorGoToRepairStation(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_REPAIR, nh, robot_name) {}

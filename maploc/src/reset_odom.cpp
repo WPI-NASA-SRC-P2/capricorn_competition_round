@@ -325,6 +325,7 @@ int main(int argc, char *argv[])
     // indicate that reset is complete
     ROS_INFO("[MAPLOC | reset_odom.cpp | SERVICE]: reset rover odometry service, online");
 
+    ros::Duration(0.1).sleep();
     ros::spin();
     return 0;
 }

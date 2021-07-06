@@ -98,11 +98,11 @@ public:
 
    //UNDERSTANDING: Trigerred in the setInitialState()
    void entryPoint() override {
-      ROS_INFO_STREAM("  [" << getName() << "] - entry point");
+      ROS_INFO_STREAM(" [ STATE_MACHINES | scout_state_machine | " << getName() << "] - entry point ]");
    }
    //UNDERSTANDING: Every state might HAVE its own exitpoint. 
    void exitPoint() override {
-      ROS_INFO_STREAM("  [" << getName() << "] - exit point");
+      ROS_INFO_STREAM(" [ STATE_MACHINES | scout_state_machine | " << getName() << "] - exit point ]");
    }
 
    void step() override {}
@@ -142,6 +142,13 @@ protected:
   operations::ParkRobotGoal park_robot_goal_;
 };
 
+/**
+ * @brief Undock move off volatile
+ * 
+ * @param isDone() navigation vision is done
+ * @param hasSucceeded() navigation vision has succeeded
+ * 
+ */
 class Undock : public ScoutState {
 public:   
    Undock(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_UNDOCK, nh, robot_name) {}
@@ -161,6 +168,12 @@ private:
    operations::NavigationVisionGoal navigation_vision_goal_;
 };
 
+/**
+ * @brief Seach attemps to seach for a volatile
+ * 
+ * @param isDone() when near a volatile
+ * @param hasSucceeded() when near a volatile
+ */
 class Search : public ScoutState {
 public:   
    Search(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_SEARCH_VOLATILE, nh, robot_name) {}
@@ -179,6 +192,12 @@ private:
 
 };
 
+/**
+ * @brief Locate move closer to the center of the volatile
+ * 
+ * @param isDone volatile is within range 
+ * @param hasSucceeded scout is parked on top of volatile
+ */
 class Locate : public ScoutState {
 public:   
    Locate(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_LOCATE_VOLATILE, nh, robot_name) {}
@@ -197,7 +216,13 @@ private:
    bool first_;
 };
 
-
+/**
+ * @brief ResetOdomAtHopper navigates to hopper, and then resets odom
+ * 
+ * @param isDone() when naviagtion vision is complete
+ * @param hasSucceeded(); when navigation vision succeeds, and resetOdom msg was sent 
+ * 
+ */
 class ResetOdomAtHopper : public ScoutState {
 public:   
    ResetOdomAtHopper(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_RESET_ODOM, nh, robot_name) {}
@@ -231,6 +256,12 @@ private:
    RESET_ODOM_MICRO_STATES micro_state;
 };
 
+/**
+ * @brief IdleState Robot should stop and do nothing
+ * 
+ * @param isDone() goals have been send to stop the robot
+ * @param hasSucceded() goals sent have been successfull
+ */
 class IdleState : public ScoutState {
 public:   
    IdleState(ros::NodeHandle nh, std::string robot_name) : ScoutState(ROBOT_IDLE_STATE, nh, robot_name) {}
@@ -244,6 +275,12 @@ public:
    void exitPoint() override{}
 };
 
+/**
+ * @brief GoToRepairStation naviagte to repair station
+ * 
+ * @param isDone() navigation vision is done getting to the repair station
+ * @param hasSucceeded() navigation vision has succeeded at getting to the repair station
+ */
 class GoToRepairStation : public ScoutState {
 public:   
    GoToRepairStation(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_GOTO_REPAIR_STATION, nh, robot_name) {}

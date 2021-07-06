@@ -96,16 +96,16 @@ public:
    //UNDERSTANDING: Trigerred in the setInitialState()
    void entryPoint() override {
       m_unCount = 0;
-      ROS_INFO_STREAM("  [" << getName() << "] - entry point");
+      ROS_INFO_STREAM("[ STATE_MACHINES | hauler_state_machine | " << getName() << "] - entry point ]");
    }
    //UNDERSTANDING: Every state might HAVE its own exitpoint. 
    void exitPoint() override {
-      ROS_INFO_STREAM("  [" << getName() << "] - exit point");
+      ROS_INFO_STREAM("[ STATE_MACHINES | hauler_state_machine | " << getName() << "] - exit point ]");
    }
 
    void step() override {
       ++m_unCount;
-      ROS_INFO_STREAM("  [" << getName() << "] - count = " << m_unCount);
+      ROS_INFO_STREAM("[ STATE_MACHINES | hauler_state_machine | " << getName() << "] - count = " << m_unCount << " ]");
    }
 
 protected:
@@ -143,6 +143,12 @@ protected:
   operations::ParkRobotGoal park_robot_goal_;
 };
 
+/**
+ * @brief GoToProcPlant navigate to proccessing plant
+ * 
+ * @param isDone() navigation vision is done
+ * @param hasSucceeded() navigation vision has succeeded
+ */
 class GoToProcPlant : public HaulerState {
 public:   
    GoToProcPlant(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_TO_PROC_PLANT, nh, robot_name) {}
@@ -165,6 +171,12 @@ private:
    geometry_msgs::PoseStamped target_loc_;
 };
 
+/**
+ * @brief HaulerGoToScout navigate to scout's location
+ * 
+ * @param isDone() navigation vision is done
+ * @param hasSucceeded() navigation vision has succeeded
+ */
 class HaulerGoToScout : public HaulerState {
 public:   
    HaulerGoToScout(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_TO_SCOUT, nh, robot_name) {}
@@ -187,6 +199,12 @@ private:
    geometry_msgs::PoseStamped target_loc_;
 };
 
+/**
+ * @brief ParkAtHopper dock at hopper
+ * 
+ * @param isDone() park robot actionlib is done
+ * @param hasSucceeded()  park robot actionlib has succeeded
+ */
 class ParkAtHopper : public HaulerState {
 public:   
    ParkAtHopper(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_PARK_AT_HOPPER, nh, robot_name) {}
@@ -232,6 +250,15 @@ private:
 //    maploc::ResetOdom reset_srv_;
 // };
 
+
+/**
+ * @brief UndockHopper hauler undocks from hopper
+ * 
+ * @param isDone() navigation vision is done undocking from hopper
+ * @param hasSucceeded() navigation vision succeeds at undocking from hopper 
+ *                       and odom successfully reset
+ * 
+ */
 class UndockHopper : public HaulerState {
 public:   
    UndockHopper(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_UNDOCK_HOPPER, nh, robot_name) {}
@@ -277,6 +304,13 @@ private:
 //    geometry_msgs::PoseStamped target_loc_;
 // };
 
+/**
+ * @brief GoToExcavator navigates to excavator
+ * 
+ * @param isDone() navigation vision is done getting to excavator
+ * @param hasSucceeded() naviagtion vision succeeds at getting to excavator
+ * 
+ */
 class GoToExcavator : public HaulerState {
 public:   
    GoToExcavator(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_BACK_TO_EXCAVATOR, nh, robot_name) {}
@@ -299,6 +333,12 @@ private:
    geometry_msgs::PoseStamped target_loc_;
 };
 
+/**
+ * @brief ParkAtExcavator park in front of excavator robot to be within range of the arm
+ * 
+ * @param isDone park robot actionlib is done
+ * @param hasSucceeded park robot actionlib has succeeded
+ */
 class ParkAtExcavator : public HaulerState {
 public:   
    ParkAtExcavator(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_PARK_AT_EXCAVATOR, nh, robot_name) {}
@@ -321,6 +361,12 @@ private:
    geometry_msgs::PoseStamped target_loc_;
 };
 
+/**
+ * @brief UndockExcavator undocks from excavator
+ * 
+ * @param isDone() navigation vision is done undocking
+ * @param hasSucceeded navigation vision has succeeded in undocking
+ */
 class UndockExcavator : public HaulerState {
 public:   
    UndockExcavator(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_UNDOCK_EXCAVATOR, nh, robot_name) {}
@@ -345,6 +391,13 @@ private:
    double current_;
 };
 
+/**
+ * @brief DunpVolatile dumps volatiles
+ * 
+ * @param isDone()
+ * @param hasSucceeded()
+ * 
+ */
 class DumpVolatile : public HaulerState {
 public:   
    DumpVolatile(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_DUMP_VOLATILE, nh, robot_name) {}
@@ -366,6 +419,12 @@ private:
    bool first_;
 };
 
+/**
+ * @brief HaulerGoToLoc naviagte to pose
+ * 
+ * @param isDone() navigation is done getting to position
+ * @param hasSucceeded() navigation has succeeded at getting to position
+ */
 class HaulerGoToLoc : public HaulerState {
 public:   
    HaulerGoToLoc(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_TO_LOC, nh, robot_name) {}
@@ -388,6 +447,12 @@ private:
    geometry_msgs::PoseStamped target_loc_;
 };
 
+/**
+ * @brief IdleState Robot should stop and do nothing
+ * 
+ * @param isDone() goals have been send to stop the robot
+ * @param hasSucceded() goals sent have been successfull
+ */
 class IdleState : public HaulerState {
 public:   
    IdleState(ros::NodeHandle nh, std::string robot_name) : HaulerState(ROBOT_IDLE_STATE, nh, robot_name) {}
@@ -407,6 +472,15 @@ public:
 
 };
 
+/**
+ * @brief DumpVolatileAtHopper Executes the following:
+ *    [1] Navigates to the hopper
+ *    [2] Dunps volatile
+ *    [2] Resets odom
+ * 
+ * @param isDone() is done when it has reset Odom
+ * @param hasSucceeded() has successfully reset odom
+ */
 class DumpVolatileAtHopper : public HaulerState {
 public:   
    DumpVolatileAtHopper(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_DUMP_VOLATILE_TO_PROC_PLANT, nh, robot_name) {}
@@ -443,6 +517,12 @@ private:
    RESET_ODOM_MICRO_STATES micro_state;
 };
 
+/**
+ * @brief HaulerGoToRepairStation naviagte to repair station
+ * 
+ * @param isDone() navigation vision is done getting to the repair station
+ * @param hasSucceeded() navigation vision has succeeded at getting to the repair station
+ */
 class HaulerGoToRepairStation : public HaulerState {
 public:   
    HaulerGoToRepairStation(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GOTO_REPAIR_STATION, nh, robot_name) {}
