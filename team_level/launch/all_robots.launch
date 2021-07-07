@@ -1,11 +1,11 @@
 <launch>
-    <!-- <arg name="robot_name" default="small_scout_1" /> -->
+    <!-- <arg name="robot_name" default="small_scout_2" /> -->
 
     <arg name="output" default="screen" />
-    <arg name="use_cheat_odom" default="true" />
+    <arg name="use_cheat_odom" default="false" />
     <arg name="use_crab_drive" default="false" />
 
-    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /odom /map 100" />
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /map /odom 100" />
 
     <include file="$(find state_machines)/launch/start_scout.launch">
         <arg name="robot_name" value="small_scout_1" />
@@ -26,6 +26,28 @@
         <arg name="output" value="$(arg output)" />
         <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
+    </include>
+
+    <include file="$(find state_machines)/launch/start_scout.launch">
+        <arg name="robot_name" value="small_scout_2" />
+        <arg name="output" value="$(arg output)" />
+        <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
+        <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
+    </include>
+
+    <include file="$(find state_machines)/launch/start_excavator.launch">
+        <arg name="robot_name" value="small_excavator_2" />
+        <arg name="output" value="$(arg output)" />
+        <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
+        <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
+    </include>
+
+    <include file="$(find state_machines)/launch/start_hauler.launch">
+        <arg name="robot_name" value="small_hauler_2" />
+        <arg name="output" value="$(arg output)" />
+        <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
+        <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
+        <arg name="get_true_pose" value="false" />
     </include>
 
     <!-- <node name="scheduler" pkg="team_level" type="scheduler" args="$(arg robot_name)" output="screen" /> -->

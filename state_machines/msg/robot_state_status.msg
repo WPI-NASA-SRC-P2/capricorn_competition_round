@@ -1,0 +1,4 @@
+string robot_name
+int8 robot_current_state
+bool current_state_done
+bool last_state_succeeded

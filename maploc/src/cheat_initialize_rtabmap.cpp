@@ -23,7 +23,7 @@ NASA SPACE ROBOTICS CHALLENGE
  * DISCLAIMER: This script sets the inital pose of RTabMap in "robot_base_footprint" frame, make sure the output frame id
  * parameter in launch file for RTabMap is "robot_base_footprint"
  * 
- * DISCLAIMER: "SHOULD NOT BE USED IN SUBMISSION, just for testing and debugging"
+ * DISCLAIMER: "SHOULD NOT BE USED IN SUBMISSION, only for testing and debugging"
  * 
  * @param argv : REQUIRED paramter is the robot name eg. small_scout_1
  * @return int 

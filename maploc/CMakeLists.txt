@@ -16,10 +16,18 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_msgs
   rtabmap_ros
   tf
+  tf2
+  tf2_ros
   utils
+  # operations
   perception
   srcp2_msgs
   message_generation
+  # actionlib_msgs
+  # genmsg
+  # actionlib
+
+  
 )
 
 ## System dependencies are found with CMake's conventions
@@ -80,6 +88,7 @@ add_service_files(
    DEPENDENCIES
    geometry_msgs
    std_msgs
+  #  operations
  )
 
 ################################################
@@ -112,10 +121,14 @@ add_service_files(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- INCLUDE_DIRS include
+#  INCLUDE_DIRS include
 #  LIBRARIES maploc
- CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf utils std_msgs message_runtime rtabmap_ros perception srcp2_msgs
-#  DEPENDS system_lib
+ CATKIN_DEPENDS roscpp rospy geometry_msgs nav_msgs gazebo_msgs tf tf2 tf2_ros utils std_msgs message_runtime rtabmap_ros perception srcp2_msgs 
+#  operations 
+#  actionlib_msgs
+#  genmsg
+#  actionlib
+ #  DEPENDS system_lib
 ) 
 
 ###########
@@ -185,6 +198,12 @@ target_link_libraries(odom_error
   ${catkin_LIBRARIES}
 )
 
+add_executable(localization_odom_encoders src/localization_odom_encoders.cpp)
+add_dependencies(localization_odom_encoders ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(localization_odom_encoders
+  ${catkin_LIBRARIES}
+)
+
 add_executable(ground_truth_pr src/ground_truth_pr.cpp)
 add_dependencies(ground_truth_pr ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(ground_truth_pr
@@ -198,7 +217,9 @@ target_link_libraries(pr_dataset
 )
 
 install(PROGRAMS
-src/ground_truth_localmaps.py
+src/obstacle_localmaps.py
+src/map_centering_frame.py
+src/gazebo_base_footprints.py
 DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -218,9 +239,10 @@ DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-# install(TARGETS ${PROJECT_NAME}_node
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS publish_cheat_odom initialize_rtabmap reset_odom odom_error 
+                localization_odom_encoders ground_truth_pr pr_dataset
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
@@ -231,18 +253,23 @@ DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)
+
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+  PATTERN ".svn" EXCLUDE)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(FILES
+  msg/OdomError.msg
+  msg/PosePR.msg
+  srv/ResetOdom.srv
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 #############
 ## Testing ##

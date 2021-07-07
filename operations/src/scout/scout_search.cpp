@@ -6,7 +6,7 @@ TEAM CAPRICORN
 NASA SPACE ROBOTICS CHALLENGE
 
 Command Line Arguments Required:
-1. robot_name: eg. small_scout_1, small_excavator_2
+1. robot_name_: eg. small_scout_1, small_excavator_2
 */
 #include <mutex>
 #include <operations/NavigationAction.h>
@@ -46,6 +46,7 @@ bool resume_spiral = false;
 bool new_stop_call = false;
 const double CHECKPOINT_THRESHOLD = 2.0;
 bool was_driving = false;
+std::string robot_name_;
 
 /**
  * @brief Callback to the robot pose topic
@@ -119,55 +120,74 @@ void objectsCallback(const perception::ObjectArray &objs)
  */
 void driveSprial()
 {
-  if (g_spiral_points.size() >= 3)
+  if (g_spiral_points.size() > 1)
   {
-    double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
-    bool done_driving = g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED;
-    if (g_going_to_goal && !done_driving)
-    {
-      g_last_dist = dist;
-      ros::Duration(0.1).sleep();
-      g_going_to_goal = true;
-      return;
-    }
-    else
-      g_going_to_goal = false;
+    // double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
+    bool done_driving = g_client->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
+    // bool failed_driving = g_client->getState() == actionlib::SimpleClientGoalState::ABORTED;
 
-    if (dist < CHECKPOINT_THRESHOLD)
-    {
-      geometry_msgs::PointStamped center_of_rot = getCenterOfRotation(g_spiral_points);
+    // if (g_going_to_goal && !done_driving)
+    // {
+    //   g_last_dist = dist;
+    //   ros::Duration(0.1).sleep();
+    //   g_going_to_goal = true;
+    //   if(failed_driving)
+    //   {
+    //     g_spiral_points.erase(g_spiral_points.begin());
+    //     was_driving = true;
+    //   }
+    //   else
+    //     return;
+    // }
+    // else
+    //   g_going_to_goal = false;
+
+
+    // if (dist < CHECKPOINT_THRESHOLD)
+    // {
+    //   geometry_msgs::PointStamped center_of_rot = getCenterOfRotation(g_spiral_points);
+    //   g_spiral_points.erase(g_spiral_points.begin());
+    //   g_nav_goal.drive_mode = NAV_TYPE::REVOLVE;
+    //   g_nav_goal.point = center_of_rot;
+    //   g_nav_goal.forward_velocity = 2.0;
+    //   ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Circular Motion radius: " << center_of_rot.point.y << "\tdist: " << dist);
+    //   g_last_dist = 100; // Just to make it big for the next iteration
+    //   g_new_trajectory = true;
+    //   // g_going_to_goal = true;
+    //   was_driving = false;
+    // }
+    // else if (dist > g_last_dist || was_driving)
+    // {
+      if(done_driving)
+      {
       g_spiral_points.erase(g_spiral_points.begin());
-      g_nav_goal.drive_mode = NAV_TYPE::REVOLVE;
-      g_nav_goal.point = center_of_rot;
-      g_nav_goal.forward_velocity = 2.0;
-      ROS_INFO_STREAM("Circular Motion radius: " << center_of_rot.point.y << "\tdist: " << dist);
-      g_last_dist = 100; // Just to make it big for the next iteration
-      g_new_trajectory = true;
-      // g_going_to_goal = true;
-      was_driving = false;
-    }
-    else if (dist > g_last_dist || was_driving)
-    {
       geometry_msgs::Point point_0, point_2;
       point_0 = g_spiral_points.at(0).point;
       point_2 = g_spiral_points.at(2).point;
 
-      ROS_INFO_STREAM("Going to goal dist:" << dist);
+      ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: ");// << "Going to goal dist:" << dist);
 
       g_nav_goal.drive_mode = NAV_TYPE::GOAL;
       g_nav_goal.pose.pose.position = g_spiral_points.at(1).point;
       g_nav_goal.pose.pose.orientation = getOrientation(point_0, point_2);
       g_nav_goal.pose.header.frame_id = MAP;
+      g_nav_goal.epsilon = 1;
+      g_nav_goal.final_rotate = false;
       // g_client->sendGoal(g_nav_goal);
-      g_going_to_goal = true;
+      // g_going_to_goal = true;
       g_new_trajectory = true;
-      was_driving = true;
-    }
-    else
-    {
-      g_last_dist = dist;
-      g_new_trajectory = false;
-    }
+      // was_driving = true;
+      }
+  //   }
+  //   else
+  //   {
+  //     g_last_dist = dist;
+  //     g_new_trajectory = false;
+  //   }
+  }
+  else
+  {
+    g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(ROBOT_NUMBER);
   }
 }
 
@@ -177,31 +197,19 @@ void driveSprial()
  */
 void spiralSearch()
 {
-  const std::lock_guard<std::mutex> lock(g_objects_mutex);
-  perception::ObjectArray objects = g_objects;
+  // const std::lock_guard<std::mutex> lock(g_objects_mutex);
+  // perception::ObjectArray objects = g_objects;
 
-  std::vector<perception::Object> obstacles;
+  // std::vector<perception::Object> obstacles;
 
-  for (int i = 0; i < objects.number_of_objects; i++)
-    obstacles.push_back(objects.obj.at(i));
+  // for (int i = 0; i < objects.number_of_objects; i++)
+  //   obstacles.push_back(objects.obj.at(i));
 
-  float direction = checkObstacle(obstacles);
+  // float direction = checkObstacle(obstacles);
 
-  if (abs(direction) > 0.0)
-  {
-    g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
-    g_nav_goal.forward_velocity = FORWARD_VELOCITY;
-    g_nav_goal.direction = direction;
-    g_nav_goal.angular_velocity = 0;
-    g_new_trajectory = true;
-    // g_going_to_goal = true;
-    ROS_INFO("Avoiding Obstacle");
-    return;
-  }
-  else
-  {
-    driveSprial();
-  }
+  // if (abs(direction) > 0.0)
+  //   was_driving = true;
+  driveSprial();
 }
 
 /**
@@ -218,6 +226,9 @@ void execute()
       spiralSearch();
       if (g_new_trajectory)
       {
+        g_client->sendGoal(g_nav_goal);
+        g_client->sendGoal(g_nav_goal);
+        g_client->sendGoal(g_nav_goal);
         g_client->sendGoal(g_nav_goal);
         g_new_trajectory = false;
       }
@@ -241,31 +252,31 @@ void execute()
 bool serviceCB(operations::Spiral::Request &req,
                operations::Spiral::Response &res)
 {
-  resume_spiral = req.resume_spiral_motion;
-
   // Whever interrupted, it assumes that this location has volatiles,
   // and robots will park. So it should continue from the next point after that.
-  if (!resume_spiral)
+  if (!req.resume_spiral_motion && resume_spiral)
   {
-    g_spiral_points.erase(g_spiral_points.begin());
+    // g_spiral_points.erase(g_spiral_points.begin());
     new_stop_call = true;
   }
+  resume_spiral = req.resume_spiral_motion;
+
   return true;
 }
 
 int main(int argc, char **argv)
 {
-  if (argc != 2 && argc != 4)
-  {
-    ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
-    return -1;
-  }
+  // if (argc != 2 && argc != 4)
+  // {
+  //   ROS_ERROR_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "This node must be launched with the robotname passed as a command line argument!");
+  //   return -1;
+  // }
 
-  std::string robot_name(argv[1]);
+  robot_name_ = std::string(argv[1]);
   // Convert char to int
   // https://www.softwaretestinghelp.com/cpp-character-conversion-functions/
-  ROBOT_NUMBER = (robot_name.back()) - 48; 
-  ros::init(argc, argv, robot_name + COMMON_NAMES::SCOUT_SEARCH_NODE_NAME);
+  ROBOT_NUMBER = (robot_name_.back()) - 48; 
+  ros::init(argc, argv, robot_name_ + COMMON_NAMES::SCOUT_SEARCH_NODE_NAME);
   ros::NodeHandle nh;
 
   bool odom_flag;
@@ -273,18 +284,18 @@ int main(int argc, char **argv)
 
   ros::Subscriber odom_sub;
 
-	if (odom_flag)
-	{
-		odom_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name + CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
-		ROS_INFO("Currently using cheat odom from Gazebo\n");
-	}
-	else
-	{
-		odom_sub = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, updateRobotPose);
-		ROS_INFO("Currently using odom from rtabmap\n");
-	}
+	// if (odom_flag)
+	// {
+	// 	odom_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name_ + CHEAT_ODOM_TOPIC, 1000, updateRobotPose);
+	// 	ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Currently using cheat odom from Gazebo\n");
+	// }
+	// else
+	// {
+		odom_sub = nh.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 1000, updateRobotPose);
+		ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Currently using odom from rtabmap\n");
+	// }
 
-  g_client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
+  g_client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
   g_client->waitForServer();
   g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
 
@@ -298,10 +309,13 @@ int main(int argc, char **argv)
     ros::spinOnce();
   }
 
-  ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
+  ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
 
   ros::ServiceServer service = nh.advertiseService(COMMON_NAMES::SCOUT_SEARCH_SERVICE, serviceCB);
-  ROS_INFO_STREAM("Starting Searching - " << robot_name);
+  ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Starting Searching - " << robot_name_);
   execute();
+
+  delete g_client;
+
   return 0;
 }

@@ -1,0 +1,44 @@
+item {
+    id: 1
+    name: 'processingPlant'
+}
+item {
+    id: 2
+    name: 'repairStation'
+}
+item {
+    id: 3
+    name: 'hopper'
+}
+item {
+    id: 4
+    name: 'rock'
+}
+item {
+    id: 5
+    name: 'scout'
+}
+item {
+    id: 6
+    name: 'excavator'
+}
+item {
+    id: 7
+    name: 'hauler'
+}
+item {
+    id: 8
+    name: 'robotAntenna'
+}
+item {
+    id: 9
+    name: 'excavatorArm'
+}
+item {
+    id:10 
+    name: 'furnace'
+}
+item {
+    id: 11
+    name: 'ppSmallThruster'
+}

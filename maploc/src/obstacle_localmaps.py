@@ -17,6 +17,17 @@ from perception.msg import ObjectArray
 # tf2 req
 import tf_conversions
 import tf2_ros
+
+# MAP CONSTANTS
+
+MAP_RESOLUTION = 0.2
+MAP_WIDTH  = 40
+MAP_HEIGHT = 40
+MAP_X_OFFSET = 20
+MAP_Y_OFFSET = 20
+OCCUPIED = 100
+UNOCCUPIED = 0
+OBSTACLE_SCALER = 2
  
 class ObjectPlotter:
     def __init__(self):
@@ -50,25 +61,33 @@ class ObjectPlotter:
     
     # initialize/refresh the blank 20x20 map centered on the robot 
     def resetOccGrid(self):
+        global MAP_RESOLUTION                         # (m/pixel) 0.05 matches rtabmap resolution
+        global MAP_WIDTH
+        global MAP_HEIGHT
+        global MAP_X_OFFSET
+        global MAP_Y_OFFSET
+        global UNOCCUPIED
+        
+
         metadata = MapMetaData()
         # define dimensions of blank occupancy grid
-        metadata.resolution = 0.05 # (m/pixel) 0.05 matches rtabmap resolution
-        metadata.width = int(20/metadata.resolution) # sets the map to be 20m x 20m regardless of resolution
-        metadata.height = int(20/metadata.resolution)
+        metadata.resolution = MAP_RESOLUTION
+        metadata.width  = int(MAP_WIDTH/metadata.resolution) # sets the map to be 40m x 40m regardless of resolution
+        metadata.height = int(MAP_HEIGHT/metadata.resolution)
 
         # we use a blank pose centered in the map as opposed to the robot pose from odom at the moment. Everything is still w.r.t. robot base frame so the relative positions are correct
         base_frame = Pose()
-        # offset the map such that the bottom left of the map is -10m x -10m to the bottom left of the robot
+        # offset the map such that the bottom left of the map is -20m x -20m to the bottom left of the robot
         # thus making the robot pose be the center of the map
-        base_frame.position.x = -10
-        base_frame.position.y = -10
+        base_frame.position.x = -MAP_X_OFFSET
+        base_frame.position.y = -MAP_Y_OFFSET
         metadata.origin = base_frame 
 
         # set up the 2D OccupancyGrid with robot base frame as origin
         # - the origin is at bottom left. The origin will be translated to the center of the map in plotting function and publishing
+        self.occ_grid.header.frame_id = self.robot_name + '_base_footprint'
         self.occ_grid.info = metadata
         # initialize map data as all zeros
-        UNOCCUPIED = 0
         self.occ_grid.data = [UNOCCUPIED] * self.occ_grid.info.width*self.occ_grid.info.height
     
     # transform the object list from camera frame to base frame
@@ -93,12 +112,19 @@ class ObjectPlotter:
     # 100 = obstacle, -1 = unexplored, 0 = free
     def addObstacle(self, obx, oby, radius):
         # plot everything w.r.t. center of the grid
-        obx = obx + 10
-        oby = oby + 10
+        global MAP_X_OFFSET
+        global MAP_Y_OFFSET
+        global OCCUPIED
+
+        obx = obx + MAP_X_OFFSET
+        oby = oby + MAP_Y_OFFSET
         # convert meters to pixels
-        obx_p = obx/self.occ_grid.info.resolution
-        oby_p = oby/self.occ_grid.info.resolution
-        radius_p = radius/self.occ_grid.info.resolution
+        no_zeroes_here = 0.0
+        if(self.occ_grid.info.resolution == 0):                           #HOTFIX: TO PREVENT DIVIDE-BY-ZERO-ERROR
+            no_zeroes_here = 0.05
+        obx_p = obx/(self.occ_grid.info.resolution + no_zeroes_here)
+        oby_p = oby/(self.occ_grid.info.resolution + no_zeroes_here)
+        radius_p = radius/(self.occ_grid.info.resolution + no_zeroes_here)
         # rospy.loginfo("Im here")
         # fill in obstacles found within localmaps
         for val in range(0, 901):
@@ -130,122 +156,15 @@ class ObjectPlotter:
             # rospy.loginfo("circX = " + str(circX) + " up_bound = " + str(up_bound) + " down_bound = " + str(down_bound))
             # circX = self.occ_grid.info.width - circ
             while pos < down_bound:
-                OCCUPIED = 100
                 # rospy.loginfo("printing within map")
                 self.occ_grid.data[int(pos*(self.occ_grid.info.width) + circX)] = OCCUPIED
                 pos += 1
-        # for val in range(90, 991):
-        #     # counter-clockwise (right-bound)
-        #     pos_theta = (val / 5.0)*pi/180 
-        #     # clockwise (left-bound)
-        #     neg_theta = -(val / 5.0)*pi/180 
-        #     # # swap obx_p and oby_p
-        #     # left_bound = int(obx_p + radius_p*np.sin(neg_theta))
-        #     # right_bound = int(obx_p + radius_p*np.sin(pos_theta))
-        #     # circY = int(oby_p + radius_p*np.cos(pos_theta))
-        #     # swap obx_p and oby_p
-        #     left_bound = int(oby_p + radius_p*np.sin(neg_theta))
-        #     right_bound = int(oby_p + radius_p*np.sin(pos_theta))
-        #     circY = int(obx_p + radius_p*np.cos(pos_theta))
-        #     # check boundary cases
-        #     # first case is if y value is not valid
-        #     if circY not in range(0, self.occ_grid.info.height + 1):
-        #         continue
-        #     # second case is if x values gotten from pos_theta and neg_theta are out of the grid
-        #     if left_bound not in range(0, self.occ_grid.info.width + 1) and right_bound not in range(0, self.occ_grid.info.width + 1):
-        #         continue
-        #     if left_bound not in range(0, self.occ_grid.info.width + 1):
-        #         left_bound = 0
-        #     if right_bound not in range(0, self.occ_grid.info.width + 1):
-        #         right_bound = self.occ_grid.info.width
-        #     # fill in pixels in-between 
-        #     pos = left_bound
-        #     circY = self.occ_grid.info.height - circY
-        #     while pos < right_bound:
-        #         OCCUPIED = 100
-        #         # rospy.loginfo("printing within map")
-        #         self.occ_grid.data[int(circY*(self.occ_grid.info.width) + pos)] = OCCUPIED
-        #         pos += 1
- 
-
-
-            # # for cos, range is 0-2PI
-            # circX = int((obx_p + radius_p*np.cos(theta)))
-            # # for sin, range is -PI - PI  
-            # circY = int((oby_p + radius_p*np.sin(theta)))
-            # # define bounds of if index value is valid 
-            # voxel_not_negative = int(circY*self.occ_grid.info.width + circX) >= 0
-            # voxel_not_outside = int(circY*self.occ_grid.info.width + circX) < self.occ_grid.info.width*self.occ_grid.info.height
-            
-            # # obstacle wrapping check (don't plot stuff behind when object has disappeared)
-            # # first, check if the x value is within boundary 0 to self.occ_grid.info.width
-            # voxel_not_wrapping = circX in range(0, self.occ_grid.info.width) and circY in range(0, self.occ_grid.info.height)
-            # # next, check if the circY is also within boundary 0 to self.occ_grid.info.height
-            # # voxel_not_wrapping = circY in range(0, self.occ_grid.info.height)
-            # # only add obstacle to grid if its index value is valid (else, not in view of robot anyways)
-            # if voxel_not_negative and voxel_not_outside and voxel_not_wrapping: 
-            #     #rospy.loginfo("Obstacle Plotted")
-            #     OCCUPIED = 100
-            #     self.occ_grid.data[int(circY*self.occ_grid.info.width + circX)] = OCCUPIED
-
-        # # plot everything w.r.t. center of the grid (robot is at center)
-        # obx = obx + 10
-        # oby = oby + 10
-        # # plot a circle around the center point of the object
-        # previous_node_x = 0
-        # previous_node_y = 0
-        # current_node_x = 0
-        # current_node_y = 0
-        # for theta in range(0,90,1):
-        #     theta = theta*pi/180
-        #     # convert meters to pixels
-        #     obx_p = obx/self.occ_grid.info.resolution
-        #     oby_p = oby/self.occ_grid.info.resolution
-        #     radius_p = radius/self.occ_grid.info.resolution
-        #     # for cos, range is 0-2PI
-        #     circX = int((obx_p + radius_p*np.cos(theta)))
-        #     # for sin, range is -PI - PI  
-        #     circY = int((oby_p + radius_p*np.sin(theta)))
-        #     # define bounds of if index value is valid 
-        #     voxel_not_negative = int(circY*self.occ_grid.info.width + circX) >= 0
-        #     voxel_not_outside = int(circY*self.occ_grid.info.width + circX) < self.occ_grid.info.width*self.occ_grid.info.height
-            
-        #     # obstacle wrapping check (don't plot stuff behind when object has disappeared)
-        #     # first, check if the x value is within boundary 0 to self.occ_grid.info.width
-        #     voxel_not_wrapping = circX in range(0, self.occ_grid.info.width) and circY in range(0, self.occ_grid.info.height)
-        #     # next, check if the circY is also within boundary 0 to self.occ_grid.info.height
-        #     # voxel_not_wrapping = circY in range(0, self.occ_grid.info.height)
-        #     # only add obstacle to grid if its index value is valid (else, not in view of robot anyways)
-        #     if voxel_not_negative and voxel_not_outside and voxel_not_wrapping: 
-        #         #rospy.loginfo("Obstacle Plotted")
-        #         OCCUPIED = 100
-        #         self.occ_grid.data[int(circY*self.occ_grid.info.width + circX)] = OCCUPIED
-        #         # rospy.loginfo('voxel_not_negative = ' + str(int(circY*self.occ_grid.info.width + circX)))
-        #         if theta == 0:
-        #             previous_node_x = circX
-        #             previous_node_y = circY
-        #         else:
-        #             # current_node = (circY*self.occ_grid.info.width + circX)
-        #             current_node_x = circX
-        #             current_node_y = circY
-        #             # x1, y1 = previous_node
-        #             x1 = previous_node_x
-        #             y1 = previous_node_y
-        #             # x2, y2 = current_node
-        #             x2 = current_node_x
-        #             y2 = current_node_y
-        #             for j in range(0, 5):
-        #                 u = j / 5
-        #                 x = int(x2 * u + x1 * (1 - u))
-        #                 y = int(y2 * u + y1 * (1 - u))
-        #                 self.occ_grid.data[int(y*self.occ_grid.info.width + x)] = OCCUPIED
-        #             previous_node_x = current_node_x
-        #             previous_node_y = current_node_y
 
     
     # plot all objects in object list
     # - basically plot single object many times (across length of object list)
     def addAllObstacles(self):
+        global OBSTACLE_SCALER
         # check if there are any observed objects
         #rospy.loginfo("Adding Obstacles from Obj list")
         if len(self.obj_list.obj) > 0:
@@ -266,7 +185,7 @@ class ObjectPlotter:
                 #obx, oby = self.transform(obx, oby, self.robot_name)
                 
                 # set radius of object to be plotted based on the width of the bounding box observed
-                radius = (obj.width)/2
+                radius = (obj.width + OBSTACLE_SCALER)/2 ####increasing the obstacle size
                 # plot the obstacle onto the occupancy grid
                 self.addObstacle(obx, oby, radius)      
         
@@ -291,8 +210,9 @@ class ObjectPlotter:
 if __name__=="__main__":
     # initialize node
     rospy.init_node("Ground_Truth_Localmaps")
-    rospy.loginfo("ground_truth_localmaps node, online")
     # instantiate the object plotter to begin mapping
+    rospy.loginfo("[MAPLOC | obstacle_localmaps.py | " + str(sys.argv[1]) + "]: ground_truth_localmaps node, online") 
     ObstacleMap = ObjectPlotter()
+    rospy.sleep(5.)
     # this node works entirely based on the callback functions, thus just need to spin in main loop after creating the plotter object    
     rospy.spin()

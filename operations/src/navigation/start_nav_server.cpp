@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 {
     if(argc != 2 && argc != 4)
     {
-        ROS_ERROR_STREAM("This node must be launched with the robotname passed as a command line argument!");
+        ROS_ERROR_STREAM("[operations | start_nav_server]: This node must be launched with the robotname passed as a command line argument!");
 
         return -1;
     }
@@ -18,13 +18,15 @@ int main(int argc, char* argv[])
     ros::init(argc, argv, robot_name + "_nav_server");
     ros::NodeHandle nh;
 
-    printf("Constructing nav server\n");
+    ROS_INFO("[operations | start_nav_server]: Constructing nav server", robot_name);
 
     NavigationServer* ns = new NavigationServer(nh, robot_name);
 
-    printf("Done constructing nav server\n");
+    ROS_INFO("[operations | start_nav_server]: Done constructing nav server", robot_name);
 
     ros::spin();
 
-    printf("NavigationServer died!\n");
+    delete ns;
+
+    ROS_WARN("[operations | start_nav_server]: NavigationServer died!", robot_name);
 }

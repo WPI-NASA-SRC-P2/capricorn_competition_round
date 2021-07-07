@@ -1,0 +1,122 @@
+<launch>
+    <!-- Modular way to launch an instance of an odometry engine. One should be launched per robot-->
+    <!-- Args: -->
+        <!-- robot_name: The name of the robot in the simulation-->
+        <!-- robot_number: The number of the robot in the simulation. Default: 1-->
+        <!-- output_topic: What topic to output odometry on. Default: odometry/filtered_twist-->
+        <!-- use_encoders: Whether to fuse encoder data. Skid steering only right now. Default: False-->
+        <!-- use_imu: Whether to fuse imu data. Default: False-->
+        <!-- use_lidar: Whether to fuse LIDAR data. Default: True. WARNING: Setting to false will cause capricorn_odom_initialize to crash. This may be okay, but proceed with caution. -->
+        <!-- use_camera: Whether to fuse stereo camera data. Default: False-->
+        <!-- use_cheat: Whether to take data directly from Gazebo (true position relative to lunar_terrain). If this is set to true, please set the other 2 to false. Default: False.-->
+
+    <!-- For encoders, X,Y,Z Velocity, as well as yaw velocity are fused.-->
+    <!-- For the IMU, Roll,Pitch,Yaw position, and Yaw velocity are fused.-->
+
+    <arg name="robot_name" />
+    <!-- <arg name="robot_number" default="1"/> -->
+    <!-- <arg name="output_topic" default="$(arg robot_name)/camera/odom/localization" /> -->
+    <arg name="output_topic" default="$(arg robot_name)/camera/odom" />
+    <arg name="use_encoders" default="false" />
+    <arg name="use_imu"      default="true" />
+    <arg name="use_lidar"    default="false" />
+    <arg name="use_camera"   default="true" />
+    <arg name="use_cheat"    default="false" />
+
+    <!-- Name must be variable to that multiple launches don't collide-->
+    <node pkg="robot_localization" type="ekf_localization_node" name="$(arg robot_name)_localization_ekf_node_odom" clear_params="true">
+        <!-- <param name="frequency" value="10." />  -->
+        <!-- frequency directly tied to all_robots.launch! -->
+        <param name="frequency" value="100." /> 
+        <param name="sensor_timeout" value="0.2" />
+        <param name="publish_tf" value="true" />
+        <param name="map_frame" value="map" />
+        <!-- <param name="odom_frame" value="$(arg robot_name)_odom" /> -->
+        <param name="odom_frame" value="odom" />
+        <param name="base_link_frame" value="$(arg robot_name)_base_footprint" />
+        <param name="world_frame" value="odom" />
+        <param name="print_diagnostics" value="true" />
+        <remap from="odometry/filtered" to="$(arg output_topic)" />
+
+        <param name="transform_time_offset" value="0.5" />
+        <param name="predict_to_current_time" value="true" />
+
+        <param name="imu0" value="/$(arg robot_name)/imu" if="$(arg use_imu)"/>
+        <rosparam param="imu0_config" if="$(arg use_imu)">
+                                    [false, false, false, <!-- X, Y, Z-->
+                                    true, true, true,    <!-- Roll, Pitch, Yaw-->
+                                    false, false, false, <!-- Vel[X, Y, Z]-->
+                                    false, false, false,  <!-- Vel[Roll, Pitch, Yaw]-->
+                                    true, true, false] <!-- Accel[X, Y, Z]-->
+        </rosparam>
+
+        <param name="imu0_remove_gravitational_acceleration" value="true" />
+        <param name="gravitational_acceleration" value="1.62" />
+        
+        <!-- RTABMAP output odometry topic -->
+        <param name="odom0" value="/$(arg robot_name)/camera/odom/localization" if="$(arg use_camera)" />
+        <rosparam param="odom0_config" if="$(arg use_camera)">
+                                    [true, true, true,                          <!-- X, Y, Z-->
+                                        false, false, false,                          <!-- Roll, Pitch, Yaw-->
+                                        true, true, true,                             <!-- Vel[X, Y, Z]-->
+                                        true, true, true,                           <!-- Vel[Roll, Pitch, Yaw]-->
+                                        false, false, false]                          <!-- Accel[X, Y, Z]-->
+        </rosparam>
+
+        <!-- ENCODER odom -->
+        <param name="odom1" value="/$(arg robot_name)/joint_states" if="$(arg use_encoders)" />
+        <rosparam param="odom1_config" if="$(arg use_encoders)">
+                                    [false, false, false,                          <!-- X, Y, Z-->
+                                        false, false, false,                          <!-- Roll, Pitch, Yaw-->
+                                        true, true, true,                             <!-- Vel[X, Y, Z]-->
+                                        false, false, true,                           <!-- Vel[Roll, Pitch, Yaw]-->
+                                        false, false, false]                          <!-- Accel[X, Y, Z]-->
+        </rosparam>
+
+        <!-- NOTE: Encoders and cheat odometry are named the same (odom0) as odom1 wont run without an odom0 existing. Please don't try to run both at the same time.-->
+        <param name="odom0" value="/$(arg robot_name)/camera/odom/localization" if="$(arg use_cheat)" />
+        <rosparam param="odom0_config" if="$(arg use_cheat)">
+                                    [true, true, true,                          <!-- X, Y, Z-->
+                                        false, false, false,                          <!-- Roll, Pitch, Yaw-->
+                                        false, false, false,                             <!-- Vel[X, Y, Z]-->
+                                        false, false, false,                           <!-- Vel[Roll, Pitch, Yaw]-->
+                                        false, false, false]                          <!-- Accel[X, Y, Z]-->
+        </rosparam>
+
+        <!-- We did quite a bit of research and could not figure out how to properly tune covariances.
+            These values seem to work, as the covariances reported by the robot_localization node stay small.-->
+
+        <rosparam param="process_noise_covariance">[0.001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                0, 0.001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                0, 0, 0.001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0.001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0.001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0.001, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0, 0,
+                                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0, 0,
+                                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001, 0,
+                                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.001]
+        </rosparam>
+        <rosparam param="initial_estimate_covariance">[0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                    0, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                    0, 0, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                    0, 0, 0, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                    0, 0, 0, 0, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                    0, 0, 0, 0, 0, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                    0, 0, 0, 0, 0, 0, 0.1, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                    0, 0, 0, 0, 0, 0, 0, 0.1, 0, 0, 0, 0, 0, 0, 0,
+                                                    0, 0, 0, 0, 0, 0, 0, 0, 0.1, 0, 0, 0, 0, 0, 0,
+                                                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 0, 0, 0, 0, 0,
+                                                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 0, 0, 0, 0,
+                                                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 0, 0, 0,
+                                                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 0, 0,
+                                                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 0,
+                                                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1]
+        </rosparam>
+    </node>
+</launch>

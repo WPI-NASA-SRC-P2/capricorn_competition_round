@@ -139,6 +139,111 @@ float NavigationAlgo::getRadiusInArchimedeanSpiral(const float t)
   return radius;
 }
 
+std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRectangularScanningPoints(const int scout_number)
+{
+  float radius = 80;
+  float start_pt_x = scout_number == 1 ? 35 : -35, theta_x = scout_number == 1 ? 5 : -5;
+  int max_x = scout_number == 1 ? 80 : -80;
+
+  std::vector<geometry_msgs::PointStamped> points;
+
+  auto getY = [&radius](float x)->float
+  {
+    return abs(sqrt((radius * radius) - (x * x)));
+  };
+
+  auto getPoint = [](float x, float y)->geometry_msgs::PointStamped
+  {
+    geometry_msgs::PointStamped msg;
+    msg.header.frame_id = MAP;
+    msg.point.x = x;
+    msg.point.y = y;
+    return msg;
+  };
+
+  points.push_back(getPoint(0, 0));
+  points.push_back(getPoint(0, 0));
+  points.push_back(getPoint(start_pt_x, 0));
+
+  while (abs(start_pt_x) < abs(max_x))
+  {
+    float y = getY(start_pt_x);
+    if(points.back().point.y == 0)
+    {
+      points.push_back(getPoint(start_pt_x, y));
+    }
+    else
+    {
+      if(points.back().point.y < 0)
+      {
+        points.push_back(getPoint(start_pt_x, -y));
+      points.push_back(getPoint(start_pt_x, 0));
+        points.push_back(getPoint(start_pt_x, y));
+      }
+      else
+      {
+        points.push_back(getPoint(start_pt_x, y));
+        points.push_back(getPoint(start_pt_x, 0));
+        points.push_back(getPoint(start_pt_x, -y));
+      }
+    }
+    start_pt_x += theta_x;
+  }
+
+  for (auto pt : points)
+  {
+    ROS_INFO_STREAM("X: " + std::to_string(pt.point.x) + ", Y: " + std::to_string(pt.point.y));
+  }
+
+  return points;
+}
+
+std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRadialScanningPoints(const int scout_number)
+{
+  #define PI 3.14159265
+
+  float radius = 80;
+  float start_angle = scout_number == 1 ? 10 : -10, theta_x = scout_number == 1 ? 15 : -15;
+  int angle_max = scout_number == 1 ? 175 : -175;
+
+  std::vector<geometry_msgs::PointStamped> points;
+
+  auto getAnglePoint = [&radius](float angle)->geometry_msgs::PointStamped
+  {
+    geometry_msgs::PointStamped msg;
+    msg.header.frame_id = MAP;
+    msg.point.x = radius * sin(angle*PI/180);
+    msg.point.y = radius * cos(angle*PI/180);
+    return msg;
+  };
+
+  auto getPoint = [](float x, float y)->geometry_msgs::PointStamped
+  {
+    geometry_msgs::PointStamped msg;
+    msg.header.frame_id = MAP;
+    msg.point.x = x;
+    msg.point.y = y;
+    return msg;
+  };
+
+  points.push_back(getPoint(0, 0));
+  points.push_back(getPoint(0, 0));
+
+  while (abs(start_angle) <= abs(angle_max))
+  {
+    points.push_back(getAnglePoint(start_angle));
+    points.push_back(getPoint(scout_number == 1 ? 20 : -20, 0));
+    start_angle += theta_x;
+  }
+
+  for (auto pt : points)
+  {
+    ROS_INFO_STREAM("X: " + std::to_string(pt.point.x) + ", Y: " + std::to_string(pt.point.y));
+  }
+
+  return points;
+}
+
 /**
  * @brief 
  * 
@@ -211,8 +316,6 @@ double NavigationAlgo::changeInPosition(const geometry_msgs::PoseStamped& curren
 
 double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& current_waypoint, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer)
 {
-  //printf("%f\n", chan)
-
   // Hack (kind of) for Ashay. If the two poses are within 15cm of each other, we assume that we want to match orientations, not turn to face a waypoint
   // TODO: Make sure planner team doesn't give us two waypoints that is within this tolerance
   if(changeInPosition(current_robot_pose, current_waypoint) < 0.15)
@@ -233,6 +336,8 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 
   //Get the change in yaw between the two poses with atan2
 	double change_in_yaw = atan2(waypoint_relative_to_robot.pose.position.y, waypoint_relative_to_robot.pose.position.x);
+
+  //ROS_ERROR("[operations | nav_algo | %s]: Change in yaw before calculations %f", robot_name.c_str(), change_in_yaw);
 	
 	// We want the robot to turn in the direction of the smallest angle change, so if abs(change) > 180, flip its direction
 	if(change_in_yaw >= M_PI)
@@ -244,6 +349,8 @@ double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current
 	{
 		change_in_yaw += 2*M_PI;
 	}
+
+  //ROS_ERROR("[operations | nav_algo | %s]: Change in yaw after calculations %f", robot_name.c_str(), change_in_yaw);
 	
 	return change_in_yaw;
 }
@@ -258,7 +365,7 @@ double NavigationAlgo::changeInOrientation(const geometry_msgs::PoseStamped& des
   }
   else
   {
-    ROS_ERROR_STREAM("transformPose failed in changeInOrientation. Returning 0.\n");
+    ROS_ERROR("[operations | nav_algos | %s]: transformPose failed in changeInOrientation. Returning 0.", robot_name.c_str());
 
     return 0;
   }
@@ -283,7 +390,7 @@ bool NavigationAlgo::transformPose(geometry_msgs::PoseStamped& pose, const std::
     }
   }
 
-  ROS_ERROR_STREAM("tf2::ExtrapolationException too many times in a row! Failed while transforming from " << pose.header.frame_id << " to " << frame << " at time " << pose.header.stamp.sec << "." << pose.header.stamp.nsec);
+  ROS_ERROR("[operations | nav_algos]: tf2::ExtrapolationException too many times in a row! Failed while transforming from %s to %s at time %d.%d", pose.header.frame_id.c_str(), frame.c_str(), pose.header.stamp.sec, pose.header.stamp.nsec);
 
 	return false;
 }
@@ -313,7 +420,7 @@ double NavigationAlgo::getRadiusOfThreePointsCircle(const std::vector<geometry_m
 {
   if(points.size()!=3)
   {
-    ROS_ERROR("Must get 3 points to get Radius, supplied %i points", points.size());
+    ROS_ERROR("[operations | nav_algos]: Must get 3 points to get Radius, supplied %lu points", points.size());
 
     return -1.0;
   }
@@ -333,7 +440,7 @@ geometry_msgs::PointStamped NavigationAlgo::getCenterOfThreePointsCircle(const s
 {
   if(points.size()!=3)
   {
-    ROS_ERROR("Must get 3 points to get Center Location, supplied %i points", points.size());
+    ROS_ERROR("[operations | nav_algos]: Must get 3 points to get Center Location, supplied %lu points", points.size());
 
     geometry_msgs::PointStamped err;
     return err;
@@ -357,7 +464,7 @@ std::vector<double> NavigationAlgo::getABCDofThreePointsCircle(const std::vector
 {
   if(points.size()!=3)
   {
-    ROS_ERROR("Must get 3 points to calculate the A B C and D constants, supplied %i points", points.size());
+    ROS_ERROR("[operations | nav_algos]: Must get 3 points to calculate the A B C and D constants, supplied %lu points", points.size());
     
     // Not sure if this is right, but needs to return something. 
     std::vector<double> err;
@@ -410,17 +517,10 @@ geometry_msgs::Pose NavigationAlgo::getPointCloserToOrigin(const geometry_msgs::
     out_point.position.x = out_x;
     out_point.position.y = out_y;
 
-    // tf::Quaternion quat(self_point.orientation.x, self_point.orientation.y, self_point.orientation.z, self_point.orientation.w);
-    // tf::Matrix3x3 m(quat);
-    // double roll, pitch, yaw;
-    // m.getRPY(roll, pitch, yaw);
-    // double out_yaw = yaw+theta;
-
     tf2::Quaternion myQuaternion;
     myQuaternion.setRPY( 0, 0, theta );
 
     tf2::convert(myQuaternion, out_point.orientation);
-    // ROS_INFO_STREAM(yaw<<" "<<yaw<<" "<<yaw<<" "<<yaw<<" "<<yaw<<" "<<yaw<<" ");
   }
 
   return out_point;

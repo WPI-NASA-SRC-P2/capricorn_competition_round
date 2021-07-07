@@ -8,14 +8,23 @@
 #include <geometry_msgs/Point.h> // To get target point in order to orient shoulder joint
 #include <math.h>                // used in findShoulderAngle() for atan2()
 #include <mutex>
+#include <vector>
 
+#include <actionlib/client/simple_action_client.h>
 #include <perception/ObjectArray.h>
 #include <perception/Object.h>
 #include <operations/navigation_algorithm.h>
+#include <operations/NavigationAction.h>
 
 #include <tf/transform_listener.h>
 
+typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
+
 using namespace COMMON_NAMES;
+
+Client *g_client;
+
+operations::NavigationGoal g_nav_goal;
 
 // Initialization for joint angle publishers
 typedef actionlib::SimpleActionServer<operations::ExcavatorAction> Server;
@@ -30,13 +39,14 @@ float curr_sh_pitch = 0;
 float curr_elb_pitch = 0;
 float curr_wrt_pitch = 0;
 bool volatile_found = false; // flag to store value received from scoop_info topic
+std::string robot_name_;
 std::mutex excavator_cancel_goal_mutex;
 
 int SLEEP_DURATION = 5; // The sleep duration
 
 // Variables for object detection of hauler with respect to excavator
 perception::ObjectArray objectArray;
-std::string desired_label = OBJECT_DETECTION_HAULER_CLASS;
+std::string desired_label = OBJECT_DETECTION_ROBOT_ANTENNA_CLASS;
 std::mutex objects_mutex;
 bool objects_received = 0;
 
@@ -72,9 +82,9 @@ void scoopCallback(const srcp2_msgs::ExcavatorScoopMsg::ConstPtr &msg)
  */
 void objectsCallback(const perception::ObjectArray &objs)
 {
-  const std::lock_guard<std::mutex> lock(objects_mutex);
-  objects_received = true;
-  objectArray = objs;
+    const std::lock_guard<std::mutex> lock(objects_mutex);
+    objects_received = true;
+    objectArray = objs;
 }
 
 /**
@@ -102,7 +112,7 @@ float findShoulderAngle(const geometry_msgs::Point &target)
  */
 void printPoint(std::string const &description, geometry_msgs::Point &point)
 {
-  ROS_INFO_STREAM(description << ": [" << point.x << ", " << point.y << ", " << point.z << "]");
+    ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << description << ": [" << point.x << ", " << point.y << ", " << point.z << "]");
 }
 
 /**
@@ -115,34 +125,73 @@ geometry_msgs::PoseStamped getHaulerPose(geometry_msgs::PointStamped stamped_poi
 {
 
   geometry_msgs::PoseStamped currentHaulerPoseStamped;
-  currentHaulerPoseStamped.pose.position = stamped_point.point;
+  currentHaulerPoseStamped.pose.position = stamped_point.point; 
   perception::ObjectArray objects = objectArray;
 
   bool pointDetected = false;
 
   int count = 0;
-  while (count < 5 && !pointDetected) // Checks five times for hauler pose so that missed frames don't cause error
+  while(count < 5 && !pointDetected) // Checks five times for hauler pose so that missed frames don't cause error
   {
-    for (int i = 0; i < objects.number_of_objects; i++)
-    {
-      perception::Object object = objects.obj.at(i);
-      // ROS_INFO_STREAM("Object label: " << object.label);
-      if (object.label == "robotAntenna")
-      {
-        // Store the object's location
-        currentHaulerPoseStamped = object.point;
-        pointDetected = true;
-        ROS_INFO_STREAM("Point Detected");
-        break;
+    for(int i = 0; i < objects.number_of_objects; i++) 
+      {   
+          perception::Object object = objects.obj.at(i);
+          // ROS_INFO_STREAM("Object label: " << object.label);
+          if(object.label == desired_label)
+          {
+              // Store the object's location
+              currentHaulerPoseStamped = object.point;
+              pointDetected = true;
+              //ROS_INFO("[operations | excavator_server | %s]: Point Detected", robot_name_.c_str());
+              break;
+          }
       }
-    }
-    count++;
+      count++;
   }
 
-  if (!pointDetected)
-    ROS_INFO_STREAM("Hauler not detected, using default hauler position in left camera optical frame");
+  currentHaulerPoseStamped.pose.position.x += 0.4;
+  currentHaulerPoseStamped.pose.position.y -= 0.2;
+  currentHaulerPoseStamped.pose.position.z -= 0.5;
 
+  if (!pointDetected)
+    ROS_WARN("[operations | excavator_server | %s]: Hauler antenna not detected, using default hauler position in left camera optical frame", robot_name_.c_str());
+    
   return currentHaulerPoseStamped;
+}
+
+std::vector<float> getDepthHeight(geometry_msgs::Point hauler_center)
+{
+  float l1 = 1.0; // shoulder link lenght
+  float l2 = 0.8; // elbow link length
+  std::vector<float> thetas;
+  float D = hauler_center.x;
+  float H = hauler_center.z;//+0.5;
+  float d = (pow(D,2) + pow(H,2) - pow(l1,2) - pow(l2,2))/(2*l1*l2);
+  
+  // Geometric inverse kinematics equations
+  float theta3 = -atan(-sqrt(1-pow(d,2))/d);
+  float theta2 = -(atan(H/D) - atan(l2*sin(theta3)/(l1+l2*cos(theta3))));
+  theta3 = -theta3;
+
+  if(theta2 > -0.35) // this ensures that theta2 is always greater than -20 degrees to ensure elbow up pose
+  {
+    theta2 = theta3 + theta2;
+    theta3 = -theta3;
+  }
+
+  if(std::to_string(theta2) == "nan" || std::to_string(theta3) == "nan")
+  {
+    ROS_INFO("Invalid values obtained, passing default values");
+    theta2 = -1.17;
+    theta3 = 1.39;
+  }
+
+  thetas.push_back(theta2);
+  thetas.push_back(theta3);
+  ROS_INFO_STREAM("Degrees: " << 180/M_PI*(theta2)<< "\t Radian: "<< theta2);
+  ROS_INFO_STREAM("Degrees: " << 180/M_PI*(theta3)<< "\t Radian: "<< theta3);
+
+  return thetas;
 }
 
 /**
@@ -151,23 +200,20 @@ geometry_msgs::PoseStamped getHaulerPose(geometry_msgs::PointStamped stamped_poi
  * @param tries Number of times transform should be attempted
  * @return geometry_msgs::Point The dumping point loaction in base footprint frame
  */
-float getDumpAngleInBase(int tries)
+std::vector<float> getDumpAngleInBase(int tries)
 {
   tf::TransformListener tf_listener_; // For transformation from camera frame to shoulder frame
-
-  std::string base_frame = "small_excavator_1" + ROBOT_BASE;
-  std::string left_camera_frame = "small_excavator_1" + LEFT_CAMERA_ROBOT_LINK;
+  
+  std::string base_frame = robot_name_ + ROBOT_BASE; //change to robot name
+  std::string left_camera_frame = robot_name_ + LEFT_CAMERA_ROBOT_LINK;
 
   bool transformSet = false; // flag to keep track of when valid frames are found
-  int countTries = 0;        // counter to keep track of tries
-
+  int countTries = 0; // counter to keep track of tries
+  
   geometry_msgs::PointStamped initial_point_stamped; // object to store detected hauler point in base frame
-  initial_point_stamped.point.z = 2.0;               // Default assumed location is [0, 0, 2] in left camera frame in case object detection fails
+  initial_point_stamped.point.z = 1.2; // Default assumed location is [0, 0, 1.2] in left camera frame in case object detection fails
 
-  printPoint("Default point in left camera frame", initial_point_stamped.point);
-
-  initial_point_stamped.point = getHaulerPose(initial_point_stamped).pose.position; // try to get hauler location from object detection
-
+  initial_point_stamped.point = getHaulerPose(initial_point_stamped).pose.position; // try to get hauler location from object detection  
   printPoint("Detected point in left camera frame", initial_point_stamped.point);
 
   geometry_msgs::PointStamped final_point_stamped; // point stamped object to store transformation of point from camera frame to base frame
@@ -178,26 +224,40 @@ float getDumpAngleInBase(int tries)
   initial_point_stamped.header.frame_id = left_camera_frame;
   final_point_stamped.header.frame_id = base_frame;
 
-  while (countTries < tries && !transformSet)
+  while(countTries<tries && !transformSet) {
+        try{
+            tf_listener_.transformPoint(base_frame, initial_point_stamped, final_point_stamped);
+            transformSet = true;
+        }
+        catch (tf::TransformException &ex) {
+            ROS_WARN_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Could not transform hauler detection from " << left_camera_frame << " to " << base_frame);
+            ROS_ERROR("[operations | excavator_server | %s]: %s", robot_name_.c_str(), ex.what());
+            ros::Duration(0.1).sleep();
+            countTries++;
+            continue;
+        }
+    }
+  
+  printPoint("Detected point in excavator base frame", final_point_stamped.point);
+
+  // This part returns the point in excavator shoulder frame
+  geometry_msgs::Point final_wrt_shoulder;
+  final_wrt_shoulder.x = final_point_stamped.point.x - 0.7;
+  final_wrt_shoulder.y = final_point_stamped.point.y - 0.000001;
+  final_wrt_shoulder.z = final_point_stamped.point.z - 0.100000;
+
+  printPoint("Detected point in excavator shoulder frame", final_wrt_shoulder);
+
+
+  std::vector<float> thetas = getDepthHeight(final_wrt_shoulder);
+  float shoulder_yaw = findShoulderAngle(final_point_stamped.point);
+  if(shoulder_yaw > 0)
   {
-    try
-    {
-      tf_listener_.transformPoint(base_frame, initial_point_stamped, final_point_stamped);
-      transformSet = true;
-    }
-    catch (tf::TransformException &ex)
-    {
-      ROS_INFO_STREAM("Could not transform hauler detection from " << left_camera_frame << " to " << base_frame);
-      ROS_ERROR("%s", ex.what());
-      ros::Duration(1.0).sleep();
-      continue;
-    }
-    countTries++;
+    shoulder_yaw = shoulder_yaw - 0.34*shoulder_yaw/0.78; // Offset for getting precise yaw angle
   }
-
-  printPoint("Transformed point in base frame", final_point_stamped.point);
-
-  return findShoulderAngle(final_point_stamped.point);
+  thetas.insert(thetas.begin(), shoulder_yaw);
+  ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: arm angles are " << thetas[0] << ", " << thetas[1] << ", " << thetas[2]);
+  return thetas;
 }
 
 /**
@@ -228,6 +288,75 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
   excavator_wrist_pitch_publisher_.publish(wrist_pitch_msg);
 }
 
+void excavatorRecovery(const int& trial_number)
+{   
+    ROS_INFO("Inside excavator recovery function");
+    g_nav_goal.point.header.frame_id = robot_name_ + ROBOT_BASE;
+    g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+    g_nav_goal.angular_velocity = 0;
+
+    if(trial_number == 1)
+    {
+        //move straight
+        ROS_INFO("Inside if of excavator recovery function");
+        g_nav_goal.direction = 0;
+        ROS_INFO("Before send goal");
+        g_client->sendGoal(g_nav_goal);
+        ROS_INFO("After send goal");
+        ros::Duration(0.5).sleep();
+        g_nav_goal.forward_velocity = 0.6;
+        ROS_INFO("Go Forward with trial: [%d]", trial_number);
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(2).sleep();
+
+        g_nav_goal.forward_velocity = 0.0;
+        ROS_INFO("Stop with trial: [%d]", trial_number);
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+    }
+    else if(trial_number == 2)
+    {
+        //move back
+        g_nav_goal.forward_velocity = -0.6;   
+        ROS_INFO("Go back with trial: [%d]", trial_number);
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(4).sleep();
+
+        g_nav_goal.forward_velocity = 0.0;
+        ROS_INFO("Stop with trail: [%d]", trial_number);
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+    }
+    else if(trial_number == 3)
+    {
+        //move diagonal left
+        g_nav_goal.direction = 0.75;
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+        g_nav_goal.forward_velocity = 0.6;
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(3).sleep();
+
+        g_nav_goal.forward_velocity = 0.0;
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+    }
+    else
+    {
+        //move right
+        g_nav_goal.direction = -1.57;
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+        g_nav_goal.forward_velocity = 0.6;  
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(4).sleep();
+
+        g_nav_goal.forward_velocity = 0.0;
+        g_client->sendGoal(g_nav_goal);
+        ros::Duration(0.5).sleep();
+    }
+}  
+
 /**
  * @brief publishes the excavator angles to the rostopics small_excavator_1/arm/*joint_name/position
  * 
@@ -235,30 +364,36 @@ void publishAngles(float shoulder_yaw, float shoulder_pitch, float elbow_pitch, 
  * @param target the target x, y coordinates in terms of the body frame
  * @param shoulder the fixed coordinates of the shoulder joint in body frame
  */
-bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const geometry_msgs::Point &shoulder)
+bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, const geometry_msgs::Point &shoulder)
 {
-  float dumpAngle = getDumpAngleInBase(3); // Get dumping angle based on hauler position from object detection using three tries for transformation
 
-  float theta = -1.57;                     // Rightmost arm position
-  static float last_vol_loc_angle = -1.57; // variable for storing last volatile location angle
+  int task = goal->task;
+  geometry_msgs::Point target = goal->target;
+  int trial = goal->trial;
+
+  std::vector<float> thetas = getDumpAngleInBase(3); // Get dumping angle based on hauler position from object detection using three tries for transformation
+
+  float theta = -1.5; // Rightmost arm position
+  static float last_vol_loc_angle = -1.5; // variable for storing last volatile location angle
   float yaw_angle;
 
-  if (target.x == 1)            // Target for when the excavator parked to a new volatile position
-    last_vol_loc_angle = theta; // Start looking for angles from the rightmost angle
+  if (target.x == 1) // Target for when the excavator parked to a new volatile position
+      last_vol_loc_angle = theta; // Start looking for angles from the rightmost angle
 
   std::string scoop_value;
   if (task == START_DIGGING) // digging angles
   {
-    publishAngles(0, -2, 1, 0);                  // Move the arm up
+    publishAngles(0, -2, 1, 0);     // Move the arm up
     publishAngles(last_vol_loc_angle, -2, 1, 0); // Step for safe trajectory to not bump into camera
     ros::Duration(2).sleep();
     publishAngles(last_vol_loc_angle, 1, 1, -2); // This set of values move the scoop under the surface
     ros::Duration(5).sleep();
 
-    dumpAngle = getDumpAngleInBase(3);
+    thetas = getDumpAngleInBase(3);
 
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
-    ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
+    ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Scoop info topic returned: " + scoop_value + "\n");
+    
 
     while (!volatile_found && last_vol_loc_angle < 1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
     {
@@ -266,9 +401,9 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
       publishAngles(last_vol_loc_angle, 1, 1, -0.6);
       ros::Duration(3).sleep();
       last_vol_loc_angle += 0.2;
-      ROS_INFO_STREAM(std::to_string(last_vol_loc_angle));
+      ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << std::to_string(last_vol_loc_angle));
       scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
-      ROS_INFO_STREAM("Scoop info topic returned: " + scoop_value + "\n");
+      ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Scoop info topic returned: " + scoop_value + "\n");
     }
 
     yaw_angle = last_vol_loc_angle; // The last volatile angle is stored here
@@ -308,20 +443,26 @@ bool publishExcavatorMessage(int task, const geometry_msgs::Point &target, const
   else if (task == START_UNLOADING) // dumping angles
   {
     // previous shoulder yaw was 0.15
-    publishAngles(dumpAngle, -2, 1, 0.4); // This set of values moves the scoop towards the hauler
+    publishAngles(thetas[0], -2, 1, 0.4); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(dumpAngle, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
-    ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(dumpAngle, -2, 1, -0.7786); // This set of values moves the scoop to the front center
+    // publishAngles(thetas[0], thetas[1], thetas[2], 0.4); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    // ros::Duration(3).sleep();
+    publishAngles(thetas[0], -2, 1, 3); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    ros::Duration(3).sleep();
+    publishAngles(thetas[0], -2, 1, -0.7786); // This set of values moves the scoop to the front center
     ros::Duration(3).sleep();
   }
-  else if (task == GO_TO_DEFAULT) // dumping angles
+  else if (task == RECOVERY)
   {
-    publishAngles(-1, -1, 1.5792, -0.7786);
+    excavatorRecovery(trial);
+  }
+  else if(task == GO_TO_DEFAULT) // dumping angles
+  {
+    publishAngles(-1, -1, 1.5792, -1.2);
   }
   else
   {
-    ROS_ERROR("Unhandled state encountered in Excavator actionlib server");
+    ROS_ERROR("[operations | excavator_server | %s]: Unhandled state encountered in Excavator actionlib server", robot_name_.c_str());
   }
   return true;
 }
@@ -339,7 +480,7 @@ void execute(const operations::ExcavatorGoalConstPtr &goal, Server *action_serve
   shoulder_wrt_base_footprint.y = 0.0;
   shoulder_wrt_base_footprint.z = 0.1;
 
-  bool dig_dump_result = publishExcavatorMessage(goal->task, goal->target, shoulder_wrt_base_footprint);
+  bool dig_dump_result = publishExcavatorMessage(goal, shoulder_wrt_base_footprint);
   ros::Duration(SLEEP_DURATION).sleep();
   // action_server->working(); // might use for feedback
 
@@ -356,9 +497,9 @@ void cancelGoal()
   std_msgs::Float64 shoulder_yaw_msg;
   shoulder_yaw_msg.data = -1.57;
 
-  ROS_INFO("Cancelled Excavator Goal");
+  ROS_INFO("[operations | excavator_server | %s]: Cancelled Excavator Goal", robot_name_.c_str());
   const std::lock_guard<std::mutex> lock(excavator_cancel_goal_mutex);
-  ROS_INFO("Done Cancelling");
+  ROS_INFO("[operations | excavator_server | %s]: Done Cancelling", robot_name_.c_str());
   excavator_shoulder_yaw_publisher_.publish(shoulder_yaw_msg);
   ros::Duration(SLEEP_DURATION).sleep();
   publishAngles(-1.57, -2, 1, 1.5); // This set of values moves the scoop to deposit volatiles in the hauler bin
@@ -379,23 +520,30 @@ int main(int argc, char **argv)
   if (argc != 2 && argc != 4)
   {
     // Displaying an error message for correct usage of the script, and returning error.
-    ROS_ERROR_STREAM("This Node needs an argument as <RobotName_Number>");
+    ROS_ERROR_STREAM("The excavator_server needs an argument as <RobotName_Number>");
     return -1;
   }
   else
   {
     std::string robot_name = (std::string)argv[1];
-    ROS_INFO_STREAM(robot_name + "\n");
+    robot_name_ = robot_name;
     std::string node_name = robot_name + "_excavator_action_server";
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
     initExcavatorPublisher(nh, robot_name);
-    ros::Subscriber sub = nh.subscribe("/" + robot_name + SCOOP_INFO, 1000, scoopCallback);                                         // scoop info subscriber
-    ros::Subscriber objects_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback); // object array subscriber
+    ros::Subscriber sub = nh.subscribe("/" + robot_name + SCOOP_INFO, 1000, scoopCallback); // scoop info subscriber
+    ros::Subscriber objects_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback); // object array subscriber 
     Server server(nh, EXCAVATOR_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     // server.registerPreemptCallback(&cancelGoal);
     server.start();
-    ROS_INFO("STARTED EXCAVATOR SERVER");
+    ROS_INFO("[operations | excavator_server | %s]: STARTED EXCAVATOR SERVER", robot_name_.c_str());
+
+    g_client = new Client(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
+    
+    ROS_INFO("Waiting for server to start");
+    g_client->waitForServer();
+    ROS_INFO("Server has started");
+
     ros::spin();
 
     return 0;

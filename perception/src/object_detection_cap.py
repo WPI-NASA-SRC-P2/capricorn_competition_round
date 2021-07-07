@@ -20,11 +20,22 @@ and then published in perception/Objects message
 
 from object_detection_cap_lib import *
 
+g_disparity = None
+g_image = None
+g_robot_name = "small_scout_1"
+
+def getString(message):
+    """
+    Returns the string to be logged or printed
+    """
+    global g_robot_name
+    return "[PERCEPTION | OBJECT DETECTION CAP | " + g_robot_name +  "]: " + message
+
 def detectionCallback(image, disparity):  
     """
     Camera image and disparity combined callback
     """  
-    rospy.logwarn_once("Callback Working")
+    rospy.logwarn_once(getString("Callback Working"))
 
     global g_image
     global g_disparity
@@ -60,7 +71,7 @@ def initObjectDetection(path_to_model, path_to_label_map):
     model = tf.saved_model.load(str.format(path_to_model))
     model_fn = model.signatures['serving_default']
 
-    rospy.logwarn("Registering loop callback for {}".format(g_robot_name))       
+    rospy.logwarn(getString("Registering loop callback for {}".format(g_robot_name)))
 
     while not rospy.is_shutdown():
         if(g_disparity is not None and g_image is not None):
@@ -68,7 +79,6 @@ def initObjectDetection(path_to_model, path_to_label_map):
         update_rate.sleep()
 
 if __name__ == '__main__':   
-    global g_robot_name
     g_robot_name = sys.argv[1]
     path_to_model = sys.argv[2]
     path_to_label_map = sys.argv[3]

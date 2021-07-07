@@ -3,29 +3,48 @@
     <arg name="output" default="screen" />
     <arg name="use_cheat_odom" default="false" />
     <arg name="use_crab_drive" default="false" />
-    <arg name="get_true_pose" default="true"/>
+    <arg name="get_true_pose" default="true"/>        <!--Doubtful-->
     <arg name="node_start_delay" default="5.0" /> 
+    <arg name="use_robot_localization" default="false"/>
 
-    <include file="$(find operations)/launch/nav_planner.launch">
+    <!-- UNNECESSARY BECAUSE PLANNER.LAUNCH AND NAVIGATION.LAUNCH ARE LAUNCHED ALREADY AT BOTTOM -->
+    <!-- <include file="$(find operations)/launch/nav_planner.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
         <arg name="output" value="log" />
         <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
-    </include>
+    </include> -->
+
+    <!-- <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /map /odom 100" /> -->
 
     <include unless="$(arg use_cheat_odom)" file="$(find maploc)/launch/mapping.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
         <arg name="output" value="log" />
         <arg name="get_true_pose" value="$(arg get_true_pose)" />
         <arg name="node_start_delay" value="$(arg node_start_delay)" />
+        <arg name="use_robot_localization" value="$(arg use_robot_localization)"/>
     </include>
+
+    <node pkg="state_machines" type="odom_resetter" name="$(arg robot_name)_odom_resetter" args="$(arg robot_name)" />
 
     <group ns="/capricorn/$(arg robot_name)">      
         <param name="cheat_odom" value="$(arg use_cheat_odom)"/>
           
-        <node pkg="state_machines" type="start_scout_sm" name="scout_1_sm" args="$(arg robot_name)" output="screen" />
+        <include file="$(find planning)/launch/planner.launch">
+			<arg name="robot_name" value="$(arg robot_name)" />
+	    </include>
+
+        <include file="$(find operations)/launch/navigation.launch">
+            <arg name="robot_name" value="$(arg robot_name)" />
+            <arg name="output" value="log" />
+            <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
+            <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
+        </include> 
+
+        <!-- <node pkg="state_machines" type="start_scout_sm" name="scout_1_sm" args="$(arg robot_name)" output="screen" /> -->
         <node name="navigation_vision_server" pkg="operations" type="navigation_vision_server" args="$(arg robot_name)" output="screen"/>
         <node pkg="operations" type="resource_localiser" name="scout_1_localiser" args="$(arg robot_name)" output="screen" />
         <node pkg="operations" type="scout_search" name="scout_1_search" args="$(arg robot_name)" output="screen" />
+        <node name="park_hauler_server" pkg="operations" type="park_hauler_server" args="$(arg robot_name)" output="screen"/>
     </group>
 </launch>
