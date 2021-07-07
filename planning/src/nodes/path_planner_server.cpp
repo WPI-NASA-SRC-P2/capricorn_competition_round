@@ -5,7 +5,6 @@
 #include "planning/TrajectoryWithVelocities.h"
 #include <geometry_msgs/Point.h>
 
-
 //Setting the node's update rate
 #define UPDATE_HZ 10
 
@@ -17,12 +16,17 @@ ros::Publisher debug_pathPublisher;
 #endif
 
 std::string robot_name_ = "";
-bool map_received_ = false;
+bool map_received = false;
 
 bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
-  std::lock_guard<std::mutex> lock(oGrid_mutex_);
-  auto paddedGrid = CSpace::getCSpace(global_oGrid_, 50, 10);
+  std::unique_lock<std::mutex> locationLock(oGrid_mutex_);
+  auto global_oGrid_CPY = global_oGrid_;
+  locationLock.unlock();
+
+
+  // obstacle threshold = 50, Padding Radius = 6
+  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 6);
 
   #ifdef DEBUG_INSTRUMENTATION
   debug_oGridPublisher.publish(paddedGrid);
@@ -30,6 +34,7 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
 
   auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, 50, robot_name_);
 
+  
   #ifdef DEBUG_INSTRUMENTATION
   debug_pathPublisher.publish(path);
   #endif
@@ -40,19 +45,18 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
     trajectory.waypoints = path.poses;
 
     res.trajectory = trajectory;
-
-    return true;
   } else {
-    ROS_WARN("[planning | path_planner_server | %s]: No Poses Set.", robot_name_);
+    ROS_WARN("[planning | astar | %s ]: No Poses Set.", robot_name_);
   }
-  return false;
+
+  return true;
 }
 
-void PathServer::oGridCallback(nav_msgs::OccupancyGrid::ConstPtr oGrid)
+void PathServer::oGridCallback(nav_msgs::OccupancyGrid oGrid)
 {
   std::lock_guard<std::mutex> lock(oGrid_mutex_);
-  global_oGrid_ = *oGrid;
-  map_received_ = true;
+  global_oGrid_ = oGrid;
+  map_received = true;
 }
 
 int main(int argc, char *argv[])
@@ -61,15 +65,15 @@ int main(int argc, char *argv[])
   ros::init(argc, argv, "path_planner_server");
 
   std::string robot_name(argv[1]);
-
   robot_name_ = robot_name;
 
   //ROS Topic names
-  std::string oGrid_topic_ = "/capricorn/"+ robot_name_ +"/object_detection_map";
+  std::string oGrid_topic_ = "/capricorn/"+robot_name_+"/object_detection_map";
 
   //create a nodehandle
   ros::NodeHandle nh;
 
+  //initializing a planner server
   PathServer server;
 
   server.oGrid_subscriber = nh.subscribe(oGrid_topic_, 1000, &PathServer::oGridCallback, &server);
@@ -79,7 +83,7 @@ int main(int argc, char *argv[])
   debug_pathPublisher = nh.advertise<nav_msgs::Path>("/galaga/debug_path", 1000);
   #endif
 
-  while(!map_received_ && ros::ok())
+  while(!map_received)
   {
     ros::Duration(0.1).sleep();
     ros::spinOnce();

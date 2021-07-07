@@ -1,0 +1,3 @@
+string robot_name
+int64 robot_desired_state
+geometry_msgs/PoseStamped goal_pose

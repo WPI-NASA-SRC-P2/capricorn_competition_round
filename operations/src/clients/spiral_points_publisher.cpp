@@ -19,9 +19,9 @@ int main(int argc, char **argv)
   marker.id = 0;
   marker.type = visualization_msgs::Marker::SPHERE_LIST;
   marker.action = visualization_msgs::Marker::ADD;
-  marker.scale.x = 4;
-  marker.scale.y = 4;
-  marker.scale.z = 4;
+  marker.scale.x = 2;
+  marker.scale.y = 2;
+  marker.scale.z = 2;
   marker.pose.orientation.x = 0.0;
   marker.pose.orientation.y = 0.0;
   marker.pose.orientation.z = 0.0;
@@ -40,21 +40,23 @@ int main(int argc, char **argv)
   ros::Duration(0.1).sleep();
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = "map";
-  int number_of_points = 500;
+  int number_of_points = 120;
   std::vector<geometry_msgs::PointStamped> spiral_points_1 = NavigationAlgo::getNArchimedeasSpiralPoints(1);
-  std::vector<geometry_msgs::PointStamped> spiral_points_2 = NavigationAlgo::getNArchimedeasSpiralPoints(2);
+  number_of_points = spiral_points_1.size();
+  // std::vector<geometry_msgs::PointStamped> spiral_points_2 = NavigationAlgo::getNArchimedeasSpiralPoints(2);
 
-  marker.points.resize(2*number_of_points);
-  marker.colors.resize(2*number_of_points);
+  marker.points.resize(number_of_points);
+  marker.colors.resize(number_of_points);
 
   for (int i = 0; i < number_of_points; i++)
   {
     marker.points.at(i) = spiral_points_1.at(i).point;
     marker.colors.at(i) = green_color;
-    marker.points.at(number_of_points + i) = spiral_points_2.at(i).point;
-    marker.colors.at(number_of_points + i) = red_color;
+    // marker.points.at(number_of_points + i) = spiral_points_2.at(i).point;
+    // marker.colors.at(number_of_points + i) = red_color;
   }
 
+  marker.colors.at(0) = red_color;
   while (ros::ok())
   {
     vis_pub.publish(marker);

@@ -23,7 +23,7 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 	listener_ = new tf2_ros::TransformListener(buffer_);
 
 	// Initialize the rate limiter to 10 HZ
-	update_rate_ = new ros::Rate(10);
+	update_rate_ = new ros::Rate(100);
 
 	moveRobotWheels(0);
 	steerRobot(0);

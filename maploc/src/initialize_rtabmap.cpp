@@ -69,6 +69,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, robot_name + COMMON_NAMES::INITALIZE_ODOM_NODE_NAME);
     ros::NodeHandle nh;
 
+    ros::Duration(0.1).sleep();
+
     ros::ServiceClient nasa_client;
 
     // initialize the rtabmap with the true pose to have unified coordinates
@@ -141,7 +143,7 @@ int main(int argc, char **argv)
         if(use_robot_localization)
         {
             // initialize a robot_localization client for setting pose (basically reset odom again)
-            ros::ServiceClient robot_localization_client = nh.serviceClient<robot_localization::SetPose>("/set_pose");
+            ros::ServiceClient robot_localization_client = nh.serviceClient<robot_localization::SetPose>(COMMON_NAMES::RESET_LOCALIZATION_POSE);
             // reset the robot localization pose as well using a PoseWithCovarianceStamped
             robot_localization::SetPose localization_pose;
             // geometry_msgs::PoseWithCovarianceStamped localization_pose;
@@ -149,7 +151,7 @@ int main(int argc, char **argv)
             localization_pose.request.pose.pose.pose = pose_wrt_heightmap;
             // set the header values based on the odometry frame of the robot and current time?
             // localization_pose.request.header.frame_id = robot_name + "_base_footprint";
-            localization_pose.request.pose.header.frame_id = "map";
+            localization_pose.request.pose.header.frame_id = COMMON_NAMES::MAP;
             localization_pose.request.pose.header.stamp = ros::Time::now();
 
             if(robot_localization_client.call(localization_pose))

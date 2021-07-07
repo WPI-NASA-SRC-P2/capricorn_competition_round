@@ -1,5 +1,18 @@
-#ifndef EXCAVATOR_STATE_MACHINE_H
-#define EXCAVATOR_STATE_MACHINE_H
+/**
+ * @file excavator_state_machine.h
+ * @author Team Bebop(mmuqeetjibran@wpi.edu)
+ * @brief Excavator state machine which controls all the operations done by excavator
+ * @version 0.1
+ * @date 2021-06-23
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+
+#pragma once
+
+// #ifndef EXCAVATOR_STATE_MACHINE_H
+// #define EXCAVATOR_STATE_MACHINE_H
 
 #include <iostream>
 #include <operations/NavigationAction.h>
@@ -10,169 +23,400 @@
 #include <operations/ExcavatorAction.h>
 #include <geometry_msgs/PointStamped.h>
 #include <state_machines/RobotStateMachineTaskAction.h>
+#include <state_machines/common_robot_state_machine.h>
+// #include <operations/obstacle_avoidance.h>
 #include <maploc/ResetOdom.h>
+#include "perception/ObjectArray.h"                    //Not sure why this had to be added, wasnt needed in scout sm, including the obstacle_avoidance header causes problems
+#include <operations/ParkRobotAction.h>
 
 using namespace COMMON_NAMES;
 
-typedef actionlib::SimpleActionServer<state_machines::RobotStateMachineTaskAction> SM_SERVER;
 
 const std::set<STATE_MACHINE_TASK> EXCAVATOR_TASKS = {
     STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOC,
     STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT,
     STATE_MACHINE_TASK::EXCAVATOR_PARK_AND_PUB,
+    STATE_MACHINE_TASK::EXCAVATOR_PRE_HAULER_PARK_MANEUVER,
     STATE_MACHINE_TASK::EXCAVATOR_DIG_AND_DUMP_VOLATILE,
     STATE_MACHINE_TASK::EXCAVATOR_GOTO_DEFAULT_ARM_POSE,
     STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM_GROUND_TRUTH,
     STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM,
     STATE_MACHINE_TASK::EXCAVATOR_SYNC_ODOM,
     STATE_MACHINE_TASK::EXCAVATOR_FACE_PROCESSING_PLANT,
-    STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR};
+    STATE_MACHINE_TASK::EXCAVATOR_VOLATILE_RECOVERY,
+    STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR
 
-class ExcavatorStateMachine
-{
+/****************************************/
+/****************************************/
+};
+
+class ExcavatorState : public State {
+   
 private:
+  ros::Subscriber objects_sub_;
+   /*** @param objs 
+   */
+  void objectsCallback(const perception::ObjectArray::ConstPtr objs);
+
+public:
+   
+   ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string robot_name);
+   
+   ~ExcavatorState();
+
+   //UNDERSTANDING: Trigerred in the setInitialState()
+   void entryPoint() override {
+      m_unCount = 0;
+      ROS_INFO_STREAM("[ STATE_MACHINES | excavator_state_machine |  [" << getName() << "] - entry point ]");
+   }
+   //UNDERSTANDING: Every state might HAVE its own exitpoint. 
+   void exitPoint() override {
+      ROS_INFO_STREAM("[ STATE_MACHINES | excavator_state_machine |  [" << getName() << "] - exit point ]");
+   }
+
+   void step() override {
+      ++m_unCount;
+      ROS_INFO_STREAM("[ STATE_MACHINES | excavator_state_machine |  [" << getName() << "] - count = " << m_unCount << " ]");
+   }
+
+protected:
+
+  uint32_t m_unMaxCount;
+  uint32_t m_unCount;
+
   ros::NodeHandle nh_;
 
   std::string robot_name_;
 
-  ros::ServiceClient resetExcavatorOdometryClient_;
-
-  const double SLEEP_TIME = 0.5;
-  const double ROTATION_SPEED = 0.5;
-
-  const int DIGGING_TRIES_ = 2; // BIG HACK FOR DEMO
-  int digging_attempt_ = 0;
-  int new_vol_loc_flag_ = 1; // flag to check if excavator parked in a new volatile location
-
-  typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
-  NavigationClient *navigation_client_;
-  operations::NavigationGoal navigation_action_goal_;
-
-  typedef actionlib::SimpleActionClient<operations::ExcavatorAction> ExcavatorClient;
-  ExcavatorClient *excavator_arm_client_;
-  operations::ExcavatorGoal excavator_arm_goal_;
+  std::mutex objects_mutex_;
+  perception::ObjectArray::ConstPtr vision_objects_;
+  bool objects_msg_received_ = false;
 
   typedef actionlib::SimpleActionClient<operations::NavigationVisionAction> NavigationVisionClient;
   NavigationVisionClient *navigation_vision_client_;
   operations::NavigationVisionGoal navigation_vision_goal_;
+  operations::NavigationVisionResult navigation_vision_result_;
 
-  /**
-   * @brief Once the goal is received, go close to the predicted volatile location. 
-   *          Publish that the excavator has reached close enough for scout to move out
-   * 
-   */
-  bool goToScout();
+  typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
+  NavigationClient *navigation_client_;
+  operations::ExcavatorGoal excavator_arm_goal_;
+//   operations::ExcavatorResult excavator_arm_result_;
 
-  /**
-   * @brief Once the goal is received, go close to the predicted volatile location. 
-   *          Publish that the excavator has reached close enough for scout to move out
-   * 
-   */
-  bool goToLoc(const geometry_msgs::PoseStamped &loc); //Needs comment
+  typedef actionlib::SimpleActionClient<operations::ExcavatorAction> ExcavatorClient;
+  ExcavatorClient *excavator_arm_client_;
+  operations::NavigationGoal navigation_action_goal_;
 
-  /**
-   * @brief Goes to the actual location where the volatile was predicted. 
-   * 
-   */
-  bool parkExcavator();
+  typedef actionlib::SimpleActionClient<operations::ParkRobotAction> ParkRobotClient;
+  ParkRobotClient *park_robot_client_;
+  operations::ParkRobotGoal park_robot_goal_;
 
-  /**
-   * @brief Dig the volatile location
-   * 
-   */
-  bool digVolatile();
+/** @brief:
+ * Parameters that have to be tuned through testing.*/ 
+   float PARAM_EXCAVATOR_HIT_SCOUT = 1.2;  //In STATE 10: EXCAVATOR_PARK_AND_PUB, how far the excavator should go so that it 'just touches' the scout, assuming it is centered to scout.
 
-  /**
-   * @brief Dump the volatile at Hauler Location
-   * 
-   */
-  bool dumpVolatile();
-
-  /**
-   * @brief Digs and dump continuously until volatile is available
-   * 
-   * @return true 
-   * @return false 
-   */
-  bool digAndDumpVolatile();
-
-  /**
-   * @brief Digs and dump continuously until volatile is available AND RESET ODOMETRY 
-   * 
-   * @return true 
-   * @return false 
-   */
-  bool digAndDumpVolatile(const geometry_msgs::PoseStamped &POSE);
-
-  /**
-   * @brief Takes excavator arm to default arm position (used for object detection)
-   * 
-   * @return true 
-   * @return false 
-   */
-  bool goToDefaultArmPosition();
-
-    /**
-   * @brief Resets odometry to the pose passed to it, usually hauler. 
-   * 
-   * @return true 
-   * @return false 
-   */
-
-  bool resetOdometry(const geometry_msgs::PoseStamped &POSE);
-
-      /**
-   * @brief Resets odometry at the beginning of the simulation, to the ground truth. 
-   * 
-   * @return true 
-   * @return false 
-   */
-
-  bool resetOdometry();
-
-    /**
-   * @brief centers excavator wrt processing plant
-   * 
-   * @return true : if task is successful.
-   * @return false : if task is failed or aborted or interrupted
-   */
-
-  bool faceProcessingPlant();
-
-  /**
-   * @brief centers excavator wrt processing plant and then resets the odometry according to whatever pose we pass it.
-   * 
-   * @return true : if task is successful.
-   * @return false : if task is failed or aborted or interrupted
-   */
-
-  bool syncOdometry(const geometry_msgs::PoseStamped &POSE);
-
-    /**
-   * @brief REACHES THE REPAIR STATION
-   * 
-   * @return true : if task is successful.
-   * @return false : if task is failed or aborted or interrupted
-   */
-
-  bool goToRepairStation();
-
-    /**
-   * @brief Goes to location with a combination of navigation and navigation vision 
-   * 
-   * @return true 
-   * @return false 
-   */
-
-  bool goToLocObject(const geometry_msgs::PoseStamped &target_loc, std::string target_object);
-
-public:
-  ExcavatorStateMachine(ros::NodeHandle nh, const std::string &robot_name);
-
-  ~ExcavatorStateMachine();
-
-  friend void cancelGoal(ExcavatorStateMachine *sm);
-  friend void execute(const state_machines::RobotStateMachineTaskGoalConstPtr &goal, SM_SERVER *as, ExcavatorStateMachine *sm);
 };
 
-#endif // EXCAVATOR_STATE_MACHINE_H
+/**
+ * @brief GoToScout Excavator attempts to go to the scout's location by:
+ *    [1] using scout pose to get to relative location
+ *    [2] use nav vision to more reliably get within range of scout
+ * 
+ *  @param isDone() naviagtion vision completed the task
+ *  @param hasSucceeded() naviation vision succeeded in going to Scout
+ */
+class GoToScout : public ExcavatorState {
+public:   
+   GoToScout(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_SCOUT, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override ;
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+   bool first_;
+   geometry_msgs::PoseStamped target_loc_;
+};
+
+/**
+ * @brief GoToDefaultArmPosition send excavator's arm to our 
+ *       default position to avoid collion with other robots and 
+ *       for easier detection by other robots
+ * 
+ * @param isDone() excavator arm is done going to default position
+ * @param hasSucceded() excavator arm succeeded in going to it's default arm position
+ */
+class GoToDefaultArmPosition : public ExcavatorState {
+public:   
+   GoToDefaultArmPosition(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GOTO_DEFAULT_ARM_POSE, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override ;
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+  bool first_;
+};
+
+/**
+ * @brief ParkAndPub docks the excavator to the scout by:   
+ *    [1] Centers the excavator to the scout
+ *    [2] Moves forward some meters 
+ *       
+ * @param isDone() navagation vision completded task as mentioned
+ * @param hasSucceded() navaigation vision succeeded in both task
+ * 
+ */
+class ParkAndPub : public ExcavatorState {
+public:
+   ParkAndPub(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_PARK_AND_PUB, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+   //helper functions to navigate to toward Scout 
+   void navToScout();       //centering code (isnt really needed if the previous state is already centering)
+   void closeInToScout();   //moves forward for X duration
+
+private: 
+  bool first_;
+  /** only used for timed stuff-- TODO: delete when no longer needed*/
+  double begin_;
+  double current_;
+   //   int step_;
+   const float crash_time_ = 2.7;  //time to move forward
+};
+
+/**
+ * @brief DigAndDump digs and dumps voltiles into hauler until no volatile remains in that area
+ * 
+ * @param isDone() :  when there is no volatile in scoop
+ * @param hasSucceded() : When there have been volatiles that have been dug, and no more remain
+ */
+class DigAndDump : public ExcavatorState {
+public:
+   DigAndDump(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_DIG_AND_DUMP_VOLATILE, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override ;
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+   // helper functions for digging and dumping the volatile
+   void digVolatile();
+   void dumpVolatile();
+
+private: 
+   bool volatile_found_;
+   bool done_digging_;
+   bool digging_server_succeeded_;
+   bool last_state_dig_;
+   bool dig_;
+   bool dump_;
+   int new_vol_loc_flag_;
+   int digging_attempt_ = 0;
+};
+
+/**
+ * @brief IdleState Robot should stop and do nothing
+ * 
+ * @param isDone() goals have been send to stop the robot
+ * @param hasSucceded() goals sent have been successfull
+ */
+class IdleState : public ExcavatorState {
+public:   
+   IdleState(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(ROBOT_IDLE_STATE, nh, robot_name) {}
+
+   bool isDone() override{ 
+      current_state_done_ = true;
+      return true; }
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override{ 
+      last_state_succeeded_ = true;
+      return true; }
+
+   void entryPoint() override{}
+   void step() override{}
+   void exitPoint() override{}
+   State& transition() override{} 
+};
+
+/**
+ * @brief PreParkHauler docks the excavator to the scout by: 
+ * 
+ *    [1] Moves forward some distance to be ontop of volatile
+ *    [2] Rotates until excavator's vision is centered to hauler
+ *    [3] Moves back to have excavator's arm over volatile spot
+ *     
+ *  @param isDone() if arm is above the voltile 
+ *  @param hasSucceeded() excavator is centered to hauler and arm is above volatile
+ * 
+ */
+class PreParkHauler : public ExcavatorState {
+public:   
+   PreParkHauler(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_PRE_HAULER_PARK_MANEUVER, nh, robot_name) {}
+
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+   State& transition() override{}; 
+
+   // movements for getting into position at volatile w.r.t. hauler
+   void goToVolatile();
+   void centerHauler();
+   void getInArmPosition();
+
+private:
+   bool first_;
+   int goal_;
+   enum goal_states_
+   {
+      GO_TO_VOLATILE = 1,
+      CENTER_TO_HAULER = 2,
+      GET_IN_DIGGING_POSITION = 3
+   };
+
+   bool goToVolatileDone_;
+   bool centerHaulerDone_;
+   bool getInArmPositionDone_;
+};
+
+/**
+ * @brief ExcavatorGoToLoc go to a pose 
+ * 
+ * @param isDone() navigation is done
+ * @param hasSucceeded()  navigation succeeds to get to pose with referance to odom
+ */
+class ExcavatorGoToLoc : public ExcavatorState {
+public:   
+   ExcavatorGoToLoc(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_LOC, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+   bool first_;
+   geometry_msgs::PoseStamped target_loc_;
+};
+
+/**
+ * @brief ExcavatorResetOdomAtHopper navigates to hopper, and then resets odom
+ * 
+ * @param isDone() when naviagtion vision is complete
+ * @param hasSucceeded(); when navigation vision succeeds, and resetOdom msg was sent 
+ * 
+ */
+class ExcavatorResetOdomAtHopper: public ExcavatorState {
+public:   
+   ExcavatorResetOdomAtHopper(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_RESET_ODOM_AT_HOPPER, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+   bool first_;
+   geometry_msgs::PoseStamped target_loc_;
+   void goToProcPlant();
+   void parkAtHopper();
+   void undockFromHopper();
+   void resetOdom();
+   void idleExcavator(){}
+
+   bool first_GTPP, first_PAH, first_UFH, macro_state_succeeded, macro_state_done;
+   
+   bool state_done;
+
+   enum RESET_ODOM_MICRO_STATES{
+      GO_TO_PROC_PLANT,
+      PARK_AT_HOPPER,
+      UNDOCK_FROM_HOPPER,
+      RESET_ODOM_AT_HOPPER,
+      EXCAVATOR_IDLE 
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
+
+};
+
+/**
+ * @brief ExcavatorGoToRepairStation travel to the Repair Station
+ * 
+ * @param isDone() navigation vision is complete
+ * @param hasSucceeded() navigation succeeded in going to Repair Station
+ * 
+ */ 
+class ExcavatorGoToRepairStation : public ExcavatorState {
+public:   
+   ExcavatorGoToRepairStation(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_REPAIR, nh, robot_name) {}
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private:
+   bool first_;
+};
+// #endif
+
