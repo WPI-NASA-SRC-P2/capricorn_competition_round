@@ -20,12 +20,14 @@ NavigationClient_ *navigation_client_;
 
 using namespace COMMON_NAMES;
 
-double ROTATION_VELOCITY = 0.2;
-double DRIVING_VELOCITY = 0.2;
-double MAX_DETECT_DIST = 2.0;
-double VOLATILE_DISTANCE_THRESHOLD = 0.005;
-int FLIP_ROTATION_COUNT_MAX = 3;
-int REPEAT_COUNT_MAX = 2;
+static const double ROTATION_VELOCITY = 0.2;
+static const double DRIVING_VELOCITY = 0.4;
+static const double MAX_DETECT_DIST = 2.0;
+static const double VOLATILE_DISTANCE_THRESHOLD = 0.005;
+static const int FLIP_ROTATION_COUNT_MAX = 3;
+static const int REPEAT_COUNT_MAX = 2;
+static const float VOLATILE_SENSOR_TO_BASE_DISTANCE = 0.670;
+
 bool near_volatile_ = false;
 bool new_message_received = false;
 double volatile_distance_;
@@ -64,7 +66,7 @@ void rotateRobot(const DrivingDirection rotate_direction, const float rotational
 
   goal.forward_velocity = 0;
   goal.angular_velocity = rotate_direction * ROTATION_VELOCITY * rotational_velocity_multiplier;
-
+  
   navigation_client_->sendGoal(goal);
   ros::Duration(0.1).sleep();
 }
@@ -85,6 +87,9 @@ void stopRobot()
   goal.angular_velocity = 0;
 
   navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal);
   ros::Duration(0.5).sleep();
 }
 
@@ -93,23 +98,20 @@ void getOnTopOfVolatile()
   operations::NavigationGoal goal;
 
   goal.drive_mode = NAV_TYPE::MANUAL;
-  goal.forward_velocity = 0.6;   
+  goal.forward_velocity = 0.2;   
   goal.angular_velocity = 0;
   navigation_client_->sendGoal(goal);
   navigation_client_->sendGoal(goal);
   navigation_client_->sendGoal(goal);
   navigation_client_->sendGoal(goal);
-  ros::Duration(1).sleep();
+  
+  float starting_volatile_distance = volatile_distance_;
 
-  goal.drive_mode = NAV_TYPE::MANUAL;
-  goal.forward_velocity = 0.0;   
-  goal.angular_velocity = 0;
-  navigation_client_->sendGoal(goal);
-  navigation_client_->sendGoal(goal);
-  navigation_client_->sendGoal(goal); 
-  navigation_client_->sendGoal(goal);
-  navigation_client_->sendGoal(goal);
-  ros::Duration(0.5).sleep();
+  float volatile_to_base_distance = (std::hypot(starting_volatile_distance, VOLATILE_SENSOR_TO_BASE_DISTANCE));
+  while(ros::ok() && volatile_distance_ < volatile_to_base_distance)
+    ros::Duration(0.1).sleep();
+
+  stopRobot();
 }
 
 /**
@@ -125,7 +127,7 @@ void driveRobotStraight(DrivingDirection rotate_direction, const float rotationa
 
   // Manual driving
   goal.drive_mode = NAV_TYPE::MANUAL;
-
+  
   goal.forward_velocity = rotate_direction * DRIVING_VELOCITY * rotational_velocity_multiplier;
   goal.angular_velocity = 0;
   ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Driving robot straight");
@@ -146,7 +148,7 @@ void getBestPose()
   DrivingDirection driving_direction = POSITIVE;
   DrivingMode driving_mode = ROTATE_ROBOT;
   bool rotate_robot = true;
-  int flip_rotation_count = 0;
+  float flip_rotation_count = 0;
   int repeat_count = 0;
 
   double last_volatile_distance = MAX_DETECT_DIST + 1; // To make sure any detected
@@ -178,6 +180,7 @@ void getBestPose()
       // If the distance is increasing
       else if ((volatile_distance_ - best_volatile_distance) > VOLATILE_DISTANCE_THRESHOLD)
       {
+        best_volatile_distance =  MAX_DETECT_DIST + 1;
         ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Going far");
         if (flip_rotation_count < FLIP_ROTATION_COUNT_MAX)
         {
@@ -224,7 +227,6 @@ void getBestPose()
           }
         }
       }
-
       if (driving_execution == ROTATE_ROBOT)
         rotateRobot(driving_direction, 1 / (flip_rotation_count + 1));
       else 
@@ -234,7 +236,7 @@ void getBestPose()
     }
     else
     {
-      ROS_ERROR("Ohh noo ERRROR IN RESOURCE LOCALISE");
+      ROS_WARN_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "No new message found");
       // TODO: What is new message is not received?
       // This case may not arise normally, but can arise during battery low situation
       // as volatile sensor stops working in battery low mode
@@ -259,12 +261,24 @@ void localiseResource(const operations::ResourceLocaliserGoalConstPtr &localiser
     getBestPose();
 
     ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Driving on top of volatile");
-    getOnTopOfVolatile();
-    server->setSucceeded();
+
+    operations::ResourceLocaliserResult res;
+    if(volatile_distance_ != MAX_DETECT_DIST + 1)
+    {
+      getOnTopOfVolatile();
+      res.result = COMMON_RESULT::SUCCESS;
+    }
+    else
+    {
+      ROS_ERROR_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Resource localiser finished ending up outside of volatile range");
+      res.result = COMMON_RESULT::FAILED;
+    }
+    stopRobot();
+    server->setSucceeded(res);
   }
   else
   {
-    ROS_ERROR("Resourse localisation called, but rover not near volatile");
+    ROS_ERROR_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Resourse localisation called, but rover not near volatile");
     server->setAborted();
   }
 }
@@ -293,15 +307,15 @@ void updateSensorData(const srcp2_msgs::VolSensorMsg::ConstPtr &msg)
 
 int main(int argc, char **argv)
 {
-  // Ensure the robot name is passed in
-  if (argc != 2 && argc != 4)
-  {
-    // Displaying an error message for correct usage of the script, and returning error.
-    ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
-    return -1;
-  }
-  else
-  {
+  // // Ensure the robot name is passed in
+  // if (argc != 2 && argc != 4)
+  // {
+  //   // Displaying an error message for correct usage of the script, and returning error.
+  //   ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
+  //   return -1;
+  // }
+  // else
+  // {
     // Robot Name from argument
     robot_name_ = std::string(argv[1]);
     std::string node_name = robot_name_ + "_resource_localiser_action_server";
@@ -325,5 +339,5 @@ int main(int argc, char **argv)
     delete navigation_client_;
 
     return 0;
-  }
+  // }
 }
