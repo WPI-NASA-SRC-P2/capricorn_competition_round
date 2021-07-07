@@ -359,6 +359,7 @@ public:
 private: 
    bool first_;
    geometry_msgs::PoseStamped target_loc_;
+   std::string excavator_name_;
 };
 
 /**

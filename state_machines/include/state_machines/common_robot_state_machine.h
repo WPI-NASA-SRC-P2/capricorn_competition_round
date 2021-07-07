@@ -81,11 +81,16 @@ public:
       ROS_INFO_STREAM(" state_machines | common_robot_state_machine.h | RobotScheduler | Pose Sent = " << goal_pose_);
       return goal_pose_;}
 
+   std::string getTargetRobotName(){
+      ROS_INFO_STREAM(" state_machines | common_robot_state_machine.h | RobotScheduler | Pose Sent = " << goal_pose_);
+      return target_robot_name_;}
+
 private:
    ros::NodeHandle nh_;
    State* m_pcCurrent;
    std::unordered_map<uint32_t, State*> m_mapStates;
    geometry_msgs::PoseStamped goal_pose_;
+   std::string target_robot_name_;
 
 protected:
    bool new_state_request = false;

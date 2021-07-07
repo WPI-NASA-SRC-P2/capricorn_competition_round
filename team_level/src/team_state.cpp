@@ -388,7 +388,7 @@ void Excavating::stepPreParkManeuverExcavator()
 
 void Excavating::stepParkHauler()
 {
-   robot_state_register->setRobotState(hauler_in_team, HAULER_PARK_AT_EXCAVATOR);
+   robot_state_register->setRobotState(hauler_in_team, excavator_in_team, HAULER_PARK_AT_EXCAVATOR);
 }
 
 void Excavating::stepDigAndDump()

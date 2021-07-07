@@ -66,6 +66,7 @@ void RobotScheduler::desiredStateCB(const state_machines::robot_desired_state::C
       new_state_request = true;
       new_state_ = (STATE_MACHINE_TASK) msg->robot_desired_state;
       goal_pose_ = msg->goal_pose;
+      target_robot_name_ = msg->target_robot_name;
       // ROS_INFO_STREAM(" state_machines | common_robot_state_machine.h | RobotScheduler | Pose RECEIVED = " << goal_pose_);
       // ROS_INFO_STREAM("New state received: " << new_state_);             //Checking if the casting isn't messed up. 
    }  
