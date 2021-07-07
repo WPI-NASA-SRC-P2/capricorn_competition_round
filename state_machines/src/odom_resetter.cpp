@@ -97,17 +97,18 @@ int main(int argc, char** argv)
         ros::Duration(0.1).sleep();
         ros::spinOnce();
     }
-    ROS_WARN("Hauler Resets Started");
+    ROS_WARN_STREAM("[STATE_MACHINES | odom_resetter.cpp | "<<robot_name<<"]: Odom Resets Started");
 
     double init_odom_r, init_odom_p, init_odom_y;
     double init_imu_r, init_imu_p, init_imu_y;
     // do
     // {
+    ros::Duration(0.5).sleep();
+    ros::spinOnce();
     getOdomRPY(init_odom_r, init_odom_p, init_odom_y);
     getImuRPY(init_imu_r, init_imu_p, init_imu_y);
-    ros::Duration(0.1).sleep();
 
-    ROS_ERROR_STREAM(  "init_imu_r: " << init_imu_r<< "  init_imu_p: " << init_imu_p<< "  init_imu_y: " << init_imu_y);
+    ROS_INFO_STREAM("[STATE_MACHINES | odom_resetter.cpp | "<<robot_name<<"]:init_imu_r: " << init_imu_r<< "  init_imu_p: " << init_imu_p<< "  init_imu_y: " << init_imu_y);
     //     ros::spinOnce();
     // } while ((init_odom_r != init_odom_r || init_odom_p != init_odom_p || init_odom_y != init_odom_y) && ros::ok());
     
@@ -134,10 +135,10 @@ int main(int argc, char** argv)
 
         // call the 'reset pose' rosservice to send updated data
         if(reset_odom_to_pose_client.call(pose)){
-            ROS_INFO_STREAM("[UTILS | odom_resetter.cpp | " + robot_name + "]: " + "Pose initialized for rtabmap");
+            ROS_INFO_STREAM("[STATE_MACHINES | odom_resetter.cpp | " + robot_name + "]: " + "Pose initialized for rtabmap");
         }
         else{
-            ROS_ERROR_STREAM("[UTILS | odom_resetter.cpp | " + robot_name + "]: " + "RTabMap initialize pose failed.");
+            ROS_ERROR_STREAM("[STATE_MACHINES | odom_resetter.cpp | " + robot_name + "]: " + "RTabMap initialize pose failed.");
         }
 
         // Wait 10 seconds and then do it all again

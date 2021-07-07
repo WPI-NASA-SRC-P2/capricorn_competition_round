@@ -11,10 +11,10 @@
 
 using namespace COMMON_NAMES;
 
-#define MAX_SCOUTS 1
-#define MAX_EXCAVATORS 1
-#define MAX_HAULERS 1
-#define MAX_TEAMS 5
+#define MAX_SCOUTS 2
+#define MAX_EXCAVATORS 2
+#define MAX_HAULERS 2
+#define MAX_TEAMS 8
 
 class TeamManager {
    
@@ -36,6 +36,8 @@ private:
    std::array<bool, MAX_TEAMS> excavator_for_sale;
    std::array<bool, MAX_TEAMS> teams_need_hauler;
    std::array<bool, MAX_TEAMS> hauler_for_sale;
+
+   static const int resetting_hauler_index = 1;
 
    void initTeams(ros::NodeHandle nh);
 

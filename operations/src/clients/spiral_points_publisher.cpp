@@ -42,21 +42,21 @@ int main(int argc, char **argv)
   zero_point.header.frame_id = "map";
   int number_of_points = 120;
   std::vector<geometry_msgs::PointStamped> spiral_points_1 = NavigationAlgo::getNArchimedeasSpiralPoints(1);
-  number_of_points = spiral_points_1.size();
-  // std::vector<geometry_msgs::PointStamped> spiral_points_2 = NavigationAlgo::getNArchimedeasSpiralPoints(2);
+  std::vector<geometry_msgs::PointStamped> spiral_points_2 = NavigationAlgo::getNArchimedeasSpiralPoints(2);
+  number_of_points = 5;//spiral_points_1.size();
 
-  marker.points.resize(number_of_points);
-  marker.colors.resize(number_of_points);
+  marker.points.resize(2*number_of_points);
+  marker.colors.resize(2*number_of_points);
 
   for (int i = 0; i < number_of_points; i++)
   {
     marker.points.at(i) = spiral_points_1.at(i).point;
     marker.colors.at(i) = green_color;
-    // marker.points.at(number_of_points + i) = spiral_points_2.at(i).point;
-    // marker.colors.at(number_of_points + i) = red_color;
+    marker.points.at(number_of_points + i) = spiral_points_2.at(i).point;
+    marker.colors.at(number_of_points + i) = red_color;
   }
 
-  marker.colors.at(0) = red_color;
+  // marker.colors.at(0) = red_color;
   while (ros::ok())
   {
     vis_pub.publish(marker);

@@ -388,6 +388,7 @@ void ParkAtExcavator::step()
     if(first_)
     {
         // park at the excavator using vnav
+        park_robot_goal_.hopper_or_excavator = excavator_name_;
         park_robot_client_->sendGoal(park_robot_goal_);
         // park_robot_client_->waitForResult();
         first_ = false;
