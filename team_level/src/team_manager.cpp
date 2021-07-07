@@ -53,10 +53,10 @@ void TeamManager::addRobots()
       all_teams.at(i)->setTeamMacroState(IDLE);
    }
    
-   // HACK !!
-   // First hauler is sent to reset the odom
-   for(int i = 1; i < MAX_HAULERS; i++)
+   for(int i = 0; i < MAX_HAULERS; i++)
    {
+      if (i == resetting_hauler_index)
+         continue;
       int robot_index = (int) HAULER_1 + i;
       ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
       all_teams.at(i)->setHauler(robot);
@@ -82,7 +82,7 @@ void TeamManager::setHaulerForReset()
    {
       if(all_teams.at(i)->getTeamMacroState() == STANDBY)
       {      
-         int robot_index = (int) HAULER_1;
+         int robot_index = (int) HAULER_1 + resetting_hauler_index;
          ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
          all_teams.at(i)->setHauler(robot);
          all_teams.at(i)->setTeamMacroState(DUMPING);
