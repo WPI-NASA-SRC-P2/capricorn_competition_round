@@ -352,7 +352,7 @@ void ResetOdomAtHopper::resetOdom()
    return;
 }
 
-//Go to repair station after resetting odometry
+//Go to repair station after resetting odometry.
 void ResetOdomAtHopper::goToRepair()
 {
    if(first_GTR)
