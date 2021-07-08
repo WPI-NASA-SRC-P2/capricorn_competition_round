@@ -185,7 +185,7 @@ int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
         //checks if the current element is an obstacle or not
             if(oGrid.data[unVisitedIndexes[k]] < threshold)
             {
-              ROS_INFO("found the new index");
+              ROS_INFO("[planning | astar ]: found the new index");
               newGoalIndex = unVisitedIndexes[k];
               return newGoalIndex;
             }

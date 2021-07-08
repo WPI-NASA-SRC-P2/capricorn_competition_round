@@ -100,9 +100,9 @@ void GoToProcPlant::step()
         // navigation_vision_client_->waitForResult();
         // return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
         first_ = false;
-    }
-    else
         ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: going to processing plant");
+    }
+   //  else
 }
 
 bool GoToProcPlant::isDone() 
@@ -149,9 +149,9 @@ void HaulerGoToScout::step()
         navigation_vision_goal_.goal_loc = target_loc_;
         navigation_vision_client_->sendGoal(navigation_vision_goal_);
         first_ = false;
+        ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:Moving towards excavator");
     }
     // else   
-    //     ROS_INFO_STREAM("Moving towards excavator");
 }
 
 bool HaulerGoToScout::isDone() 
@@ -205,9 +205,9 @@ void ParkAtHopper::step()
         park_robot_client_->sendGoal(park_robot_goal_);
         // park_robot_client_->waitForResult();
         first_ = false;
-    }
-    else
         ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Parking at hopper");
+    }
+   //  else
 }
 
 bool ParkAtHopper::isDone() 
@@ -337,9 +337,9 @@ void GoToExcavator::step()
         navigation_vision_client_->sendGoal(navigation_vision_goal_);
         // navigation_vision_client_->waitForResult();
         first_ = false;
-    }
-    else   
         ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Moving towards excavator");
+    }
+   //  else   
 }
 
 bool GoToExcavator::isDone() 
@@ -393,9 +393,9 @@ void ParkAtExcavator::step()
         park_robot_client_->sendGoal(park_robot_goal_);
         // park_robot_client_->waitForResult();
         first_ = false;
+        ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Parking at excavator");
     }
     // else
-    //     ROS_INFO_STREAM("Parking at excavator");
 }
 
 bool ParkAtExcavator::isDone() 
@@ -496,9 +496,9 @@ void DumpVolatile::step()
         hauler_client_->sendGoal(hauler_goal_);
         // hauler_client_->waitForResult();
         first_ = false;
-    }
-    else
         ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Dumping volatile");
+    }
+   //  else
 }
 
 bool DumpVolatile::isDone() 
@@ -765,8 +765,8 @@ void HaulerGoToRepairStation::step()
       // navigation_vision_goal_.target_loc = target_loc_;
       navigation_vision_client_->sendGoal(navigation_vision_goal_);
       first_ = false;
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Going to repair station Step Function!");
    }
-   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Going to repair station Step Function!");
 }
 
 void HaulerGoToRepairStation::exitPoint()
