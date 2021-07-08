@@ -36,6 +36,7 @@ enum TEAM_MICRO_STATE{
    ROBOTS_TO_GOAL,
    UNDOCK_SCOUT,
    PARK_EXCAVATOR_AT_SCOUT,
+   MAKE_EXCAV_HAULER_IDLE,
 
    // EXCAVATING
    WAIT_FOR_HAULER,
@@ -174,6 +175,7 @@ private:
    void stepRobotsToGoal();
    void stepUndockScout();
    void stepParkExcavatorAtScout();
+   void stepMakeExcavHaulerIdle();
 };
 
 class Excavating: public TeamState{
