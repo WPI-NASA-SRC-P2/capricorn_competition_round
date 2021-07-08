@@ -418,5 +418,7 @@ public:
 private:
    bool first_;
 };
+
+//Add excavator_go_to_scout_recovery_here. 
 // #endif
 
