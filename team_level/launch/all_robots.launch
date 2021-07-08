@@ -28,7 +28,7 @@
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
     </include>
 
-    <!-- <include file="$(find state_machines)/launch/start_scout.launch">
+    <include file="$(find state_machines)/launch/start_scout.launch">
         <arg name="robot_name" value="small_scout_2" />
         <arg name="output" value="$(arg output)" />
         <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
@@ -48,7 +48,7 @@
         <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
         <arg name="get_true_pose" value="false" />
-    </include> -->
+    </include>
 
     <!-- <node name="scheduler" pkg="team_level" type="scheduler" args="$(arg robot_name)" output="screen" /> -->
 </launch>
