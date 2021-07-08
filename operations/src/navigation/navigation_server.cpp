@@ -510,7 +510,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
 		{
 			ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
-			ROS_WARN("Current distance traveled %f", distance_traveled);
+			ROS_INFO_STREAM("[operations | nav_server | "<<robot_name_<<"] "<<"Current distance traveled" << distance_traveled);
 
 			moveRobotWheels(0);
 			brakeRobot(true);
@@ -582,7 +582,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 
 void NavigationServer::requestNewTrajectory(void)
 {
-	ROS_WARN("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
+	ROS_INFO("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
 
 	moveRobotWheels(0);
 	brakeRobot(true);
