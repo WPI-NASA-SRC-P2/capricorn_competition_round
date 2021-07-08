@@ -22,16 +22,16 @@ int prev_reading_count = 0;
 double filter_factor = 0.2;
 
 // Variables to hold avgs
-double orientation_x_avg;
-double orientation_y_avg;
-double orientation_z_avg;
-double orientation_w_avg;
-double angular_velocity_x_avg;
-double angular_velocity_y_avg;
-double angular_velocity_z_avg;
-double linear_acceleration_x_avg;
-double linear_acceleration_y_avg;
-double linear_acceleration_z_avg;
+double orientation_x_avg = 0.0;
+double orientation_y_avg = 0.0;
+double orientation_z_avg = 0.0;
+double orientation_w_avg = 0.0;
+double angular_velocity_x_avg = 0.0;
+double angular_velocity_y_avg = 0.0;
+double angular_velocity_z_avg = 0.0;
+double linear_acceleration_x_avg = 0.0;
+double linear_acceleration_y_avg = 0.0;
+double linear_acceleration_z_avg = 0.0;
 
 // Callback fn to run every time the imu subscriber sees new data
 void imu_callback(sensor_msgs::Imu imu_data) 
