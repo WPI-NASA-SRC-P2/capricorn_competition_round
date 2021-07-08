@@ -307,15 +307,15 @@ void updateSensorData(const srcp2_msgs::VolSensorMsg::ConstPtr &msg)
 
 int main(int argc, char **argv)
 {
-  // // Ensure the robot name is passed in
-  // if (argc != 2 && argc != 4)
-  // {
-  //   // Displaying an error message for correct usage of the script, and returning error.
-  //   ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
-  //   return -1;
-  // }
-  // else
-  // {
+  // Ensure the robot name is passed in
+  if (argc != 2 && argc != 4)
+  {
+    // Displaying an error message for correct usage of the script, and returning error.
+    ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
+    return -1;
+  }
+  else
+  {
     // Robot Name from argument
     robot_name_ = std::string(argv[1]);
     std::string node_name = robot_name_ + "_resource_localiser_action_server";
@@ -339,5 +339,5 @@ int main(int argc, char **argv)
     delete navigation_client_;
 
     return 0;
-  // }
+  }
 }
