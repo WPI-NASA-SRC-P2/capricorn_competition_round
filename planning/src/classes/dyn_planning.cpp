@@ -111,7 +111,7 @@ std::vector<geometry_msgs::Point> interpolation_poses(std::pair<geometry_msgs::P
             geometry_msgs::Point Intr;    
             Intr.x  = A.x*(1-(1/k)) + B.x*(1/k);    
             Intr.y  = A.y*(1-(1/k)) + B.y*(1/k);
-            Intr_poses.push_back(Intr);   // interpolated point
+            Intr_poses.push_back(Intr);   // interpolated points
         } 
     }
 
