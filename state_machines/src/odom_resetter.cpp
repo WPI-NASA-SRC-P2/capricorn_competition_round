@@ -84,7 +84,7 @@ int main(int argc, char** argv)
     std::string robot_name = argv[1];
     
     ros::Subscriber camera_odom_sub = nh.subscribe("/"+ robot_name + COMMON_NAMES::RTAB_ODOM_TOPIC, 223, odom_callback);
-    ros::Subscriber imu_odom_sub = nh.subscribe("/"+ robot_name + "/imu", 223, imu_callback);
+    ros::Subscriber imu_odom_sub = nh.subscribe("/"+ robot_name + COMMON_NAMES::IMU_FILTERED_TOPIC, 223, imu_callback);
     ros::Subscriber robot_state_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::ROBOTS_CURRENT_STATE_TOPIC, 223, robot_state_callback);
 
     ros::ServiceClient reset_odom_to_pose_client = nh.serviceClient<rtabmap_ros::ResetPose>(robot_name + COMMON_NAMES::RESET_POSE_CLIENT);
