@@ -211,7 +211,7 @@ namespace COMMON_NAMES
     EXCAVATOR_VOLATILE_RECOVERY,
     
     /**************HAULER STATES**************/
-    //21
+    //23
     HAULER_GO_TO_LOC,                    // Takes Hauler to a location
     HAULER_DUMP_VOLATILE_TO_PROC_PLANT, // Undocks hauler from excavator, goes to processing plant,
                                              // parks hauler to processing plant, dumps volatile and

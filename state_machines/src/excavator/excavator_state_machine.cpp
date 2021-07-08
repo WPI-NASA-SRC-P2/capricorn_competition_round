@@ -571,6 +571,7 @@ void ExcavatorResetOdomAtHopper::entryPoint()
    first_GTPP = true;
    first_PAH = true;
    first_UFH = true;
+   first_GTR = true;
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
@@ -607,6 +608,9 @@ void ExcavatorResetOdomAtHopper::step()
       break;
    case RESET_ODOM_AT_HOPPER:
       resetOdom();
+      break;
+   case GO_TO_REPAIR_STATION:
+      goToRepair();
       break;
    case EXCAVATOR_IDLE:
       idleExcavator();
@@ -688,9 +692,33 @@ void ExcavatorResetOdomAtHopper::resetOdom()
    maploc::ResetOdom srv;
    srv.request.target_robot_name = robot_name_;
    srv.request.at_hopper = true;
-   macro_state_succeeded = resetOdometryClient.call(srv);
-   macro_state_done = true;
-   micro_state = EXCAVATOR_IDLE;
+   // macro_state_succeeded = resetOdometryClient.call(srv);
+   // macro_state_done = true;
+   micro_state = GO_TO_REPAIR_STATION;
+   return;
+}
+
+void ExcavatorResetOdomAtHopper::goToRepair()
+{
+   if(first_GTR)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_REACH;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Going to repair station vision goal sent");  
+      first_GTR = false;
+      return;
+   }
+   
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      macro_state_done = true;
+      macro_state_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      if (macro_state_succeeded)
+         micro_state = EXCAVATOR_IDLE;
+      // Dont find a reason it should fail,
+   }
 }
 
 void ExcavatorResetOdomAtHopper::exitPoint()

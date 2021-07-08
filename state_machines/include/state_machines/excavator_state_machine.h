@@ -376,9 +376,10 @@ private:
    void parkAtHopper();
    void undockFromHopper();
    void resetOdom();
+   void goToRepair();
    void idleExcavator(){}
 
-   bool first_GTPP, first_PAH, first_UFH, macro_state_succeeded, macro_state_done;
+   bool first_GTPP, first_PAH, first_UFH, first_GTR, macro_state_succeeded, macro_state_done;
    
    bool state_done;
 
@@ -387,6 +388,7 @@ private:
       PARK_AT_HOPPER,
       UNDOCK_FROM_HOPPER,
       RESET_ODOM_AT_HOPPER,
+      GO_TO_REPAIR_STATION,
       EXCAVATOR_IDLE 
    };
 
