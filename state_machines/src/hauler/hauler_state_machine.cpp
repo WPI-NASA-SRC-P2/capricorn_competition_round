@@ -747,9 +747,14 @@ void DumpVolatileAtHopper::goToRepairStation()
    first_GTRS = false;
    }
    
-   macro_state_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
-   macro_state_done = navigation_vision_client_->getState().isDone();
-   micro_state = HAULER_IDLE;  
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      macro_state_done = true;
+      macro_state_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      micro_state = HAULER_IDLE;
+      // Dont find a reason it should fail,
+   }
 }
 
 void DumpVolatileAtHopper::exitPoint()
