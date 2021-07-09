@@ -5,16 +5,16 @@
 using namespace std;
 
 
-float lengthOfPath(nav_msgs::Path path)
+float DynamicPlanning::lengthOfPath(nav_msgs::Path path)
 {   
     float pathLength = 0;
 
     for (int i = 0; i < path.poses.size() - 1; i++)
     {
-        geometry_msgs::Point first_point = path.poses[i].position;
-        geometry_msgs::Point second_point = path.poses[i+1].position;
+        geometry_msgs::Point first_point = path.poses[i].pose.position;
+        geometry_msgs::Point second_point = path.poses[i+1].pose.position;
 
-        length = sqrt(pow(second_point.x - first_point.x, 2) + pow(second_point.y - first_point.y, 2) * 1.0);
+        float length = sqrt(pow(second_point.x - first_point.x, 2) + pow(second_point.y - first_point.y, 2) * 1.0);
         pathLength += length;
     }
     
@@ -22,7 +22,7 @@ float lengthOfPath(nav_msgs::Path path)
 }
 
 
-double distance(geometry_msgs::Point firstpoint, geometry_msgs::Point secondpoint)
+double DynamicPlanning::distance(geometry_msgs::Point firstpoint, geometry_msgs::Point secondpoint)
 {
     return sqrt(pow(secondpoint.x - firstpoint.x, 2) + pow(secondpoint.y - firstpoint.y, 2) * 1.0);
 }
@@ -30,21 +30,16 @@ double distance(geometry_msgs::Point firstpoint, geometry_msgs::Point secondpoin
 
 
 
- std::pair <geometry_msgs::Point, geometry_msgs::Point> waypointOnPath(geometry_msgs::PoseStamped upcoming_point, geometry_msgs::PoseStamped robot_pose, float distance)
+ std::pair <geometry_msgs::Point, geometry_msgs::Point> DynamicPlanning::waypointOnPath(geometry_msgs::Point upcoming_point, geometry_msgs::PoseStamped robot_pose, nav_msgs::Path &path, float distance)
 {
     geometry_msgs::Point pointOfInterest;
     float trackDistance1 = 0; 
     std::pair <geometry_msgs::Point, geometry_msgs::Point> waypoints;
-    if(lengthOfPath(path) < distance)
-    {
-      distance -= 1;       
-    }
-    else
-    {         
+
         for (int i = 0; i < path.poses.size() - 2; i++)
         {
         geometry_msgs::Point first_point = robot_pose.pose.position;          //robot position
-        geometry_msgs::Point second_point = upcoming_point.pose.position;       //upcoming point
+        geometry_msgs::Point second_point = upcoming_point;       //upcoming point
                 
         trackDistance1 = sqrt(pow(second_point.x - first_point.x, 2) + pow(second_point.y - first_point.y, 2) * 1.0);    
               
@@ -72,8 +67,8 @@ double distance(geometry_msgs::Point firstpoint, geometry_msgs::Point secondpoin
             new_point_2.y = first_point.y - (m1*6*(sqrt(1/(1 + pow(m1,2)))));
             
 
-            double distance_1 = distance(second_point, new_point_1);
-            double distance_2 = distance(second_point, new_point_2);
+            double distance_1 = DynamicPlanning::distance(second_point, new_point_1);
+            double distance_2 = DynamicPlanning::distance(second_point, new_point_2);
 
 
             if(distance_1 < distance_2)
@@ -101,10 +96,10 @@ std::vector<geometry_msgs::Point> interpolation_poses(std::pair<geometry_msgs::P
 {   
    std::vector<geometry_msgs::Point> Intr_poses;
 
-   geometry_msgs::Point A = waypointOnPath.first; // first point of the line 
-   geometry_msgs::Point B = waypointOnPath.second; // last point of the line 
+   geometry_msgs::Point A = waypoints.first; // first point of the line 
+   geometry_msgs::Point B = waypoints.second; // last point of the line 
 
-   for(int k = 0; k < 6; k++)
+   for(int k = 1; k < 6; k++)
     {
         {   
             geometry_msgs::Point Intr;    
@@ -117,23 +112,25 @@ std::vector<geometry_msgs::Point> interpolation_poses(std::pair<geometry_msgs::P
    return Intr_poses;
 }
 
-bool DynamicPlanning::checkForObstacles(nav_msgs::Path& path, nav_msgs::OccupancyGrid& oGrid,  geometry_msgs::PoseStamped upcoming_point, geometry_msgs::PoseStamped robot_pose) // path is giving the grid coordinates
+bool DynamicPlanning::checkForObstacles(nav_msgs::Path& path, nav_msgs::OccupancyGrid& oGrid, geometry_msgs::PoseStamped robot_pose) // path is giving the grid coordinates
 {
     for(int i = 0; i < path.poses.size()-1 ; i++)
     {
-
         geometry_msgs::Point upcoming_point;
-        upcoming_point = path.poses[i+1]; 
+        upcoming_point = path.poses[i+1].pose.position; 
+
+        while(upcoming_point.x == robot_pose.pose.position.x  && upcoming_point.y == robot_pose.pose.position.y)
+        {
 
         std::pair<geometry_msgs::Point, geometry_msgs::Point> new_waypoints;
-        new_waypoints = waypointOnPath(upcoming_point,robot_pose, 6.0);
+        new_waypoints = waypointOnPath(upcoming_point,robot_pose, path, 6.0);
 
         std::vector<geometry_msgs::Point> new_Intr_poses;
         new_Intr_poses = interpolation_poses(new_waypoints);
 
         for(int j = 0; j < new_Intr_poses.size() ; j++)
         {
-            if(oGrid.data[AStar::indexFromPoseStamped(new_Intr_poses.poses[j].pose.position, oGrid)] > 50)  
+            if(oGrid.data[AStar::indexFromPoseStamped(new_Intr_poses[j], oGrid)] > 50)  
             {                                                                                 
                 ROS_INFO("Obstacle on the current path");
                 return true; // trigger on !!!!
@@ -143,24 +140,7 @@ bool DynamicPlanning::checkForObstacles(nav_msgs::Path& path, nav_msgs::Occupanc
                 return false;
             }
         }
+        }
     }
 
-
-    // std::vector<int> Path_index;
-    // if(lengthOfPath(nav::msgs Path& path) > 6)    // it is needed because we cant decide from the number of waypoints.   
-    //     for (int i = 0; i < path.poses.size(); i++)
-    //     {   
-    //         Path_index.push_back(AStar::indexFromPoseStamped(path.poses[i].position, oGrid)]);
-    //         std::reverse_iterator(Path_index.rbegin(), Path_index.rend()); // saved all the index points from start point to end point.
-            
-    
-    //         if(oGrid.data[AStar::indexFromPoseStamped(path.poses[i].pose.position, oGrid)] > 50) // first converting the grid coordinate to the index  
-    //         {                                                                                  // and then checking the threshold value of that index 
-    //             ROS_INFO("Obstacle on the current path");
-    //             return true;
-    //         }
-    //     }
-
-    //     return false;
-    // }
 }

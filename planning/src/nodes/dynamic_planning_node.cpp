@@ -1,5 +1,4 @@
 #include "path_planner_server.h"
-
 #include <cspace.h>
 #include <astar.h>
 #include "planning/TrajectoryWithVelocities.h"
@@ -14,12 +13,14 @@
 
 ros::Subscriber pathSubscriber;
 ros::Subscriber oGridSubscriber;
+ros::Subscriber Odom_robotpose;
 ros::Publisher replan_trigger;
 
 
 std::string robot_name_ = "";
 
 nav_msgs::OccupancyGrid global_oGrid_;
+geometry_msgs::PoseStamped robot_pose;
 
 
 void oGridCB(nav_msgs::OccupancyGrid oGrid)
@@ -30,7 +31,7 @@ void oGridCB(nav_msgs::OccupancyGrid oGrid)
 void pathCB(nav_msgs::Path path)
 {
   std_msgs::Bool result;
-  if(DynamicPlanning::checkForObstacles(path, global_oGrid_))
+  if(DynamicPlanning::checkForObstacles(path, global_oGrid_, robot_pose))
   {
     result.data = true;
     replan_trigger.publish(result);
@@ -43,6 +44,11 @@ void pathCB(nav_msgs::Path path)
   }
 }
 
+void Odom_poseCB(nav_msgs::Odometry odom)
+{
+  
+  robot_pose.pose = odom.pose.pose;
+}
 
 int main(int argc, char *argv[])
 {
@@ -55,6 +61,7 @@ int main(int argc, char *argv[])
   //ROS Topic names
   std::string oGrid_topic_ = "/capricorn/"+robot_name_+"/object_detection_map";
   std::string path_topic_ = "/galaga/debug_path";
+  std::string Odom_pose_ = "/capricorn/" + robot_name_+"/camera/odom"; //Confirm from Albert
 
   //create a nodehandle
   ros::NodeHandle nh;
@@ -63,6 +70,7 @@ int main(int argc, char *argv[])
   DynamicPlanning dp;
 
   oGridSubscriber = nh.subscribe(oGrid_topic_, 1000, oGridCB);
+  Odom_robotpose = nh.subscribe(Odom_pose_, 1000, Odom_poseCB);
   pathSubscriber = nh.subscribe(path_topic_, 1000, pathCB);
 
   #ifdef DEBUG_INSTRUMENTATION
