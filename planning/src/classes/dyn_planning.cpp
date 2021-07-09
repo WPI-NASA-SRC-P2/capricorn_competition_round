@@ -24,7 +24,6 @@ float lengthOfPath(nav_msgs::Path path)
 
 double distance(geometry_msgs::Point firstpoint, geometry_msgs::Point secondpoint)
 {
-
     return sqrt(pow(secondpoint.x - firstpoint.x, 2) + pow(secondpoint.y - firstpoint.y, 2) * 1.0);
 }
 
@@ -118,21 +117,21 @@ std::vector<geometry_msgs::Point> interpolation_poses(std::pair<geometry_msgs::P
    return Intr_poses;
 }
 
-bool DynamicPlanning::checkForObstacles(nav_msgs::Path& path, nav_msgs::OccupancyGrid& oGrid, geometry_msgs::PoseStamped robot_pose) // path is giving the grid coordinates
+bool DynamicPlanning::checkForObstacles(nav_msgs::Path& path, nav_msgs::OccupancyGrid& oGrid,  geometry_msgs::PoseStamped upcoming_point, geometry_msgs::PoseStamped robot_pose) // path is giving the grid coordinates
 {
-    for(size_t i = 0; i < path.poses.size() ; i ++)
+    for(int i = 0; i < path.poses.size()-1 ; i++)
     {
 
         geometry_msgs::Point upcoming_point;
         upcoming_point = path.poses[i+1]; 
 
         std::pair<geometry_msgs::Point, geometry_msgs::Point> new_waypoints;
-        new_wavepoints = waypointOnPath(upcoming_point,robot_pose, float distance = 6.0);
+        new_waypoints = waypointOnPath(upcoming_point,robot_pose, 6.0);
 
         std::vector<geometry_msgs::Point> new_Intr_poses;
         new_Intr_poses = interpolation_poses(new_waypoints);
 
-        for(j = 0; j < new_Intr_poses.size() ; j++)
+        for(int j = 0; j < new_Intr_poses.size() ; j++)
         {
             if(oGrid.data[AStar::indexFromPoseStamped(new_Intr_poses.poses[j].pose.position, oGrid)] > 50)  
             {                                                                                 
