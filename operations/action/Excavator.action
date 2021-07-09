@@ -1,6 +1,7 @@
 # Define the goal
-int8 task # The task variable to choose between digging or unloading
+int8 task # The task variable to choose between digging, unloading or recovery
 geometry_msgs/Point target # target point for shoulder yaw orientation
+int8 trial # The trial number for recovery task
 ---
 # Define the result
 bool result_mass # Unused

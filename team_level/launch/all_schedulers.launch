@@ -1,0 +1,11 @@
+<launch>
+    <node pkg="team_level" type="start_scheduler" name="team_scheduler"/>
+
+    <node pkg="state_machines" type="start_scout_sm" name="start_scout_sm_1" args="small_scout_1" />
+    <node pkg="state_machines" type="start_excavator_sm" name="start_excavator_sm_1" args="small_excavator_1" />
+    <node pkg="state_machines" type="start_hauler_sm" name="start_hauler_sm_1" args="small_hauler_1" />
+
+    <node pkg="state_machines" type="start_scout_sm" name="start_scout_sm_2" args="small_scout_2" />
+    <node pkg="state_machines" type="start_excavator_sm" name="start_excavator_sm_2" args="small_excavator_2" />
+    <node pkg="state_machines" type="start_hauler_sm" name="start_hauler_sm_2" args="small_hauler_2" />
+</launch>

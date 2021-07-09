@@ -5,9 +5,9 @@
     <arg name="dataset_path" default="$(find utils)/dataset/images/" />
     <arg name="prefix" default="cp_" />
 
-    <include file="$(find operations)/launch/navigation.launch">
+    <!-- <include file="$(find operations)/launch/navigation.launch">
         <arg name="robot_name" value="$(arg robot_name)" />
-    </include>
+    </include> -->
 
     <!-- Running Teleop -->
     <node name="teleop_twist_keyboard" pkg="utils" type="object_detection_save_image.py" args="$(arg robot_name) $(arg dataset_path) $(arg prefix)" output="screen"/>
