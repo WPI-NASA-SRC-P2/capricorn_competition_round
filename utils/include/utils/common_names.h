@@ -183,6 +183,7 @@ namespace COMMON_NAMES
   {
     /**************SCOUT STATES**************/
     SCOUT_SEARCH_VOLATILE, // Execute spiral motion to search for the volatiles.
+    SCOUT_GO_TO_LOC,       // Sends scout to the given location
     SCOUT_STOP_SEARCH,     // Stop executing the search algorithm.
     SCOUT_LOCATE_VOLATILE, // Pinpoint the location of the volatile
     SCOUT_UNDOCK,          // Move the Scout away from the Excavator

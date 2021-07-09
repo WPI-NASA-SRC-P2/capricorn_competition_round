@@ -266,9 +266,13 @@ class IdleState : public ScoutState {
 public:   
    IdleState(ros::NodeHandle nh, std::string robot_name) : ScoutState(ROBOT_IDLE_STATE, nh, robot_name) {}
 
-   bool isDone() override{ return true; }
+   bool isDone() override{ 
+      current_state_done_ = true;
+      return true; }
    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
-   bool hasSucceeded() override{};
+   bool hasSucceeded() override{ 
+      last_state_succeeded_ = true;
+      return true; }
 
    void entryPoint() override;
    void step() override{}
@@ -296,6 +300,31 @@ public:
 
 private:
    bool first_;
+};
+
+/**
+ * @brief Sends the scout to the given goal
+ * 
+ * @param isDone() when near a volatile
+ * @param hasSucceeded() when near a volatile
+ */
+class ScoutGoToLoc : public ScoutState {
+public:   
+   ScoutGoToLoc(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_SEARCH_VOLATILE, nh, robot_name) {}
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private:
+   bool first_;
+   geometry_msgs::PoseStamped target_loc_;
+   operations::NavigationGoal navigation_action_goal_;
 };
 
 // class ParkAtRepairStation : public ScoutState {

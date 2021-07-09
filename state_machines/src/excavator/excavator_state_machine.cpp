@@ -436,7 +436,7 @@ void DigAndDump::step()
    digging_server_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    done_digging_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::ABORTED);
    // digging_attempt_ += (excavator_arm_client_->getState().isDone();
-   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Digging server succeeded = " << digging_server_succeeded_);
+   // ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Digging server succeeded = " << digging_server_succeeded_);
    // ROS_INFO_STREAM("Digging server succeeded = " << digging_server_succeeded_);
    // digVolatile();
 

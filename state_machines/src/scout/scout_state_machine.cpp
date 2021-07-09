@@ -461,6 +461,53 @@ void IdleState::entryPoint()
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout has entered idle state, awaiting new state...");
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// G O _ T O _ L O C   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ScoutGoToLoc::entryPoint()
+{
+    // declare entrypoint variables
+    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: State Machine: Go To Loc");
+    // pose of the excavator, supposed to be provided by scheduler
+    target_loc_ = m_pcRobotScheduler->getDesiredPose();    
+    first_ = true;
+}
+
+void ScoutGoToLoc::step()
+{
+    // go to excavator using planner+vision goal
+    if(first_)
+    {
+        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+        navigation_action_goal_.pose = target_loc_;
+        navigation_client_->sendGoal(navigation_action_goal_);
+        navigation_client_->sendGoal(navigation_action_goal_);
+        navigation_client_->sendGoal(navigation_action_goal_);
+        navigation_client_->sendGoal(navigation_action_goal_);
+        first_ = false;
+    }
+}
+
+bool ScoutGoToLoc::isDone() {
+   current_state_done_ = navigation_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool ScoutGoToLoc::hasSucceeded() {
+   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   // if(last_state_succeeded_)
+   //    ROS_WARN_STREAM("Go to Scout Completed Successfully");
+   return last_state_succeeded_;
+}
+
+void ScoutGoToLoc::exitPoint()
+{
+    // clean up (cancel goals)
+    navigation_client_->cancelGoal();
+    ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Reached scout, preparing to park");
+}
+
 //////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// M A I N ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
