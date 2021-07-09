@@ -578,6 +578,8 @@ void DumpVolatileAtHopper::entryPoint()
    first_PAH = true;
    first_UFH = true;
    first_DV = true;
+   first_ROH = true;
+   first_GTRS = true;
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
@@ -616,6 +618,9 @@ void DumpVolatileAtHopper::step()
       break;
    case RESET_ODOM_AT_HOPPER:
       resetOdom();
+      break;
+   case GO_TO_REPAIR_STATION:
+      goToRepairStation();
       break;
    case HAULER_IDLE:
       idleScout();
@@ -714,14 +719,37 @@ void DumpVolatileAtHopper::undockFromHopper()
 
 void DumpVolatileAtHopper::resetOdom()
 {
+   bool is_done;
+   if(first_ROH) 
+   {
    ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
    maploc::ResetOdom srv;
    srv.request.target_robot_name = robot_name_;
    srv.request.at_hopper = true;
-   macro_state_succeeded = resetOdometryClient.call(srv);
+   is_done = resetOdometryClient.call(srv);
+   if(!is_done)
+      ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine ]: Failed to reset odom for " << robot_name_);
+   micro_state = GO_TO_REPAIR_STATION;
+   first_ROH = false;
+   return;
+   }
+
    
-   macro_state_done = true;
-   micro_state = HAULER_IDLE;
+}
+
+void DumpVolatileAtHopper::goToRepairStation() 
+{
+   if(first_GTRS)
+   {
+   navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+   navigation_vision_goal_.mode = V_REACH;
+   navigation_vision_client_->sendGoal(navigation_vision_goal_);
+   first_GTRS = false;
+   }
+   
+   macro_state_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   macro_state_done = navigation_vision_client_->getState().isDone();
+   micro_state = HAULER_IDLE;  
 }
 
 void DumpVolatileAtHopper::exitPoint()
