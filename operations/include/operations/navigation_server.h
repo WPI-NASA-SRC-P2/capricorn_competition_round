@@ -47,18 +47,18 @@ private:
     float c_dist_epsilon_ = DIST_EPSILON;
 
     // Delta heading limits for smooth drive
-    const float MAX_TURNING_RAD = M_PI/2 - ANGLE_EPSILON;
-    const float MIN_TURNING_RAD = -M_PI/2 + ANGLE_EPSILON;
     const float HALF_VIEWING = M_PI/6;
+    const float MAX_TURNING_RAD = HALF_VIEWING - ANGLE_EPSILON;
+    const float MIN_TURNING_RAD = -HALF_VIEWING + ANGLE_EPSILON;
 
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
     const float BASE_DRIVE_SPEED = 0.6;
     const float BASE_SPIN_SPEED = 0.3;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
-    const double LARGE_TRAJECTORY_RESET_DIST = 8; 
-    const double SMALL_TRAJECTORY_RESET_DIST = 5; 
-    double trajectory_reset_dist_ = SMALL_TRAJECTORY_RESET_DIST;
+    const double LARGE_TRAJECTORY_REST_DIST = 5; 
+    const double SMALL_TRAJECTORY_REST_DIST = 3; 
+    double trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
 
     std::string robot_name_;
 

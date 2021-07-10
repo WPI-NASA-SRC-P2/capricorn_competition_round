@@ -39,17 +39,17 @@ std::string g_robot_name;
 geometry_msgs::PoseStamped g_robot_pose;
 
 const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
-const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 0.8, g_angular_vel_step_size = 0.05, TIMER_THRESH = 20.0;
+const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 1, g_angular_vel_step_size = 0.05, TIMER_THRESH = 20.0;
 const double NOT_AVOID_OBSTACLE_THRESHOLD = 5.0;
 std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex, g_clock_mutex;
 std::string g_desired_label;
-bool g_reached_goal = false, g_cancel_called = false, g_goal_failed = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false;
+bool g_reached_goal = false, g_cancel_called = false, g_goal_failed = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false, g_nav_vision_called = false;
 int g_height_threshold = 400;
 
 enum HEIGHT_THRESHOLD
 {
     EXCAVATOR = 170,
-    SCOUT = 200,
+    SCOUT = 220,
     HAULER = 200,
     PROCESSING_PLANT = 340,
     REPAIR_STATION = 340,
@@ -330,6 +330,47 @@ void undock()
 }
 
 /**
+ * @brief Function for undock hardcoded code at the proc plant
+ * 
+ * Steps:
+ * 1. Rotate robot util the desired object detection class has its bounding box in the center of the frame
+ * 2. Drive back from the object
+ */
+void hardcodedUndock()
+{
+    g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+    g_nav_goal.direction = 0;
+    g_nav_goal.forward_velocity = -0.5;
+    g_nav_goal.angular_velocity = 0;
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    ros::Duration(2).sleep();
+    g_nav_goal.direction = 0;
+    g_nav_goal.forward_velocity = 0.0;
+    g_nav_goal.angular_velocity = 0.5;
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    ros::Duration(2).sleep();
+    // g_nav_goal.direction = 0;
+    // g_nav_goal.forward_velocity = 0.5;
+    // g_nav_goal.angular_velocity = 0;
+    // g_client->sendGoal(g_nav_goal);
+    // g_client->sendGoal(g_nav_goal);
+    // g_client->sendGoal(g_nav_goal);
+    // ros::Duration(2).sleep();
+    g_nav_goal.direction = 0;
+    g_nav_goal.forward_velocity = 0.0;
+    g_nav_goal.angular_velocity = 0;
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    ros::Duration(0.01).sleep();
+    g_reached_goal = true;
+}
+
+/**
  * @brief Function for navigating a robot near to an object detection based class
  * 
  * Steps:
@@ -562,18 +603,13 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     static int object_found_frames = 0;
 
-    if (object_found_frames > 10)
+    if(g_nav_vision_called) 
     {
-        // ROS_INFO_STREAM("Going to vision navigation");
-        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
-        g_send_nav_goal = true;
         visionNavigation();
-        if (g_reached_goal)
-        {
-            object_found_frames = 0;
-        }
         return;
-    }
+    } 
+
+    g_start_clock = g_clock;
 
     if (g_send_nav_goal)
     {
@@ -590,16 +626,15 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
 
     if (g_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-        // ROS_INFO_STREAM("Going to vision navigation");
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
-        visionNavigation();
+        g_nav_vision_called = true;
     }
 
     const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
     double distance = NavigationAlgo::changeInPosition(g_robot_pose, goal_loc);
 
-    if (distance > 20)
+    if (distance > 15)
     {
         return;
     }
@@ -618,7 +653,6 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         perception::Object object = objects.obj.at(i);
         if (object.label == g_desired_label)
         {
-            // ROS_INFO_STREAM("Found object");
             // Store the object's center
             object_found = true;
         }
@@ -632,6 +666,14 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
     {
         object_found_frames = 0;
     }
+
+    if (object_found_frames > 10)
+    {
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_send_nav_goal = true;
+        g_nav_vision_called = true;
+        return;
+    }   
 }
 
 /**
@@ -690,6 +732,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     g_cancel_called = false;
     g_reached_goal = false;
     g_goal_failed = false;
+    g_nav_vision_called = false;
 
     ros::Rate update_rate(UPDATE_HZ);
 
@@ -711,6 +754,13 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
             break;
         case NAV_VISION_TYPE::V_UNDOCK:
             undock();
+            if (g_send_nav_goal)
+            {
+                g_client->sendGoal(g_nav_goal);
+            }
+            break;
+        case NAV_VISION_TYPE::V_HARDCODED_UNDOCK:
+            hardcodedUndock();
             if (g_send_nav_goal)
             {
                 g_client->sendGoal(g_nav_goal);
@@ -762,6 +812,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     }
 
     g_reached_goal = false;
+    ROS_INFO_STREAM(getString("Done Vision Nav Goal"));
     result.result = COMMON_RESULT::SUCCESS;
     as->setSucceeded(result);
 }
@@ -795,12 +846,15 @@ int main(int argc, char **argv)
 
     ros::Subscriber objects_sub = nh.subscribe(CAPRICORN_TOPIC + g_robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
     ros::Subscriber clock_sub = nh.subscribe(CLOCK_TOPIC, 1, &clockCallback);
-    ros::Subscriber robot_odom_sub = nh.subscribe(CAPRICORN_TOPIC + g_robot_name + CHEAT_ODOM_TOPIC, 1, &odomCallback);
+    ros::Subscriber robot_odom_sub = nh.subscribe("/" + g_robot_name + RTAB_ODOM_TOPIC, 1, &odomCallback);
 
     Server server(nh, g_robot_name + NAVIGATION_VISION_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.registerPreemptCallback(&cancelGoal);
     server.start();
     ROS_INFO_STREAM(getString("Starting Navigation Vision Server"));
     ros::spin();
+
+    delete g_client;
+    
     return 0;
 }

@@ -515,15 +515,16 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
     {
         // park with excavator
         ROS_INFO_STREAM(getString("Parking To Excavator"));
-        std::string excavator_name = COMMON_NAMES::EXCAVATOR_1;
+        std::string excavator_name = COMMON_NAMES::EXCAVATOR_1_NAME;
 
         if (goal->hopper_or_excavator == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS)
         {
             // uses "small_excavator_1" by default
-            ROS_INFO_STREAM(getString(std::string("USING AS ") + COMMON_NAMES::EXCAVATOR_1 + std::string(" EXCAVATOR DEFAULT")));
+            ROS_INFO_STREAM(getString("USING AS ") << COMMON_NAMES::EXCAVATOR_1_NAME << " EXCAVATOR DEFAULT");
         }
         else
         {
+            ROS_INFO_STREAM(getString("USING AS ") << goal->hopper_or_excavator << " FOR EXCAVATOR PARKING");
             // use given excavator name in the actionlib goal, this excavator name is used for subscribing to it's object detection topic
             excavator_name = goal->hopper_or_excavator;
         }
@@ -595,5 +596,9 @@ int main(int argc, char *argv[])
     ros::spin();
 
     ROS_INFO_STREAM(getString("Exiting"));
+
+    delete g_nav_client;
+    delete g_navigation_vision_client;
+    
     return 0;
 }

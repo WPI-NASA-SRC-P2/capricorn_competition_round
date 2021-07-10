@@ -2,3 +2,4 @@
 utils/bags/*.bag
 utils/dataset/images/*.jpg
 perception/src/__pycache__/
+.VSCodeCounter/

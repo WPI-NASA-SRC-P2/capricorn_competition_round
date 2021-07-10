@@ -23,7 +23,7 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 	listener_ = new tf2_ros::TransformListener(buffer_);
 
 	// Initialize the rate limiter to 10 HZ
-	update_rate_ = new ros::Rate(10);
+	update_rate_ = new ros::Rate(100);
 
 	moveRobotWheels(0);
 	steerRobot(0);
@@ -591,7 +591,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist_)
 		{
 			ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
-			ROS_WARN("Current distance traveled %f", distance_traveled);
+			ROS_INFO_STREAM("[operations | nav_server | "<<robot_name_<<"] "<<"Current distance traveled" << distance_traveled);
 
 			// moveRobotWheelsNew(0);
 			brakeRobotNew(true);
@@ -663,7 +663,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 
 void NavigationServer::requestNewTrajectory(void)
 {
-	ROS_WARN("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
+	ROS_INFO("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
 
 	// moveRobotWheels(0);
 	brakeRobot(true);

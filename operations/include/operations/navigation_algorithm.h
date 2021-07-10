@@ -18,11 +18,11 @@ using namespace COMMON_NAMES;
 class NavigationAlgo
 {
 private:
-  static constexpr float arc_spiral_a_1 = 20, arc_spiral_a_2 = 15;    // Inner radius (starting radius of the spiral)
-  static constexpr int init_theta_1 = 8, init_theta_2 = 18;
+  static constexpr float arc_spiral_a_1 = 8, arc_spiral_a_2 = 15;    // Inner radius (starting radius of the spiral)
+  static constexpr int init_theta_1 = 12, init_theta_2 = 6;
   static constexpr float arc_spiral_b = 10;   // Incerement per rev
-  static constexpr float arc_spiral_incr = 5; // Distance between two points
-  static constexpr int N = 500;
+  static constexpr float arc_spiral_incr = 25; // Distance between two points
+  static constexpr int N = 120;
   /**
    * @brief Calculates variables needed for calculation of center and radius of the three point circle
    * 
@@ -135,6 +135,22 @@ public:
    * @return std::vector<geometry_msgs::Point> 
    */
   static std::vector<geometry_msgs::PointStamped> getNArchimedeasSpiralPoints(const int scout_number = 1);
+
+  /**
+   * @brief Returns the points on a rectangular path
+   * 
+   * @param scout_number Number of the scout for which points are needed. Only works with 1 or 2. 
+   * @return std::vector<geometry_msgs::Point> 
+   */  
+  static std::vector<geometry_msgs::PointStamped> getRectangularScanningPoints(const int scout_number);
+
+  /**
+   * @brief Returns the points on a straight path
+   * 
+   * @param scout_number Number of the scout for which points are needed. Only works with 1 or 2. 
+   * @return std::vector<geometry_msgs::Point> 
+   */  
+  static std::vector<geometry_msgs::PointStamped> getRadialScanningPoints(const int scout_number);
 
   /**
    * @brief Get the Kinetic Energy object

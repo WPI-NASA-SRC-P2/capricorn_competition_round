@@ -20,12 +20,14 @@ NavigationClient_ *navigation_client_;
 
 using namespace COMMON_NAMES;
 
-double ROTATION_VELOCITY = 0.2;
-double DRIVING_VELOCITY = 0.2;
-double MAX_DETECT_DIST = 2.0;
-double VOLATILE_DISTANCE_THRESHOLD = 0.005;
-int FLIP_ROTATION_COUNT_MAX = 2;
-int REPEAT_COUNT_MAX = 2;
+static const double ROTATION_VELOCITY = 0.2;
+static const double DRIVING_VELOCITY = 0.4;
+static const double MAX_DETECT_DIST = 2.0;
+static const double VOLATILE_DISTANCE_THRESHOLD = 0.005;
+static const int FLIP_ROTATION_COUNT_MAX = 3;
+static const int REPEAT_COUNT_MAX = 2;
+static const float VOLATILE_SENSOR_TO_BASE_DISTANCE = 0.670;
+
 bool near_volatile_ = false;
 bool new_message_received = false;
 double volatile_distance_;
@@ -56,6 +58,7 @@ enum DrivingMode
  */
 void rotateRobot(const DrivingDirection rotate_direction, const float rotational_velocity_multiplier)
 {
+  // ROS_INFO("Rotating the robot");
   operations::NavigationGoal goal;
 
   // Manual driving
@@ -63,7 +66,7 @@ void rotateRobot(const DrivingDirection rotate_direction, const float rotational
 
   goal.forward_velocity = 0;
   goal.angular_velocity = rotate_direction * ROTATION_VELOCITY * rotational_velocity_multiplier;
-
+  
   navigation_client_->sendGoal(goal);
   ros::Duration(0.1).sleep();
 }
@@ -84,6 +87,9 @@ void stopRobot()
   goal.angular_velocity = 0;
 
   navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal);
   ros::Duration(0.5).sleep();
 }
 
@@ -92,16 +98,20 @@ void getOnTopOfVolatile()
   operations::NavigationGoal goal;
 
   goal.drive_mode = NAV_TYPE::MANUAL;
-  goal.forward_velocity = 0.6;   
+  goal.forward_velocity = 0.2;   
   goal.angular_velocity = 0;
   navigation_client_->sendGoal(goal);
-  ros::Duration(2).sleep();
+  navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal);
+  navigation_client_->sendGoal(goal);
+  
+  float starting_volatile_distance = volatile_distance_;
 
-  goal.drive_mode = NAV_TYPE::MANUAL;
-  goal.forward_velocity = 0.0;   
-  goal.angular_velocity = 0;
-  navigation_client_->sendGoal(goal);
-  ros::Duration(0.5).sleep();
+  float volatile_to_base_distance = (std::hypot(starting_volatile_distance, VOLATILE_SENSOR_TO_BASE_DISTANCE));
+  while(ros::ok() && volatile_distance_ < volatile_to_base_distance)
+    ros::Duration(0.1).sleep();
+
+  stopRobot();
 }
 
 /**
@@ -112,11 +122,12 @@ void getOnTopOfVolatile()
  */
 void driveRobotStraight(DrivingDirection rotate_direction, const float rotational_velocity_multiplier)
 {
+  // ROS_INFO("Driving the robot");
   operations::NavigationGoal goal;
 
   // Manual driving
   goal.drive_mode = NAV_TYPE::MANUAL;
-
+  
   goal.forward_velocity = rotate_direction * DRIVING_VELOCITY * rotational_velocity_multiplier;
   goal.angular_velocity = 0;
   ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Driving robot straight");
@@ -137,7 +148,7 @@ void getBestPose()
   DrivingDirection driving_direction = POSITIVE;
   DrivingMode driving_mode = ROTATE_ROBOT;
   bool rotate_robot = true;
-  int flip_rotation_count = 0;
+  float flip_rotation_count = 0;
   int repeat_count = 0;
 
   double last_volatile_distance = MAX_DETECT_DIST + 1; // To make sure any detected
@@ -145,7 +156,10 @@ void getBestPose()
   double best_volatile_distance = last_volatile_distance;
 
   // Start rotating the robot to minimise distance
+  // Sometimes the goal is skipped, and robot doesn't move. So sending consequitive orders.
   rotateRobot(driving_direction, 1.0);
+  rotateRobot(driving_direction, 1.0);
+  DrivingMode driving_execution;
 
   while (rotate_robot && ros::ok())
   {
@@ -166,15 +180,18 @@ void getBestPose()
       // If the distance is increasing
       else if ((volatile_distance_ - best_volatile_distance) > VOLATILE_DISTANCE_THRESHOLD)
       {
+        best_volatile_distance =  MAX_DETECT_DIST + 1;
         ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Going far");
         if (flip_rotation_count < FLIP_ROTATION_COUNT_MAX)
         {
           ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Flipping Direction");
           driving_direction = (driving_direction == POSITIVE) ? NEGATIVE : POSITIVE;
           if (driving_mode == ROTATE_ROBOT)
-            rotateRobot(driving_direction, 1 / (flip_rotation_count + 1));
+            // rotateRobot(driving_direction, 1 / (flip_rotation_count + 1));
+            driving_execution = ROTATE_ROBOT;
           else
-            driveRobotStraight(driving_direction, 1 / (flip_rotation_count + 1));
+            // driveRobotStraight(driving_direction, 1 / (flip_rotation_count + 1));
+            driving_execution = DRIVE_ROBOT_STRAIGHT;
           flip_rotation_count++;
         }
         else
@@ -189,14 +206,16 @@ void getBestPose()
             {
               ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Now linear optimisation");
               driving_mode = DRIVE_ROBOT_STRAIGHT;
-              driveRobotStraight(driving_direction, 1);
+              // driveRobotStraight(driving_direction, 1);
+              driving_execution = DRIVE_ROBOT_STRAIGHT;
               repeat_count++;
             }
             else
             {
               ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Now Rotational optimisation");
               driving_mode = ROTATE_ROBOT;
-              rotateRobot(driving_direction, 1);
+              // rotateRobot(driving_direction, 1);
+              driving_execution = ROTATE_ROBOT;
             }
           }
           else
@@ -208,11 +227,16 @@ void getBestPose()
           }
         }
       }
-
+      if (driving_execution == ROTATE_ROBOT)
+        rotateRobot(driving_direction, 1 / (flip_rotation_count + 1));
+      else 
+        driveRobotStraight(driving_direction, 1 / (flip_rotation_count + 1));
+      
       last_volatile_distance = volatile_distance_;
     }
     else
     {
+      ROS_WARN_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "No new message found");
       // TODO: What is new message is not received?
       // This case may not arise normally, but can arise during battery low situation
       // as volatile sensor stops working in battery low mode
@@ -237,12 +261,24 @@ void localiseResource(const operations::ResourceLocaliserGoalConstPtr &localiser
     getBestPose();
 
     ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Driving on top of volatile");
-    getOnTopOfVolatile();
-    server->setSucceeded();
+
+    operations::ResourceLocaliserResult res;
+    if(volatile_distance_ != MAX_DETECT_DIST + 1)
+    {
+      getOnTopOfVolatile();
+      res.result = COMMON_RESULT::SUCCESS;
+    }
+    else
+    {
+      ROS_ERROR_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Resource localiser finished ending up outside of volatile range");
+      res.result = COMMON_RESULT::FAILED;
+    }
+    stopRobot();
+    server->setSucceeded(res);
   }
   else
   {
-    ROS_ERROR("Resourse localisation called, but rover not near volatile");
+    ROS_ERROR_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Resourse localisation called, but rover not near volatile");
     server->setAborted();
   }
 }
