@@ -84,7 +84,7 @@ int main(int argc, char** argv)
     std::string robot_name = argv[1];
     
     ros::Subscriber camera_odom_sub = nh.subscribe("/"+ robot_name + COMMON_NAMES::RTAB_ODOM_TOPIC, 223, odom_callback);
-    ros::Subscriber imu_odom_sub = nh.subscribe("/"+ robot_name + "/imu", 223, imu_callback);
+    ros::Subscriber imu_odom_sub = nh.subscribe("/"+ robot_name + COMMON_NAMES::IMU_TOPIC, 223, imu_callback);
     ros::Subscriber robot_state_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::ROBOTS_CURRENT_STATE_TOPIC, 223, robot_state_callback);
 
     ros::ServiceClient reset_odom_to_pose_client = nh.serviceClient<rtabmap_ros::ResetPose>(robot_name + COMMON_NAMES::RESET_POSE_CLIENT);
@@ -101,16 +101,13 @@ int main(int argc, char** argv)
 
     double init_odom_r, init_odom_p, init_odom_y;
     double init_imu_r, init_imu_p, init_imu_y;
-    // do
-    // {
+    
     ros::Duration(0.5).sleep();
     ros::spinOnce();
     getOdomRPY(init_odom_r, init_odom_p, init_odom_y);
     getImuRPY(init_imu_r, init_imu_p, init_imu_y);
 
     ROS_INFO_STREAM("[STATE_MACHINES | odom_resetter.cpp | "<<robot_name<<"]:init_imu_r: " << init_imu_r<< "  init_imu_p: " << init_imu_p<< "  init_imu_y: " << init_imu_y);
-    //     ros::spinOnce();
-    // } while ((init_odom_r != init_odom_r || init_odom_p != init_odom_p || init_odom_y != init_odom_y) && ros::ok());
     
     // Inf loop
     while(ros::ok())

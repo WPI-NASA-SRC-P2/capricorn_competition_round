@@ -109,6 +109,8 @@ namespace COMMON_NAMES
   const std::string NAV_TYPE_TOPIC = "/nav_type_topic";
   const std::string ROBOTS_CURRENT_STATE_TOPIC = "robot_state_status";
   const std::string ROBOTS_DESIRED_STATE_TOPIC = "robot_desired_state";
+  const std::string IMU_TOPIC = "/imu";
+  const std::string IMU_FILTERED_TOPIC = "/imu_filtered";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
@@ -181,6 +183,7 @@ namespace COMMON_NAMES
   {
     /**************SCOUT STATES**************/
     SCOUT_SEARCH_VOLATILE, // Execute spiral motion to search for the volatiles.
+    SCOUT_GO_TO_LOC,       // Sends scout to the given location
     SCOUT_STOP_SEARCH,     // Stop executing the search algorithm.
     SCOUT_LOCATE_VOLATILE, // Pinpoint the location of the volatile
     SCOUT_UNDOCK,          // Move the Scout away from the Excavator
@@ -211,7 +214,7 @@ namespace COMMON_NAMES
     EXCAVATOR_VOLATILE_RECOVERY,
     
     /**************HAULER STATES**************/
-    //21
+    //23
     HAULER_GO_TO_LOC,                    // Takes Hauler to a location
     HAULER_DUMP_VOLATILE_TO_PROC_PLANT, // Undocks hauler from excavator, goes to processing plant,
                                              // parks hauler to processing plant, dumps volatile and

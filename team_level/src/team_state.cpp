@@ -150,6 +150,9 @@ void Search::exitPoint()
 {
    ROS_INFO("TEAM_LEVEL | team_state | exitpoint of SEARCH, cancelling SEARCH goal");
    robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -188,14 +191,29 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
    STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
 
    bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team) && robot_state_register->hasSucceeded(scout_in_team);
-   bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team);// && robot_state_register->hasSucceeded(excavator_in_team);
+   bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
+   bool excavator_done_and_failed = robot_state_register->isDone(excavator_in_team) && !robot_state_register->hasSucceeded(excavator_in_team);
    bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
 
-   if (scout_task == ROBOT_IDLE_STATE)
-      return ROBOTS_TO_GOAL;
-   if (excavator_task == EXCAVATOR_GO_TO_SCOUT && excavator_done_and_succeeded)
-      if (scout_task == SCOUT_LOCATE_VOLATILE && scout_done_and_succeeded)
-         return UNDOCK_SCOUT;
+   if (scout_task == ROBOT_IDLE_STATE || excavator_task == ROBOT_IDLE_STATE )
+   {
+      if(scout_task != SCOUT_UNDOCK)
+         return ROBOTS_TO_GOAL;
+   }
+   if (excavator_task == EXCAVATOR_GO_TO_SCOUT)
+   {
+      if(excavator_done_and_succeeded)
+      {
+         ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Succeeded to reach Scout");
+         if (scout_task == SCOUT_LOCATE_VOLATILE && scout_done_and_succeeded)
+            return UNDOCK_SCOUT;
+      }
+      else if (excavator_done_and_failed)
+      {
+         ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Failed to reach Scout");
+         return MAKE_EXCAV_HAULER_IDLE;
+      }
+   }
    if (scout_task == SCOUT_UNDOCK && scout_done_and_succeeded)
       return PARK_EXCAVATOR_AT_SCOUT;
    if (scout_task == SCOUT_LOCATE_VOLATILE)
@@ -240,6 +258,8 @@ void ScoutWaiting::step()
    case ROBOTS_TO_GOAL:
       stepRobotsToGoal();
       break;
+   case MAKE_EXCAV_HAULER_IDLE:
+      stepMakeExcavHaulerIdle();
    case UNDOCK_SCOUT:
       stepUndockScout();
       break;
@@ -264,6 +284,13 @@ void ScoutWaiting::stepRobotsToGoal()
    robot_state_register->setRobotState(hauler_in_team, HAULER_GO_BACK_TO_EXCAVATOR, volatile_site_location);
 }
 
+void ScoutWaiting::stepMakeExcavHaulerIdle()
+{
+      robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
+      
+      robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
+}
+
 void ScoutWaiting::stepUndockScout()
 {
    robot_state_register->setRobotState(scout_in_team, SCOUT_UNDOCK);
@@ -277,6 +304,18 @@ void ScoutWaiting::stepParkExcavatorAtScout()
 void ScoutWaiting::exitPoint() 
 {
    ROS_INFO("TEAM_LEVEL | team_state | exitpoint of ScoutWaiting, cancelling ScoutWaiting goal");
+   robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
+
+   robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
+
+   robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
+
    robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
    robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
    robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
@@ -401,6 +440,15 @@ void Excavating::exitPoint()
    ROS_INFO("TEAM_LEVEL | team_state | exitpoint of Excavating, cancelling Excavating goal");
    robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
    robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
+
+   robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
+
+   robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
+
+   robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -449,5 +497,8 @@ void Dumping::step()
 void Dumping::exitPoint() 
 {
    ROS_INFO("TEAM_LEVEL | team_state | exitpoint of Dumping, cancelling Dumping goal");
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
    robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
 }

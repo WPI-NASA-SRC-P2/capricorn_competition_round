@@ -263,7 +263,7 @@ bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res
             }
         }
 
-        ROS_INFO_STREAM(common_gt_pose_value);
+        ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: " << "Reset Pose:" << common_gt_pose_value);
         res.success = resetOdomPose(target_robot_name, common_gt_pose_value);
         if (res.success)
         {        

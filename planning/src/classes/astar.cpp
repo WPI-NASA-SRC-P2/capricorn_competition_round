@@ -185,7 +185,7 @@ int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
         //checks if the current element is an obstacle or not
             if(oGrid.data[unVisitedIndexes[k]] < threshold)
             {
-              ROS_INFO("found the new index");
+              ROS_INFO("[planning | astar ]: found the new index");
               newGoalIndex = unVisitedIndexes[k];
               return newGoalIndex;
             }
@@ -195,7 +195,7 @@ int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
             {
               if(elementExists(unVisitedIndexes, currentIndexNeighbors[j]) && elementExists(visitedIndexes, currentIndexNeighbors[j]))
               {
-                ROS_INFO("added the index");
+                // ROS_INFO("added the index");
                 unVisitedIndexes.push_back(currentIndexNeighbors[j]);                 
               }
             }        
@@ -225,7 +225,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   int endIndex = 0;
   int centerIndex = (oGrid.info.height / 2) * oGrid.info.width + oGrid.info.width / 2;
 
-  ROS_WARN("[planning | astar | %s]: centerIndex calculated", robot_name);
+  ROS_INFO("[planning | astar | %s]: centerIndex calculated", robot_name.c_str());
 
   //this code takes care of the case when the starting pose is in the padding area
   if (oGrid.data[centerIndex] > threshold)
@@ -248,7 +248,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   // If it is, we need to find the closest point on the edge of the occupancy grid to the target.
   if ((int)target.x > (int)oGrid.info.width / 2 || (int)target.x < (int)-(oGrid.info.width / 2) || (int)target.y > (int)oGrid.info.height / 2 || (int)target.y < (int)-(oGrid.info.height / 2))
   {
-    ROS_WARN("[planning | astar | %s]: Finding New index...", robot_name.c_str());
+    ROS_INFO("[planning | astar | %s]: Finding New index...", robot_name.c_str());
     float distFromRobot = INFINITY;
     float minDist = INFINITY;
     float optmlDist = INFINITY;
@@ -319,7 +319,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   {
     // If the target point was on the grid, just calculate the index of the point (with the center being 0,0)
     endIndex = (target.y + (oGrid.info.height / 2)) * oGrid.info.width + (target.x + (oGrid.info.width / 2));
-    ROS_WARN("[planning | astar | %s]: Calculated Index: %d", robot_name.c_str(), endIndex);
+    ROS_INFO("[planning | astar | %s]: Calculated Index: %d", robot_name.c_str(), endIndex);
   }
   // Check if the final destination is occupied.
   if (oGrid.data[endIndex] > threshold)

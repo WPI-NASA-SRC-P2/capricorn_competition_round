@@ -225,6 +225,7 @@ void ResetOdomAtHopper::entryPoint()
    first_GTPP = true;
    first_PAH = true;
    first_UFH = true;
+   first_GTR = true;
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
@@ -261,6 +262,9 @@ void ResetOdomAtHopper::step()
       break;
    case RESET_ODOM_AT_HOPPER:
       resetOdom();
+      break;
+   case GO_TO_REPAIR_STATION:
+      goToRepair();
       break;
    case SCOUT_IDLE:
       idleScout();
@@ -342,9 +346,34 @@ void ResetOdomAtHopper::resetOdom()
    maploc::ResetOdom srv;
    srv.request.target_robot_name = robot_name_;
    srv.request.at_hopper = true;
-   macro_state_succeeded = resetOdometryClient.call(srv);
-   macro_state_done = true;
-   micro_state = SCOUT_IDLE;
+   // macro_state_succeeded = resetOdometryClient.call(srv);
+   // macro_state_done = true;
+   micro_state = GO_TO_REPAIR_STATION;
+   return;
+}
+
+//Go to repair station after resetting 
+void ResetOdomAtHopper::goToRepair()
+{
+   if(first_GTR)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_REACH;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Going to repair station vision goal sent");  
+      first_GTR = false;
+      return;
+   }
+   
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      macro_state_done = true;
+      macro_state_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      if (macro_state_succeeded)
+         micro_state = SCOUT_IDLE;
+      // Dont find a reason it should fail,
+   }
 }
 
 void ResetOdomAtHopper::exitPoint()
@@ -459,6 +488,53 @@ void IdleState::entryPoint()
    srv.request.resume_spiral_motion = false;
    spiralClient_.call(srv);
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout has entered idle state, awaiting new state...");
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// G O _ T O _ L O C   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ScoutGoToLoc::entryPoint()
+{
+    // declare entrypoint variables
+    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: State Machine: Go To Loc");
+    // pose of the excavator, supposed to be provided by scheduler
+    target_loc_ = m_pcRobotScheduler->getDesiredPose();    
+    first_ = true;
+}
+
+void ScoutGoToLoc::step()
+{
+    // go to excavator using planner+vision goal
+    if(first_)
+    {
+        navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+        navigation_action_goal_.pose = target_loc_;
+        navigation_client_->sendGoal(navigation_action_goal_);
+        navigation_client_->sendGoal(navigation_action_goal_);
+        navigation_client_->sendGoal(navigation_action_goal_);
+        navigation_client_->sendGoal(navigation_action_goal_);
+        first_ = false;
+    }
+}
+
+bool ScoutGoToLoc::isDone() {
+   current_state_done_ = navigation_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool ScoutGoToLoc::hasSucceeded() {
+   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   // if(last_state_succeeded_)
+   //    ROS_WARN_STREAM("Go to Scout Completed Successfully");
+   return last_state_succeeded_;
+}
+
+void ScoutGoToLoc::exitPoint()
+{
+    // clean up (cancel goals)
+    navigation_client_->cancelGoal();
+    ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Reached scout, preparing to park");
 }
 
 //////////////////////////////////////////////////////////////////////////////////

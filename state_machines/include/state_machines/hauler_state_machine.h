@@ -503,9 +503,10 @@ private:
    void dumpVolatile();
    void undockFromHopper();
    void resetOdom();
+   void goToRepairStation();
    void idleScout(){}
 
-   bool first_GTPP, first_PAH, first_UFH, first_DV, macro_state_succeeded, macro_state_done;
+   bool first_GTPP, first_PAH, first_UFH, first_DV, first_ROH, first_GTRS, macro_state_succeeded, macro_state_done;
    
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_PROC_PLANT,
@@ -513,6 +514,7 @@ private:
       DUMP_VOLATILE,
       UNDOCK_FROM_HOPPER,
       RESET_ODOM_AT_HOPPER,
+      GO_TO_REPAIR_STATION,
       HAULER_IDLE
    };
 
