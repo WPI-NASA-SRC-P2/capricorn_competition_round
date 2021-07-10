@@ -211,6 +211,7 @@ namespace COMMON_NAMES
     EXCAVATOR_FACE_PROCESSING_PLANT,  //Face processing plant using NAV_VISION::V_CENTER
     EXCAVATOR_GO_TO_REPAIR,           //Go to repair station using NAV_VISION
     EXCAVATOR_RESET_ODOM_AT_HOPPER,    // Excavator resets odometry at hopper
+    EXCAVATOR_GO_TO_SCOUT_RECOVERY,
     EXCAVATOR_VOLATILE_RECOVERY,
     
     /**************HAULER STATES**************/
