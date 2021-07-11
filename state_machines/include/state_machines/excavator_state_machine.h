@@ -470,9 +470,35 @@ private:
    int pose_index_;
    float search_offset_;
    bool cross_end_complete_;
-   bool scout_found_;
+   bool search_done_, scout_found_, searches_exhausted_;
    bool search_failed_;
    int substate_; 
 };
+
+/**
+ * @brief ExcavatorGoToRepairStation travel to the Repair Station
+ * 
+ * @param isDone() navigation vision is complete
+ * @param hasSucceeded() navigation succeeded in going to Repair Station
+ * 
+ */ 
+class VolatileRecovery : public ExcavatorState {
+public:   
+   VolatileRecovery(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_VOLATILE_RECOVERY, nh, robot_name) {}
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private:
+   bool first_;
+};
+
 // #endif
 
