@@ -100,9 +100,9 @@ void GoToProcPlant::step()
         // navigation_vision_client_->waitForResult();
         // return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
         first_ = false;
-    }
-    else
         ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: going to processing plant");
+    }
+   //  else
 }
 
 bool GoToProcPlant::isDone() 
@@ -149,9 +149,9 @@ void HaulerGoToScout::step()
         navigation_vision_goal_.goal_loc = target_loc_;
         navigation_vision_client_->sendGoal(navigation_vision_goal_);
         first_ = false;
+        ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:Moving towards excavator");
     }
     // else   
-    //     ROS_INFO_STREAM("Moving towards excavator");
 }
 
 bool HaulerGoToScout::isDone() 
@@ -205,9 +205,9 @@ void ParkAtHopper::step()
         park_robot_client_->sendGoal(park_robot_goal_);
         // park_robot_client_->waitForResult();
         first_ = false;
-    }
-    else
         ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Parking at hopper");
+    }
+   //  else
 }
 
 bool ParkAtHopper::isDone() 
@@ -337,9 +337,9 @@ void GoToExcavator::step()
         navigation_vision_client_->sendGoal(navigation_vision_goal_);
         // navigation_vision_client_->waitForResult();
         first_ = false;
-    }
-    else   
         ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Moving towards excavator");
+    }
+   //  else   
 }
 
 bool GoToExcavator::isDone() 
@@ -370,6 +370,7 @@ void ParkAtExcavator::entryPoint()
     // set entry variables
     first_ = true;
     park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_EXCAVATOR_CLASS;
+    excavator_name_ = m_pcRobotScheduler->getTargetRobotName();
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  State Machine: Parking at Excavator");
 }
 
@@ -392,9 +393,9 @@ void ParkAtExcavator::step()
         park_robot_client_->sendGoal(park_robot_goal_);
         // park_robot_client_->waitForResult();
         first_ = false;
+        ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Parking at excavator");
     }
     // else
-    //     ROS_INFO_STREAM("Parking at excavator");
 }
 
 bool ParkAtExcavator::isDone() 
@@ -495,9 +496,9 @@ void DumpVolatile::step()
         hauler_client_->sendGoal(hauler_goal_);
         // hauler_client_->waitForResult();
         first_ = false;
-    }
-    else
         ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Dumping volatile");
+    }
+   //  else
 }
 
 bool DumpVolatile::isDone() 
@@ -577,6 +578,8 @@ void DumpVolatileAtHopper::entryPoint()
    first_PAH = true;
    first_UFH = true;
    first_DV = true;
+   first_ROH = true;
+   first_GTRS = true;
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
@@ -615,6 +618,9 @@ void DumpVolatileAtHopper::step()
       break;
    case RESET_ODOM_AT_HOPPER:
       resetOdom();
+      break;
+   case GO_TO_REPAIR_STATION:
+      goToRepairStation();
       break;
    case HAULER_IDLE:
       idleScout();
@@ -713,14 +719,42 @@ void DumpVolatileAtHopper::undockFromHopper()
 
 void DumpVolatileAtHopper::resetOdom()
 {
+   bool is_done;
+   if(first_ROH) 
+   {
    ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
    maploc::ResetOdom srv;
    srv.request.target_robot_name = robot_name_;
    srv.request.at_hopper = true;
-   macro_state_succeeded = resetOdometryClient.call(srv);
+   is_done = resetOdometryClient.call(srv);
+   if(!is_done)
+      ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine ]: Failed to reset odom for " << robot_name_);
+   micro_state = GO_TO_REPAIR_STATION;
+   first_ROH = false;
+   return;
+   }
+
    
-   macro_state_done = true;
-   micro_state = HAULER_IDLE;
+}
+
+void DumpVolatileAtHopper::goToRepairStation() 
+{
+   if(first_GTRS)
+   {
+   navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+   navigation_vision_goal_.mode = V_REACH;
+   navigation_vision_client_->sendGoal(navigation_vision_goal_);
+   first_GTRS = false;
+   }
+   
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      macro_state_done = true;
+      macro_state_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      micro_state = HAULER_IDLE;
+      // Dont find a reason it should fail,
+   }
 }
 
 void DumpVolatileAtHopper::exitPoint()
@@ -764,8 +798,8 @@ void HaulerGoToRepairStation::step()
       // navigation_vision_goal_.target_loc = target_loc_;
       navigation_vision_client_->sendGoal(navigation_vision_goal_);
       first_ = false;
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Going to repair station Step Function!");
    }
-   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Going to repair station Step Function!");
 }
 
 void HaulerGoToRepairStation::exitPoint()
