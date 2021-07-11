@@ -46,9 +46,9 @@ private:
     float c_dist_epsilon_ = DIST_EPSILON;
 
     // Delta heading limits for smooth drive
-    const float MAX_TURNING_RAD = M_PI/2 - ANGLE_EPSILON;
-    const float MIN_TURNING_RAD = -M_PI/2 + ANGLE_EPSILON;
     const float HALF_VIEWING = M_PI/6;
+    const float MAX_TURNING_RAD = HALF_VIEWING - ANGLE_EPSILON;
+    const float MIN_TURNING_RAD = -HALF_VIEWING + ANGLE_EPSILON;
 
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
     const float BASE_DRIVE_SPEED = 0.6;

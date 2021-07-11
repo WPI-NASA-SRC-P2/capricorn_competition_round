@@ -165,7 +165,7 @@ void driveSprial()
       point_0 = g_spiral_points.at(0).point;
       point_2 = g_spiral_points.at(2).point;
 
-      ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: ");// << "Going to goal dist:" << dist);
+      ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: Clearing current a waypoint");// << "Going to goal dist:" << dist);
 
       g_nav_goal.drive_mode = NAV_TYPE::GOAL;
       g_nav_goal.pose.pose.position = g_spiral_points.at(1).point;

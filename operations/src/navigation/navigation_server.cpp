@@ -521,20 +521,20 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 
 		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
 		// we want to get a new trajectory from the planner.
-		// if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
-		// {
-		// 	ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
-		// 	ROS_WARN("Current distance traveled %f", distance_traveled);
+		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
+		{
+			ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
+			ROS_WARN("Current distance traveled %f", distance_traveled);
 
-		// 	moveRobotWheels(0);
-		// 	brakeRobot(true);
+			moveRobotWheels(0);
+			brakeRobot(true);
 
-		// 	// Reset the distance traveled
-		// 	total_distance_traveled_ = 0;
+			// Reset the distance traveled
+			total_distance_traveled_ = 0;
 
-		// 	get_new_trajectory_ = true;
-		// 	return true;
-		// }
+			get_new_trajectory_ = true;
+			return true;
+		}
 
 		// Calculate the current dist to waypoint
 		double current_distance_to_waypoint = NavigationAlgo::changeInPosition(getRobotPose(), waypoint);

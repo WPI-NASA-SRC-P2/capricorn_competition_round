@@ -41,7 +41,7 @@
         <param name="transform_time_offset" value="0.5" />
         <param name="predict_to_current_time" value="true" />
 
-        <param name="imu0" value="/$(arg robot_name)/imu" if="$(arg use_imu)"/>
+        <param name="imu0" value="/$(arg robot_name)/imu_filtered" if="$(arg use_imu)"/>
         <rosparam param="imu0_config" if="$(arg use_imu)">
                                     [false, false, false, <!-- X, Y, Z-->
                                     true, true, true,    <!-- Roll, Pitch, Yaw-->
