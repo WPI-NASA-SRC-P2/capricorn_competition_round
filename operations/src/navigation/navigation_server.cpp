@@ -131,6 +131,7 @@ void NavigationServer::initSubscribers(ros::NodeHandle& nh, std::string& robot_n
 	nh.getParam("cheat_odom", odom_flag);
 
 	update_current_robot_pose_ = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
+	replan_sub_ = nh.subscribe("/" + robot_name + "/" + NAVIGATION_ACTIONLIB + "/" + REPLAN_TRAJECTORY, 1000, &NavigationServer::replanCB, this);
 
 	if (odom_flag)
 	{
@@ -439,6 +440,13 @@ bool NavigationServer::driveDistance(double delta_distance)
 			return false;
 		}
 
+		// Check trajectory flag before continuing
+		if(get_new_trajectory_ == true)
+		{
+			requestNewTrajectory();
+			return false;
+		}
+
 		distance_traveled = abs(NavigationAlgo::changeInPosition(starting_pose, getRobotPose()));
 
 		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
@@ -500,6 +508,13 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 			moveRobotWheels(0);
 			brakeRobot(true);
 
+			return false;
+		}
+
+		// Check trajectory flag before continuing
+		if(get_new_trajectory_ == true)
+		{
+			requestNewTrajectory();
 			return false;
 		}
 
@@ -580,17 +595,24 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	return true;
 }
 
-void NavigationServer::requestNewTrajectory(void)
+void NavigationServer::requestNewTrajectory(void, bool replan_request)
 {
-	ROS_WARN("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
-
 	moveRobotWheels(0);
 	brakeRobot(true);
 
 	// Reset the distance traveled
 	total_distance_traveled_ = 0;
 
-	get_new_trajectory_ = true;
+	if(replan_request){
+		ROS_WARN("[operations | nav_server | %s]: Resetting trajectory flag after obstacle detected in path by planner.\n", robot_name_.c_str());
+		get_new_trajectory_ = false;
+	}
+	else
+	{
+		ROS_WARN("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
+		get_new_trajectory_ = true;
+	}
+		
 }
 
 void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server, bool smooth)
