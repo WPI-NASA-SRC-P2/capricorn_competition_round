@@ -108,6 +108,7 @@ void TeamManager::setEmptyTeamsStandby()
 
 void TeamManager::recruitment()
 {
+   hopper_busy = false;
    setEmptyTeamsStandby();
    for(int i = 0; i < MAX_TEAMS; i++)
    {
@@ -133,11 +134,27 @@ void TeamManager::recruitment()
       case DUMPING:
          checkAndRecruitForDumping(i);
          break;
+      case GO_TO_REPAIR_STATION:
+         checkAndRecruitForGoToRepairStation(i);
+         break;
+      case WAIT_FOR_HOPPER_APPOINTMENT:
+         checkAndRecruitForWaitForHopperAppointment(i);
+         break;
+      case RESET_AT_HOPPER:
+         checkAndRecruitForResetAtHopper(i);
+         break;
       default:
          break;
       }
    }
-   // ROS_INFO("");
+
+   for(int i = 0; i < MAX_ROBOTS; i++)
+   {
+      if (robots_waiting_to_reset.at(i) && !hopper_busy)
+      {
+         all_teams.at(i)->setTeamMacroState(RESET_AT_HOPPER);
+      }
+   }
 }
 
 bool TeamManager::hasScout(int team_index)
@@ -320,6 +337,52 @@ void TeamManager::checkAndRecruitForDumping(int team_index)
    fireExcavator(team_index);
 }
 
+void TeamManager::checkAndRecruitForGoToRepairStation(int team_index)
+{
+   if(all_teams.at(team_index)->isExcavatorHired() && all_teams.at(team_index)->isHaulerHired())
+   {
+      int standby_team = getStandbyTeam();
+      ROBOTS_ENUM excavator = all_teams.at(team_index)->getExcavator();
+      all_teams.at(standby_team)->setExcavator(excavator);
+      all_teams.at(team_index)->disbandExcavator();
+
+      all_teams.at(standby_team)->setTeamMacroState(GO_TO_REPAIR_STATION);
+   }
+}
+
+void TeamManager::checkAndRecruitForWaitForHopperAppointment(int team_index)
+{
+   // int robot_index = (int) SCOUT_1 + i;
+   ROBOTS_ENUM scout = all_teams.at(team_index)->getScout();
+   ROBOTS_ENUM excavator = all_teams.at(team_index)->getExcavator();
+   ROBOTS_ENUM hauler = all_teams.at(team_index)->getHauler();\
+
+   int scout_index = (int) SCOUT_1 + i;
+   int excavator_index = (int) EXCAVATOR_1 + i;
+   int hauler_index = (int) HAULER_1 + i;
+
+   robots_waiting_to_reset.at(scout_index) = true;
+   robots_waiting_to_reset.at(excavator_index) = true;
+   robots_waiting_to_reset.at(hauler_index) = true;
+}
+
+void TeamManager::checkAndRecruitForResetAtHopper(int team_index)
+{
+   hopper_busy = true; 
+
+   ROBOTS_ENUM scout = all_teams.at(team_index)->getScout();
+   ROBOTS_ENUM excavator = all_teams.at(team_index)->getExcavator();
+   ROBOTS_ENUM hauler = all_teams.at(team_index)->getHauler();\
+
+   int scout_index = (int) SCOUT_1 + i;
+   int excavator_index = (int) EXCAVATOR_1 + i;
+   int hauler_index = (int) HAULER_1 + i;
+
+   robots_waiting_to_reset.at(scout_index) = false;
+   robots_waiting_to_reset.at(excavator_index) = false;
+   robots_waiting_to_reset.at(hauler_index) = false;
+}
+
 void TeamManager::checkAndRecruitForIdle(int team_index)
 {
    if(!hasScout(team_index))
@@ -336,6 +399,15 @@ void TeamManager::checkAndRecruitForStandby(int team_index)
       
    fireExcavator(team_index);
    fireHauler(team_index);
+}
+
+int TeamManager::getStandbyTeam()
+{
+   for(int i = 0; i < MAX_TEAMS; i++)
+   {
+      if(all_teams.at(i)->getTeamMacroState() == STANDBY)
+         return i;
+   }
 }
 
 void TeamManager::step()
