@@ -18,7 +18,7 @@ operations::WheelVelocities last_velocity;
 
 bool interrupt_ramp;
 // Maximum acceleration we allow for the robot. 0.5 m/s linear, (0.5 / 0.19) rad/s angular
-const float CONST_ACCEL = 5.0 / 0.19;
+const float CONST_ACCEL = 0.50 / 0.19;
 const float VEL_EPSILON = 0.01;
 
 ros::Publisher front_left_vel_pub_;

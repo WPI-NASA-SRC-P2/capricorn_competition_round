@@ -238,17 +238,18 @@ void NavigationServer::steerRobot(const std::vector<double>& angles)
  */
 void NavigationServer::moveRobotWheels(const std::vector<double> velocity)
 {
-	std::vector<double> angular_vels;
+	moveRobotWheelsNew(velocity);
+	// std::vector<double> angular_vels;
 
-	for(int i = 0; i < velocity.size(); i++)
-	{
-		angular_vels.push_back(NavigationAlgo::linearToAngularVelocity(velocity.at(i)));
-	}
+	// for(int i = 0; i < velocity.size(); i++)
+	// {
+	// 	angular_vels.push_back(NavigationAlgo::linearToAngularVelocity(velocity.at(i)));
+	// }
 
-	publishMessage(front_left_vel_pub_, angular_vels.at(0));
-	publishMessage(front_right_vel_pub_, angular_vels.at(1));
-	publishMessage(back_right_vel_pub_, angular_vels.at(2));
-	publishMessage(back_left_vel_pub_, angular_vels.at(3));
+	// publishMessage(front_left_vel_pub_, angular_vels.at(0));
+	// publishMessage(front_right_vel_pub_, angular_vels.at(1));
+	// publishMessage(back_right_vel_pub_, angular_vels.at(2));
+	// publishMessage(back_left_vel_pub_, angular_vels.at(3));
 }
 
 /**
@@ -258,12 +259,13 @@ void NavigationServer::moveRobotWheels(const std::vector<double> velocity)
  */
 void NavigationServer::moveRobotWheels(const double velocity)
 {
-	double angular_velocity = NavigationAlgo::linearToAngularVelocity(velocity);
+	moveRobotWheelsNew(velocity);
+	// double angular_velocity = NavigationAlgo::linearToAngularVelocity(velocity);
 
-	publishMessage(front_left_vel_pub_, angular_velocity);
-	publishMessage(front_right_vel_pub_, angular_velocity);
-	publishMessage(back_left_vel_pub_, angular_velocity);
-	publishMessage(back_right_vel_pub_, angular_velocity);
+	// publishMessage(front_left_vel_pub_, angular_velocity);
+	// publishMessage(front_right_vel_pub_, angular_velocity);
+	// publishMessage(back_left_vel_pub_, angular_velocity);
+	// publishMessage(back_right_vel_pub_, angular_velocity);
 }
 
 // Ramp robot wheels at a given velocity. Calls the other version
@@ -499,7 +501,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 
 bool NavigationServer::driveDistance(double delta_distance)
 {
-	brakeRobot(false);
+	brakeRobotNew(false);
 	ROS_INFO("[operations | nav_server | %s]: Driving forwards %fm\n", robot_name_.c_str(), delta_distance);
 
 	// Save the starting robot pose so we can track delta distance
@@ -515,7 +517,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 		{
 			// Stop moving the robot, as we were interrupted.
 			// moveRobotWheels(0);
-			brakeRobot(true);
+			brakeRobotNew(true);
 
 			return false;
 		}
@@ -539,7 +541,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 		}
 
 		// Move the wheels forward at a constant speed
-		moveRobotWheels(BASE_DRIVE_SPEED);
+		moveRobotWheelsNew(BASE_DRIVE_SPEED);
 
 		// Allow ROS to catch up and update our subscribers
 		ros::spinOnce();
@@ -555,7 +557,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 
 	// Stop moving the robot after we are done moving
 	// moveRobotWheels(0);
-	brakeRobot(true);
+	brakeRobotNew(true);
 
 	return true;
 }

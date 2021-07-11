@@ -56,9 +56,9 @@ private:
     const float BASE_SPIN_SPEED = 0.3;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
-    const double LARGE_TRAJECTORY_REST_DIST = 5; 
-    const double SMALL_TRAJECTORY_REST_DIST = 3; 
-    double trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
+    const double LARGE_TRAJECTORY_RESET_DIST = 5; 
+    const double SMALL_TRAJECTORY_RESET_DIST = 3; 
+    double trajectory_reset_dist_ = SMALL_TRAJECTORY_RESET_DIST;
 
     std::string robot_name_;
 
