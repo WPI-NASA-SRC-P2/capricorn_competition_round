@@ -43,7 +43,7 @@ const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -
 const double NOT_AVOID_OBSTACLE_THRESHOLD = 5.0;
 std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex, g_clock_mutex;
 std::string g_desired_label;
-bool g_reached_goal = false, g_cancel_called = false, g_goal_failed = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false, g_nav_vision_called = false;
+bool g_reached_goal = false, g_cancel_called = false, g_goal_failed = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false, g_nav_vision_called = false, g_last_nav_vision_call = false;
 int g_height_threshold = 400;
 
 enum HEIGHT_THRESHOLD
@@ -606,7 +606,18 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
     if(g_nav_vision_called) 
     {
         visionNavigation();
-        return;
+
+        if(g_goal_failed && !g_last_nav_vision_call)
+        {
+            g_goal_failed = false;
+            g_send_nav_goal = true;
+            g_nav_vision_called = false;
+            g_previous_state_is_go_to = false;
+        }
+        else
+        {
+            return;
+        }
     } 
 
     g_start_clock = g_clock;
@@ -629,6 +640,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
         g_nav_vision_called = true;
+        g_last_nav_vision_call = true;
     }
 
     const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
@@ -733,6 +745,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     g_reached_goal = false;
     g_goal_failed = false;
     g_nav_vision_called = false;
+    g_last_nav_vision_call = false;
 
     ros::Rate update_rate(UPDATE_HZ);
 
@@ -799,6 +812,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     {
         g_goal_failed = false;
         result.result = COMMON_RESULT::FAILED;
+        ROS_INFO_STREAM(getString("TASK FAILED FINALLY"));
         as->setSucceeded(result, "Failed Goal");
         return;
     }
