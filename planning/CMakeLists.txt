@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   nav_msgs
   geometry_msgs
+  perception
   message_generation
   #TrajectoryWithVelocities
 )
@@ -54,6 +55,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
   FILES
   TrajectoryWithVelocities.msg
+  
  )
 
 ## Generate services in the 'srv' folder
@@ -137,7 +139,7 @@ include_directories(
 # )
 add_library(${PROJECT_NAME} 
   # src/nodes/path_planner_server.cpp
-  src/classes/astar.cpp src/classes/cspace.cpp src/classes/dyn_planning.cpp 
+  src/classes/astar.cpp src/classes/cspace.cpp src/classes/dyn_planning.cpp src/classes/dyn_planning_2.cpp 
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
