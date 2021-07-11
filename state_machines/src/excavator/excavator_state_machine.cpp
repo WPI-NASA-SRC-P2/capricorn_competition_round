@@ -928,41 +928,41 @@ void ExcavatorGoToScoutRecovery::createPoses()
 /////////////////////////////////////  V O L A T I L E  R E C O V E R Y  S T A T E  C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ExcavatorGoToRepairStation::entryPoint()
-{
-   first_ = true;
-}
+// void ExcavatorGoToRepairStation::entryPoint()
+// {
+//    first_ = true;
+// }
 
-bool ExcavatorGoToRepairStation::isDone()
-{
-   current_state_done_ = navigation_vision_client_->getState().isDone();
-   return current_state_done_;
-}
+// bool ExcavatorGoToRepairStation::isDone()
+// {
+//    current_state_done_ = navigation_vision_client_->getState().isDone();
+//    return current_state_done_;
+// }
 
-bool ExcavatorGoToRepairStation::hasSucceeded()
-{
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
-   // if(last_state_succeeded_)
-   //    ROS_WARN_STREAM("Excavator Go to Repair Station Completed Successfully");
-   return last_state_succeeded_;
-}
+// bool ExcavatorGoToRepairStation::hasSucceeded()
+// {
+//    last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+//    // if(last_state_succeeded_)
+//    //    ROS_WARN_STREAM("Excavator Go to Repair Station Completed Successfully");
+//    return last_state_succeeded_;
+// }
 
-void ExcavatorGoToRepairStation::step()
-{
+// void ExcavatorGoToRepairStation::step()
+// {
 
-   if (first_)
-   {
-      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
-      navigation_vision_goal_.mode = V_REACH;
-      // navigation_vision_goal_.target_loc = target_loc_;
-      navigation_vision_client_->sendGoal(navigation_vision_goal_);
-      first_ = false;
-   }
-   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Going to repair station Step Function!");
-}
+//    if (first_)
+//    {
+//       navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+//       navigation_vision_goal_.mode = V_REACH;
+//       // navigation_vision_goal_.target_loc = target_loc_;
+//       navigation_vision_client_->sendGoal(navigation_vision_goal_);
+//       first_ = false;
+//    }
+//    ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Going to repair station Step Function!");
+// }
 
-void ExcavatorGoToRepairStation::exitPoint()
-{
-   // none at the moment
-   navigation_vision_client_->cancelGoal();
-}
+// void ExcavatorGoToRepairStation::exitPoint()
+// {
+//    // none at the moment
+//    navigation_vision_client_->cancelGoal();
+// }
