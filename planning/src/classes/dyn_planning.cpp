@@ -5,7 +5,7 @@
 using namespace std;
 
 
-float DynamicPlanning::lengthOfPath(nav_msgs::Path path)
+float DynamicPlanning::lengthOfPath(nav_msgs::Path& path)
 {   
     float pathLength = 0;
 
@@ -17,7 +17,7 @@ float DynamicPlanning::lengthOfPath(nav_msgs::Path path)
         float length = sqrt(pow(second_point.x - first_point.x, 2) + pow(second_point.y - first_point.y, 2) * 1.0);
         pathLength += length;
     }
-    
+    std::cout << "path length is: " <<  pathLength << std::endl;
     return pathLength;
 }
 
@@ -36,25 +36,31 @@ double DynamicPlanning::distance(geometry_msgs::Point firstpoint, geometry_msgs:
     float trackDistance1 = 0; 
     std::pair <geometry_msgs::Point, geometry_msgs::Point> waypoints;
 
-        for (int i = 0; i < path.poses.size() - 2; i++)
+        for (int i = path.poses.size(); i > 1; i--)
         {
-        geometry_msgs::Point first_point = robot_pose.pose.position;          //robot position
+        geometry_msgs::Point first_point = path.poses[i-1].pose.position;          //robot position
+        std::cout << "------first point:  " <<  first_point << std::endl;
         geometry_msgs::Point second_point = upcoming_point;       //upcoming point
+        std::cout << "------second point:  " <<  second_point << std::endl;
+       
                 
         trackDistance1 = sqrt(pow(second_point.x - first_point.x, 2) + pow(second_point.y - first_point.y, 2) * 1.0);    
+        std::cout << "*********" << trackDistance1 << "*********" << std::endl;
               
 
         if(trackDistance1 > 6)
         {
             /*find the equation of the line using two points
             then find the point which is at 6 m from the initial point */
-            double a, b , c;
+            float a, b , c;
 
             a = second_point.y - first_point.y;
+            std::cout << a << std::endl;
             b = second_point.x - first_point.x;
-           
+            std::cout << b << std::endl;
             float m1, c1;
-            m1 = tan(a/b);
+            m1 = a/(b + 0.1);
+            std::cout << "#########" << m1 << "###########" << std::endl;
             c1 = first_point.y - m1*first_point.x;
             
             geometry_msgs::Point new_point_1;
@@ -74,16 +80,24 @@ double DynamicPlanning::distance(geometry_msgs::Point firstpoint, geometry_msgs:
             if(distance_1 < distance_2)
             {  
                 waypoints.first = first_point;   
-                waypoints.second = new_point_1;   
+                waypoints.second = new_point_1;  
+                ROS_INFO("Calculated new waypoints d1 < d2, "); 
                 return waypoints; 
             }
             else
             {
                 waypoints.first = first_point;   
                 waypoints.second = new_point_2;   
+                ROS_INFO("Calculated new waypoints d2 < d1");
                 return waypoints;
             }
         }  
+        else{
+            waypoints.first = first_point;
+            waypoints.second = second_point;
+            ROS_INFO("Distance is less than 6m");
+            return waypoints;
+        }
     }
 
 }
@@ -98,49 +112,83 @@ std::vector<geometry_msgs::Point> interpolation_poses(std::pair<geometry_msgs::P
 
    geometry_msgs::Point A = waypoints.first; // first point of the line 
    geometry_msgs::Point B = waypoints.second; // last point of the line 
+   std::cout << "------waypoint 1:  " <<  A << std::endl;
+   std::cout << "------waypoint 2:  " << B << std::endl;
 
-   for(int k = 1; k < 6; k++)
-    {
-        {   
-            geometry_msgs::Point Intr;    
-            Intr.x  = A.x*(1-(1/k)) + B.x*(1/k);    
-            Intr.y  = A.y*(1-(1/k)) + B.y*(1/k);
-            Intr_poses.push_back(Intr);   // interpolated points
-        } 
-    }
+   geometry_msgs::Point mean;
+   mean.x = (A.x + B.x)/2;
+   mean.y = (A.y + B.y)/2;
+
+   geometry_msgs::Point onethird;
+   onethird.x = (A.x + (0.33*(B.x - A.x)));
+   onethird.y = (A.y + (0.33*(B.y - A.y)));
+
+
+   geometry_msgs::Point twothird;
+   twothird.x = (A.x + (0.66*(B.x - A.x)));
+   twothird.y = (A.y + (0.66*(B.y - A.y)));
+
+
+
+   Intr_poses.push_back(mean);
+   Intr_poses.push_back(onethird);
+   Intr_poses.push_back(twothird);
+//    for(int i=0; i < Intr_poses.size(); i++)
+//  {
+     std::cout << "Interpolated points calculated: " << Intr_poses[2] << std::endl;
+//  }
+        // for(int k = 1; k < 10; k++)
+    
+        // {   
+            // geometry_msgs::Point Intr;    
+            // Intr.x  = A.x*(1-(1/k)) + B.x*(1/k);    
+            // Intr.y  = A.y*(1-(1/k)) + B.y*(1/k);
+            // Intr_poses.push_back(Intr);   // interpolated points
+
+
+            
+
+            // std::cout << "Interpolated points calculated: " << Intr_poses[k] << std::endl;
+            // 
+        // } 
+    // }
 
    return Intr_poses;
 }
 
 bool DynamicPlanning::checkForObstacles(nav_msgs::Path& path, nav_msgs::OccupancyGrid& oGrid, geometry_msgs::PoseStamped robot_pose) // path is giving the grid coordinates
 {
-    for(int i = 0; i < path.poses.size()-1 ; i++)
+    // lengthOfPath(nav_msgs::Path& path);
+    for(int i = path.poses.size(); i > 2 ; i--)
     {
         geometry_msgs::Point upcoming_point;
-        upcoming_point = path.poses[i+1].pose.position; 
+        upcoming_point = path.poses[i-3].pose.position;  // changed to 2 cause first two points in path are same.
 
-        while(upcoming_point.x == robot_pose.pose.position.x  && upcoming_point.y == robot_pose.pose.position.y)
-        {
+        // while(upcoming_point.x != robot_pose.pose.position.x  && upcoming_point.y != robot_pose.pose.position.y)
+        // {
+    
+            std::pair<geometry_msgs::Point, geometry_msgs::Point> new_waypoints;
+            new_waypoints = waypointOnPath(upcoming_point,robot_pose, path, 6.0);
 
-        std::pair<geometry_msgs::Point, geometry_msgs::Point> new_waypoints;
-        new_waypoints = waypointOnPath(upcoming_point,robot_pose, path, 6.0);
+        
 
-        std::vector<geometry_msgs::Point> new_Intr_poses;
-        new_Intr_poses = interpolation_poses(new_waypoints);
+            std::vector<geometry_msgs::Point> new_Intr_poses;
+            new_Intr_poses = interpolation_poses(new_waypoints);
 
-        for(int j = 0; j < new_Intr_poses.size() ; j++)
-        {
-            if(oGrid.data[AStar::indexFromPoseStamped(new_Intr_poses[j], oGrid)] > 50)  
-            {                                                                                 
-                ROS_INFO("Obstacle on the current path");
-                return true; // trigger on !!!!
-            }
-            else
+            for(int j = 0; j < new_Intr_poses.size() ; j++)
             {
-                return false;
+                ROS_INFO("checking for Threshold values");
+                if(oGrid.data[AStar::indexFromPoseStamped(new_Intr_poses[j], oGrid)] > 50)  
+                {                                                                                 
+                    ROS_INFO("Obstacle on the current path");
+                    return true; // trigger on !!!!
+                }
+                else
+                {
+                    return false;
+                }
             }
-        }
-        }
+        // }
     }
 
 }
