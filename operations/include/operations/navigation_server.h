@@ -261,7 +261,7 @@ private:
      * @brief Used to request a new trajectory after the robot has performed the inital turn upon receiving new goal (Helps with obstacle detection) OR to handle replan requests from planner.
      * @param replan_request Used to indicate whether the new trajectory request was called for an initial turn double traj check or for replan request for dynamic planning.
      */
-    void requestNewTrajectory(void, bool replan_request = false);
+    void requestNewTrajectory(bool replan_request = false);
 
     /**
      * @brief Execute a smooth drive to a waypoint. WARNING: Will keep moving after termination.

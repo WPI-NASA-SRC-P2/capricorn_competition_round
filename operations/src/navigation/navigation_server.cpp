@@ -131,7 +131,7 @@ void NavigationServer::initSubscribers(ros::NodeHandle& nh, std::string& robot_n
 	nh.getParam("cheat_odom", odom_flag);
 
 	update_current_robot_pose_ = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
-	replan_sub_ = nh.subscribe("/" + robot_name + "/" + NAVIGATION_ACTIONLIB + "/" + REPLAN_TRAJECTORY, 1000, &NavigationServer::replanCB, this);
+	replan_sub_ = nh.subscribe(NAVIGATION_ACTIONLIB + "/" + REPLAN_TRAJECTORY, 1000, &NavigationServer::replanCB, this);
 
 	if (odom_flag)
 	{
@@ -256,7 +256,7 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	// Declare a trajectory message
 	planning::TrajectoryWithVelocities traj;
 
-	// Use the service call to get a trajectory
+	// // Use the service call to get a trajectory
 	planning::trajectory srv;
 	srv.request.targetPose = goal;
 
@@ -265,8 +265,10 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	{
 		ROS_INFO("[operations | nav_server | %s]: Trajectory client call succeeded", robot_name_.c_str());
 		traj = srv.response.trajectory;
+
 		//TODO: Delete hotfix once planner issue with extra waypoints has been solved
 		int trajLength = traj.waypoints.size();
+
 		if(trajLength >= 2)
 		{
 			traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 2);
@@ -278,7 +280,6 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 			traj.waypoints.resize(0);
 			return traj;
 		}
-		
 	}
 	else
 	{
@@ -309,7 +310,6 @@ planning::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const pla
 		std_msgs::Float64 temp_vel;
 		temp_vel.data = 0;
 		in_map_frame.velocities.push_back(temp_vel);
-
 	}
 
 	//Reverse trajectory waypoints from planner
@@ -375,7 +375,6 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	while (abs(delta_heading) > ANGLE_EPSILON && ros::ok())
 	{
 		delta_heading = NavigationAlgo::changeInHeading(getRobotPose(), target_robot_pose, robot_name_, buffer_);
-		// printf("Current delta heading: %frad\n", delta_heading);
 
 		// target_robot_pose in the robot's frame of reference
 		geometry_msgs::PoseStamped target_in_robot_frame = target_robot_pose;
@@ -443,7 +442,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 		// Check trajectory flag before continuing
 		if(get_new_trajectory_ == true)
 		{
-			requestNewTrajectory();
+			requestNewTrajectory(true);
 			return false;
 		}
 
@@ -514,28 +513,28 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		// Check trajectory flag before continuing
 		if(get_new_trajectory_ == true)
 		{
-			requestNewTrajectory();
-			return false;
+			requestNewTrajectory(true);
+			return true;
 		}
 
 		distance_traveled = abs(NavigationAlgo::changeInPosition(starting_pose, getRobotPose()));
 
 		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
 		// we want to get a new trajectory from the planner.
-		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
-		{
-			ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
-			ROS_WARN("Current distance traveled %f", distance_traveled);
+		// if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
+		// {
+		// 	ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
+		// 	ROS_WARN("Current distance traveled %f", distance_traveled);
 
-			moveRobotWheels(0);
-			brakeRobot(true);
+		// 	moveRobotWheels(0);
+		// 	brakeRobot(true);
 
-			// Reset the distance traveled
-			total_distance_traveled_ = 0;
+		// 	// Reset the distance traveled
+		// 	total_distance_traveled_ = 0;
 
-			get_new_trajectory_ = true;
-			return true;
-		}
+		// 	get_new_trajectory_ = true;
+		// 	return true;
+		// }
 
 		// Calculate the current dist to waypoint
 		double current_distance_to_waypoint = NavigationAlgo::changeInPosition(getRobotPose(), waypoint);
@@ -595,7 +594,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	return true;
 }
 
-void NavigationServer::requestNewTrajectory(void, bool replan_request)
+void NavigationServer::requestNewTrajectory(bool replan_request)
 {
 	moveRobotWheels(0);
 	brakeRobot(true);
@@ -603,16 +602,15 @@ void NavigationServer::requestNewTrajectory(void, bool replan_request)
 	// Reset the distance traveled
 	total_distance_traveled_ = 0;
 
-	if(replan_request){
+	if(replan_request)
+	{
 		ROS_WARN("[operations | nav_server | %s]: Resetting trajectory flag after obstacle detected in path by planner.\n", robot_name_.c_str());
-		get_new_trajectory_ = false;
 	}
 	else
 	{
 		ROS_WARN("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
-		get_new_trajectory_ = true;
 	}
-		
+		get_new_trajectory_ = true;
 }
 
 void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server, bool smooth)
@@ -740,13 +738,18 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 					ros::Duration(1.0).sleep();
 
-					if(initial_turn_completed == false)
+					if(!initial_turn_completed)
 					{
 						//Request new trajectory after inital turn in case new obstacles have appeared
-						requestNewTrajectory();
+						requestNewTrajectory(false);
 						initial_turn_completed = true;
 						break;
-						
+					}
+
+					if(get_new_trajectory_)
+					{
+						i = trajectory.waypoints.size();
+						continue;
 					}
 
 					if (!turned_successfully)
@@ -794,7 +797,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 					return;
 				}
-				
+
+				if(get_new_trajectory_)
+				{
+					i = trajectory.waypoints.size();
+					continue;
+				}
 			}
 			else
 			{
@@ -836,6 +844,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 					return;
 				}
 
+				if(get_new_trajectory_)
+				{
+					i = trajectory.waypoints.size();
+					continue;
+				}
+
 				//Get current pose + position from odometry
 				geometry_msgs::PoseStamped current_robot_pose = getRobotPose();
 
@@ -846,12 +860,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				ROS_INFO("[operations | nav_server | %s]: Going the distance, going for speed", robot_name_.c_str());
 				bool drove_successfully = driveDistance(delta_distance);
 
-				// If driveDistance set the get_new_trajectory_ flag, we should quit out of the for loop, which will get a new trajectory.
 				if(get_new_trajectory_)
 				{
-					ROS_INFO("[operations | nav_server | %s]: Distance planner interrupt. Getting new trajectory.", robot_name_.c_str());
-
-					// Setting i to the length of the trajectory will terminate the for loop.
 					i = trajectory.waypoints.size();
 					continue;
 				}
@@ -908,15 +918,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				//AAAH ERROR
 				ROS_ERROR("[operations | nav_server | %s]: Final turn did not succeed. Exiting.", robot_name_.c_str());
 				res.result = COMMON_RESULT::FAILED;
-				
 			}
 			action_server->setSucceeded(res);
 
 			return;
 		}
 	}
-
-	
 
 	ROS_INFO("[operations | nav_server | %s]: Finished automatic goal!", robot_name_.c_str());
 

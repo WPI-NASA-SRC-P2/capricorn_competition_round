@@ -1,7 +1,7 @@
 <launch>
     <arg name="robot_name" default="small_scout_1" />
     <arg name="output" default="screen" />
-    <arg name="use_cheat_odom" default="false" />
+    <arg name="use_cheat_odom" default="true" />
     <arg name="use_crab_drive" default="false" />
 
     <!-- <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /odom /map 100" /> -->
