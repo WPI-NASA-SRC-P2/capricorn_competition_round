@@ -40,8 +40,10 @@ private:
 
    static const int resetting_hauler_index = 1;
 
-   std::array<bool, MAX_ROBOTS> robots_waiting_to_reset;
+   std::array<bool, 10> robots_waiting_to_reset;
    bool hopper_busy;
+
+   int getStandbyTeam();
 
    void initTeams(ros::NodeHandle nh);
 
