@@ -28,6 +28,7 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: All excavator action servers started!");
 
 //   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
+  odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ExcavatorState::odomCallback, this);
 }
 
 ExcavatorState::~ExcavatorState()
@@ -41,6 +42,16 @@ ExcavatorState::~ExcavatorState()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// C A L L B A C K S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+void ExcavatorState::odomCallback(const nav_msgs::Odometry odom)
+{
+   odom_ = odom;
+   // excavator_pose_ = odom.pose.pose;
+   excavator_pose_.pose = odom.pose.pose;
+   excavator_pose_.header = odom.header;
+   
+}
 
 /** TODO: Check if the object detection callback is needed*/
 
@@ -436,7 +447,7 @@ void DigAndDump::step()
    digging_server_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    done_digging_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::ABORTED);
    // digging_attempt_ += (excavator_arm_client_->getState().isDone();
-   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Digging server succeeded = " << digging_server_succeeded_);
+   // ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Digging server succeeded = " << digging_server_succeeded_);
    // ROS_INFO_STREAM("Digging server succeeded = " << digging_server_succeeded_);
    // digVolatile();
 
@@ -571,6 +582,7 @@ void ExcavatorResetOdomAtHopper::entryPoint()
    first_GTPP = true;
    first_PAH = true;
    first_UFH = true;
+   first_GTR = true;
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
@@ -607,6 +619,9 @@ void ExcavatorResetOdomAtHopper::step()
       break;
    case RESET_ODOM_AT_HOPPER:
       resetOdom();
+      break;
+   case GO_TO_REPAIR_STATION:
+      goToRepair();
       break;
    case EXCAVATOR_IDLE:
       idleExcavator();
@@ -651,10 +666,7 @@ void ExcavatorResetOdomAtHopper::parkAtHopper()
    bool is_done = (park_robot_client_->getState().isDone());
    if (is_done)
    {
-      if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
-         micro_state = UNDOCK_FROM_HOPPER;
-      else
-      {
+      if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS){
          first_PAH = true;
          micro_state = PARK_AT_HOPPER;
       }
@@ -688,9 +700,33 @@ void ExcavatorResetOdomAtHopper::resetOdom()
    maploc::ResetOdom srv;
    srv.request.target_robot_name = robot_name_;
    srv.request.at_hopper = true;
-   macro_state_succeeded = resetOdometryClient.call(srv);
-   macro_state_done = true;
-   micro_state = EXCAVATOR_IDLE;
+   // macro_state_succeeded = resetOdometryClient.call(srv);
+   // macro_state_done = true;
+   micro_state = GO_TO_REPAIR_STATION;
+   return;
+}
+
+void ExcavatorResetOdomAtHopper::goToRepair()
+{
+   if(first_GTR)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_REACH;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Going to repair station vision goal sent");  
+      first_GTR = false;
+      return;
+   }
+   
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      macro_state_done = true;
+      macro_state_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      if (macro_state_succeeded)
+         micro_state = EXCAVATOR_IDLE;
+      // Dont find a reason it should fail,
+   }
 }
 
 void ExcavatorResetOdomAtHopper::exitPoint()
@@ -743,25 +779,190 @@ void ExcavatorGoToRepairStation::exitPoint()
    navigation_vision_client_->cancelGoal();
 }
 
-// int main(int argc, char** argv)
-// {
-//    ros::init(argc, argv, "excavator_state_machine");
-//    ros::NodeHandle nh;
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  G O  TO  S C O U T  R E C O V E R Y  S T A T E  C L A S S /////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//    try {
-//       ExcavatorScheduler cSchd(700);
-      
-//       cSchd.addState(new GoToDefaultArmPosition());
-//       cSchd.addState(new GoToScout());
-//       cSchd.addState(new ParkAndPub());
-//       cSchd.addState(new DigAndDump());
-//       cSchd.setInitialState(EXCAVATOR_DIG_AND_DUMP_VOLATILE);
-//       // cSchd.setInitialState(EXCAVATOR_GOTO_DEFAULT_ARM_POSE);
-//       // cSchd.setInitialState(EXCAVATOR_GO_TO_SCOUT);
-//       cSchd.exec();
-//       return 0;
-//    }
-//    catch(StateMachineException& ex) {
-//       std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
-//    }
-// }
+void ExcavatorGoToScoutRecovery::entryPoint()
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToScoutRecovery.");
+   // define the offset distance for generating poses
+   search_offset_ = 1.0;
+   // set up the four recovery poses
+   createPoses();
+   // reset the pose that is going to be checked
+   pose_index_ = 0;
+
+   cross_end_complete_ = false;
+   search_done_ = false;
+   first_ = true;
+   search_failed_ = false;
+   substate_ = 1;
+}
+
+/** LOGIC: Since step() runs in a loop, flags have to be checked for the sequence to be implemented correctly. 
+ * if(first_) ==> goToCrossEnd
+ * if(crossend DONE) ==> SearchForScout()
+ * if(search successful) ==> last_state_succeeded ==> EXIT
+ * if(search failed) ==> (first_ = true) ==> pose_index_++ ==> cross_end_completed set to FALSE
+ * if(pose_index > 4) ==> last_state_succeeded = false
+ * */
+
+void ExcavatorGoToScoutRecovery::step() 
+{
+   // Sending goal of going to one of the stored poses.
+   if(first_ && (substate_ == 1))
+   {
+      goToCrossEnd(pose_index_);
+      first_ = false;
+   }
+
+   // Sending goal of searching for scout.
+   if(first_ && (substate_ == 2))
+   {
+      searchForScout();
+      ROS_INFO_STREAM("searching for the scout");
+      first_ = false;
+   }
+
+   // check for completion of states
+   if(!cross_end_complete_ && (substate_ == 1))
+      cross_end_complete_ = navigation_client_->getState().isDone();
+   if(!search_done_ && (substate_ == 2))
+      search_done_ = navigation_vision_client_->getState().isDone();
+
+   // If excavator reaches one of the stored poses, set flags that will enable sending goal of searching for scout
+   if(cross_end_complete_ && (substate_ == 1))
+   {
+      substate_ = 2;
+      first_ = true;
+   }
+
+   // Checking to see if search fails, if it does we update the excavator to go to the next recovery pose.
+   if(search_done_ && (substate_ == 2))
+      search_failed_ = (navigation_vision_result_.result == COMMON_RESULT::FAILED);
+
+   // Here is where we update the recovery pose, set the conditions for going to one of those stored poses and 
+   // tell that the cross end is incomplete so that it checks for completion of the new recovery pose. 
+   if(search_failed_ && (pose_index_ < 4) && (substate_ == 2)) {
+      first_ = true;
+      cross_end_complete_ = false;
+      substate_ = 1;
+      pose_index_ ++;
+      search_failed_ = false;
+      search_done_ = false;
+   }
+   scout_found_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   searches_exhausted_= (pose_index_ > 3);
+}
+
+// If the excavator finds the scout or all the recovery_poses_ are exhausted, this recovery state is done.
+bool ExcavatorGoToScoutRecovery::isDone()
+{
+   current_state_done_ = (searches_exhausted_ || scout_found_);
+   return current_state_done_;
+}
+
+// If the excavator finds the scout, state succeeds. 
+bool ExcavatorGoToScoutRecovery::hasSucceeded()
+{
+   // succeeds if scout is found successfully 
+   last_state_succeeded_ = scout_found_;
+   return last_state_succeeded_;
+}
+
+void ExcavatorGoToScoutRecovery::exitPoint()
+{
+   navigation_vision_client_->cancelGoal();
+   navigation_client_->cancelGoal();
+}
+
+// Excavator goes to X-Y offsets defined at the entry point from the pose of the excavator at the entry point. The index correspons to the index of the poses stored at that time.
+void ExcavatorGoToScoutRecovery::goToCrossEnd(int index)
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to cross-end");
+   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+   ROS_INFO_STREAM("POSE INDEX = " << index);
+   ROS_INFO_STREAM("Going to recovery pose : " << recovery_poses_[index]);
+   navigation_action_goal_.pose = recovery_poses_[index];
+   navigation_client_->sendGoal(navigation_action_goal_);
+}
+
+// Excavator searches for scout once it gets to one of those offset poses. 
+void ExcavatorGoToScoutRecovery::searchForScout() 
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to scout");
+   navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS;
+   navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_NAV_AND_NAV_VISION;
+   target_loc_ = m_pcRobotScheduler->getDesiredPose();
+   navigation_vision_goal_.goal_loc = target_loc_;
+   navigation_vision_client_->sendGoal(navigation_vision_goal_);
+   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Excavator State Machine: SUCCESSFUL POSE RECEIVED");
+}
+
+// When the excavator's Recovery method is triggered, it creates 4 offset poses from its current location and stores them in recovery_poses_
+void ExcavatorGoToScoutRecovery::createPoses()
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Creating poses.");
+   
+   recovery_pose_ = excavator_pose_;
+   recovery_pose_.pose.position.x += search_offset_;
+   recovery_poses_[0] = recovery_pose_;
+
+   recovery_pose_ = excavator_pose_;
+   recovery_pose_.pose.position.x -= search_offset_;
+   recovery_poses_[1] = recovery_pose_;
+
+   recovery_pose_ = excavator_pose_;
+   recovery_pose_.pose.position.y += search_offset_;
+   recovery_poses_[2] = recovery_pose_;
+
+   recovery_pose_ = excavator_pose_;
+   recovery_pose_.pose.position.y -= search_offset_;
+   recovery_poses_[3] = recovery_pose_;
+
+   ROS_INFO_STREAM("Poses created: " << recovery_poses_);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  V O L A T I L E  R E C O V E R Y  S T A T E  C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ExcavatorGoToRepairStation::entryPoint()
+{
+   first_ = true;
+}
+
+bool ExcavatorGoToRepairStation::isDone()
+{
+   current_state_done_ = navigation_vision_client_->getState().isDone();
+   return current_state_done_;
+}
+
+bool ExcavatorGoToRepairStation::hasSucceeded()
+{
+   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   // if(last_state_succeeded_)
+   //    ROS_WARN_STREAM("Excavator Go to Repair Station Completed Successfully");
+   return last_state_succeeded_;
+}
+
+void ExcavatorGoToRepairStation::step()
+{
+
+   if (first_)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_REACH;
+      // navigation_vision_goal_.target_loc = target_loc_;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      first_ = false;
+   }
+   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Going to repair station Step Function!");
+}
+
+void ExcavatorGoToRepairStation::exitPoint()
+{
+   // none at the moment
+   navigation_vision_client_->cancelGoal();
+}

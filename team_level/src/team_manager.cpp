@@ -111,7 +111,7 @@ void TeamManager::recruitment()
    setEmptyTeamsStandby();
    for(int i = 0; i < MAX_TEAMS; i++)
    {
-      ROS_INFO_STREAM("[TEAM_LEVEL | team_manager.cpp ]: " << all_teams.at(i)->getScout()<<"  "<<all_teams.at(i)->getExcavator()<<"  "<<all_teams.at(i)->getHauler());
+      // ROS_INFO_STREAM("[TEAM_LEVEL | team_manager.cpp ]: " << all_teams.at(i)->getScout()<<"  "<<all_teams.at(i)->getExcavator()<<"  "<<all_teams.at(i)->getHauler());
 
       switch (all_teams.at(i)->getTeamMacroState())
       {
@@ -137,7 +137,7 @@ void TeamManager::recruitment()
          break;
       }
    }
-   ROS_INFO("");
+   // ROS_INFO("");
 }
 
 bool TeamManager::hasScout(int team_index)
@@ -150,7 +150,7 @@ bool TeamManager::hasScout(int team_index)
    }
    else
    {
-      ROS_INFO_THROTTLE(1, "[TEAM_LEVEL | team_manager.cpp ]: Team %i needs Scout", team_index);
+      ROS_INFO_THROTTLE(3, "[TEAM_LEVEL | team_manager.cpp ]: Team %i needs Scout", team_index);
       teams_need_scout.at(team_index) = true;
       return false;
    }
@@ -166,7 +166,7 @@ bool TeamManager::hasExcavator(int team_index)
    }
    else
    {
-      ROS_INFO_THROTTLE(1, "[TEAM_LEVEL | team_manager.cpp ]: Team %i needs Excavator", team_index);
+      ROS_INFO_THROTTLE(3, "[TEAM_LEVEL | team_manager.cpp ]: Team %i needs Excavator", team_index);
       teams_need_excavator.at(team_index) = true;
       return false;
    }
@@ -182,7 +182,7 @@ bool TeamManager::hasHauler(int team_index)
    }
    else
    {
-      ROS_INFO_THROTTLE(1, "[TEAM_LEVEL | team_manager.cpp ]: Team %i needs Hauler", team_index);
+      ROS_INFO_THROTTLE(3, "[TEAM_LEVEL | team_manager.cpp ]: Team %i needs Hauler", team_index);
       teams_need_hauler.at(team_index) = true;
       return false;
    }
@@ -192,7 +192,7 @@ void TeamManager::fireScout(int team_index)
 {
    if(all_teams.at(team_index)->isScoutHired())
    {
-      ROS_INFO_THROTTLE(1, "[TEAM_LEVEL | team_manager.cpp ]: Scout for sale in team %i", team_index);
+      ROS_INFO_THROTTLE(3, "[TEAM_LEVEL | team_manager.cpp ]: Scout for sale in team %i", team_index);
       scout_for_sale.at(team_index) = true;
    }
    else
@@ -205,7 +205,7 @@ void TeamManager::fireExcavator(int team_index)
 {
    if(all_teams.at(team_index)->isExcavatorHired())
    {
-      ROS_INFO_THROTTLE(1, "[TEAM_LEVEL | team_manager.cpp ]: Excavator for sale in team %i", team_index);
+      ROS_INFO_THROTTLE(3, "[TEAM_LEVEL | team_manager.cpp ]: Excavator for sale in team %i", team_index);
       excavator_for_sale.at(team_index) = true;
    }
    else
@@ -218,7 +218,7 @@ void TeamManager::fireHauler(int team_index)
 {
    if(all_teams.at(team_index)->isHaulerHired())
    {
-      ROS_INFO_THROTTLE(1, "[TEAM_LEVEL | team_manager.cpp ]: Hauler for sale in team %i", team_index);
+      ROS_INFO_THROTTLE(3, "[TEAM_LEVEL | team_manager.cpp ]: Hauler for sale in team %i", team_index);
       hauler_for_sale.at(team_index) = true;
    }
    else
@@ -354,6 +354,6 @@ void TeamManager::exec()
       recruitment();
       step();
       ros::spinOnce();
-      ros::Duration(0.05).sleep();
+      // ros::Duration(0.05).sleep();
    }
 }

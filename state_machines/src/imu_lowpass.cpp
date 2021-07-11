@@ -9,6 +9,7 @@ NASA SPACE ROBOTICS CHALLENGE
 #include <ros/ros.h>
 #include "std_msgs/String.h"
 #include <sensor_msgs/Imu.h>
+#include <utils/common_names.h>
 
 // Global variable to hold the unfiltered data as it comes from the imu
 sensor_msgs::Imu imu_unfiltered;
@@ -22,16 +23,16 @@ int prev_reading_count = 0;
 double filter_factor = 0.2;
 
 // Variables to hold avgs
-double orientation_x_avg;
-double orientation_y_avg;
-double orientation_z_avg;
-double orientation_w_avg;
-double angular_velocity_x_avg;
-double angular_velocity_y_avg;
-double angular_velocity_z_avg;
-double linear_acceleration_x_avg;
-double linear_acceleration_y_avg;
-double linear_acceleration_z_avg;
+double orientation_x_avg = 0.0;
+double orientation_y_avg = 0.0;
+double orientation_z_avg = 0.0;
+double orientation_w_avg = 0.0;
+double angular_velocity_x_avg = 0.0;
+double angular_velocity_y_avg = 0.0;
+double angular_velocity_z_avg = 0.0;
+double linear_acceleration_x_avg = 0.0;
+double linear_acceleration_y_avg = 0.0;
+double linear_acceleration_z_avg = 0.0;
 
 // Callback fn to run every time the imu subscriber sees new data
 void imu_callback(sensor_msgs::Imu imu_data) 
@@ -94,9 +95,9 @@ int main(int argc, char** argv)
     std::string robot_name = argv[1];
     
     // Subscribe to the imu readings
-    ros::Subscriber imu_odom_sub = nh.subscribe("/"+ robot_name + "/imu", 223, imu_callback);
+    ros::Subscriber imu_odom_sub = nh.subscribe("/"+ robot_name + COMMON_NAMES::IMU_TOPIC, 223, imu_callback);
     // Publish filtered imu readings
-    ros::Publisher imu_odom_pub = nh.advertise<sensor_msgs::Imu>("/" + robot_name + "/imu_filtered", 223);
+    ros::Publisher imu_odom_pub = nh.advertise<sensor_msgs::Imu>("/" + robot_name + COMMON_NAMES::IMU_FILTERED_TOPIC, 223);
 
     // Wait here until the imu has given us something
     while(ros::ok() && !imu_message_received)

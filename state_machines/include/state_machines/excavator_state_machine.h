@@ -28,6 +28,8 @@
 #include <maploc/ResetOdom.h>
 #include "perception/ObjectArray.h"                    //Not sure why this had to be added, wasnt needed in scout sm, including the obstacle_avoidance header causes problems
 #include <operations/ParkRobotAction.h>
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseArray.h>
 
 using namespace COMMON_NAMES;
 
@@ -54,9 +56,16 @@ class ExcavatorState : public State {
    
 private:
   ros::Subscriber objects_sub_;
+  ros::Subscriber odom_sub_;
+
    /*** @param objs 
    */
   void objectsCallback(const perception::ObjectArray::ConstPtr objs);
+
+  /** @param odom
+   * Odometry callback for excavator_pose_
+  */
+  void odomCallback(const nav_msgs::Odometry odom);
 
 public:
    
@@ -87,6 +96,11 @@ protected:
   ros::NodeHandle nh_;
 
   std::string robot_name_;
+
+  // For odometry callback
+  nav_msgs::Odometry odom_;
+//   geometry_msgs::Pose excavator_pose_;
+  geometry_msgs::PoseStamped excavator_pose_;
 
   std::mutex objects_mutex_;
   perception::ObjectArray::ConstPtr vision_objects_;
@@ -376,9 +390,10 @@ private:
    void parkAtHopper();
    void undockFromHopper();
    void resetOdom();
+   void goToRepair();
    void idleExcavator(){}
 
-   bool first_GTPP, first_PAH, first_UFH, macro_state_succeeded, macro_state_done;
+   bool first_GTPP, first_PAH, first_UFH, first_GTR, macro_state_succeeded, macro_state_done;
    
    bool state_done;
 
@@ -387,6 +402,7 @@ private:
       PARK_AT_HOPPER,
       UNDOCK_FROM_HOPPER,
       RESET_ODOM_AT_HOPPER,
+      GO_TO_REPAIR_STATION,
       EXCAVATOR_IDLE 
    };
 
@@ -418,5 +434,71 @@ public:
 private:
    bool first_;
 };
+
+/**
+ * @brief If GoToScout fails, this recovery state creates 4 targets located at 4 corners from it
+ *        and looks for the scout at each of those corners. If the scout is found at those corners, it exits the state.
+ */
+class ExcavatorGoToScoutRecovery : public ExcavatorState {
+public:   
+   ExcavatorGoToScoutRecovery(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_SCOUT_RECOVERY, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+   void createPoses();
+   void goToCrossEnd(int index);
+   void searchForScout();
+
+private:
+   bool first_;
+   // geometry_msgs::PoseArray recovery_poses_;
+   geometry_msgs::PoseStamped recovery_poses_[4];
+   geometry_msgs::PoseStamped recovery_pose_;
+   geometry_msgs::PoseStamped target_loc_;
+
+   // geometry_msgs::PoseStamped recovery_pose_1_;
+   // geometry_msgs::PoseStamped recovery_pose_2_;
+   // geometry_msgs::PoseStamped recovery_pose_3_;
+   // geometry_msgs::PoseStamped recovery_pose_4_;
+
+   int pose_index_;
+   float search_offset_;
+   bool cross_end_complete_;
+   bool search_done_, scout_found_, searches_exhausted_;
+   bool search_failed_;
+   int substate_; 
+};
+
+/**
+ * @brief ExcavatorGoToRepairStation travel to the Repair Station
+ * 
+ * @param isDone() navigation vision is complete
+ * @param hasSucceeded() navigation succeeded in going to Repair Station
+ * 
+ */ 
+class VolatileRecovery : public ExcavatorState {
+public:   
+   VolatileRecovery(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_VOLATILE_RECOVERY, nh, robot_name) {}
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private:
+   bool first_;
+};
+
 // #endif
 
