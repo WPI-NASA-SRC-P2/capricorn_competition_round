@@ -41,14 +41,21 @@ bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_
     float dist;
     float radius;
     std::vector<std::unordered_map<std::string, float>> CompletePathParameters;
-    for (int i = 0; i < path.poses.size() - 1; i++)
+    for (int i = 0; i < path.poses.size() - 2; i++)
     {
-        std::unordered_map<std::string, float> parameters = LineEquation(path.poses[i].pose.position, path.poses[i + 1].pose.position );
+        ROS_INFO("checkAllObstacles - 1");
+
+        std::unordered_map<std::string, float> parameters = LineEquation(path.poses[i + 1].pose.position, path.poses[i + 2].pose.position );
         CompletePathParameters.push_back(parameters); // should save the parameters of all the segments in path
+
+        ROS_INFO("checkAllObstacles - 2");
+
     }
 
     for (int l = 0; l < CompletePathParameters.size(); l++ )
     {
+        ROS_INFO("checkAllObstacles - 3");
+
         for (int j = 0; j < obstacles.number_of_objects; j++)
         {
             geometry_msgs::Point centroid;

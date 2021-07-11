@@ -4,7 +4,8 @@
 #include "planning/TrajectoryWithVelocities.h"
 #include <geometry_msgs/Point.h>
 #include "perception/ObjectArray.h"
-#include "dyn_planning.h"
+#include "perception/Object.h"
+#include "dyn_planning_2.h"
 #include "std_msgs/Bool.h"
 
 
@@ -20,25 +21,23 @@ ros::Publisher replan_trigger;
 
 std::string robot_name_ = "";
 bool path_received;
-// bool robot_reached = false;
 nav_msgs::Path global_path_1;
 std_msgs::Bool result;
+perception::ObjectArray global_Obstacles_; 
+bool freePath;
+std_msgs::Bool pathstatus;
 
-nav_msgs::OccupancyGrid global_oGrid_;
-// geometry_msgs::PoseStamped robot_pose;
 
-perception::ObjectArray GlobalObstacle; 
-
-void ObjectDetectionCB(perception::ObjectArray obstacles)
+void DetectionCB(perception::ObjectArray obstacles)
 {
-    GlobalObstacle = obstacles; 
-
+  ROS_INFO(" obstacles Received");
+  global_Obstacles_ = obstacles; 
 }
 
 void pathCB(nav_msgs::Path path)
 {
   ROS_INFO(" Path Received");
-  
+  global_path_1 = path;
   path_received = true;
 }
 
@@ -53,41 +52,47 @@ int main(int argc, char *argv[])
   robot_name_ = robot_name;
 
   //ROS Topic names
-  std::string ObjectDetection_topic_ = "/capricorn/"+robot_name_+"/object_detection_map";
+  std::string ObjectDetection_topic_ = "/capricorn/"+robot_name_+"/object_detection/objects";
   std::string path_topic_ = "/galaga/debug_path";
  
-
   //create a nodehandle
   ros::NodeHandle nh;
 
-  //initializing a planner server
+  ROS_INFO("Begin Subscribing");
 
-  ObjectDetectionSubscriber = nh.subscribe(ObjectDetection_topic_, 1000, ObjectDetectionCB);
+  ObjectDetectionSubscriber = nh.subscribe(ObjectDetection_topic_, 1000, DetectionCB);
+  ROS_INFO("Begin Subscribing-2");
+
   pathSubscriber = nh.subscribe(path_topic_, 1000, pathCB);
 
+  ROS_INFO("Done Subscribing");
   #ifdef DEBUG_INSTRUMENTATION
   replan_trigger = nh.advertise<std_msgs::Bool>("/capricorn/"+ robot_name_ + "/trigger", 1000);
   #endif
-perception::ObjectArray obstacles;
+  ROS_INFO("Done Publishing");
+  
   while(ros::ok())
   {
-    
-    // else if (robot_reached)
-    //   continue;
-    // else
-    // {
+    ROS_INFO("While loop - 1");
+      if(path_received)
+      {
 
-      // if(!path_received)
-      //   continue;
-      // else
-      // {
-    if(path_received == true)
-    {
-      ROS_INFO("Path Received");
-
-    }
-   
-    
+        freePath = DynamicPlanning2::checkAllObstacles(global_Obstacles_, global_path_1);
+        ROS_INFO("While loop - 2");
+        
+        if(freePath)
+        {
+          pathstatus.data = true;
+          replan_trigger.publish(pathstatus);
+        }
+        else 
+        {
+          pathstatus.data = false;
+          replan_trigger.publish(pathstatus);
+        }
+        ROS_INFO("While loop - 3");
+          
+      }
     ros::spinOnce();
   }
   return 0;

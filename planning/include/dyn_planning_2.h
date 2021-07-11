@@ -49,7 +49,7 @@ public:
  * @return true 
  * @return false 
  */
-bool checkAllObstacles(perception::ObjectArray obstacles, nav_msgs::Path path);
+static bool checkAllObstacles(perception::ObjectArray obstacles, nav_msgs::Path path);
 
 
 };
