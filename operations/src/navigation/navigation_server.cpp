@@ -256,7 +256,7 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	// Declare a trajectory message
 	planning::TrajectoryWithVelocities traj;
 
-	// // Use the service call to get a trajectory
+	// Use the service call to get a trajectory
 	planning::trajectory srv;
 	srv.request.targetPose = goal;
 
@@ -524,7 +524,6 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
 		{
 			ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
-			ROS_WARN("Current distance traveled %f", distance_traveled);
 
 			moveRobotWheels(0);
 			brakeRobot(true);
