@@ -4,15 +4,23 @@
 #include <perception/Object.h>
 #include <geometry_msgs/Point.h>
 #include <ros/ros.h>
+#include <tf2_ros/transform_listener.h>
 #include <unordered_map>
 #include <math.h>
+#include <utils/common_names.h> 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+
+
 
 class DynamicPlanning2
 {
 private:
+
     
 public:
 
+ 
 /**
  * @brief 
  * 
@@ -39,6 +47,16 @@ public:
   * @return float 
   */
  static float PerpendicularDistance(std::unordered_map<std::string, float> parameters, geometry_msgs::Point centroidOfObstacle);
+
+/**
+ * @brief 
+ * 
+ * @param path 
+ * @return nav_msgs::Path 
+ */
+static nav_msgs::Path getPathInMapFrame(nav_msgs::Path path);
+
+static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration = 0.1, int tries = 10);
 
 
 /**

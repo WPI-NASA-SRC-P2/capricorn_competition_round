@@ -12,6 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   geometry_msgs
   perception
+  utils
+  tf2
+  tf2_ros
   message_generation
   #TrajectoryWithVelocities
 )
@@ -121,7 +124,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES planning
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs nav_msgs message_runtime
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs nav_msgs message_runtime 
 #  DEPENDS system_lib
 )
 ###########
