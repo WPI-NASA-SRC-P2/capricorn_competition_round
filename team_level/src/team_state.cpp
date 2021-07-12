@@ -360,6 +360,8 @@ TEAM_MICRO_STATE Excavating::getMicroState()
 
    if(hauler_task == ROBOT_IDLE_STATE && excavator_task == ROBOT_IDLE_STATE)
          return WAIT_FOR_HAULER;
+   if(hauler_task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_done_and_succeeded)
+      return WAIT_FOR_HAULER;
    if(hauler_task == HAULER_PARK_AT_EXCAVATOR && hauler_done_and_succeeded)
       return DIG_AND_DUMP;
    if(excavator_task == EXCAVATOR_PRE_HAULER_PARK_MANEUVER && excavator_done_and_succeeded)
@@ -512,7 +514,7 @@ bool GoToRepairStation::entryPoint()
    //Set to true to avoid repeatedly giving the goal.
    ROS_INFO("TEAM_LEVEL | team_state | entrypoint of GoToRepairStation");
 
-   if(scout_in_team == NONE || excavator_in_team == NONE || hauler_in_team == NONE)
+   if(scout_in_team == NONE && excavator_in_team == NONE && hauler_in_team == NONE)
    {
       ROS_ERROR_STREAM("TEAM_LEVEL | team_state | No robot set for GoToRepairStation!");
       return false;
@@ -662,9 +664,9 @@ TeamState& ResetAtHopper::transition()
 void ResetAtHopper::step()
 {
    if(scout_in_team != NONE)
-      robot_state_register->setRobotState(hauler_in_team, SCOUT_RESET_ODOM);
+      robot_state_register->setRobotState(scout_in_team, SCOUT_RESET_ODOM);
    if(excavator_in_team != NONE)
-      robot_state_register->setRobotState(hauler_in_team, EXCAVATOR_RESET_ODOM_AT_HOPPER);
+      robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_RESET_ODOM_AT_HOPPER);
    if(hauler_in_team != NONE)
       robot_state_register->setRobotState(hauler_in_team, HAULER_DUMP_VOLATILE_TO_PROC_PLANT);
 }
