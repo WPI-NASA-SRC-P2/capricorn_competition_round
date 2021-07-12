@@ -56,6 +56,17 @@ public:
  */
 static nav_msgs::Path getPathInMapFrame(nav_msgs::Path path);
 
+/**
+ * @brief 
+ * 
+ * @param pose 
+ * @param frame 
+ * @param tf_buffer 
+ * @param duration 
+ * @param tries 
+ * @return true 
+ * @return false 
+ */
 static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& frame, const tf2_ros::Buffer& tf_buffer, float duration = 0.1, int tries = 10);
 
 
@@ -67,7 +78,7 @@ static bool transformPose(geometry_msgs::PoseStamped& pose, const std::string& f
  * @return true 
  * @return false 
  */
-static bool checkAllObstacles(perception::ObjectArray obstacles, nav_msgs::Path path);
+static bool checkAllObstacles(perception::ObjectArray obstacles, nav_msgs::Path path, std::string robot_name);
 
 
 };

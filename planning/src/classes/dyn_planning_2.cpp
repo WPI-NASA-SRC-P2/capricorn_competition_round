@@ -4,16 +4,20 @@
 tf2_ros::Buffer buffer_;
 tf2_ros::TransformListener *listener_;
 
+
+
+
 std::unordered_map<std::string, float> DynamicPlanning2::LineEquation(geometry_msgs::Point wp1, geometry_msgs::Point wp2)
 {
     std::unordered_map<std::string, float> parameters;
     float deltaX = wp2.x - wp1.x;
     float deltaY = wp2.y - wp1.y;
+    //CHECK IF THE DELTAx IS ZERO 
     float m = deltaY/deltaX;
-    parameters["a"]= -deltaY/deltaX;;
+    parameters["a"]= -m;
     parameters["b"] = 1;
     parameters["c"] = wp2.y - m*wp2.x;
-    parameters["m"] = deltaY/deltaX;;
+    parameters["m"] = m;
     
     return parameters;
 }
@@ -86,18 +90,18 @@ nav_msgs::Path DynamicPlanning2::getPathInMapFrame(nav_msgs::Path path)
 
  
 
-bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_msgs::Path path)
+bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_msgs::Path path, std::string robot_name)
 {
-    float min_dist = INFINITY;
     float dist;
     float radius;
     std::vector<std::unordered_map<std::string, float>> CompletePathParameters;
-    nav_msgs::Path new_path = getPathInMapFrame(path);
-    for (int i = 0; i < new_path.poses.size() - 2; i++)
+    listener_ = new tf2_ros::TransformListener(buffer_);
+    //nav_msgs::Path new_path = getPathInMapFrame(path);
+    for (int i = 0; i < path.poses.size() - 2; i++)
     {
         ROS_INFO("checkAllObstacles - 1");
 
-        std::unordered_map<std::string, float> parameters = LineEquation(new_path.poses[i + 1].pose.position, new_path.poses[i + 2].pose.position );
+        std::unordered_map<std::string, float> parameters = LineEquation(path.poses[i + 1].pose.position, path.poses[i + 2].pose.position );
         CompletePathParameters.push_back(parameters); // should save the parameters of all the segments in path
 
         ROS_INFO("checkAllObstacles - 2");
@@ -110,9 +114,13 @@ bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_
 
         for (int j = 0; j < obstacles.number_of_objects; j++)
         {
+            geometry_msgs::PoseStamped obstaclePoseStamped = obstacles.obj[j].point; 
+	        DynamicPlanning2::transformPose(obstaclePoseStamped, robot_name + COMMON_NAMES::ROBOT_BASE, buffer_);
+
             geometry_msgs::Point centroid;
-            centroid.x = obstacles.obj[j].center.x;
-            centroid.y = obstacles.obj[j].center.y;
+            centroid.x = obstaclePoseStamped.pose.position.x;
+            centroid.y = obstaclePoseStamped.pose.position.y;
+            centroid.z = obstaclePoseStamped.pose.position.z;
 
             dist = PerpendicularDistance( CompletePathParameters[l], centroid);
             radius = ObstacleRadius(obstacles.obj[j].width);
@@ -120,12 +128,10 @@ bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_
             {
                 return true;
             }
-            else 
-            {
-                return false;
-            }
+
         }
         
     }
+    delete listener_;
     return false;
 }

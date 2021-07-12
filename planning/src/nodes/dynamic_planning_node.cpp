@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
       if(path_received)
       {
 
-        freePath = DynamicPlanning2::checkAllObstacles(global_Obstacles_, global_path_1);
+        freePath = DynamicPlanning2::checkAllObstacles(global_Obstacles_, global_path_1, robot_name_);
         ROS_INFO("While loop - 2");
         
         if(freePath)
