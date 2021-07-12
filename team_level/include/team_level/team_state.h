@@ -115,7 +115,7 @@ protected:
    RobotStateRegister *robot_state_register;
    RobotPoseRegister *robot_pose_register;
    geometry_msgs::PoseStamped volatile_site_location;
-   bool reset_robot_odometry;
+   bool reset_robot_odometry = false;
 };
 
 // // All the states as per the diagram

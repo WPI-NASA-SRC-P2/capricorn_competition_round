@@ -35,3 +35,18 @@ Unknown states combination:
 [ WARN] [1625934780.005314187, 100.690000000]: TEAM_LEVEL | team_state | Excavator enum 5 state:39
 [ WARN] [1625934780.005326378, 100.690000000]: TEAM_LEVEL | team_state | Hauler enum 7 state:26
 
+[ WARN] [1626037198.332337715, 190.929000000]: TEAM_LEVEL | team_state | Scout enum 1 state:4
+[ WARN] [1626037198.332350655, 190.929000000]: TEAM_LEVEL | team_state | Excavator enum 4 state:39
+[ WARN] [1626037198.332363897, 190.929000000]: TEAM_LEVEL | team_state | Hauler enum 0 state:39
+
+[ WARN] [1626043974.118034939, 1025.412000000]: TEAM_LEVEL | team_state | Scout enum 1 state:2
+[ WARN] [1626043974.118050005, 1025.412000000]: TEAM_LEVEL | team_state | Excavator enum 4 state:11
+[ WARN] [1626043974.118062872, 1025.412000000]: TEAM_LEVEL | team_state | Hauler enum 0 state:39
+
+[ WARN] [1625784697.806591495, 102.112000000]: TEAM_LEVEL | team_state | Scout enum 1 state:0
+[ WARN] [1625784697.806614911, 102.112000000]: TEAM_LEVEL | team_state | Excavator enum 4 state:39
+[ WARN] [1625784697.806627428, 102.112000000]: TEAM_LEVEL | team_state | Hauler enum 7 state:39
+
+[ WARN] [1626119656.370114633, 5113.564000000]: TEAM_LEVEL | team_state | Scout enum 0 state:39
+[ WARN] [1626119656.370126358, 5113.564000000]: TEAM_LEVEL | team_state | Excavator enum 4 state:39
+[ WARN] [1626119656.370137404, 5113.564000000]: TEAM_LEVEL | team_state | Hauler enum 7 state:25

@@ -69,6 +69,7 @@ void RobotStateRegister::setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK des
     desired_state_msg.robot_name = ROBOT_ENUM_NAME_MAP[robot];
     desired_state_msg.robot_desired_state = desired_task;
     robot_state_publisher.publish(desired_state_msg);
+   //  ROS_ERROR_STREAM("[ TEAM_LEVEL | robot_state_register ]: "<< desired_state_msg.robot_name <<"  "<<desired_state_msg.robot_desired_state);
     ros::Duration(0.01).sleep();
    }
    else
@@ -86,6 +87,7 @@ void RobotStateRegister::setRobotState(ROBOTS_ENUM robot, ROBOTS_ENUM target_rob
     desired_state_msg.target_robot_name = ROBOT_ENUM_NAME_MAP[target_robot];
     desired_state_msg.robot_desired_state = desired_task;
     robot_state_publisher.publish(desired_state_msg);
+   //  ROS_ERROR_STREAM("[ TEAM_LEVEL | robot_state_register ]: "<< desired_state_msg.robot_name <<"  "<<desired_state_msg.robot_desired_state);
     ros::Duration(0.01).sleep();
    }
    else{
@@ -102,6 +104,7 @@ void RobotStateRegister::setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK des
     desired_state_msg.robot_desired_state = desired_task;
     desired_state_msg.goal_pose = target_pose;
     robot_state_publisher.publish(desired_state_msg);
+   //  ROS_ERROR_STREAM("[ TEAM_LEVEL | robot_state_register ]: "<< desired_state_msg.robot_name <<"  "<<desired_state_msg.robot_desired_state);
     ros::Duration(0.01).sleep();
    }
    else

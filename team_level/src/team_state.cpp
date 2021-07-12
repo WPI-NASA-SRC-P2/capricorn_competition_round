@@ -653,7 +653,10 @@ TeamState& ResetAtHopper::transition()
    if(isDone())
    {
       ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to IDLE");
-      return getState(IDLE);
+      if(scout_in_team != NONE)
+         return getState(SEARCH);
+      else
+         return getState(IDLE);
    }
    else
    {

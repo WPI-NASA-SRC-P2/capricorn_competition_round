@@ -254,7 +254,7 @@ void TeamManager::recruitScout(int team_index)
          all_teams.at(team_index)->setScout(scout);
          all_teams.at(i)->disbandScout();
 
-         all_teams.at(team_index)->setTeamMacroState(SEARCH);
+         all_teams.at(team_index)->setTeamMacroState(GO_TO_REPAIR_STATION);
          all_teams.at(team_index)->setResetRobot(true);
 
          scout_for_sale.at(i) = false;
@@ -403,6 +403,6 @@ void TeamManager::exec()
       recruitment();
       step();
       ros::spinOnce();
-      // ros::Duration(0.05).sleep();
+      // ros::Duration(0.5).sleep();
    }
 }

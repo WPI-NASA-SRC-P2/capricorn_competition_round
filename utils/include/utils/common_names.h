@@ -196,7 +196,7 @@ namespace COMMON_NAMES
     SCOUT_PARK_REPAIR_STATION,   // Scout parks at repair station
 
     /**************EXCAVATOR STATES**************/  
-    //10
+    //11
     EXCAVATOR_GO_TO_LOC,             // Takes Excavator to a location from which it will
                                          // be quicker to get to the digging location
     EXCAVATOR_GO_TO_SCOUT,           // Get close to the volatile when it is detected
@@ -215,7 +215,7 @@ namespace COMMON_NAMES
     EXCAVATOR_VOLATILE_RECOVERY,
     
     /**************HAULER STATES**************/
-    //23
+    //24
     HAULER_GO_TO_LOC,                    // Takes Hauler to a location
     HAULER_DUMP_VOLATILE_TO_PROC_PLANT, // Undocks hauler from excavator, goes to processing plant,
                                              // parks hauler to processing plant, dumps volatile and

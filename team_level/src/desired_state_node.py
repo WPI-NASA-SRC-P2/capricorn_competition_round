@@ -175,5 +175,21 @@ if __name__ == "__main__":
   desired_state.last_state_succeeded = True
   desired_state_pub.publish(desired_state)
   
+  input('Enter for Hauler Park at Proc Plant')
+  desired_state = robot_state_status()
+  desired_state.robot_name = "small_hauler_1"
+  desired_state.robot_current_state = 39
+  desired_state.current_state_done = True
+  desired_state.last_state_succeeded = True
+  desired_state_pub.publish(desired_state)
+  
+  input('Enter for Excavator Park at Proc Plant')
+  desired_state = robot_state_status()
+  desired_state.robot_name = "small_excavator_1"
+  desired_state.robot_current_state = 22
+  desired_state.current_state_done = True
+  desired_state.last_state_succeeded = True
+  desired_state_pub.publish(desired_state)
+  
 
   # this node works entirely based on the callback functions, thus just need to spin in main loop after initializing    
