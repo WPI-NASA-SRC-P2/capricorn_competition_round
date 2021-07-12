@@ -444,8 +444,8 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
     ros::Duration(2).sleep();
     publishAngles(-1.5, 1, 1, -2); // This set of values move the scoop under the surface
     ros::Duration(2).sleep();
-    publishAngles(-1.5, 1, 1, -0.6);
-    ros::Duration(3).sleep();
+    publishAngles(-1.5, 1, 1, -1.0); //-0.6 earlier
+    ros::Duration(5).sleep();
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
     ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Scoop info topic returned: " + scoop_value + "\n");
 
@@ -510,6 +510,7 @@ void execute(const operations::ExcavatorGoalConstPtr &goal, Server *action_serve
   // SUCCEESS or FAILED depending upon if it could find volatile
   if(goal->task == CHECK_VOLATILE && dig_dump_result == false)
   {
+    ROS_INFO_STREAM("[operations | excavator_server | " <<robot_name_.c_str() << "]: CHECK VOLATILE DID NOT RETURN VOLATILES");
     operations::ExcavatorResult res;
     res.result = COMMON_RESULT::FAILED;
     action_server->setSucceeded(res);

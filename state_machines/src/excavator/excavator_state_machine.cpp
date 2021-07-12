@@ -787,7 +787,7 @@ void ExcavatorGoToScoutRecovery::entryPoint()
 {
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToScoutRecovery.");
    // define the offset distance for generating poses
-   search_offset_ = 1.0;
+   search_offset_ = 10.0;
    // set up the four recovery poses
    createPoses();
    // reset the pose that is going to be checked
@@ -1003,7 +1003,8 @@ void VolatileRecovery::step()
          }
          // check if volatile check has been completed and/or has suceeded
          volatile_check_done_ = (excavator_arm_client_->getState().isDone());
-         volatile_found_ = (excavator_arm_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+         // volatile_found_ = (excavator_arm_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+         volatile_found_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
          if(trial_ > 4)
             trials_exhausted_ = true;
          ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Volatile found : " << volatile_found_);
