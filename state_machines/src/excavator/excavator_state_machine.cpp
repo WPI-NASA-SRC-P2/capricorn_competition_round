@@ -128,7 +128,7 @@ bool GoToScout::isDone() {
 } 
 
 bool GoToScout::hasSucceeded() {
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    return last_state_succeeded_;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -796,8 +796,7 @@ void ExcavatorGoToScoutRecovery::entryPoint()
    cross_end_complete_ = false;
    search_done_ = false;
    first_ = true;
-   search_failed_ = false;
-   substate_ = 1;
+   substate_ = GO_TO_CROSS_END;
 }
 
 /** LOGIC: Since step() runs in a loop, flags have to be checked for the sequence to be implemented correctly. 
@@ -810,50 +809,53 @@ void ExcavatorGoToScoutRecovery::entryPoint()
 
 void ExcavatorGoToScoutRecovery::step() 
 {
-   // Sending goal of going to one of the stored poses.
-   if(first_ && (substate_ == 1))
+   switch(substate_)
    {
-      goToCrossEnd(pose_index_);
-      first_ = false;
+      case GO_TO_CROSS_END:
+         if(first_){
+            goToCrossEnd(pose_index_);
+            first_ = false;
+            pose_index_++;
+         }
+   
+         cross_end_complete_ = navigation_client_->getState().isDone();
+
+         if(cross_end_complete_){
+            first_ = true;
+            substate_ = SEARCH_FOR_SCOUT;
+            cross_end_complete_ = false;
+         }
+         
+         break;
+      case SEARCH_FOR_SCOUT:
+      
+         // sending goal of searching for scout
+         if(first_){
+            searchForScout();
+            ROS_INFO_STREAM("searching for the scout");
+            first_ = false;
+         }
+
+         ROS_INFO_STREAM("checking for scout using vision!");
+         search_done_ = navigation_vision_client_->getState().isDone();
+         scout_found_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+         searches_exhausted_= (pose_index_ > 3);
+         ROS_INFO_STREAM("boolean results: search_done: " << search_done_ << " scout_found_: " << scout_found_);
+
+         if(search_done_){
+            first_ = true;
+            cross_end_complete_ = false;
+            substate_ = GO_TO_CROSS_END;
+            search_done_ = false;
+         }     
+         if(scout_found_ || searches_exhausted_)
+            substate_ = EXCAVATOR_IDLE;
+         break;
+
+      case EXCAVATOR_IDLE:
+         ROS_INFO_STREAM("Excavator is now idle, scout may have been found (state may have failed)");
+         break;
    }
-
-   // Sending goal of searching for scout.
-   if(first_ && (substate_ == 2))
-   {
-      searchForScout();
-      ROS_INFO_STREAM("searching for the scout");
-      first_ = false;
-   }
-
-   // check for completion of states
-   if(!cross_end_complete_ && (substate_ == 1))
-      cross_end_complete_ = navigation_client_->getState().isDone();
-   if(!search_done_ && (substate_ == 2))
-      search_done_ = navigation_vision_client_->getState().isDone();
-
-   // If excavator reaches one of the stored poses, set flags that will enable sending goal of searching for scout
-   if(cross_end_complete_ && (substate_ == 1))
-   {
-      substate_ = 2;
-      first_ = true;
-   }
-
-   // Checking to see if search fails, if it does we update the excavator to go to the next recovery pose.
-   if(search_done_ && (substate_ == 2))
-      search_failed_ = (navigation_vision_result_.result == COMMON_RESULT::FAILED);
-
-   // Here is where we update the recovery pose, set the conditions for going to one of those stored poses and 
-   // tell that the cross end is incomplete so that it checks for completion of the new recovery pose. 
-   if(search_failed_ && (pose_index_ < 4) && (substate_ == 2)) {
-      first_ = true;
-      cross_end_complete_ = false;
-      substate_ = 1;
-      pose_index_ ++;
-      search_failed_ = false;
-      search_done_ = false;
-   }
-   scout_found_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   searches_exhausted_= (pose_index_ > 3);
 }
 
 // If the excavator finds the scout or all the recovery_poses_ are exhausted, this recovery state is done.
@@ -863,7 +865,6 @@ bool ExcavatorGoToScoutRecovery::isDone()
    return current_state_done_;
 }
 
-// If the excavator finds the scout, state succeeds. 
 bool ExcavatorGoToScoutRecovery::hasSucceeded()
 {
    // succeeds if scout is found successfully 
@@ -928,41 +929,122 @@ void ExcavatorGoToScoutRecovery::createPoses()
 /////////////////////////////////////  V O L A T I L E  R E C O V E R Y  S T A T E  C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// void ExcavatorGoToRepairStation::entryPoint()
-// {
-//    first_ = true;
-// }
 
-// bool ExcavatorGoToRepairStation::isDone()
-// {
-//    current_state_done_ = navigation_vision_client_->getState().isDone();
-//    return current_state_done_;
-// }
+/** LOGIC: 
+*
+*/
+void VolatileRecovery::entryPoint()
+{
+   first_ = true;    
+   trial_ = 1;
+   movement_done_ = false;
+   default_arm_done_ = false;
+   volatile_check_done_ = false;
+   volatile_found_ = false;
+   macro_state_done_ = false;
+   trials_exhausted_ = false;
+   substate_ = CROSS_MOVEMENT;
+}
 
-// bool ExcavatorGoToRepairStation::hasSucceeded()
-// {
-//    last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
-//    // if(last_state_succeeded_)
-//    //    ROS_WARN_STREAM("Excavator Go to Repair Station Completed Successfully");
-//    return last_state_succeeded_;
-// }
+bool VolatileRecovery::isDone()
+{
+   // base isDone on excavator arm client done (recovery failed) or if found volatile
+   current_state_done_ = (macro_state_done_ || volatile_found_);
+   return current_state_done_;
+}
 
-// void ExcavatorGoToRepairStation::step()
-// {
+bool VolatileRecovery::hasSucceeded()
+{
+   // base succeeded on if a volatile was found
+   last_state_succeeded_ = volatile_found_;
+   // if(last_state_succeeded_)
+   //    ROS_WARN_STREAM("Excavator Go to Repair Station Completed Successfully");
+   return last_state_succeeded_;
+}
 
-//    if (first_)
-//    {
-//       navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
-//       navigation_vision_goal_.mode = V_REACH;
-//       // navigation_vision_goal_.target_loc = target_loc_;
-//       navigation_vision_client_->sendGoal(navigation_vision_goal_);
-//       first_ = false;
-//    }
-//    ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Going to repair station Step Function!");
-// }
+/*
+current_state_done_ = excavator_arm_client_->getState().isDone();
+last_state_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+*/
 
-// void ExcavatorGoToRepairStation::exitPoint()
-// {
-//    // none at the moment
-//    navigation_vision_client_->cancelGoal();
-// }
+void VolatileRecovery::step()
+{
+
+   if(trial_ > 4)
+      trials_exhausted_ = true;
+   macro_state_done_ = trials_exhausted_ && volatile_check_done_;
+
+   // first go to the first step of recovery
+   switch (substate_)
+   {
+      case CROSS_MOVEMENT:
+         // execute cross movement part of the recovery based on trial number
+         if (first_){
+            ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Volatile Recovery Executing Cross Movement trial " << trial_);    
+            crossMovement(trial_);      
+            first_ = false;
+            trial_++;
+         }
+         // check if cross movement is finished
+         movement_done_ = (excavator_arm_client_->getState().isDone());
+         // once cross movement is finished, switch to check volatile microstate
+         if(movement_done_){
+            substate_ = CHECK_VOLATILE;
+            first_ = true;
+            movement_done_ = false;
+         }
+         break;
+      case CHECK_VOLATILE:
+         // check for the volatile at the recovery location
+         if(first_){
+            ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Volatile Recovery Executing Volatile Check");
+            checkVolatile();
+            first_ = false;         
+         }
+         // check if volatile check has been completed and/or has suceeded
+         volatile_check_done_ = (excavator_arm_client_->getState().isDone());
+         volatile_found_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+         // once volatile check has been completed, switch to default arm pose microstate
+         if(volatile_check_done_){
+            substate_ = CROSS_MOVEMENT;
+            first_ = true;
+            volatile_check_done_ = false;
+         }
+         break;
+      case DEFAULT_ARM_POSE:
+         if(first_){
+            goToDefaultArmPose();
+            first_ = false;
+         }
+         break;
+      
+   }
+   if(macro_state_done_){
+      substate_ = DEFAULT_ARM_POSE;
+      first_ = true;
+   }
+}
+
+void VolatileRecovery::crossMovement(const int& trial)
+{ 
+   excavator_arm_goal_.task = EXCAVATOR_ARM_TASK::RECOVERY; 
+   excavator_arm_goal_.trial = trial;
+   excavator_arm_client_->sendGoal(excavator_arm_goal_);
+}   
+void VolatileRecovery::checkVolatile() 
+{
+   excavator_arm_goal_.task = EXCAVATOR_ARM_TASK::CHECK_VOLATILE;
+   excavator_arm_client_->sendGoal(excavator_arm_goal_); 
+}
+
+void VolatileRecovery::goToDefaultArmPose() 
+{
+   excavator_arm_goal_.task = EXCAVATOR_ARM_TASK::GO_TO_DEFAULT;
+   excavator_arm_client_->sendGoal(excavator_arm_goal_);
+}
+
+void VolatileRecovery::exitPoint()
+{
+   // none at the moment
+   excavator_arm_client_->cancelGoal();
+}

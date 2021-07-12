@@ -462,17 +462,17 @@ private:
    geometry_msgs::PoseStamped recovery_pose_;
    geometry_msgs::PoseStamped target_loc_;
 
-   // geometry_msgs::PoseStamped recovery_pose_1_;
-   // geometry_msgs::PoseStamped recovery_pose_2_;
-   // geometry_msgs::PoseStamped recovery_pose_3_;
-   // geometry_msgs::PoseStamped recovery_pose_4_;
-
    int pose_index_;
    float search_offset_;
    bool cross_end_complete_;
    bool search_done_, scout_found_, searches_exhausted_;
-   bool search_failed_;
-   int substate_; 
+
+   enum GO_TO_SCOUT_RECOVERY_MICRO_STATES{
+      GO_TO_CROSS_END,
+      SEARCH_FOR_SCOUT,
+      EXCAVATOR_IDLE
+   };
+   GO_TO_SCOUT_RECOVERY_MICRO_STATES substate_; 
 };
 
 /**
@@ -496,8 +496,24 @@ public:
    void step() override;
    void exitPoint() override;
 
+   void checkVolatile();
+   void crossMovement(const int& trial);
+   void goToDefaultArmPose();
+
 private:
    bool first_;
+   int trial_;
+   bool movement_done_;
+   bool default_arm_done_;
+   bool volatile_check_done_;
+   bool volatile_found_, macro_state_done_, trials_exhausted_;
+   enum VOLATILE_RECOVERY_MICRO_STATES{
+      CROSS_MOVEMENT,
+      CHECK_VOLATILE,
+      DEFAULT_ARM_POSE
+   };
+
+   VOLATILE_RECOVERY_MICRO_STATES substate_;
 };
 
 // #endif
