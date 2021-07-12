@@ -2,7 +2,7 @@
 
 
 tf2_ros::Buffer buffer_;
-tf2_ros::TransformListener *listener_;
+tf2_ros::TransformListener *listener_obstacle_;
 
 
 
@@ -95,7 +95,7 @@ bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_
     float dist;
     float radius;
     std::vector<std::unordered_map<std::string, float>> CompletePathParameters;
-    listener_ = new tf2_ros::TransformListener(buffer_);
+    listener_obstacle_ = new tf2_ros::TransformListener(buffer_);
     //nav_msgs::Path new_path = getPathInMapFrame(path);
     for (int i = 0; i < path.poses.size() - 2; i++)
     {
@@ -115,7 +115,7 @@ bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_
         for (int j = 0; j < obstacles.number_of_objects; j++)
         {
             geometry_msgs::PoseStamped obstaclePoseStamped = obstacles.obj[j].point; 
-	        DynamicPlanning2::transformPose(obstaclePoseStamped, robot_name + COMMON_NAMES::ROBOT_BASE, buffer_);
+	        DynamicPlanning2::transformPose(obstaclePoseStamped, COMMON_NAMES::MAP, buffer_);
 
             geometry_msgs::Point centroid;
             centroid.x = obstaclePoseStamped.pose.position.x;
@@ -132,6 +132,6 @@ bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_
         }
         
     }
-    delete listener_;
+    delete listener_obstacle_;
     return false;
 }

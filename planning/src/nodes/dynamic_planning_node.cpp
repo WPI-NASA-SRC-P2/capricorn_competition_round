@@ -17,6 +17,9 @@
 ros::Subscriber pathSubscriber;
 ros::Subscriber ObjectDetectionSubscriber; ///
 ros::Publisher replan_trigger;
+tf2_ros::Buffer buffer_;
+tf2_ros::TransformListener *listener_path_;
+
 
 
 std::string robot_name_ = "";
@@ -39,6 +42,13 @@ void pathCB(nav_msgs::Path path)
   ROS_INFO(" Path Received");
   global_path_1 = path;
   path_received = true;
+  
+  for(int i = 0; i < path.poses.size(); i++)
+  {
+    DynamicPlanning2::transformPose(path.poses[i],COMMON_NAMES::MAP, buffer_);
+  }
+
+ 
 }
 
 
@@ -62,7 +72,7 @@ int main(int argc, char *argv[])
 
   ObjectDetectionSubscriber = nh.subscribe(ObjectDetection_topic_, 1000, DetectionCB);
   ROS_INFO("Begin Subscribing-2");
-
+  listener_path_ = new tf2_ros::TransformListener(buffer_);
   pathSubscriber = nh.subscribe(path_topic_, 1000, pathCB);
 
   ROS_INFO("Done Subscribing");
