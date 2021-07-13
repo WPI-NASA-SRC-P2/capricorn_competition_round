@@ -342,10 +342,10 @@ bool Excavating::entryPoint()
 
 bool Excavating::isDone()
 {
-   STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
-   bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
+   STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
+   bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
 
-   return excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_succeeded;
+   return hauler_task == HAULER_UNDOCK_EXCAVATOR && hauler_done_and_succeeded;
 }
 
 TEAM_MICRO_STATE Excavating::getMicroState()
@@ -362,6 +362,8 @@ TEAM_MICRO_STATE Excavating::getMicroState()
          return WAIT_FOR_HAULER;
    if(hauler_task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_done_and_succeeded)
       return WAIT_FOR_HAULER;
+   if(excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && robot_state_register->isDone(excavator_in_team))
+      return UNDOCK_HAULER;
    if(hauler_task == HAULER_PARK_AT_EXCAVATOR && hauler_done_and_succeeded)
       return DIG_AND_DUMP;
    if(excavator_task == EXCAVATOR_PRE_HAULER_PARK_MANEUVER && excavator_done_and_succeeded)
@@ -412,6 +414,8 @@ void Excavating::step()
    case DIG_AND_DUMP:
       stepDigAndDump();
       break;
+   case UNDOCK_HAULER:
+      stepUndockHauler();
    default:
       break;
    }
@@ -435,6 +439,11 @@ void Excavating::stepParkHauler()
 void Excavating::stepDigAndDump()
 {
    robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_DIG_AND_DUMP_VOLATILE);
+}
+
+void Excavating::stepUndockHauler()
+{
+   robot_state_register->setRobotState(hauler_in_team, excavator_in_team, HAULER_UNDOCK_EXCAVATOR);
 }
 
 void Excavating::exitPoint() 
@@ -528,21 +537,21 @@ bool GoToRepairStation::isDone()
    if(scout_in_team != NONE)
    {
       STATE_MACHINE_TASK scout_task = robot_state_register->currentState(scout_in_team);
-      bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team) && robot_state_register->hasSucceeded(scout_in_team);
+      bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team);// && robot_state_register->hasSucceeded(scout_in_team);
 
       return scout_task == SCOUT_GOTO_REPAIR_STATION && scout_done_and_succeeded;
    }
    if(excavator_in_team != NONE)
    {
       STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
-      bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
+      bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team);// && robot_state_register->hasSucceeded(excavator_in_team);
 
       return excavator_task == EXCAVATOR_GO_TO_REPAIR && excavator_done_and_succeeded;
    }
    if(hauler_in_team != NONE)
    {
       STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
-      bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
+      bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team);// && robot_state_register->hasSucceeded(hauler_in_team);
 
       return hauler_task == HAULER_GOTO_REPAIR_STATION && hauler_done_and_succeeded;
    }

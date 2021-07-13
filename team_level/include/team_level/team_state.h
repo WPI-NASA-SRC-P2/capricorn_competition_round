@@ -47,6 +47,7 @@ enum TEAM_MICRO_STATE{
    PRE_PARK_MANEUVER_EXCAVATOR,
    PARK_AT_EXCAVATOR_HAULER,
    DIG_AND_DUMP,
+   UNDOCK_HAULER,
 
    // DUMPING
    DUMP_COLLECTION,
@@ -200,6 +201,7 @@ private:
    void stepPreParkManeuverExcavator();
    void stepParkHauler();
    void stepDigAndDump();
+   void stepUndockHauler();
 };
 
 class Dumping: public TeamState{

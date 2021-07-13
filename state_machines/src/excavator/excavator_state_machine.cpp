@@ -692,7 +692,7 @@ void ExcavatorResetOdomAtHopper::resetOdom()
    maploc::ResetOdom srv;
    srv.request.target_robot_name = robot_name_;
    srv.request.at_hopper = true;
-   // macro_state_succeeded = resetOdometryClient.call(srv);
+   resetOdometryClient.call(srv);
    // macro_state_done = true;
    micro_state = GO_TO_REPAIR_STATION;
    return;
@@ -761,8 +761,8 @@ void ExcavatorGoToRepairStation::step()
       // navigation_vision_goal_.target_loc = target_loc_;
       navigation_vision_client_->sendGoal(navigation_vision_goal_);
       first_ = false;
+      ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Going to repair station Step Function!");
    }
-   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Going to repair station Step Function!");
 }
 
 void ExcavatorGoToRepairStation::exitPoint()
