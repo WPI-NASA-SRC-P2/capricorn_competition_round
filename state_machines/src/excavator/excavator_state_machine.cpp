@@ -667,8 +667,8 @@ void ExcavatorResetOdomAtHopper::parkAtHopper()
    if (is_done)
    {
       if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS){
-         first_PAH = true;
-         micro_state = PARK_AT_HOPPER;
+         first_UFH = true;
+         micro_state = UNDOCK_FROM_HOPPER;  
       }
    }
 }
