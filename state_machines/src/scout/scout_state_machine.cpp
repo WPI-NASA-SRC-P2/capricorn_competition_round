@@ -226,6 +226,7 @@ void ResetOdomAtHopper::entryPoint()
    first_PAH = true;
    first_UFH = true;
    first_GTR = true;
+   resetOdomDone_ = false;
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
@@ -311,11 +312,11 @@ void ResetOdomAtHopper::parkAtHopper()
    {
       if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
          micro_state = UNDOCK_FROM_HOPPER;
-      else
-      {
-         first_PAH = true;
-         micro_state = PARK_AT_HOPPER;
-      }
+      // else
+      // {
+      //    first_PAH = true;
+      //    micro_state = PARK_AT_HOPPER;
+      // }
    }
 }
 
@@ -346,6 +347,7 @@ void ResetOdomAtHopper::resetOdom()
    maploc::ResetOdom srv;
    srv.request.target_robot_name = robot_name_;
    srv.request.at_hopper = true;
+   resetOdomDone_ = resetOdometryClient.call(srv);
    // macro_state_succeeded = resetOdometryClient.call(srv);
    // macro_state_done = true;
    micro_state = GO_TO_REPAIR_STATION;
@@ -404,7 +406,7 @@ bool GoToRepairStation::isDone()
 
 bool GoToRepairStation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(last_state_succeeded_)
       ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout GoToRepairStation completed successfully");
 

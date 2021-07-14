@@ -466,11 +466,16 @@ public:
       last_state_succeeded_ = true;
       return true; }
 
-   void entryPoint() override{}
+   void entryPoint() override 
+   {
+      hauler_client_->cancelGoal();
+      navigation_vision_client_ ->cancelGoal();
+      navigation_client_->cancelGoal();
+      park_robot_client_->cancelGoal();
+   }
    void step() override{}
    void exitPoint() override{}
    State& transition() override{} 
-
 };
 
 /**
@@ -478,7 +483,7 @@ public:
  *    [0] Navigates to Proc_plant
  *    [1] Parks to the hopper
  *    [2] Dunps volatile
- *    [3] UNdocks from hopper to prevent drift accumulation after resetting odom due to 180 deg turn
+ *    [3] Undocks from hopper to prevent drift accumulation after resetting odom due to 180 deg turn
  *    [4] Resets odom
  * 
  * @param isDone() is done when it has reset Odom
