@@ -40,10 +40,12 @@ enum TEAM_MICRO_STATE{
    ROBOTS_TO_GOAL,
    UNDOCK_SCOUT,
    PARK_EXCAVATOR_AT_SCOUT,
+   RECOVERY_SCOUT_FINDING,
    MAKE_EXCAV_HAULER_IDLE,
 
    // EXCAVATING
    WAIT_FOR_HAULER,
+   CHECK_FOR_VOLATILE,
    PRE_PARK_MANEUVER_EXCAVATOR,
    PARK_AT_EXCAVATOR_HAULER,
    DIG_AND_DUMP,
@@ -180,6 +182,7 @@ private:
    void stepRobotsToGoal();
    void stepUndockScout();
    void stepParkExcavatorAtScout();
+   void stepRecoveryScoutFinding();
    void stepMakeExcavHaulerIdle();
 };
 
