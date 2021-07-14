@@ -14,8 +14,8 @@
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
     </include>
     
-    <include file="$(find team_level)/launch/all_schedulers.launch"/> 
+    <!-- <include file="$(find team_level)/launch/all_schedulers.launch"/>  -->
 
-    <!-- <include file="$(find maploc)/launch/odom_comparison.launch"/>  -->
+    <include file="$(find maploc)/launch/odom_comparison.launch"/> 
     
 </launch>
