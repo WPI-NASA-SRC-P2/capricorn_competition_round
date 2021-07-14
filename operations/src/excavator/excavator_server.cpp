@@ -447,21 +447,13 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
     publishAngles(-1.5, 1, 1, -1.0); //-0.6 earlier
     ros::Duration(5).sleep();
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
+    bool return_value = volatile_found;
     ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Scoop info topic returned: " + scoop_value + "\n");
 
-    if(!volatile_found)
-    {
-      publishAngles(-1.5, -0.5, 1, 1.5); // Intermediate set of values to raise the arm above the surface
-      ros::Duration(2).sleep();
-      publishAngles(-1.5, -2, 1, 1.5); // This set of values moves the arm over the surface
-      return false;
-    }
-    else
-    {
-      publishAngles(-1.5, -0.5, 1, 1.5); // Intermediate set of values to raise the arm above the surface
-      ros::Duration(2).sleep();
-      publishAngles(-1.5, -2, 1, 1.5); // This set of values moves the arm over the surface
-    }
+    publishAngles(-1.5, -0.5, 1, 1.5); // Intermediate set of values to raise the arm above the surface
+    ros::Duration(2).sleep();
+    publishAngles(-1.5, -2, 1, 1.5); // This set of values moves the arm over the surface
+    return return_value;
   }
   else if (task == START_UNLOADING) // dumping angles
   {
@@ -504,21 +496,9 @@ void execute(const operations::ExcavatorGoalConstPtr &goal, Server *action_serve
   shoulder_wrt_base_footprint.z = 0.1;
 
   bool dig_dump_result = publishExcavatorMessage(goal, shoulder_wrt_base_footprint);
-  ros::Duration(SLEEP_DURATION).sleep();
-  // action_server->working(); // might use for feedback
-
-  // SUCCEESS or FAILED depending upon if it could find volatile
-  if(goal->task == CHECK_VOLATILE && dig_dump_result == false)
-  {
-    ROS_INFO_STREAM("[operations | excavator_server | " <<robot_name_.c_str() << "]: CHECK VOLATILE DID NOT RETURN VOLATILES");
     operations::ExcavatorResult res;
-    res.result = COMMON_RESULT::FAILED;
-    action_server->setSucceeded(res);
-  }
-  else
-  {
-    dig_dump_result ? action_server->setSucceeded() : action_server->setAborted();
-  }
+    res.result = dig_dump_result;
+    dig_dump_result ? action_server->setSucceeded(res) : action_server->setAborted(res);
 }
 
 /**

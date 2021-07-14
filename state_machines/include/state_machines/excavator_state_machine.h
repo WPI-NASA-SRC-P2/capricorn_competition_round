@@ -393,7 +393,7 @@ private:
    void goToRepair();
    void idleExcavator(){}
 
-   bool first_GTPP, first_PAH, first_UFH, first_GTR, macro_state_succeeded, macro_state_done;
+   bool first_GTPP, first_PAH, first_UFH, first_GTR, resetOdomDone_, macro_state_succeeded, macro_state_done;
    
    bool state_done;
 

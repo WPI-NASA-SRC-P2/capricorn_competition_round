@@ -583,6 +583,7 @@ void ExcavatorResetOdomAtHopper::entryPoint()
    first_PAH = true;
    first_UFH = true;
    first_GTR = true;
+   resetOdomDone_ = false;
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
@@ -700,6 +701,7 @@ void ExcavatorResetOdomAtHopper::resetOdom()
    maploc::ResetOdom srv;
    srv.request.target_robot_name = robot_name_;
    srv.request.at_hopper = true;
+   resetOdomDone_ = resetOdometryClient.call(srv);
    // macro_state_succeeded = resetOdometryClient.call(srv);
    // macro_state_done = true;
    micro_state = GO_TO_REPAIR_STATION;
@@ -943,7 +945,8 @@ void VolatileRecovery::entryPoint()
    volatile_found_ = false;
    macro_state_done_ = false;
    trials_exhausted_ = false;
-   substate_ = CROSS_MOVEMENT;
+   // substate_ = CROSS_MOVEMENT;
+   substate_ = CHECK_VOLATILE;
 }
 
 bool VolatileRecovery::isDone()
@@ -991,6 +994,7 @@ void VolatileRecovery::step()
             substate_ = CHECK_VOLATILE;
             first_ = true;
             movement_done_ = false;
+            trial_++; 
          }
          break;
       case CHECK_VOLATILE:
@@ -998,16 +1002,14 @@ void VolatileRecovery::step()
          if(first_){
             ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Volatile Recovery Executing Volatile Check");
             checkVolatile();
-            first_ = false;
-            trial_++;         
+            first_ = false;          
          }
          // check if volatile check has been completed and/or has suceeded
          volatile_check_done_ = (excavator_arm_client_->getState().isDone());
-         // volatile_found_ = (excavator_arm_client_->getResult()->result == COMMON_RESULT::SUCCESS);
          volatile_found_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+
          if(trial_ > 4)
             trials_exhausted_ = true;
-         ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Volatile found : " << volatile_found_);
          // volatile_found_ = excavator_arm_client_->getResult()->result == COMMON_RESULT::SUCCESS;
          // once volatile check has been completed, switch to default arm pose microstate
          if(volatile_check_done_ && (!trials_exhausted_)){
@@ -1016,6 +1018,7 @@ void VolatileRecovery::step()
             volatile_check_done_ = false;
          }
          if(trials_exhausted_ || volatile_found_){
+            ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Volatile found : " << volatile_found_);
             substate_ = DEFAULT_ARM_POSE;
             first_ = true;
          }
