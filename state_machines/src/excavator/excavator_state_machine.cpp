@@ -3,6 +3,7 @@
 #include <state_machines/RobotStateMachineTaskAction.h>
 #include <actionlib/server/simple_action_server.h>
 
+#define ONE_METRE_DELAY 1.66
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// E X C A V A T O R   B A S E   S T A T E   C L A S S ////////////////////////////////////
@@ -255,12 +256,20 @@ void ParkAndPub::navToScout()
 
 void ParkAndPub::closeInToScout()
 {
-   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-   navigation_action_goal_.epsilon = 0.1;                      //TUNABLE
-   navigation_action_goal_.pose.header.frame_id = robot_name_+"_base_footprint";
-   navigation_action_goal_.pose.pose.position.x = PARAM_EXCAVATOR_HIT_SCOUT;        
-   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "driving on top of volatile");
+   // move towards scout
+   navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+   navigation_action_goal_.forward_velocity = 0.6;
+   navigation_action_goal_.angular_velocity = 0;
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << " closing in to scout");
    navigation_client_->sendGoal(navigation_action_goal_);
+   ros::Duration(ONE_METRE_DELAY).sleep();
+   // brake wheels
+   navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+   navigation_action_goal_.forward_velocity = 0.0;   
+   navigation_action_goal_.angular_velocity = 0;
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << " finished closing in to scout");
+   navigation_client_->sendGoal(navigation_action_goal_);
+   ros::Duration(0.5).sleep();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -344,12 +353,19 @@ bool PreParkHauler::hasSucceeded() {
 void PreParkHauler::goToVolatile() {
    //use manual nav goal to get on top of the volatile (with epsilon of 0.1 for higher accuracy)
    if(first_){
-      navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-      navigation_action_goal_.epsilon = 0.1;                      //TUNABLE
-      navigation_action_goal_.pose.header.frame_id = robot_name_+"_base_footprint";
-      navigation_action_goal_.pose.pose.position.x = 1.0;         //TUNABLE->Should sit as close to the volatile as possible. 
-      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "driving on top of volatile");
+      // move towards volatile
+      navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+      navigation_action_goal_.forward_velocity = 0.6;
+      navigation_action_goal_.angular_velocity = 0;
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "GOING TO VOLATILE");
       navigation_client_->sendGoal(navigation_action_goal_);
+      ros::Duration(ONE_METRE_DELAY).sleep();
+      // brake wheels
+      navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+      navigation_action_goal_.forward_velocity = 0.0;   
+      navigation_action_goal_.angular_velocity = 0;
+      navigation_client_->sendGoal(navigation_action_goal_);
+      ros::Duration(0.5).sleep();
       first_ = false;
    }
    else
