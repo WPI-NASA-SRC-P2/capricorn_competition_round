@@ -338,16 +338,34 @@ void TeamManager::checkAndRecruitForDumping(int team_index)
    fireExcavator(team_index);
 }
 
+void TeamManager::transferRobotToStandbyTeam(ROBOTS_ENUM transfered_robot, TEAM_MACRO_STATE desired_state_of_team, int current_team_index)
+{
+   int standby_team = getStandbyTeam();
+   all_teams.at(standby_team)->setAnyRobot(transfered_robot);
+   all_teams.at(current_team_index)->disbandAnyRobot(transfered_robot);
+
+   all_teams.at(standby_team)->setTeamMacroState(desired_state_of_team);
+}
+
 void TeamManager::checkAndRecruitForGoToRepairStation(int team_index)
 {
-   if(all_teams.at(team_index)->isExcavatorHired() && all_teams.at(team_index)->isHaulerHired())
+   if(all_teams.at(team_index)->isScoutHired())
    {
-      int standby_team = getStandbyTeam();
+      if(all_teams.at(team_index)->isExcavatorHired())
+      {
+         ROBOTS_ENUM excavator = all_teams.at(team_index)->getExcavator();
+         transferRobotToStandbyTeam(excavator, IDLE, team_index);
+      }
+      if(all_teams.at(team_index)->isHaulerHired())
+      {
+         ROBOTS_ENUM hauler = all_teams.at(team_index)->getHauler();
+         transferRobotToStandbyTeam(hauler, IDLE, team_index);
+      }
+   }
+   else if(all_teams.at(team_index)->isExcavatorHired() && all_teams.at(team_index)->isHaulerHired())
+   {
       ROBOTS_ENUM excavator = all_teams.at(team_index)->getExcavator();
-      all_teams.at(standby_team)->setExcavator(excavator);
-      all_teams.at(team_index)->disbandExcavator();
-
-      all_teams.at(standby_team)->setTeamMacroState(GO_TO_REPAIR_STATION);
+      transferRobotToStandbyTeam(excavator, GO_TO_REPAIR_STATION, team_index);
    }
 }
 

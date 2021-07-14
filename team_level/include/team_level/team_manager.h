@@ -79,6 +79,8 @@ private:
 
    void recruitHauler(int team_index);
 
+   void transferRobotToStandbyTeam(ROBOTS_ENUM transfered_robot, TEAM_MACRO_STATE desired_state_of_team, int current_team_index);
+
    void checkAndRecruitForSearch(int team_index);
 
    void checkAndRecruitForScoutWaiting(int team_index);

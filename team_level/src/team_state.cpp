@@ -67,7 +67,9 @@ bool Idle::isDone()
 
 void Idle::step()
 {
-   // Do Nothing
+   robot_state_register->setRobotState(scout_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
 }
 
 void Idle::exitPoint() 
@@ -120,10 +122,21 @@ TEAM_MICRO_STATE Search::getMicroState()
 TeamState& Search::transition()
 {
    micro_state = getMicroState();
+
+   STATE_MACHINE_TASK scout_task = robot_state_register->currentState(scout_in_team);
+   bool scout_done_and_failed = robot_state_register->isDone(scout_in_team) && !robot_state_register->hasSucceeded(scout_in_team);
+
+   bool need_reset = scout_task == SCOUT_SEARCH_VOLATILE && scout_done_and_failed;
+
    if(isDone())
    {
       ROS_INFO("TEAM_LEVEL | team_state | volatile detected, transitioning to scout_undock state");
       return getState(SCOUT_WAITING);
+   }
+   else if(need_reset)
+   {
+      ROS_INFO("TEAM_LEVEL | team_state | Volatile not found for long, going back to reset odom");
+      return getState(GO_TO_REPAIR_STATION);
    }
    else
       return *this;
@@ -397,8 +410,11 @@ TEAM_MICRO_STATE Excavating::getMicroState()
       return DIG_AND_DUMP;
    if(excavator_task == EXCAVATOR_PRE_HAULER_PARK_MANEUVER && excavator_done_and_succeeded)
       return PARK_AT_EXCAVATOR_HAULER;
-   if(excavator_task == EXCAVATOR_VOLATILE_RECOVERY && excavator_done_and_succeeded)
+   if((excavator_task == EXCAVATOR_VOLATILE_RECOVERY && excavator_done_and_succeeded)
+      && (hauler_task == HAULER_GO_BACK_TO_EXCAVATOR && hauler_done_and_succeeded) )
       return PRE_PARK_MANEUVER_EXCAVATOR;
+   if(hauler_task == HAULER_GO_BACK_TO_EXCAVATOR)
+      return WAIT_FOR_HAULER;
 
    ROS_WARN("TEAM_LEVEL | team_state | Unknown Combination of the robot states found!");
    ROS_WARN_STREAM("TEAM_LEVEL | team_state | Scout enum "<<scout_in_team<<" state:"<<scout_task);
