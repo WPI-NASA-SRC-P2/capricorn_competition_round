@@ -264,10 +264,11 @@ private:
 };
 
 /**
- * @brief IdleState Robot should stop and do nothing
+ * @brief IdleState Robot should stop and do nothing ==> CANCELS ALL GOALS SENT BY ALL CLIENTS 
  * 
  * @param isDone() goals have been send to stop the robot
  * @param hasSucceded() goals sent have been successfull
+ * 
  */
 class IdleState : public ExcavatorState {
 public:   
@@ -281,7 +282,15 @@ public:
       last_state_succeeded_ = true;
       return true; }
 
-   void entryPoint() override{}
+   void entryPoint() override 
+   {
+   excavator_arm_client_->cancelGoal();
+   navigation_vision_client_ ->cancelGoal();
+   navigation_client_->cancelGoal();
+   park_robot_client_->cancelGoal();
+
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Excavator has entered idle state, awaiting new state...");
+   }
    void step() override{}
    void exitPoint() override{}
    State& transition() override{} 
@@ -438,6 +447,8 @@ private:
 /**
  * @brief If GoToScout fails, this recovery state creates 4 targets located at 4 corners from it
  *        and looks for the scout at each of those corners. If the scout is found at those corners, it exits the state.
+ * 
+ * @param search_offset_ This is the offset of those targets from initial excavator position. Currently = 10.0 m.
  */
 class ExcavatorGoToScoutRecovery : public ExcavatorState {
 public:   

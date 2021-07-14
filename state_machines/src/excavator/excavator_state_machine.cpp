@@ -781,6 +781,7 @@ void ExcavatorGoToRepairStation::exitPoint()
    navigation_vision_client_->cancelGoal();
 }
 
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////  G O  TO  S C O U T  R E C O V E R Y  S T A T E  C L A S S /////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -789,7 +790,7 @@ void ExcavatorGoToScoutRecovery::entryPoint()
 {
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToScoutRecovery.");
    // define the offset distance for generating poses
-   search_offset_ = 2.0;
+   search_offset_ = 10.0;
    // set up the four recovery poses
    createPoses();
    // reset the pose that is going to be checked
@@ -1018,3 +1019,16 @@ void VolatileRecovery::exitPoint()
    // none at the moment
    excavator_arm_client_->cancelGoal();
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  I D L E  S T A T E  C L A S S ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// void IdleState::entryPoint() {
+//   excavator_arm_client_->cancelGoal();
+//   navigation_vision_client_ ->cancelGoal();
+//   navigation_client_->cancelGoal();
+//   park_robot_client_->cancelGoal();
+
+//   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Excavator has entered idle state, awaiting new state...");
+// }
