@@ -494,14 +494,14 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	// Reset steering of wheels
 	steerRobot(0);
 
-	brakeRobot(true);
+	brakeRobotNew(true);
 
 	return true;
 }
 
 bool NavigationServer::driveDistance(double delta_distance)
 {
-	brakeRobotNew(false);
+	brakeRobot(false);
 	ROS_INFO("[operations | nav_server | %s]: Driving forwards %fm\n", robot_name_.c_str(), delta_distance);
 
 	// Save the starting robot pose so we can track delta distance
@@ -531,7 +531,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 			ROS_INFO("[operations | nav_server | %s]: driveDistance detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
 
 			// moveRobotWheels(0);
-			brakeRobot(true);
+			brakeRobotNew(true);
 
 			// Reset the distance traveled
 			total_distance_traveled_ = 0;
@@ -564,7 +564,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 
 bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint)
 {
-	brakeRobotNew(false);
+	brakeRobot(false);
 
 	// Save the starting robot pose so we can track delta distance
 	geometry_msgs::PoseStamped starting_pose = *getRobotPose();
@@ -668,7 +668,7 @@ void NavigationServer::requestNewTrajectory(void)
 	ROS_INFO("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
 
 	// moveRobotWheels(0);
-	brakeRobot(true);
+	brakeRobotNew(true);
 
 	// Reset the distance traveled
 	total_distance_traveled_ = 0;
@@ -981,7 +981,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 	ROS_INFO("[operations | nav_server | %s]: Finished automatic goal!", robot_name_.c_str());
 
-	brakeRobot(true);
+	brakeRobotNew(true);
 
 	operations::NavigationResult res;
 	res.result = COMMON_RESULT::SUCCESS;
@@ -1000,7 +1000,7 @@ void NavigationServer::linearDriving(const operations::NavigationGoalConstPtr &g
 	if(0 == goal->forward_velocity)
 	{
 		printf("0 linear, braking\n");
-		brakeRobot(true);
+		brakeRobotNew(true);
 	}
 	
 	operations::NavigationResult res;
@@ -1153,6 +1153,6 @@ void NavigationServer::cancelGoal()
 {
 	manual_driving_ = true;
 	steerRobot(0);
-	brakeRobot(true);
+	brakeRobotNew(true);
 	ROS_WARN("[operations | nav_server | %s]: Clearing current goal, got a new one", robot_name_.c_str());
 }

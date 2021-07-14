@@ -166,6 +166,8 @@ int main(int argc, char *argv[])
 
                 // Get the time to ramp between current and desired velocities for each wheel
                 std::vector<double> ramp_times;
+                // Can't be lower than 0
+                ramp_times.push_back(0.0);
                 for (int i = 0; i < desired_velocities.size(); i++)
                 {
                     double vel_offset = desired_velocities[i] - current_velocities[i];
@@ -190,44 +192,64 @@ int main(int argc, char *argv[])
 
                 ROS_INFO("[operations | ramp_wheel_velocities | %s]: Beginning ramp loop", robot_name.c_str());
 
-                // Ramp all wheels for that duration
-                while(ros::Time::now() - start_time < longest_time)
+                bool cont_ramping = false;
+
+                try
                 {
-                    // Do the same check inside of the loop. If there are updated velocities, then we need to restart the ramping process
-                    if(!floatVecEqual(last_vels.velocities, current_velocities) && !floatVecEqual(last_vels.velocities, desired_velocities))
+                    cont_ramping = (ros::Time::now() - start_time < longest_time);
+                }
+                catch(const std::exception& e)
+                {
+                    std::cerr << e.what() << '\n';
+                }
+
+                // Ramp all wheels for that duration
+                while(cont_ramping)
+                {
+                    try
                     {
-                        ROS_INFO("[operations | ramp_wheel_velocities | %s]: Ramp interrupted! Restarting.", robot_name.c_str());
+                        // Do the same check inside of the loop. If there are updated velocities, then we need to restart the ramping process
+                        if(!floatVecEqual(last_vels.velocities, current_velocities) && !floatVecEqual(last_vels.velocities, desired_velocities))
+                        {
+                            ROS_INFO("[operations | ramp_wheel_velocities | %s]: Ramp interrupted! Restarting.", robot_name.c_str());
 
-                        // Force the while loop to end by setting the start time to 100 seconds in the past (longer than any possible interpolation)
-                        start_time = ros::Time::now() - ros::Duration(100.0);
-                        continue;
+                            // Force the while loop to end by setting the start time to 100 seconds in the past (longer than any possible interpolation)
+                            start_time = ros::Time::now() - ros::Duration(100.0);
+                            continue;
 
-                        // current_velocities will be updated after the while loop terminates
+                            // current_velocities will be updated after the while loop terminates
+                        }
+
+                        ros::Duration cur_dt = ros::Time::now() - start_time;
+
+                        double dt = cur_dt.toNSec() * 1e-9;
+
+                        // Check if goal velocity is less than current
+                        for (int i = 0; i < desired_velocities.size(); i++)
+                        {
+                            // Calculate the current interpolated velocity for each wheel
+                            temp_goal_vels[i] = current_velocities[i] + (dt / longest_time_d) * (desired_velocities[i] - current_velocities[i]);
+                            // ROS_INFO("[operations | ramp_wheel_velocities | %s]: Wheel %d, cV %f, tV %f", robot_name.c_str(), i, current_velocities[i], temp_goal_vels[i]);
+                        }
+
+                        // Publish wheel velocities
+                        publishMessage(front_left_vel_pub_,  temp_goal_vels[0]);
+                        publishMessage(front_right_vel_pub_, temp_goal_vels[1]);
+                        publishMessage(back_right_vel_pub_,  temp_goal_vels[2]);
+                        publishMessage(back_left_vel_pub_,   temp_goal_vels[3]);
+                        finished_data.data = false;
+                        finished_pub_.publish(finished_data);
+
+                        // Sleep for some set time
+                        ros::Duration(0.005).sleep();
+                        ros::spinOnce();
+                        cont_ramping = (ros::Time::now() - start_time < longest_time);
                     }
-
-                    ros::Duration cur_dt = ros::Time::now() - start_time;
-
-                    double dt = cur_dt.toNSec() * 1e-9;
-
-                    // Check if goal velocity is less than current
-                    for (int i = 0; i < desired_velocities.size(); i++)
+                    catch(const std::exception& e)
                     {
-                        // Calculate the current interpolated velocity for each wheel
-                        temp_goal_vels[i] = current_velocities[i] + (dt / longest_time_d) * (desired_velocities[i] - current_velocities[i]);
-                        // ROS_INFO("[operations | ramp_wheel_velocities | %s]: Wheel %d, cV %f, tV %f", robot_name.c_str(), i, current_velocities[i], temp_goal_vels[i]);
+                        std::cerr << e.what() << '\n';
                     }
-
-                    // Publish wheel velocities
-                    publishMessage(front_left_vel_pub_,  temp_goal_vels[0]);
-                    publishMessage(front_right_vel_pub_, temp_goal_vels[1]);
-                    publishMessage(back_right_vel_pub_,  temp_goal_vels[2]);
-                    publishMessage(back_left_vel_pub_,   temp_goal_vels[3]);
-                    finished_data.data = false;
-                    finished_pub_.publish(finished_data);
-
-                    // Sleep for some set time
-                    ros::Duration(0.005).sleep();
-                    ros::spinOnce();
+                    
                 }
 
                 ROS_INFO("[operations | ramp_wheel_velocities | %s]: Done ramping.", robot_name.c_str());
