@@ -177,10 +177,10 @@ void parkWrtHopper()
 
     bool processing_plant_detected = (processing_plant_z != INIT_VALUE), furnace_detected = (furnace_z != INIT_VALUE), hopper_detected = (hopper_x != INIT_VALUE);
 
-    if (furnace_detected && furnace_z < 2.2)
+    if (furnace_detected && furnace_z < 3)
     {
         ROS_INFO_STREAM(getString("REACHED HOPPER"));
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 20; i++)
         {
             g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = HOPPER_FORWARD_VELOCITY;
@@ -193,7 +193,7 @@ void parkWrtHopper()
         return;
     }
 
-    if (hopper_detected && furnace_detected && furnace_size_x > 100 && abs(hopper_x - furnace_x) < 50)
+    if (hopper_detected && furnace_detected && furnace_size_x > 70 && abs(hopper_x - furnace_x) < 30)
     {
         if (centering && furnace_x > 90)
         {
