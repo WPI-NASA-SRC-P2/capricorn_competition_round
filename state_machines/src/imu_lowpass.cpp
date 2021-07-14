@@ -14,6 +14,9 @@ NASA SPACE ROBOTICS CHALLENGE
 // Global variable to hold the unfiltered data as it comes from the imu
 sensor_msgs::Imu imu_unfiltered;
 
+// Variable to track whether we have received a message
+bool imu_message_received = false;
+
 // Keep track of how many measurements we've made so we can keep track of avgs
 int reading_count = 0;
 int prev_reading_count = 0;
@@ -21,8 +24,20 @@ int prev_reading_count = 0;
 // An adjustable parameter for the filter
 // MUST BE BETWEEN 0 AND 1
 double filter_factor = 0.2;
+const int array_size = 20;
 
 // Variables to hold avgs
+double orientation_x_array[array_size];
+double orientation_y_array[array_size];
+double orientation_z_array[array_size];
+double orientation_w_array[array_size];
+double angular_velocity_x_array[array_size];
+double angular_velocity_y_array[array_size];
+double angular_velocity_z_array[array_size];
+double linear_acceleration_x_array[array_size];
+double linear_acceleration_y_array[array_size];
+double linear_acceleration_z_array[array_size];
+
 double orientation_x_avg = 0.0;
 double orientation_y_avg = 0.0;
 double orientation_z_avg = 0.0;
@@ -46,30 +61,56 @@ void imu_callback(sensor_msgs::Imu imu_data)
     // The number of readings we have taken is 1 more than the last time we were in this function
     reading_count++;
 
-    // We have new data, so the averages need to change
-    updateAverages();
+    
 }
 
 // Updates the averages based on the latest imu readings
-void updateAvgerages(){
+void updateArrays(int index){
 
     // Procedure for updating avgs:
     // 1. Multiply the previous avg by the number of previous readings to get to the sum of all previous readings.
     // 2. Add the newest reading to get the sum of all readings, including the latest one.
     // 3. Divide the sum of all readings by the total number of readings to get the average.
 
-    orientation_x_avg = (orientation_x_avg * (reading_count - 1) + imu_unfiltered.orientation.x) / reading_count;
-    orientation_y_avg = (orientation_y_avg * (reading_count - 1) + imu_unfiltered.orientation.y) / reading_count;
-    orientation_z_avg = (orientation_z_avg * (reading_count - 1) + imu_unfiltered.orientation.z) / reading_count;
-    orientation_w_avg = (orientation_w_avg * (reading_count - 1) + imu_unfiltered.orientation.w) / reading_count;
+    orientation_x_array[index] = imu_unfiltered.orientation.x;
+    orientation_y_array[index] = imu_unfiltered.orientation.y;
+    orientation_z_array[index] = imu_unfiltered.orientation.z;
+    orientation_w_array[index] = imu_unfiltered.orientation.w;
 
-    angular_velocity_x_avg = (angular_velocity_x_avg * (reading_count - 1) + imu_unfiltered.angular_velocity.x) / reading_count;
-    angular_velocity_y_avg = (angular_velocity_y_avg * (reading_count - 1) + imu_unfiltered.angular_velocity.y) / reading_count;
-    angular_velocity_z_avg = (angular_velocity_z_avg * (reading_count - 1) + imu_unfiltered.angular_velocity.z) / reading_count;
+    angular_velocity_x_array[index] = imu_unfiltered.angular_velocity.x;
+    angular_velocity_y_array[index] = imu_unfiltered.angular_velocity.y;
+    angular_velocity_z_array[index] = imu_unfiltered.angular_velocity.z;
 
-    linear_acceleration_x_avg = (linear_acceleration_x_avg * (reading_count - 1) + imu_unfiltered.linear_acceleration.x) / reading_count;
-    linear_acceleration_y_avg = (linear_acceleration_y_avg * (reading_count - 1) + imu_unfiltered.linear_acceleration.y) / reading_count;
-    linear_acceleration_z_avg = (linear_acceleration_z_avg * (reading_count - 1) + imu_unfiltered.linear_acceleration.z) / reading_count;
+    linear_acceleration_x_array[index] = imu_unfiltered.linear_acceleration.x;
+    linear_acceleration_y_array[index] = imu_unfiltered.linear_acceleration.y;
+    linear_acceleration_z_array[index] = imu_unfiltered.linear_acceleration.z;
+
+}
+
+double arrayAvg(double array[]){
+
+    double sum = 0.0;
+    for (int i = 0; i < array_size; i++){
+        sum += array[i];
+    }
+    return sum / array_size;
+}
+
+void recalcAverages(){
+
+    orientation_x_avg = arrayAvg(orientation_x_array);
+    orientation_y_avg = arrayAvg(orientation_y_array);
+    orientation_z_avg = arrayAvg(orientation_z_array);
+    orientation_w_avg = arrayAvg(orientation_w_array);
+
+    angular_velocity_x_avg = arrayAvg(angular_velocity_x_array);
+    angular_velocity_y_avg = arrayAvg(angular_velocity_y_array);
+    angular_velocity_z_avg = arrayAvg(angular_velocity_z_array);
+
+    linear_acceleration_x_avg = arrayAvg(linear_acceleration_x_array);
+    linear_acceleration_y_avg = arrayAvg(linear_acceleration_y_array);
+    linear_acceleration_z_avg = arrayAvg(linear_acceleration_z_array);
+
 }
 
 // The piece de resistance
@@ -111,7 +152,7 @@ int main(int argc, char** argv)
     {
 
         // Create a variable to hold the filtered data
-        geometry_msgs::Quaternion imu_filtered;
+        sensor_msgs::Imu imu_filtered;
 
         // Only do the stuff if we have received new data since the last time we did the stuff.
         if(reading_count > prev_reading_count)
@@ -143,6 +184,10 @@ int main(int argc, char** argv)
             // Publish imu_filtered now that we have filled in all the blanks.
 
             imu_odom_pub.publish(imu_filtered);
+
+            updateArrays(reading_count % 20);
+            recalcAverages();
+
 
             // Update the number of readings we have seen and handled.
 
