@@ -406,7 +406,7 @@ bool GoToRepairStation::isDone()
 
 bool GoToRepairStation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(last_state_succeeded_)
       ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout GoToRepairStation completed successfully");
 

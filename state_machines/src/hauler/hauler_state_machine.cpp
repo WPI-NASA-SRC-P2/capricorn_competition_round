@@ -162,7 +162,7 @@ bool HaulerGoToScout::isDone()
 
 bool HaulerGoToScout::hasSucceeded() 
 {
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(last_state_succeeded_)
       ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Go to Scout Completed Successfully");
    return last_state_succeeded_;
@@ -277,7 +277,7 @@ void UndockHopper::step()
       ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Undock stepping, first_ = false now");
    }
    // check if undocking is finished before reseting odometry
-   undock_done_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   undock_done_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    
    if(undock_done_ && !first_){
        resetOdom();
@@ -782,7 +782,7 @@ bool HaulerGoToRepairStation::isDone()
 
 bool HaulerGoToRepairStation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(last_state_succeeded_)
       ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Scout Go to Repair Station Completed Successfully");
    return last_state_succeeded_;

@@ -755,7 +755,7 @@ bool ExcavatorGoToRepairStation::isDone()
 
 bool ExcavatorGoToRepairStation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    // if(last_state_succeeded_)
    //    ROS_WARN_STREAM("Excavator Go to Repair Station Completed Successfully");
    return last_state_succeeded_;
@@ -789,80 +789,42 @@ void ExcavatorGoToScoutRecovery::entryPoint()
 {
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToScoutRecovery.");
    // define the offset distance for generating poses
-   search_offset_ = 10.0;
+   search_offset_ = 2.0;
    // set up the four recovery poses
    createPoses();
    // reset the pose that is going to be checked
    pose_index_ = 0;
 
-   cross_end_complete_ = false;
    search_done_ = false;
    first_ = true;
-   substate_ = GO_TO_CROSS_END;
+   scout_found_ = false;
 }
 
-/** LOGIC: Since step() runs in a loop, flags have to be checked for the sequence to be implemented correctly. 
- * if(first_) ==> goToCrossEnd
- * if(crossend DONE) ==> SearchForScout()
- * if(search successful) ==> last_state_succeeded ==> EXIT
- * if(search failed) ==> (first_ = true) ==> pose_index_++ ==> cross_end_completed set to FALSE
- * if(pose_index > 4) ==> last_state_succeeded = false
+/** @brief:
+ * After creating poses, call searchForScout() with first pose index. 
+ * If done, update pose index, reset first. 
+ * If searches exhausted || scout found ==> DONE
+ * If scout_found ==> SUCCEEDED. 
  * */
 
 void ExcavatorGoToScoutRecovery::step() 
 {
-   switch(substate_)
+   // Send on search whenever previous search is done [AND] searches are not exhausted [AND] The goal hasn't been sent yet [AND] scout hasn't been found yet.
+   searchForScout(pose_index_);
+   // Check if searches are exhausted.
+   searches_exhausted_ = (pose_index_ > 3);
+   // Reset flags to enable searching on a new pose, gven conditions mentioned above
+   if(search_done_ && !(searches_exhausted_) && !(scout_found_)) 
    {
-      case GO_TO_CROSS_END:
-         if(first_){
-            goToCrossEnd(pose_index_);
-            first_ = false;
-            pose_index_++;
-         }
-   
-         cross_end_complete_ = navigation_client_->getState().isDone();
-
-         if(cross_end_complete_){
-            first_ = true;
-            substate_ = SEARCH_FOR_SCOUT;
-            cross_end_complete_ = false;
-         }
-         
-         break;
-      case SEARCH_FOR_SCOUT:
-      
-         // sending goal of searching for scout
-         if(first_){
-            searchForScout();
-            ROS_INFO_STREAM("searching for the scout");
-            first_ = false;
-         }
-
-         ROS_INFO_STREAM("checking for scout using vision!");
-         search_done_ = navigation_vision_client_->getState().isDone();
-         scout_found_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
-         searches_exhausted_= (pose_index_ > 3);
-         ROS_INFO_STREAM("boolean results: search_done: " << search_done_ << " scout_found_: " << scout_found_);
-
-         if(search_done_){
-            first_ = true;
-            cross_end_complete_ = false;
-            substate_ = GO_TO_CROSS_END;
-            search_done_ = false;
-         }     
-         if(scout_found_ || searches_exhausted_)
-            substate_ = EXCAVATOR_IDLE;
-         break;
-
-      case EXCAVATOR_IDLE:
-         ROS_INFO_STREAM("Excavator is now idle, scout may have been found (state may have failed)");
-         break;
+      first_ = true;
+      pose_index_++;
    }
 }
 
 // If the excavator finds the scout or all the recovery_poses_ are exhausted, this recovery state is done.
 bool ExcavatorGoToScoutRecovery::isDone()
 {
+   // scout_found_ is updated in searchForScout()
    current_state_done_ = (searches_exhausted_ || scout_found_);
    return current_state_done_;
 }
@@ -877,30 +839,23 @@ bool ExcavatorGoToScoutRecovery::hasSucceeded()
 void ExcavatorGoToScoutRecovery::exitPoint()
 {
    navigation_vision_client_->cancelGoal();
-   navigation_client_->cancelGoal();
-}
-
-// Excavator goes to X-Y offsets defined at the entry point from the pose of the excavator at the entry point. The index correspons to the index of the poses stored at that time.
-void ExcavatorGoToScoutRecovery::goToCrossEnd(int index)
-{
-   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to cross-end");
-   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-   ROS_INFO_STREAM("POSE INDEX = " << index);
-   ROS_INFO_STREAM("Going to recovery pose : " << recovery_poses_[index]);
-   navigation_action_goal_.pose = recovery_poses_[index];
-   navigation_client_->sendGoal(navigation_action_goal_);
 }
 
 // Excavator searches for scout once it gets to one of those offset poses. 
-void ExcavatorGoToScoutRecovery::searchForScout() 
+void ExcavatorGoToScoutRecovery::searchForScout(int index) 
 {
-   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to scout");
-   navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS;
-   navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_NAV_AND_NAV_VISION;
-   target_loc_ = m_pcRobotScheduler->getDesiredPose();
-   navigation_vision_goal_.goal_loc = target_loc_;
-   navigation_vision_client_->sendGoal(navigation_vision_goal_);
-   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Excavator State Machine: SUCCESSFUL POSE RECEIVED");
+   if(first_)
+   {
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Searching for scout at Pose # : " << index);
+      navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS;
+      navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_NAV_AND_NAV_VISION;
+      target_loc_ = recovery_poses_[index];
+      navigation_vision_goal_.goal_loc = target_loc_;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      first_ = false;
+   }
+   search_done_ = navigation_vision_client_->getState().isDone();
+   scout_found_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
 }
 
 // When the excavator's Recovery method is triggered, it creates 4 offset poses from its current location and stores them in recovery_poses_
@@ -924,7 +879,10 @@ void ExcavatorGoToScoutRecovery::createPoses()
    recovery_pose_.pose.position.y -= search_offset_;
    recovery_poses_[3] = recovery_pose_;
 
-   ROS_INFO_STREAM("Poses created: " << recovery_poses_);
+   // ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << " Poses created: [1] " << recovery_poses_[0] << 
+   //                                                                                                    "\n[2] " << recovery_poses_[1] << 
+   //                                                                                                    "\n[3] " << recovery_poses_[2] << 
+   //                                                                                                    "\n[4] " << recovery_poses_[3] );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
