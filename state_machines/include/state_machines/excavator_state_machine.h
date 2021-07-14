@@ -452,8 +452,7 @@ public:
    void exitPoint() override;
 
    void createPoses();
-   void goToCrossEnd(int index);
-   void searchForScout();
+   void searchForScout(int index);
 
 private:
    bool first_;
@@ -464,15 +463,8 @@ private:
 
    int pose_index_;
    float search_offset_;
-   bool cross_end_complete_;
    bool search_done_, scout_found_, searches_exhausted_;
 
-   enum GO_TO_SCOUT_RECOVERY_MICRO_STATES{
-      GO_TO_CROSS_END,
-      SEARCH_FOR_SCOUT,
-      EXCAVATOR_IDLE
-   };
-   GO_TO_SCOUT_RECOVERY_MICRO_STATES substate_; 
 };
 
 /**
