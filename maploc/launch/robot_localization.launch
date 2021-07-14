@@ -41,6 +41,9 @@
         <param name="transform_time_offset" value="0.5" />
         <param name="predict_to_current_time" value="true" />
 
+        <param name="imu0_remove_gravitational_acceleration" value="true" />
+        <param name="gravitational_acceleration" value="1.62" />
+        
         <param name="imu0" value="/$(arg robot_name)/imu_filtered" if="$(arg use_imu)"/>
         <rosparam param="imu0_config" if="$(arg use_imu)">
                                     [true, true, true, <!-- X, Y, Z-->
@@ -50,9 +53,6 @@
                                     true, true, false] <!-- Accel[X, Y, Z]-->
         </rosparam>
 
-        <param name="imu0_remove_gravitational_acceleration" value="true" />
-        <param name="gravitational_acceleration" value="1.62" />
-        
         <!-- RTABMAP output odometry topic -->
         <param name="odom0" value="/$(arg robot_name)/camera/odom/localization" if="$(arg use_camera)" />
         <rosparam param="odom0_config" if="$(arg use_camera)">
