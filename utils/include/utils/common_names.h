@@ -111,6 +111,7 @@ namespace COMMON_NAMES
   const std::string ROBOTS_DESIRED_STATE_TOPIC = "robot_desired_state";
   const std::string IMU_TOPIC = "/imu";
   const std::string IMU_FILTERED_TOPIC = "/imu_filtered";
+  const std::string SPIRAL_WAYPOINT_PUBLISHER = "/covered_waypoints";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";

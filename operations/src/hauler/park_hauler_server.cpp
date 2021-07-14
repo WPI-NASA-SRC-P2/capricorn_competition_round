@@ -400,7 +400,7 @@ void parkWrtExcavator()
         g_nav_client->sendGoal(g_nav_goal);
         g_nav_client->sendGoal(g_nav_goal);
 
-        ros::Duration(1.5).sleep();
+        ros::Duration(1).sleep();
 
 
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;

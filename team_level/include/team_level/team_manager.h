@@ -15,6 +15,7 @@ using namespace COMMON_NAMES;
 #define MAX_EXCAVATORS 2
 #define MAX_HAULERS 2
 #define MAX_TEAMS 8
+#define MAX_ROBOTS 9
 
 class TeamManager {
    
@@ -38,6 +39,11 @@ private:
    std::array<bool, MAX_TEAMS> hauler_for_sale;
 
    static const int resetting_hauler_index = 1;
+
+   std::array<bool, 10> robots_waiting_to_reset;
+   bool hopper_busy;
+
+   int getStandbyTeam();
 
    void initTeams(ros::NodeHandle nh);
 
@@ -73,6 +79,8 @@ private:
 
    void recruitHauler(int team_index);
 
+   void transferRobotToStandbyTeam(ROBOTS_ENUM transfered_robot, TEAM_MACRO_STATE desired_state_of_team, int current_team_index);
+
    void checkAndRecruitForSearch(int team_index);
 
    void checkAndRecruitForScoutWaiting(int team_index);
@@ -84,6 +92,12 @@ private:
    void checkAndRecruitForIdle(int team_index);
 
    void checkAndRecruitForStandby(int team_index);
+
+   void checkAndRecruitForGoToRepairStation(int team_index);
+   
+   void checkAndRecruitForWaitForHopperAppointment(int team_index);
+   
+   void checkAndRecruitForResetAtHopper(int team_index);
 };
 
 #endif // TEAM_SCHEDULER_H

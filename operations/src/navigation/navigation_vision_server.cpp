@@ -345,7 +345,7 @@ void hardcodedUndock()
     g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
-    ros::Duration(2).sleep();
+    ros::Duration(3).sleep();
     g_nav_goal.direction = 0;
     g_nav_goal.forward_velocity = 0.0;
     g_nav_goal.angular_velocity = 0.5;
