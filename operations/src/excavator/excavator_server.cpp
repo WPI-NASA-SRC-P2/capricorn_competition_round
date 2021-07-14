@@ -298,19 +298,15 @@ void excavatorRecovery(const int& trial_number)
     if(trial_number == 1)
     {
         //move straight
-        ROS_INFO("Inside if of excavator recovery function");
         g_nav_goal.direction = 0;
-        ROS_INFO("Before send goal");
         g_client->sendGoal(g_nav_goal);
-        ROS_INFO("After send goal");
         ros::Duration(0.5).sleep();
         g_nav_goal.forward_velocity = 0.6;
-        ROS_INFO("Go Forward with trial: [%d]", trial_number);
+        ROS_INFO("[operations | excavator_server | %s]: Excavator recovery trial: [%d]", robot_name_.c_str(), trial_number);
         g_client->sendGoal(g_nav_goal);
         ros::Duration(2).sleep();
 
         g_nav_goal.forward_velocity = 0.0;
-        ROS_INFO("Stop with trial: [%d]", trial_number);
         g_client->sendGoal(g_nav_goal);
         ros::Duration(0.5).sleep();
     }
@@ -318,12 +314,11 @@ void excavatorRecovery(const int& trial_number)
     {
         //move back
         g_nav_goal.forward_velocity = -0.6;   
-        ROS_INFO("Go back with trial: [%d]", trial_number);
+        ROS_INFO("[operations | excavator_server | %s]: Excavator recovery trial: [%d]", robot_name_.c_str(), trial_number);
         g_client->sendGoal(g_nav_goal);
         ros::Duration(4).sleep();
 
         g_nav_goal.forward_velocity = 0.0;
-        ROS_INFO("Stop with trail: [%d]", trial_number);
         g_client->sendGoal(g_nav_goal);
         ros::Duration(0.5).sleep();
     }
@@ -334,6 +329,7 @@ void excavatorRecovery(const int& trial_number)
         g_client->sendGoal(g_nav_goal);
         ros::Duration(0.5).sleep();
         g_nav_goal.forward_velocity = 0.6;
+        ROS_INFO("[operations | excavator_server | %s]: Excavator recovery trial: [%d]", robot_name_.c_str(), trial_number);
         g_client->sendGoal(g_nav_goal);
         ros::Duration(3).sleep();
 
@@ -347,7 +343,8 @@ void excavatorRecovery(const int& trial_number)
         g_nav_goal.direction = -1.57;
         g_client->sendGoal(g_nav_goal);
         ros::Duration(0.5).sleep();
-        g_nav_goal.forward_velocity = 0.6;  
+        g_nav_goal.forward_velocity = 0.6;
+        ROS_INFO("[operations | excavator_server | %s]: Excavator recovery trial: [%d]", robot_name_.c_str(), trial_number);  
         g_client->sendGoal(g_nav_goal);
         ros::Duration(4).sleep();
 
@@ -388,23 +385,24 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
     ros::Duration(2).sleep();
     publishAngles(last_vol_loc_angle, 1, 1, -2); // This set of values move the scoop under the surface
     ros::Duration(5).sleep();
+    publishAngles(last_vol_loc_angle, 1, 1, -0.6);
+    ros::Duration(3).sleep();
 
     thetas = getDumpAngleInBase(3);
 
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
     ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Scoop info topic returned: " + scoop_value + "\n");
     
-
-    while (!volatile_found && last_vol_loc_angle < 1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
-    {
-      // move the shoulder yaw joint from right to left under the surface
-      publishAngles(last_vol_loc_angle, 1, 1, -0.6);
-      ros::Duration(3).sleep();
-      last_vol_loc_angle += 0.2;
-      ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << std::to_string(last_vol_loc_angle));
-      scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
-      ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Scoop info topic returned: " + scoop_value + "\n");
-    }
+    // while (!volatile_found && last_vol_loc_angle < 1.2) // Logic for panning the shoulder yaw angle to detect volatiles with scoop info under the surface
+    // {
+    //   // move the shoulder yaw joint from right to left under the surface
+    //   publishAngles(last_vol_loc_angle, 1, 1, -0.6);
+    //   ros::Duration(3).sleep();
+    //   last_vol_loc_angle += 0.2;
+    //   ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << std::to_string(last_vol_loc_angle));
+    //   scoop_value = volatile_found ? "Volatile found" : "Volatile not found";
+    //   ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Scoop info topic returned: " + scoop_value + "\n");
+    // }
 
     yaw_angle = last_vol_loc_angle; // The last volatile angle is stored here
 
@@ -439,6 +437,23 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
         return false;
       }
     }
+  }
+  else if (task == CHECK_VOLATILE)
+  {
+    publishAngles(-1.5, -2, 1, 0); // Step for safe trajectory to not bump into camera
+    ros::Duration(2).sleep();
+    publishAngles(-1.5, 1, 1, -2); // This set of values move the scoop under the surface
+    ros::Duration(2).sleep();
+    publishAngles(-1.5, 1, 1, -1.0); //-0.6 earlier
+    ros::Duration(5).sleep();
+    scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
+    bool return_value = volatile_found;
+    ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Scoop info topic returned: " + scoop_value + "\n");
+
+    publishAngles(-1.5, -0.5, 1, 1.5); // Intermediate set of values to raise the arm above the surface
+    ros::Duration(2).sleep();
+    publishAngles(-1.5, -2, 1, 1.5); // This set of values moves the arm over the surface
+    return return_value;
   }
   else if (task == START_UNLOADING) // dumping angles
   {
@@ -481,11 +496,9 @@ void execute(const operations::ExcavatorGoalConstPtr &goal, Server *action_serve
   shoulder_wrt_base_footprint.z = 0.1;
 
   bool dig_dump_result = publishExcavatorMessage(goal, shoulder_wrt_base_footprint);
-  ros::Duration(SLEEP_DURATION).sleep();
-  // action_server->working(); // might use for feedback
-
-  // SUCCEESS or FAILED depending upon if it could find volatile
-  dig_dump_result ? action_server->setSucceeded() : action_server->setAborted();
+    operations::ExcavatorResult res;
+    res.result = dig_dump_result;
+    dig_dump_result ? action_server->setSucceeded(res) : action_server->setAborted(res);
 }
 
 /**
@@ -540,9 +553,9 @@ int main(int argc, char **argv)
 
     g_client = new Client(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
     
-    ROS_INFO("Waiting for server to start");
+    ROS_INFO("[operations | excavator_server | %s]: Waiting for server to start", robot_name_.c_str());
     g_client->waitForServer();
-    ROS_INFO("Server has started");
+    ROS_INFO("[operations | excavator_server | %s]: Server has started", robot_name_.c_str());
 
     ros::spin();
 

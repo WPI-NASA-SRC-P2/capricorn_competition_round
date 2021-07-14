@@ -23,7 +23,8 @@ int main(int argc, char** argv)
   client.waitForServer();
 
   operations::ExcavatorGoal goal;
-  goal.task = START_DIGGING; // START_DIGGING = 1
+  //goal.task = START_DIGGING; // START_DIGGING = 1
+  goal.task = CHECK_VOLATILE; // START_DIGGING = 1
   //goal.target.x = 0.7; // set of target digging values to the left of the excavator
   goal.target.x = 0;
   goal.target.y = 2;

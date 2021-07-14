@@ -212,10 +212,11 @@ namespace COMMON_NAMES
     EXCAVATOR_FACE_PROCESSING_PLANT,  //Face processing plant using NAV_VISION::V_CENTER
     EXCAVATOR_GO_TO_REPAIR,           //Go to repair station using NAV_VISION
     EXCAVATOR_RESET_ODOM_AT_HOPPER,    // Excavator resets odometry at hopper
+    EXCAVATOR_GO_TO_SCOUT_RECOVERY,
     EXCAVATOR_VOLATILE_RECOVERY,
     
     /**************HAULER STATES**************/
-    //24
+    //25
     HAULER_GO_TO_LOC,                    // Takes Hauler to a location
     HAULER_DUMP_VOLATILE_TO_PROC_PLANT, // Undocks hauler from excavator, goes to processing plant,
                                              // parks hauler to processing plant, dumps volatile and
@@ -239,7 +240,7 @@ namespace COMMON_NAMES
 
 
     /***************ROBOTS MACRO STATES***************/
-    //36
+    //41
     SCOUT_MACRO_UNDOCK,
     EXCAVATOR_MACRO_GO_TO_SCOUT,
     EXCAVATOR_MACRO_DIG,
@@ -266,9 +267,10 @@ namespace COMMON_NAMES
 enum EXCAVATOR_ARM_TASK
 {
   START_DIGGING = 1,
-  START_UNLOADING = 2,
-  GO_TO_DEFAULT = 3,
-  RECOVERY = 4,
+  CHECK_VOLATILE = 2,
+  START_UNLOADING = 3,
+  GO_TO_DEFAULT = 4,
+  RECOVERY = 5,
 };
 
 

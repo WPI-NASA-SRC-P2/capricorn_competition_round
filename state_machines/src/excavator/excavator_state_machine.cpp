@@ -28,6 +28,7 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: All excavator action servers started!");
 
 //   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
+  odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ExcavatorState::odomCallback, this);
 }
 
 ExcavatorState::~ExcavatorState()
@@ -41,6 +42,16 @@ ExcavatorState::~ExcavatorState()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// C A L L B A C K S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+void ExcavatorState::odomCallback(const nav_msgs::Odometry odom)
+{
+   odom_ = odom;
+   // excavator_pose_ = odom.pose.pose;
+   excavator_pose_.pose = odom.pose.pose;
+   excavator_pose_.header = odom.header;
+   
+}
 
 /** TODO: Check if the object detection callback is needed*/
 
@@ -117,7 +128,7 @@ bool GoToScout::isDone() {
 } 
 
 bool GoToScout::hasSucceeded() {
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    return last_state_succeeded_;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -572,6 +583,7 @@ void ExcavatorResetOdomAtHopper::entryPoint()
    first_PAH = true;
    first_UFH = true;
    first_GTR = true;
+   resetOdomDone_ = false;
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
@@ -655,12 +667,9 @@ void ExcavatorResetOdomAtHopper::parkAtHopper()
    bool is_done = (park_robot_client_->getState().isDone());
    if (is_done)
    {
-      if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
-         micro_state = UNDOCK_FROM_HOPPER;
-      else
-      {
-         first_PAH = true;
-         micro_state = PARK_AT_HOPPER;
+      if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS){
+         first_UFH = true;
+         micro_state = UNDOCK_FROM_HOPPER;  
       }
    }
 }
@@ -692,7 +701,8 @@ void ExcavatorResetOdomAtHopper::resetOdom()
    maploc::ResetOdom srv;
    srv.request.target_robot_name = robot_name_;
    srv.request.at_hopper = true;
-   resetOdometryClient.call(srv);
+   resetOdomDone_ = resetOdometryClient.call(srv);
+   // macro_state_succeeded = resetOdometryClient.call(srv);
    // macro_state_done = true;
    micro_state = GO_TO_REPAIR_STATION;
    return;
@@ -771,25 +781,282 @@ void ExcavatorGoToRepairStation::exitPoint()
    navigation_vision_client_->cancelGoal();
 }
 
-// int main(int argc, char** argv)
-// {
-//    ros::init(argc, argv, "excavator_state_machine");
-//    ros::NodeHandle nh;
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  G O  TO  S C O U T  R E C O V E R Y  S T A T E  C L A S S /////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//    try {
-//       ExcavatorScheduler cSchd(700);
+void ExcavatorGoToScoutRecovery::entryPoint()
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToScoutRecovery.");
+   // define the offset distance for generating poses
+   search_offset_ = 10.0;
+   // set up the four recovery poses
+   createPoses();
+   // reset the pose that is going to be checked
+   pose_index_ = 0;
+
+   cross_end_complete_ = false;
+   search_done_ = false;
+   first_ = true;
+   substate_ = GO_TO_CROSS_END;
+}
+
+/** LOGIC: Since step() runs in a loop, flags have to be checked for the sequence to be implemented correctly. 
+ * if(first_) ==> goToCrossEnd
+ * if(crossend DONE) ==> SearchForScout()
+ * if(search successful) ==> last_state_succeeded ==> EXIT
+ * if(search failed) ==> (first_ = true) ==> pose_index_++ ==> cross_end_completed set to FALSE
+ * if(pose_index > 4) ==> last_state_succeeded = false
+ * */
+
+void ExcavatorGoToScoutRecovery::step() 
+{
+   switch(substate_)
+   {
+      case GO_TO_CROSS_END:
+         if(first_){
+            goToCrossEnd(pose_index_);
+            first_ = false;
+            pose_index_++;
+         }
+   
+         cross_end_complete_ = navigation_client_->getState().isDone();
+
+         if(cross_end_complete_){
+            first_ = true;
+            substate_ = SEARCH_FOR_SCOUT;
+            cross_end_complete_ = false;
+         }
+         
+         break;
+      case SEARCH_FOR_SCOUT:
       
-//       cSchd.addState(new GoToDefaultArmPosition());
-//       cSchd.addState(new GoToScout());
-//       cSchd.addState(new ParkAndPub());
-//       cSchd.addState(new DigAndDump());
-//       cSchd.setInitialState(EXCAVATOR_DIG_AND_DUMP_VOLATILE);
-//       // cSchd.setInitialState(EXCAVATOR_GOTO_DEFAULT_ARM_POSE);
-//       // cSchd.setInitialState(EXCAVATOR_GO_TO_SCOUT);
-//       cSchd.exec();
-//       return 0;
-//    }
-//    catch(StateMachineException& ex) {
-//       std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
-//    }
-// }
+         // sending goal of searching for scout
+         if(first_){
+            searchForScout();
+            ROS_INFO_STREAM("searching for the scout");
+            first_ = false;
+         }
+
+         ROS_INFO_STREAM("checking for scout using vision!");
+         search_done_ = navigation_vision_client_->getState().isDone();
+         scout_found_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+         searches_exhausted_= (pose_index_ > 3);
+         ROS_INFO_STREAM("boolean results: search_done: " << search_done_ << " scout_found_: " << scout_found_);
+
+         if(search_done_){
+            first_ = true;
+            cross_end_complete_ = false;
+            substate_ = GO_TO_CROSS_END;
+            search_done_ = false;
+         }     
+         if(scout_found_ || searches_exhausted_)
+            substate_ = EXCAVATOR_IDLE;
+         break;
+
+      case EXCAVATOR_IDLE:
+         ROS_INFO_STREAM("Excavator is now idle, scout may have been found (state may have failed)");
+         break;
+   }
+}
+
+// If the excavator finds the scout or all the recovery_poses_ are exhausted, this recovery state is done.
+bool ExcavatorGoToScoutRecovery::isDone()
+{
+   current_state_done_ = (searches_exhausted_ || scout_found_);
+   return current_state_done_;
+}
+
+bool ExcavatorGoToScoutRecovery::hasSucceeded()
+{
+   // succeeds if scout is found successfully 
+   last_state_succeeded_ = scout_found_;
+   return last_state_succeeded_;
+}
+
+void ExcavatorGoToScoutRecovery::exitPoint()
+{
+   navigation_vision_client_->cancelGoal();
+   navigation_client_->cancelGoal();
+}
+
+// Excavator goes to X-Y offsets defined at the entry point from the pose of the excavator at the entry point. The index correspons to the index of the poses stored at that time.
+void ExcavatorGoToScoutRecovery::goToCrossEnd(int index)
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to cross-end");
+   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+   ROS_INFO_STREAM("POSE INDEX = " << index);
+   ROS_INFO_STREAM("Going to recovery pose : " << recovery_poses_[index]);
+   navigation_action_goal_.pose = recovery_poses_[index];
+   navigation_client_->sendGoal(navigation_action_goal_);
+}
+
+// Excavator searches for scout once it gets to one of those offset poses. 
+void ExcavatorGoToScoutRecovery::searchForScout() 
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to scout");
+   navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS;
+   navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_NAV_AND_NAV_VISION;
+   target_loc_ = m_pcRobotScheduler->getDesiredPose();
+   navigation_vision_goal_.goal_loc = target_loc_;
+   navigation_vision_client_->sendGoal(navigation_vision_goal_);
+   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Excavator State Machine: SUCCESSFUL POSE RECEIVED");
+}
+
+// When the excavator's Recovery method is triggered, it creates 4 offset poses from its current location and stores them in recovery_poses_
+void ExcavatorGoToScoutRecovery::createPoses()
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Creating poses.");
+   
+   recovery_pose_ = excavator_pose_;
+   recovery_pose_.pose.position.x += search_offset_;
+   recovery_poses_[0] = recovery_pose_;
+
+   recovery_pose_ = excavator_pose_;
+   recovery_pose_.pose.position.x -= search_offset_;
+   recovery_poses_[1] = recovery_pose_;
+
+   recovery_pose_ = excavator_pose_;
+   recovery_pose_.pose.position.y += search_offset_;
+   recovery_poses_[2] = recovery_pose_;
+
+   recovery_pose_ = excavator_pose_;
+   recovery_pose_.pose.position.y -= search_offset_;
+   recovery_poses_[3] = recovery_pose_;
+
+   ROS_INFO_STREAM("Poses created: " << recovery_poses_);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  V O L A T I L E  R E C O V E R Y  S T A T E  C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+/** LOGIC: 
+*
+*/
+void VolatileRecovery::entryPoint()
+{
+   first_ = true;    
+   trial_ = 1;
+   movement_done_ = false;
+   default_arm_done_ = false;
+   volatile_check_done_ = false;
+   volatile_found_ = false;
+   macro_state_done_ = false;
+   trials_exhausted_ = false;
+   // substate_ = CROSS_MOVEMENT;
+   substate_ = CHECK_VOLATILE;
+}
+
+bool VolatileRecovery::isDone()
+{
+   // base isDone on excavator arm client done (recovery failed) or if found volatile
+   current_state_done_ = (macro_state_done_ || volatile_found_);
+   return current_state_done_;
+}
+
+bool VolatileRecovery::hasSucceeded()
+{
+   // base succeeded on if a volatile was found
+   last_state_succeeded_ = volatile_found_;
+   // if(last_state_succeeded_)
+   //    ROS_WARN_STREAM("Excavator Go to Repair Station Completed Successfully");
+   return last_state_succeeded_;
+}
+
+/*
+current_state_done_ = excavator_arm_client_->getState().isDone();
+last_state_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+*/
+
+void VolatileRecovery::step()
+{
+   macro_state_done_ = (default_arm_done_ || volatile_found_);   //default_arm_done_ sets to true only when all trials are exhausted
+   // if(macro_state_done_){
+   //    substate_ = DEFAULT_ARM_POSE;
+   //    // first_ = true;
+   // }
+   // first go to the first step of recovery
+   switch (substate_)
+   {
+      case CROSS_MOVEMENT:
+         // execute cross movement part of the recovery based on trial number
+         if (first_){
+            ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Volatile Recovery Executing Cross Movement trial " << trial_);    
+            crossMovement(trial_);      
+            first_ = false;
+         }
+         // check if cross movement is finished
+         movement_done_ = (excavator_arm_client_->getState().isDone());
+         // once cross movement is finished, switch to check volatile microstate
+         if(movement_done_){
+            substate_ = CHECK_VOLATILE;
+            first_ = true;
+            movement_done_ = false;
+            trial_++; 
+         }
+         break;
+      case CHECK_VOLATILE:
+         // check for the volatile at the recovery location
+         if(first_){
+            ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Volatile Recovery Executing Volatile Check");
+            checkVolatile();
+            first_ = false;          
+         }
+         // check if volatile check has been completed and/or has suceeded
+         volatile_check_done_ = (excavator_arm_client_->getState().isDone());
+         volatile_found_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+
+         if(trial_ > 4)
+            trials_exhausted_ = true;
+         // volatile_found_ = excavator_arm_client_->getResult()->result == COMMON_RESULT::SUCCESS;
+         // once volatile check has been completed, switch to default arm pose microstate
+         if(volatile_check_done_ && (!trials_exhausted_)){
+            substate_ = CROSS_MOVEMENT;
+            first_ = true;
+            volatile_check_done_ = false;
+         }
+         if(trials_exhausted_ || volatile_found_){
+            ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Volatile found : " << volatile_found_);
+            substate_ = DEFAULT_ARM_POSE;
+            first_ = true;
+         }
+         break;
+      case DEFAULT_ARM_POSE:
+         if(first_){
+            goToDefaultArmPose();
+            first_ = false;
+         }
+         default_arm_done_ = (excavator_arm_client_->getState().isDone());
+         break;
+      default:
+         break;
+      
+   }
+}
+
+void VolatileRecovery::crossMovement(const int& trial)
+{ 
+   excavator_arm_goal_.task = EXCAVATOR_ARM_TASK::RECOVERY; 
+   excavator_arm_goal_.trial = trial;
+   excavator_arm_client_->sendGoal(excavator_arm_goal_);
+}   
+void VolatileRecovery::checkVolatile() 
+{
+   excavator_arm_goal_.task = EXCAVATOR_ARM_TASK::CHECK_VOLATILE;
+   excavator_arm_client_->sendGoal(excavator_arm_goal_); 
+}
+
+void VolatileRecovery::goToDefaultArmPose() 
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Volatile Recovery : Going to Default arm pose");
+   excavator_arm_goal_.task = EXCAVATOR_ARM_TASK::GO_TO_DEFAULT;
+   excavator_arm_client_->sendGoal(excavator_arm_goal_);
+}
+
+void VolatileRecovery::exitPoint()
+{
+   // none at the moment
+   excavator_arm_client_->cancelGoal();
+}
