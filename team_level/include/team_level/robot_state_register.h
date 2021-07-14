@@ -8,6 +8,8 @@
 
 using namespace COMMON_NAMES;
 
+#define DEBUG false
+
 class RobotStateRegister
 {
    public:

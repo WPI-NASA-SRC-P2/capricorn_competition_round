@@ -112,7 +112,8 @@ void TeamManager::recruitment()
    setEmptyTeamsStandby();
    for(int i = 0; i < MAX_TEAMS; i++)
    {
-      // ROS_INFO_STREAM("[TEAM_LEVEL | team_manager.cpp ]: " << all_teams.at(i)->getScout()<<"  "<<all_teams.at(i)->getExcavator()<<"  "<<all_teams.at(i)->getHauler());
+      if (DEBUG)
+         ROS_INFO_STREAM("[TEAM_LEVEL | team_manager.cpp ]: " << all_teams.at(i)->getScout()<<"  "<<all_teams.at(i)->getExcavator()<<"  "<<all_teams.at(i)->getHauler());
 
       switch (all_teams.at(i)->getTeamMacroState())
       {
@@ -364,6 +365,9 @@ void TeamManager::checkAndRecruitForIdle(int team_index)
 {
    if(!hasScout(team_index))
       recruitScout(team_index);
+   else
+      all_teams.at(team_index)->setTeamMacroState(SEARCH);
+
   
    fireExcavator(team_index);
    fireHauler(team_index);
@@ -391,7 +395,8 @@ void TeamManager::step()
 {
    for(int i = 0; i < MAX_TEAMS; i++)
    {
-      // ROS_WARN_STREAM("Team "<<i<<" Task:"<<all_teams.at(i)->getTeamMacroState());
+      if (DEBUG)
+         ROS_WARN_STREAM("Team "<<i<<" Task:"<<all_teams.at(i)->getTeamMacroState());
       all_teams.at(i)->step();
    }
 }
@@ -403,6 +408,7 @@ void TeamManager::exec()
       recruitment();
       step();
       ros::spinOnce();
-      // ros::Duration(0.5).sleep();
+      if (DEBUG)
+         ros::Duration(0.5).sleep();
    }
 }
