@@ -229,6 +229,12 @@ target_link_libraries(imu_lowpass
   ${catkin_LIBRARIES}
 )
 
+add_executable(odom_offset_checker src/odom_offset_checker.cpp)
+add_dependencies(odom_offset_checker ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(odom_offset_checker
+  ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
