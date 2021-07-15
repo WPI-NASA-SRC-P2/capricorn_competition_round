@@ -126,7 +126,7 @@ void driveSprial()
   static int waypoints_covered = 0;
   if (g_spiral_points.size() > 1)
   {
-    // double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
+    double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
     bool done_driving = g_client->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
     // bool failed_driving = g_client->getState() == actionlib::SimpleClientGoalState::ABORTED;
 
@@ -162,9 +162,10 @@ void driveSprial()
     // }
     // else if (dist > g_last_dist || was_driving)
     // {
-      if(done_driving)
+      if(done_driving || dist < CHECKPOINT_THRESHOLD)
       {
-      g_spiral_points.erase(g_spiral_points.begin());
+      if(dist < CHECKPOINT_THRESHOLD)
+        g_spiral_points.erase(g_spiral_points.begin());
       geometry_msgs::Point point_0, point_2;
       point_0 = g_spiral_points.at(0).point;
       point_2 = g_spiral_points.at(2).point;
