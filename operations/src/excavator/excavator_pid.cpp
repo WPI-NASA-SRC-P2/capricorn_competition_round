@@ -74,16 +74,16 @@ int main(int argc, char** argv)
     std::string wrist_pitch_joint = "wrist_pitch_joint";
 
     // Initializing joint values
-    float shoulder_yaw_kp = 30;
+    float shoulder_yaw_kp = 20; //30
     float shoulder_yaw_ki = 2;
     float shoulder_yaw_kd = 10;
-    float shoulder_pitch_kp = 8;
+    float shoulder_pitch_kp = 10; //8
     float shoulder_pitch_ki = 2;
     float shoulder_pitch_kd = 10;
-    float elbow_pitch_kp = 25;
+    float elbow_pitch_kp = 20; //25
     float elbow_pitch_ki = 6;
     float elbow_pitch_kd = 3;
-    float wrist_pitch_kp = 75;
+    float wrist_pitch_kp = 20; //75
     float wrist_pitch_ki = 5;
     float wrist_pitch_kd = 5;
 
