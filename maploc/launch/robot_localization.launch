@@ -18,7 +18,7 @@
     <!-- <arg name="output_topic" default="$(arg robot_name)/camera/odom/localization" /> -->
     <arg name="output_topic" default="$(arg robot_name)/camera/odom" />
     <arg name="use_encoders" default="false" />
-    <arg name="use_imu"      default="true" />
+    <arg name="use_imu"      default="false" />
     <arg name="use_lidar"    default="false" />
     <arg name="use_camera"   default="true" />
     <arg name="use_cheat"    default="false" />

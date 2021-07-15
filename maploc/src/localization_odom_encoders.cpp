@@ -56,6 +56,8 @@ class EncoderOdom
             joint_sub_ = nh_.subscribe("/" + robot_name_ + "/joint_states", 1000, &EncoderOdom::joint_state_callback, this);
             gazebo_sub = nh_.subscribe("/gazebo/model_states", 1000, &EncoderOdom::gazebo_callback, this);
             odom_pub_ = nh_.advertise<nav_msgs::Odometry>(robot_name_ + "/encoder_odom", 1000, true);
+            ground_truth_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(robot_name_ + "/ground_truth_velocities", 1000, true);
+            
         }
 
         /**
@@ -137,6 +139,13 @@ class EncoderOdom
 
             x_dot = (std::cos(rover_yaw) * x_dot_map) - (std::sin(rover_yaw) * y_dot_map); 
             y_dot = (std::sin(rover_yaw) * x_dot_map) + (std::cos(rover_yaw) * y_dot_map);
+
+            ground_truth_velocities_.linear.x = x_dot;
+            ground_truth_velocities_.linear.y = y_dot;
+            ground_truth_velocities_.angular.z = theta_dot;
+
+            ground_truth_vel_pub_.publish(ground_truth_velocities_);
+
 
         }
 
@@ -333,8 +342,9 @@ class EncoderOdom
         // output odometry message
         nav_msgs::Odometry output_odom_;
         // output odometry publisher
-        ros::Publisher odom_pub_;   
-        std::mutex encoder_odom_mutex_;
+        ros::Publisher odom_pub_, ground_truth_vel_pub_;  
+        std::mutex encoder_odom_mutex_;\
+        geometry_msgs::Twist ground_truth_velocities_;
 
         // Header
         std_msgs::Header header_;
