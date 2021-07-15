@@ -46,7 +46,7 @@
         
         <param name="imu0" value="/$(arg robot_name)/imu_filtered" if="$(arg use_imu)"/>
         <rosparam param="imu0_config" if="$(arg use_imu)">
-                                    [true, true, true, <!-- X, Y, Z-->
+                                    [false, false, false, <!-- X, Y, Z-->
                                     true, true, true,    <!-- Roll, Pitch, Yaw-->
                                     false, false, false, <!-- Vel[X, Y, Z]-->
                                     false, false, false,  <!-- Vel[Roll, Pitch, Yaw]-->

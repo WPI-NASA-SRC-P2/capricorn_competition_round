@@ -102,7 +102,7 @@ int main(int argc, char** argv)
     double init_odom_r, init_odom_p, init_odom_y;
     double init_imu_r, init_imu_p, init_imu_y;
     
-    ros::Duration(0.5).sleep();
+    ros::Duration(1).sleep();
     ros::spinOnce();
     getOdomRPY(init_odom_r, init_odom_p, init_odom_y);
     getImuRPY(init_imu_r, init_imu_p, init_imu_y);
