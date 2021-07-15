@@ -1,0 +1,3 @@
+# Used to wrap all 4 velocities into a single message, along with the drive mode. Useful for the ramping node
+float64[] velocities
+uint32 drive_mode
