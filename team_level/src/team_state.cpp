@@ -425,7 +425,7 @@ TEAM_MICRO_STATE Excavating::getMicroState()
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: PRE_PARK_MANEUVER_EXCAVATOR  5");
          return PRE_PARK_MANEUVER_EXCAVATOR;
       }
-   if(hauler_task == HAULER_GO_BACK_TO_EXCAVATOR)
+   if(hauler_task == HAULER_GO_BACK_TO_EXCAVATOR && !hauler_done_and_succeeded)
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");
          return WAIT_FOR_HAULER;
