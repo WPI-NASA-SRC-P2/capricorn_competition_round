@@ -18,6 +18,8 @@
 
 #include <tf/transform_listener.h>
 
+#define CHECK_VOLATILE_DELAY 5
+
 typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
 
 using namespace COMMON_NAMES;
@@ -418,15 +420,16 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
   else if (task == CHECK_VOLATILE)
   {
     publishAngles(-1.5, -2, 1, 0); // Step for safe trajectory to not bump into camera
-    ros::Duration(2).sleep();
-    publishAngles(-1.5, 1, 1, -2); // This set of values move the scoop under the surface
-    ros::Duration(2).sleep();
-    publishAngles(-1.5, 1, 1, -1.0);
+    ros::Duration(4).sleep();
+    // publishAngles(-1.5, 1, 1, -2); // This set of values move the scoop under the surface
+    // ros::Duration(2).sleep();
+    publishAngles(-1.45, 0.45, 1, -1.3);  //Angle when scoop goes into ground
     ros::Duration(5).sleep();
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
     bool return_value = volatile_found;
     ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Scoop info topic returned: " + scoop_value + "\n");
-
+    publishAngles(-1.45, 0.45, 1, 1.5);
+    ros::Duration(2).sleep();
     publishAngles(-1.5, -0.5, 1, 1.5); // Intermediate set of values to raise the arm above the surface
     ros::Duration(2).sleep();
     publishAngles(-1.5, -2, 1, 1.5); // This set of values moves the arm over the surface
