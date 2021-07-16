@@ -45,6 +45,7 @@ enum TEAM_MICRO_STATE{
 
    // EXCAVATING
    WAIT_FOR_HAULER,
+   RECOVERY_EXCAVATOR_FINDING,
    CHECK_FOR_VOLATILE,
    PRE_PARK_MANEUVER_EXCAVATOR,
    PARK_AT_EXCAVATOR_HAULER,
@@ -205,6 +206,7 @@ private:
    void stepParkHauler();
    void stepDigAndDump();
    void stepUndockHauler();
+   void stepRecoveryExcavatorFinding();
 };
 
 class Dumping: public TeamState{
