@@ -38,7 +38,7 @@ rosgraph_msgs::Clock g_start_clock;
 std::string g_robot_name;
 geometry_msgs::PoseStamped g_robot_pose;
 
-const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
+const int ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5, NAV_LOC_DIST_THRESH = 15;
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 1, g_angular_vel_step_size = 0.05, TIMER_THRESH = 20.0;
 const double NOT_AVOID_OBSTACLE_THRESHOLD = 5.0;
 std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex, g_clock_mutex;
@@ -51,7 +51,7 @@ enum HEIGHT_THRESHOLD
     EXCAVATOR = 170,
     SCOUT = 220,
     HAULER = 200,
-    PROCESSING_PLANT = 340,
+    PROCESSING_PLANT = 320,
     REPAIR_STATION = 340,
     FURNACE = 150,
     OTHER = 50,
@@ -634,7 +634,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
     const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
     double distance = NavigationAlgo::changeInPosition(g_robot_pose, goal_loc);
 
-    if (distance > 15)
+    if (distance > NAV_LOC_DIST_THRESH)
     {
         return;
     }
