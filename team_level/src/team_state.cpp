@@ -258,6 +258,10 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
          ROS_WARN_STREAM("TEAM_LEVEL | team_state | Hauler state anomaly!"<<hauler_task);
       return ROBOTS_TO_GOAL;
    }
+   if (scout_task == SCOUT_UNDOCK)
+   {
+      return UNDOCK_SCOUT;
+   }
 
    ROS_WARN("TEAM_LEVEL | team_state | Unknown Combination of the robot states found!");
    ROS_WARN_STREAM("TEAM_LEVEL | team_state | Scout enum "<<scout_in_team<<" state:"<<scout_task);
@@ -317,7 +321,7 @@ void ScoutWaiting::stepRobotsToGoal()
    robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_GO_TO_SCOUT, volatile_site_location);
 
    // Hauler Goal
-   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_BACK_TO_EXCAVATOR, volatile_site_location);
+   // robot_state_register->setRobotState(hauler_in_team, HAULER_GO_BACK_TO_EXCAVATOR, volatile_site_location);
 }
 
 void ScoutWaiting::stepMakeExcavHaulerIdle()
@@ -400,21 +404,42 @@ TEAM_MICRO_STATE Excavating::getMicroState()
    bool excavator_done_and_failed = robot_state_register->isDone(excavator_in_team) && !robot_state_register->hasSucceeded(excavator_in_team);
    bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
 
-   if((hauler_task == ROBOT_IDLE_STATE && excavator_task == ROBOT_IDLE_STATE) || excavator_task == EXCAVATOR_PARK_AND_PUB)
-         return WAIT_FOR_HAULER;
-   if(hauler_task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_done_and_succeeded)
-      return WAIT_FOR_HAULER;
    if(excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_succeeded)
-      return UNDOCK_HAULER;
+      {
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: UNDOCK_HAULER  2");
+         return UNDOCK_HAULER;
+      }
    if(hauler_task == HAULER_PARK_AT_EXCAVATOR && hauler_done_and_succeeded)
-      return DIG_AND_DUMP;
+      {
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: DIG_AND_DUMP  3");
+         return DIG_AND_DUMP;
+      }
    if(excavator_task == EXCAVATOR_PRE_HAULER_PARK_MANEUVER && excavator_done_and_succeeded)
-      return PARK_AT_EXCAVATOR_HAULER;
+      {
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: PARK_AT_EXCAVATOR_HAULER  4");
+         return PARK_AT_EXCAVATOR_HAULER;
+      }
    if((excavator_task == EXCAVATOR_VOLATILE_RECOVERY && excavator_done_and_succeeded)
       && (hauler_task == HAULER_GO_BACK_TO_EXCAVATOR && hauler_done_and_succeeded) )
-      return PRE_PARK_MANEUVER_EXCAVATOR;
-   if(hauler_task == HAULER_GO_BACK_TO_EXCAVATOR)
-      return WAIT_FOR_HAULER;
+      {
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: PRE_PARK_MANEUVER_EXCAVATOR  5");
+         return PRE_PARK_MANEUVER_EXCAVATOR;
+      }
+   if(hauler_task == HAULER_GO_BACK_TO_EXCAVATOR && !hauler_done_and_succeeded)
+      {
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");
+         return WAIT_FOR_HAULER;
+      }
+   if((hauler_task == ROBOT_IDLE_STATE /*&& excavator_task == ROBOT_IDLE_STATE*/) || excavator_task == EXCAVATOR_PARK_AND_PUB)
+      {
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  7");
+         return WAIT_FOR_HAULER;
+      }
+   if(hauler_task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_done_and_succeeded)
+      {
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  1");
+         return WAIT_FOR_HAULER;
+      }
 
    ROS_WARN("TEAM_LEVEL | team_state | Unknown Combination of the robot states found!");
    ROS_WARN_STREAM("TEAM_LEVEL | team_state | Scout enum "<<scout_in_team<<" state:"<<scout_task);
