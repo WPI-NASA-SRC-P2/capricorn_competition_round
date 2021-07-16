@@ -13,6 +13,30 @@ public:
    void setExcavator(ROBOTS_ENUM excavator){ hired_excavator = excavator; }
    void setHauler(ROBOTS_ENUM hauler){ hired_hauler = hauler; }
    
+   void setAnyRobot(ROBOTS_ENUM robot){
+      int robot_enum_number = (int) robot;
+      if(robot == ROBOTS_ENUM::NONE)
+         ROS_WARN_STREAM("[ TEAM_LEVEL | team_scheduler ] Robot NONE was tried to be set, was not set.");
+      else if (robot_enum_number <= (int) ROBOTS_ENUM::SCOUT_3)
+         setScout(robot);
+      else if (robot_enum_number <= (int) ROBOTS_ENUM::EXCAVATOR_3)
+         setExcavator(robot);
+      else
+         setHauler(robot);
+   }
+   
+   void disbandAnyRobot(ROBOTS_ENUM robot){
+      int robot_enum_number = (int) robot;
+      if(robot == ROBOTS_ENUM::NONE)
+         ROS_WARN_STREAM("[ TEAM_LEVEL | team_scheduler ] Robot NONE was tried to be set, was not set.");
+      else if (robot_enum_number <= (int) ROBOTS_ENUM::SCOUT_3)
+         disbandScout();
+      else if (robot_enum_number <= (int) ROBOTS_ENUM::EXCAVATOR_3)
+         disbandExcavator();
+      else
+         disbandHauler();
+   }
+   
    void disbandScout(){ hired_scout = NONE; }
    void disbandExcavator(){ hired_excavator = NONE; }
    void disbandHauler(){ hired_hauler = NONE; }

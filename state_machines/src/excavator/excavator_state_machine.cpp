@@ -787,8 +787,8 @@ void ExcavatorGoToRepairStation::step()
       // navigation_vision_goal_.target_loc = target_loc_;
       navigation_vision_client_->sendGoal(navigation_vision_goal_);
       first_ = false;
+      ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Going to repair station Step Function!");
    }
-   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Going to repair station Step Function!");
 }
 
 void ExcavatorGoToRepairStation::exitPoint()

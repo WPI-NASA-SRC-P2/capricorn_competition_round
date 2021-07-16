@@ -130,7 +130,7 @@ void driveRobotStraight(DrivingDirection rotate_direction, const float rotationa
   
   goal.forward_velocity = rotate_direction * DRIVING_VELOCITY * rotational_velocity_multiplier;
   goal.angular_velocity = 0;
-  ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Driving robot straight");
+  // ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Driving robot straight");
 
   navigation_client_->sendGoal(goal);
   ros::Duration(0.1).sleep();
@@ -181,7 +181,7 @@ void getBestPose()
       else if ((volatile_distance_ - best_volatile_distance) > VOLATILE_DISTANCE_THRESHOLD)
       {
         best_volatile_distance =  MAX_DETECT_DIST + 1;
-        ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Going far");
+        // ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Going far");
         if (flip_rotation_count < FLIP_ROTATION_COUNT_MAX)
         {
           ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Flipping Direction");

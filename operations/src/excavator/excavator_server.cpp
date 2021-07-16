@@ -460,9 +460,9 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
     // previous shoulder yaw was 0.15
     publishAngles(thetas[0], -2, 1, 0.4); // This set of values moves the scoop towards the hauler
     ros::Duration(SLEEP_DURATION).sleep();
-    publishAngles(thetas[0], thetas[1], thetas[2], 0.4); // This set of values moves the scoop to deposit volatiles in the hauler bin
-    ros::Duration(3).sleep();
-    publishAngles(thetas[0], thetas[1], thetas[2], (thetas[1]+thetas[2]+2)); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    // publishAngles(thetas[0], thetas[1], thetas[2], 0.4); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    // ros::Duration(3).sleep();
+    publishAngles(thetas[0], -2, 1, 3); // This set of values moves the scoop to deposit volatiles in the hauler bin
     ros::Duration(3).sleep();
     publishAngles(thetas[0], -2, 1, -0.7786); // This set of values moves the scoop to the front center
     ros::Duration(3).sleep();
@@ -554,8 +554,8 @@ int main(int argc, char **argv)
     g_client = new Client(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
     
     ROS_INFO("[operations | excavator_server | %s]: Waiting for server to start", robot_name_.c_str());
-    // g_client->waitForServer();
-    // ROS_INFO("[operations | excavator_server | %s]: Server has started", robot_name_.c_str());
+    g_client->waitForServer();
+    ROS_INFO("[operations | excavator_server | %s]: Server has started", robot_name_.c_str());
 
     ros::spin();
 
