@@ -47,7 +47,7 @@ bool g_going_to_goal = false;
 bool g_new_trajectory = false;
 bool resume_spiral = false;
 bool new_stop_call = false;
-const double CHECKPOINT_THRESHOLD = 2.0;
+const double CHECKPOINT_THRESHOLD = 10.0;
 bool was_driving = false;
 std::string robot_name_;
 
@@ -126,7 +126,7 @@ void driveSprial()
   static int waypoints_covered = 0;
   if (g_spiral_points.size() > 1)
   {
-    // double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
+    double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
     bool done_driving = g_client->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
     // bool failed_driving = g_client->getState() == actionlib::SimpleClientGoalState::ABORTED;
 
@@ -164,7 +164,13 @@ void driveSprial()
     // {
       if(done_driving)
       {
-      g_spiral_points.erase(g_spiral_points.begin());
+      if(dist < CHECKPOINT_THRESHOLD)
+      {
+        std_msgs::UInt8 data;
+        data.data = ++waypoints_covered;
+        waypoint_publisher_.publish(data);
+        g_spiral_points.erase(g_spiral_points.begin());
+      }
       geometry_msgs::Point point_0, point_2;
       point_0 = g_spiral_points.at(0).point;
       point_2 = g_spiral_points.at(2).point;
@@ -175,16 +181,13 @@ void driveSprial()
       g_nav_goal.pose.pose.position = g_spiral_points.at(1).point;
       g_nav_goal.pose.pose.orientation = getOrientation(point_0, point_2);
       g_nav_goal.pose.header.frame_id = MAP;
-      g_nav_goal.epsilon = 1;
+      g_nav_goal.epsilon = 2;
       g_nav_goal.final_rotate = false;
       // g_client->sendGoal(g_nav_goal);
       // g_going_to_goal = true;
       g_new_trajectory = true;
       // was_driving = true;
 
-      std_msgs::UInt8 data;
-      data.data = ++waypoints_covered;
-      waypoint_publisher_.publish(data);
       }
   //   }
   //   else
