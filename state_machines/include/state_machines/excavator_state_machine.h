@@ -28,6 +28,8 @@
 #include <maploc/ResetOdom.h>
 #include "perception/ObjectArray.h"                    //Not sure why this had to be added, wasnt needed in scout sm, including the obstacle_avoidance header causes problems
 #include <operations/ParkRobotAction.h>
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseArray.h>
 
 using namespace COMMON_NAMES;
 
@@ -54,9 +56,16 @@ class ExcavatorState : public State {
    
 private:
   ros::Subscriber objects_sub_;
+  ros::Subscriber odom_sub_;
+
    /*** @param objs 
    */
   void objectsCallback(const perception::ObjectArray::ConstPtr objs);
+
+  /** @param odom
+   * Odometry callback for excavator_pose_
+  */
+  void odomCallback(const nav_msgs::Odometry odom);
 
 public:
    
@@ -87,6 +96,11 @@ protected:
   ros::NodeHandle nh_;
 
   std::string robot_name_;
+
+  // For odometry callback
+  nav_msgs::Odometry odom_;
+//   geometry_msgs::Pose excavator_pose_;
+  geometry_msgs::PoseStamped excavator_pose_;
 
   std::mutex objects_mutex_;
   perception::ObjectArray::ConstPtr vision_objects_;
@@ -250,10 +264,11 @@ private:
 };
 
 /**
- * @brief IdleState Robot should stop and do nothing
+ * @brief IdleState Robot should stop and do nothing ==> CANCELS ALL GOALS SENT BY ALL CLIENTS 
  * 
  * @param isDone() goals have been send to stop the robot
  * @param hasSucceded() goals sent have been successfull
+ * 
  */
 class IdleState : public ExcavatorState {
 public:   
@@ -267,7 +282,15 @@ public:
       last_state_succeeded_ = true;
       return true; }
 
-   void entryPoint() override{}
+   void entryPoint() override 
+   {
+   excavator_arm_client_->cancelGoal();
+   navigation_vision_client_ ->cancelGoal();
+   navigation_client_->cancelGoal();
+   park_robot_client_->cancelGoal();
+
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Excavator has entered idle state, awaiting new state...");
+   }
    void step() override{}
    void exitPoint() override{}
    State& transition() override{} 
@@ -379,7 +402,7 @@ private:
    void goToRepair();
    void idleExcavator(){}
 
-   bool first_GTPP, first_PAH, first_UFH, first_GTR, macro_state_succeeded, macro_state_done;
+   bool first_GTPP, first_PAH, first_UFH, first_GTR, resetOdomDone_, macro_state_succeeded, macro_state_done;
    
    bool state_done;
 
@@ -421,6 +444,80 @@ private:
    bool first_;
 };
 
-//Add excavator_go_to_scout_recovery_here. 
+/**
+ * @brief If GoToScout fails, this recovery state creates 4 targets located at 4 corners from it
+ *        and looks for the scout at each of those corners. If the scout is found at those corners, it exits the state.
+ * 
+ * @param search_offset_ This is the offset of those targets from initial excavator position. Currently = 10.0 m.
+ */
+class ExcavatorGoToScoutRecovery : public ExcavatorState {
+public:   
+   ExcavatorGoToScoutRecovery(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_SCOUT_RECOVERY, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+   void createPoses();
+   void searchForScout(int index);
+
+private:
+   bool first_;
+   // geometry_msgs::PoseArray recovery_poses_;
+   geometry_msgs::PoseStamped recovery_poses_[4];
+   geometry_msgs::PoseStamped recovery_pose_;
+   geometry_msgs::PoseStamped target_loc_;
+
+   int pose_index_;
+   float search_offset_;
+   bool search_done_, scout_found_, searches_exhausted_;
+
+};
+
+/**
+ * @brief ExcavatorGoToRepairStation travel to the Repair Station
+ * 
+ * @param isDone() navigation vision is complete
+ * @param hasSucceeded() navigation succeeded in going to Repair Station
+ * 
+ */ 
+class VolatileRecovery : public ExcavatorState {
+public:   
+   VolatileRecovery(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_VOLATILE_RECOVERY, nh, robot_name) {}
+
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+   void checkVolatile();
+   void crossMovement(const int& trial);
+   void goToDefaultArmPose();
+
+private:
+   bool first_;
+   int trial_;
+   bool movement_done_;
+   bool default_arm_done_;
+   bool volatile_check_done_;
+   bool volatile_found_, macro_state_done_, trials_exhausted_;
+   enum VOLATILE_RECOVERY_MICRO_STATES{
+      CROSS_MOVEMENT,
+      CHECK_VOLATILE,
+      DEFAULT_ARM_POSE
+   };
+
+   VOLATILE_RECOVERY_MICRO_STATES substate_;
+};
+
 // #endif
 

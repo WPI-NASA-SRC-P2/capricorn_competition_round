@@ -223,6 +223,13 @@ target_link_libraries(odom_resetter
 ${catkin_LIBRARIES}
 )
 
+# add_executable(imu_lowpass src/imu_lowpass.cpp)
+# add_dependencies(imu_lowpass ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(imu_lowpass
+# ${catkin_LIBRARIES}
+# )
+
+
 #############
 ## Install ##
 #############
