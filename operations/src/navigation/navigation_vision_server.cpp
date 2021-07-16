@@ -628,6 +628,9 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         g_nav_goal.drive_mode = NAV_TYPE::GOAL;
         g_nav_goal.pose = goal_loc;
         g_client->sendGoal(g_nav_goal);
+        g_client->sendGoal(g_nav_goal);
+        g_client->sendGoal(g_nav_goal);
+        g_client->sendGoal(g_nav_goal);
         if (g_previous_state_is_go_to)
         {
             g_send_nav_goal = false;
@@ -699,6 +702,9 @@ void cancelGoal()
 
     g_nav_goal.forward_velocity = 0;
     g_nav_goal.angular_velocity = 0;
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
+    g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
 
     ROS_INFO_STREAM(getString("Cancelled Goal"));

@@ -198,7 +198,7 @@ void driveSprial()
   }
   else
   {
-    g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(ROBOT_NUMBER);
+    g_spiral_points = NavigationAlgo::getRadialScanningPoints(ROBOT_NUMBER);
   }
 }
 
