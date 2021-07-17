@@ -4,6 +4,7 @@
 #include <astar.h>
 #include "planning/TrajectoryWithVelocities.h"
 #include <geometry_msgs/Point.h>
+#include "dyn_planning_2.h"
 
 //Setting the node's update rate
 #define UPDATE_HZ 10
@@ -33,7 +34,6 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   #endif
 
   auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, 50, robot_name_);
-
   
   #ifdef DEBUG_INSTRUMENTATION
   debug_pathPublisher.publish(path);
@@ -79,8 +79,8 @@ int main(int argc, char *argv[])
   server.oGrid_subscriber = nh.subscribe(oGrid_topic_, 1000, &PathServer::oGridCallback, &server);
 
   #ifdef DEBUG_INSTRUMENTATION
-  debug_oGridPublisher = nh.advertise<nav_msgs::OccupancyGrid>("/galaga/debug_oGrid", 1000);
-  debug_pathPublisher = nh.advertise<nav_msgs::Path>("/galaga/debug_path", 1000);
+  debug_oGridPublisher = nh.advertise<nav_msgs::OccupancyGrid>("/capricorn/" + robot_name_ + "/debug_oGrid", 1000);
+  debug_pathPublisher = nh.advertise<nav_msgs::Path>("/capricorn/"+ robot_name_ + "/debug_path", 1000);
   #endif
 
   while(!map_received)
