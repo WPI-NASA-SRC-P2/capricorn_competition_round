@@ -177,9 +177,9 @@ target_link_libraries(trajectory_client
 
 
 ##dynamic planning node
-add_executable(dynamic_planning src/nodes/dynamic_planning_node.cpp)
-add_dependencies(dynamic_planning ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(dynamic_planning
+add_executable(dynamic_planning_node src/nodes/dynamic_planning_node.cpp)
+add_dependencies(dynamic_planning_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(dynamic_planning_node
   ${catkin_LIBRARIES} ${PROJECT_NAME}
 )
 
@@ -208,7 +208,7 @@ target_link_libraries(dynamic_planning
 # )
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS ${PROJECT_NAME}_node trajectory_client
+install(TARGETS ${PROJECT_NAME}_node trajectory_client dynamic_planning_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 ## Mark libraries for installation
