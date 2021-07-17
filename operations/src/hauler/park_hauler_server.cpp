@@ -381,45 +381,77 @@ void parkWrtExcavator()
 
     if (g_found_orientation)
     {
-        // if the required orientation is found, drive forward till hauler's robot antenna's height (in pixels) exceeds a minimum threshold
-        static int times_depth_crossed = 0, g_lost = 0;
-        static float last_depth = INIT_VALUE;
+        g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+        g_nav_goal.forward_velocity = 0.15;
+        g_nav_goal.direction = 0;
+        g_nav_goal.angular_velocity = 0;
+        
+        g_nav_client->sendGoal(g_nav_goal);
+        g_nav_client->sendGoal(g_nav_goal);
 
-        g_lost = (depth_hauler_ra == INIT_VALUE) ? g_lost + 1 : 0;
 
-        if (depth_hauler_ra < ROBOT_ANTENNA_DEPTH_THRESH && depth_hauler_ra != INIT_VALUE)
-        {
-            if (last_depth != depth_hauler_ra)
-            {
-                times_depth_crossed++;
-            }
-        }
-        else
-        {
-            times_depth_crossed = 0;
-        }
-
-        if (times_depth_crossed > 2 || g_lost > 10)
-        {
-            g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-            g_nav_goal.forward_velocity = 0;
-            g_nav_goal.angular_velocity = 0;
-            times_depth_crossed = 0;
-            last_depth = INIT_VALUE;
-            g_parked = true;
-            return;
-        }
-
-        last_depth = depth_hauler_ra;
-
-        float center_img = (WIDTH_IMAGE / 2.0);
-        float error_angle = center_img - center_exc;
-        if (center_exc != INIT_VALUE && abs(error_angle) > 10 && depth_hauler_ra > 3)
-            findExcavator();
+        ros::Duration(18).sleep();
 
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-        g_nav_goal.forward_velocity = 0.1;
+        g_nav_goal.forward_velocity = -0.5;
+        g_nav_goal.direction = 0;
         g_nav_goal.angular_velocity = 0;
+        
+        g_nav_client->sendGoal(g_nav_goal);
+        g_nav_client->sendGoal(g_nav_goal);
+
+        ros::Duration(1.5).sleep();
+
+
+        g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+        g_nav_goal.forward_velocity = 0;
+        g_nav_goal.direction = 0;
+        g_nav_goal.angular_velocity = 0;
+        
+        g_nav_client->sendGoal(g_nav_goal);
+        g_nav_client->sendGoal(g_nav_goal);
+
+        g_parked = true;
+
+        // // if the required orientation is found, drive forward till hauler's robot antenna's height (in pixels) exceeds a minimum threshold
+        // static int times_depth_crossed = 0, g_lost = 0;
+        // static float last_depth = INIT_VALUE;
+
+        // g_lost = (depth_hauler_ra == INIT_VALUE) ? g_lost + 1 : 0;
+
+        // if (depth_hauler_ra < ROBOT_ANTENNA_DEPTH_THRESH && depth_hauler_ra != INIT_VALUE)
+        // {
+        //     if (last_depth != depth_hauler_ra)
+        //     {
+        //         times_depth_crossed++;
+        //     }
+        // }
+        // else
+        // {
+        //     times_depth_crossed = 0;
+        // }
+
+        // if (times_depth_crossed > 3 || g_lost > 5)
+        // {
+        //     g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+        //     g_nav_goal.forward_velocity = 0;
+        //     g_nav_goal.angular_velocity = 0;
+        //     times_depth_crossed = 0;
+        //     last_depth = INIT_VALUE;
+        //     g_parked = true;
+        //     return;
+        // }
+
+        // last_depth = depth_hauler_ra;
+
+        // float center_img = (WIDTH_IMAGE / 2.0);
+        // float error_angle = center_img - center_exc;
+        // if (center_exc != INIT_VALUE && abs(error_angle) > 10 && depth_hauler_ra > 3)
+        //     findExcavator();
+
+        // g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+        // g_nav_goal.forward_velocity = 0.1;
+        // g_nav_goal.angular_velocity = 0;
         // Stopping and exiting once correct orientation wrt excavator is found and robot antenna's distance is less than threshold
         return;
     }
