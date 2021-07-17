@@ -48,7 +48,7 @@ float DynamicPlanning2::mIntersect(std::unordered_map<std::string, float> linePa
   float d_0 = (abs(lineParameters["c"]))/(sqrt(pow(lineParameters["a"], 2) + pow(lineParameters["b"], 2)));
 
   float dIntersect = sqrt(abs((pow(radius, 2) - pow(d_0, 2))));
-  ROS_INFO_STREAM("RADIUS  " << radius   << "   d0   " << d_0);
+//   ROS_INFO_STREAM("RADIUS  " << radius   << "   d0   " << d_0);
   float mIntersect = sqrt(pow(dIntersect,2))/((pow(lineParameters["a"], 2) + pow(lineParameters["b"], 2)));
 
   return mIntersect;
@@ -104,7 +104,7 @@ bool DynamicPlanning2::transformPose(geometry_msgs::PoseStamped& pose, const std
     }
   }
 
-  ROS_ERROR("[planning | nav_algos]: tf2::ExtrapolationException too many times in a row! Failed while transforming from %s to %s at time %d.%d", pose.header.frame_id.c_str(), frame.c_str(), pose.header.stamp.sec, pose.header.stamp.nsec);
+//   ROS_ERROR("[planning | nav_algos]: tf2::ExtrapolationException too many times in a row! Failed while transforming from %s to %s at time %d.%d", pose.header.frame_id.c_str(), frame.c_str(), pose.header.stamp.sec, pose.header.stamp.nsec);
 
 	return false;
 }
@@ -135,7 +135,7 @@ nav_msgs::Path DynamicPlanning2::getPathInMapFrame(nav_msgs::Path path)
 
   ros::Time end = ros::Time::now();
   ros::Duration duration = end - begin;
-  ROS_INFO("pathInMapFrame function takes %lf secs", duration.toSec());
+//   ROS_INFO("pathInMapFrame function takes %lf secs", duration.toSec());
 	return in_map_frame;
 }
 
@@ -167,7 +167,7 @@ std::pair<float,float> DynamicPlanning2::solveQuadraticEquation(float a, float b
         // cout << "Roots are complex and different."  << endl;
         // cout << "x1 = " << realPart << "+" << imaginaryPart << "i" << endl;
         // cout << "x2 = " << realPart << "-" << imaginaryPart << "i" << endl;
-        ROS_ERROR("Imaginary root found");
+        // ROS_ERROR("Imaginary root found");
         return std::make_pair(-0,0);
     }
 }
@@ -312,18 +312,18 @@ bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_
     //nav_msgs::Path new_path = getPathInMapFrame(path);
     for (int i = 0; i < path.poses.size() - 1; i++) // starting from 1, because robot is located at 1st index
     {
-        ROS_INFO("checkAllObstacles - 1");
+        // ROS_INFO("checkAllObstacles - 1");
 
         std::unordered_map<std::string, float> parameters = LineEquation(path.poses.at(i).pose.position, path.poses.at(i+1).pose.position );
         CompletePathParameters.push_back(parameters); // should save the parameters of all the segments in path
 
-        ROS_INFO("checkAllObstacles - 2");
+        // ROS_INFO("checkAllObstacles - 2");
 
     }
 
     for (int l = 0; l < CompletePathParameters.size(); l++ )
     {
-        ROS_INFO("checkAllObstacles - 3");
+        // ROS_INFO("checkAllObstacles - 3");
 
         for (int j = 0; j < obstacles.number_of_objects; j++)
         {
@@ -350,7 +350,7 @@ bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_
     // delete listener_obstacle_;
     ros::Time end = ros::Time::now();
     ros::Duration duration = end - begin;
-    ROS_INFO("checkAllObstacles %lf secs", duration.toSec());
+    // ROS_INFO("checkAllObstacles %lf secs", duration.toSec());
 
     return false;
 }
@@ -382,7 +382,7 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
     //iterating over each line
     for (int l = 0; l < CompletePathParameters.size(); l++ )
     {   
-        ROS_INFO("WAPOINTS :%f", CompletePathParameters[l]);
+        // ROS_INFO("WAPOINTS :%f", CompletePathParameters[l]);
 
         
         // checking every obstacle for the intersection with the line
@@ -395,15 +395,15 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
             centroid.x = obstaclePoseStamped.pose.position.x;
             centroid.y = obstaclePoseStamped.pose.position.y;
             centroid.z = obstaclePoseStamped.pose.position.z;
-            ROS_INFO("-----------------------------");
-            ROS_INFO("Wapoint 1X: %f", CompletePathParameters[l]["wp1x"]);
-            ROS_INFO("Centroid X: %f", centroid.x );
-            ROS_INFO("Wapoint 2X: %f", CompletePathParameters[l]["wp2x"]);
-            ROS_INFO("-----------------------------");
-            ROS_INFO("Wapoint 1Y: %f", CompletePathParameters[l]["wp1y"]);
-            ROS_INFO("Centroid Y: %f", centroid.y);
-            ROS_INFO("Wapoint 2Y: %f", CompletePathParameters[l]["wp2y"]);
-            ROS_INFO("-----------------------------");
+            // ROS_INFO("-----------------------------");
+            // ROS_INFO("Wapoint 1X: %f", CompletePathParameters[l]["wp1x"]);
+            // ROS_INFO("Centroid X: %f", centroid.x );
+            // ROS_INFO("Wapoint 2X: %f", CompletePathParameters[l]["wp2x"]);
+            // ROS_INFO("-----------------------------");
+            // ROS_INFO("Wapoint 1Y: %f", CompletePathParameters[l]["wp1y"]);
+            // ROS_INFO("Centroid Y: %f", centroid.y);
+            // ROS_INFO("Wapoint 2Y: %f", CompletePathParameters[l]["wp2y"]);
+            // ROS_INFO("-----------------------------");
 
 
             dist = PerpendicularDistance( CompletePathParameters[l], centroid);    
@@ -414,7 +414,7 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
             
             if(dist < radius)
             {
-               ROS_WARN("distance less than radius");
+            //    ROS_WARN("distance less than radius");
               float mi = mIntersect(CompletePathParameters.at(l), radius);
               
               std::vector<float> iPoints;
@@ -423,19 +423,19 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
               
               if(CheckIfBewtweenWaypoints(CompletePathParameters.at(l), iPoints))
               {
-                ROS_WARN("************************* Obstacle *************************");
+                // ROS_WARN("************************* Obstacle *************************");
                 return true;
               }  
               else
               {
-                ROS_WARN("%%%%%%%%%%%%%%%%%%%%%%%% NOOOOOOOOOO %%%%%%%%%%%%%%%%%%%%%%%%");
+                // ROS_WARN("%%%%%%%%%%%%%%%%%%%%%%%% NOOOOOOOOOO %%%%%%%%%%%%%%%%%%%%%%%%");
               }
             }
-            ROS_INFO("---------------next obstacle-------------");
+            // ROS_INFO("---------------next obstacle-------------");
         }
-        ROS_INFO("---------------next waypoints-------------");
+        // ROS_INFO("---------------next waypoints-------------");
     }
 
-    ROS_INFO("******************Loop Completed*****************************");
+    // ROS_INFO("******************Loop Completed*****************************");
     return false;
 }
