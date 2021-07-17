@@ -229,6 +229,12 @@ target_link_libraries(imu_lowpass
   ${catkin_LIBRARIES}
 )
 
+add_executable(out_of_commission_check src/out_of_commission_check.cpp)
+add_dependencies(out_of_commission_check ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(out_of_commission_check
+  ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
