@@ -30,7 +30,7 @@ OCCUPIED = 100
 UNOCCUPIED = 0
 OBSTACLE_SCALER = 2
 ALL_OBSTACLE_LIST = []
-OBSTACLE_REMEMBRING_FRAMES = 1
+OBSTACLE_REMEMBRING_FRAMES = 2
  
 class ObjectPlotter:
     def __init__(self):
@@ -211,7 +211,9 @@ class ObjectPlotter:
                         # set radius of object to be plotted based on the width of the bounding box observed
                         radius = (obj.pose.position.z + OBSTACLE_SCALER)/2 ####increasing the obstacle size
                         # plot the obstacle onto the occupancy grid
-                        self.addObstacle(obx, oby, radius)      
+                        false_radius = 10 # false radius is because of false object detection, ex. excavator 
+                        if(radius < false_radius):
+                             self.addObstacle(obx, oby, radius)      
         
     # publish the updated occupancy grid
     # - publish self.occ_grid after finished

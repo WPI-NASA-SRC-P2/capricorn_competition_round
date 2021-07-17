@@ -36,13 +36,13 @@ using namespace COMMON_NAMES;
 
 void DetectionCB(perception::ObjectArray obstacles)
 {
-  ROS_INFO(" obstacles Received");
+//   ROS_INFO(" obstacles Received");
   global_Obstacles_ = obstacles; 
 }
 
 void pathCB(nav_msgs::Path path)
 {
-  ROS_INFO(" Path Received");
+//   ROS_INFO(" Path Received");
   
   for(int i = 0; i < path.poses.size(); i++)
   {
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
       }
      
     // run at 10hz
-    ros::Rate update_rate(1); // it slowed down pretty much, wont recommend havung it.
+    ros::Rate update_rate(0.3); // it slowed down pretty much, wont recommend havung it.
     update_rate.sleep();
     ros::spinOnce();
   }

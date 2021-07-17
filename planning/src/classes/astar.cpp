@@ -223,7 +223,8 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   std::vector<double> gScores(oGrid.data.size(), INFINITY);
 
   int endIndex = 0;
-  int centerIndex = (oGrid.info.height / 2) * oGrid.info.width + oGrid.info.width / 2;
+  int centerIndex = ((oGrid.info.height / 2) * oGrid.info.width) + (oGrid.info.width / 2);
+  // ROS_INFO("**************CENTERiNDEX********* : %f");
 
   // ROS_INFO("[planning | astar | %s]: centerIndex calculated", robot_name.c_str());
 
@@ -236,6 +237,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   }
 
   auto origin = std::make_pair<double, int>(0, std::move(centerIndex));
+  // ROS_INFO("!!!!!!!!!!!!ORIGIN!!!!!!!!!!! : %f", origin);
 
   /***************************  Calculating end index ***************************************************/
 
@@ -316,7 +318,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
     endIndex = bestIndex;
   }
   else
-  {
+   {
     // If the target point was on the grid, just calculate the index of the point (with the center being 0,0)
     endIndex = (target.y + (oGrid.info.height / 2)) * oGrid.info.width + (target.x + (oGrid.info.width / 2));
     // ROS_INFO("[planning | astar | %s]: Calculated Index: %d", robot_name.c_str(), endIndex);

@@ -412,7 +412,7 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
             ROS_INFO("radius: %f", radius);
             
             
-            if(dist < radius)
+            if((dist < radius) && (radius < 9))
             {
             //    ROS_WARN("distance less than radius");
               float mi = mIntersect(CompletePathParameters.at(l), radius);
