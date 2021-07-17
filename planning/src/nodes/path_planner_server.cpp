@@ -26,7 +26,7 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
 
 
   // obstacle threshold = 50, Padding Radius = 6
-  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 6);
+  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 2);
 
   #ifdef DEBUG_INSTRUMENTATION
   debug_oGridPublisher.publish(paddedGrid);

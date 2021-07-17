@@ -421,10 +421,12 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
     {
       if (volatile_found)
       {
-        publishAngles(yaw_angle, 1, 1, -2.6); // Set of values moves the scoop to not drop volatiles
-        ros::Duration(2).sleep();
-        publishAngles(yaw_angle, -0.5, 1, -1.1); // Intermediate set of values to raise the arm above the surface
-        ros::Duration(2).sleep();
+        publishAngles(-0.785, -2, 1, -2.6); // Set of values moves the scoop to not drop volatiles
+        ros::Duration(5).sleep();
+        // publishAngles(yaw_angle, 1, 1, -2.6); // Set of values moves the scoop to not drop volatiles
+        // ros::Duration(2).sleep();
+        // publishAngles(yaw_angle, -0.5, 1, -1.1); // Intermediate set of values to raise the arm above the surface
+        // ros::Duration(2).sleep();
         publishAngles(yaw_angle, -2, 1, 0.4); // This set of values moves the arm over the surface
       }
       else // Else raise the arm and dump the regolith in the left

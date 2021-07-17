@@ -226,7 +226,7 @@ std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRadialScanningPoints
     return msg;
   };
 
-  points.push_back(getPoint(0, 0));
+  // points.push_back(getPoint(0, 0));
   points.push_back(getPoint(0, 0));
 
   while (abs(start_angle) <= abs(angle_max))
