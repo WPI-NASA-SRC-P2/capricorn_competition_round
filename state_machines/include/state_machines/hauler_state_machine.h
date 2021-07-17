@@ -27,7 +27,9 @@
 #include <maploc/ResetOdom.h>
 
 #include <state_machines/common_robot_state_machine.h>
-#include "perception/ObjectArray.h"     
+#include "perception/ObjectArray.h"    
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseArray.h> 
 
 using namespace COMMON_NAMES;
 
@@ -85,7 +87,13 @@ private:
   ros::Subscriber objects_sub_;
    /*** @param objs 
    */
+  ros::Subscriber odom_sub_;
   void objectsCallback(const perception::ObjectArray::ConstPtr objs);
+
+  /** @param odom
+   * Odometry callback for hauler_pose_
+  */
+  void odomCallback(const nav_msgs::Odometry odom);
 
 public:
    
@@ -116,6 +124,11 @@ protected:
   ros::NodeHandle nh_;
 
   std::string robot_name_;
+
+  // For odometry callback
+  nav_msgs::Odometry odom_;
+//   geometry_msgs::Pose excavator_pose_;
+  geometry_msgs::PoseStamped hauler_pose_;
 
   std::mutex objects_mutex_;
   perception::ObjectArray::ConstPtr vision_objects_;
@@ -549,6 +562,40 @@ public:
 
 private:
    bool first_;
+};
+
+/**
+ * @brief If GoToExcavator fails, this recovery state creates 4 targets located at 4 corners from it
+ *        and looks for the scout at each of those corners. If the scout is found at those corners, it exits the state.
+ * 
+ * @param search_offset_ This is the offset of those targets from initial hauler position. Currently = 10.0 m.
+ */
+
+class GoToExcavatorRecovery : public HaulerState {
+public:   
+   GoToExcavatorRecovery(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_TO_EXCAVATOR_RECOVERY, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+   void createPoses();
+   void searchForExcavator(int index);
+
+private:
+   bool first_;
+   geometry_msgs::PoseStamped recovery_poses_[4];
+   geometry_msgs::PoseStamped recovery_pose_;
+   geometry_msgs::PoseStamped target_loc_;
+
+   int pose_index_;
+   float search_offset_;
+   bool search_done_, excavator_found_, searches_exhausted_;
+
 };
 // class HaulerIdle : public HaulerState {
 // public:   

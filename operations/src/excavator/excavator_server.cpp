@@ -428,7 +428,7 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
     scoop_value = volatile_found ? "Volatile found" : "Volatile not found"; // Prints to the terminal if volatiles found
     bool return_value = volatile_found;
     ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Scoop info topic returned: " + scoop_value + "\n");
-    publishAngles(-1.45, 0.45, 1, 1.5);
+    publishAngles(-1.45, 0.45, 1, 1.5); //Angle to retract scoop to prevent volatiles falling off after getting out of ground, or in other words, drop them when scoop is underground
     ros::Duration(2).sleep();
     publishAngles(-1.5, -0.5, 1, 1.5); // Intermediate set of values to raise the arm above the surface
     ros::Duration(2).sleep();

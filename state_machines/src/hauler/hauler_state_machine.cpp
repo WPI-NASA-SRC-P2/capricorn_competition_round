@@ -31,6 +31,8 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   resetHaulerOdometryClient_.waitForExistence();
   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: All hauler action servers started!");
 
+  odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &HaulerState::odomCallback, this);
+
 //   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &HaulerState::objectsCallback, this);
 }
 
@@ -45,6 +47,15 @@ HaulerState::~HaulerState()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// C A L L B A C K S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HaulerState::odomCallback(const nav_msgs::Odometry odom)
+{
+   odom_ = odom;
+   // excavator_pose_ = odom.pose.pose;
+   hauler_pose_.pose = odom.pose.pose;
+   hauler_pose_.header = odom.header;
+   
+}
 
 /** TODO: Check if the object detection callback is needed*/
 
@@ -806,6 +817,110 @@ void HaulerGoToRepairStation::exitPoint()
 {
    // none at the moment
    navigation_vision_client_->cancelGoal();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  G O  TO  E X C A V A T O R  R E C O V E R Y  S T A T E  C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** @brief:
+ * After creating poses, call searchForScout() with first pose index. 
+ * If done, update pose index, reset first. 
+ * If searches exhausted || scout found ==> DONE
+ * If scout_found ==> SUCCEEDED. 
+ * */
+
+void GoToExcavatorRecovery::entryPoint()
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToExcavatorRecovery.");
+   // define the offset distance for generating poses
+   search_offset_ = 10.0;
+   // set up the four recovery poses
+   createPoses();
+   // reset the pose that is going to be checked
+   pose_index_ = 0;
+
+   search_done_ = false;
+   first_ = true;
+   excavator_found_ = false;
+}
+
+void GoToExcavatorRecovery::step() 
+{
+   // Send on search whenever previous search is done [AND] searches are not exhausted [AND] The goal hasn't been sent yet [AND] scout hasn't been found yet.
+   searchForExcavator(pose_index_);
+   // Check if searches are exhausted.
+   searches_exhausted_ = (pose_index_ > 3);
+   // Reset flags to enable searching on a new pose, gven conditions mentioned above
+   if(search_done_ && !(searches_exhausted_) && !(excavator_found_)) 
+   {
+      first_ = true;
+      ++pose_index_;
+   }
+}
+
+// If the excavator finds the scout or all the recovery_poses_ are exhausted, this recovery state is done.
+bool GoToExcavatorRecovery::isDone()
+{
+   // scout_found_ is updated in searchForScout()
+   current_state_done_ = (searches_exhausted_ || excavator_found_);
+   return current_state_done_;
+}
+
+bool GoToExcavatorRecovery::hasSucceeded()
+{
+   // succeeds if scout is found successfully 
+   last_state_succeeded_ = excavator_found_;
+   return last_state_succeeded_;
+}
+
+void GoToExcavatorRecovery::exitPoint()
+{
+   navigation_vision_client_->cancelGoal();
+}
+
+// Excavator searches for scout once it gets to one of those offset poses. 
+void GoToExcavatorRecovery::searchForExcavator(int index) 
+{
+   if(first_)
+   {
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Searching for Excavator at Pose # : " << index);
+      navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS;
+      navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_NAV_AND_NAV_VISION;
+      target_loc_ = recovery_poses_[index];
+      navigation_vision_goal_.goal_loc = target_loc_;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      first_ = false;
+   }
+   search_done_ = navigation_vision_client_->getState().isDone();
+   excavator_found_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+}
+
+// When the excavator's Recovery method is triggered, it creates 4 offset poses from its current location and stores them in recovery_poses_
+void GoToExcavatorRecovery::createPoses()
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Creating poses.");
+   
+   recovery_pose_ = hauler_pose_;
+   recovery_pose_.pose.position.x += search_offset_;
+   recovery_poses_[0] = recovery_pose_;
+
+   recovery_pose_ = hauler_pose_;
+   recovery_pose_.pose.position.x -= search_offset_;
+   recovery_poses_[1] = recovery_pose_;
+
+   recovery_pose_ = hauler_pose_;
+   recovery_pose_.pose.position.y += search_offset_;
+   recovery_poses_[2] = recovery_pose_;
+
+   recovery_pose_ = hauler_pose_;
+   recovery_pose_.pose.position.y -= search_offset_;
+   recovery_poses_[3] = recovery_pose_;
+
+   // ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << " Poses created: [1] " << recovery_poses_[0] << 
+   //                                                                                                    "\n[2] " << recovery_poses_[1] << 
+   //                                                                                                    "\n[3] " << recovery_poses_[2] << 
+   //                                                                                                    "\n[4] " << recovery_poses_[3] );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
