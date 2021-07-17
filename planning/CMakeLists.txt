@@ -11,6 +11,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   nav_msgs
   geometry_msgs
+  perception
+  utils
+  tf2
+  tf2_ros
   message_generation
   #TrajectoryWithVelocities
 )
@@ -54,6 +58,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
   FILES
   TrajectoryWithVelocities.msg
+  
  )
 
 ## Generate services in the 'srv' folder
@@ -119,7 +124,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES planning
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs nav_msgs message_runtime
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs nav_msgs message_runtime 
 #  DEPENDS system_lib
 )
 ###########
@@ -137,8 +142,7 @@ include_directories(
 # )
 add_library(${PROJECT_NAME} 
   # src/nodes/path_planner_server.cpp
-  src/classes/astar.cpp 
-  src/classes/cspace.cpp
+  src/classes/astar.cpp src/classes/cspace.cpp src/classes/dyn_planning_2.cpp 
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
@@ -168,6 +172,14 @@ target_link_libraries(${PROJECT_NAME}_node
 add_executable(trajectory_client src/nodes/path_planner_client_node.cpp)
 add_dependencies(trajectory_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(trajectory_client
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
+
+##dynamic planning node
+add_executable(dynamic_planning src/nodes/dynamic_planning_node.cpp)
+add_dependencies(dynamic_planning ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(dynamic_planning
   ${catkin_LIBRARIES} ${PROJECT_NAME}
 )
 
