@@ -131,13 +131,22 @@ void Search::entryPoint()
    srv.request.resume_spiral_motion = true;
    near_volatile_ = false;
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout is beginning to search for volatile");
+   covered_waypoint_sub = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + SPIRAL_WAYPOINT_PUBLISHER, 1000, &Search::waypointsCoveredCB, this);
+   waypoints_covered_yet = 0;
+}
+
+void Search::waypointsCoveredCB(std_msgs::UInt8 msg)
+{
+   total_waypoints_covered = msg.data;
+   waypoints_covered_yet++;
 }
 
 bool Search::isDone()
 {
    // if near the volatile, then the state is done
-   current_state_done_ = near_volatile_;
-
+   // ROS_INFO_THROTTLE(3, "[ STATE MACHINES | scout_state_machine | %s ]: %i Waypoints covered by now", robot_name_.c_str(), waypoints_covered_yet);
+   current_state_done_ = (near_volatile_ || (waypoints_covered_yet >= MAX_WAYPOINTS_BEFORE_RESET));
+   // ROS_INFO_THROTTLE(3, "[ STATE MACHINES | scout_state_machine | %s ]: reset needed or not: %i", robot_name_.c_str(), (waypoints_covered_yet >= MAX_WAYPOINTS_BEFORE_RESET));
    // if(current_state_done_) {   /** @TEST: Remove thsi if running the scheduler */
    // srv.request.resume_spiral_motion = false;
    // spiralClient_.call(srv);
@@ -157,6 +166,7 @@ void Search::step()
 {
    // execute spiral motion
    spiralClient_.call(srv);
+   ros::spinOnce();
 }
 
 void Search::exitPoint()
@@ -226,6 +236,7 @@ void ResetOdomAtHopper::entryPoint()
    first_PAH = true;
    first_UFH = true;
    first_GTR = true;
+   resetOdomDone_ = false;
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
@@ -311,11 +322,11 @@ void ResetOdomAtHopper::parkAtHopper()
    {
       if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
          micro_state = UNDOCK_FROM_HOPPER;
-      else
-      {
-         first_PAH = true;
-         micro_state = PARK_AT_HOPPER;
-      }
+      // else
+      // {
+      //    first_PAH = true;
+      //    micro_state = PARK_AT_HOPPER;
+      // }
    }
 }
 
@@ -346,6 +357,7 @@ void ResetOdomAtHopper::resetOdom()
    maploc::ResetOdom srv;
    srv.request.target_robot_name = robot_name_;
    srv.request.at_hopper = true;
+   resetOdomDone_ = resetOdometryClient.call(srv);
    // macro_state_succeeded = resetOdometryClient.call(srv);
    // macro_state_done = true;
    micro_state = GO_TO_REPAIR_STATION;
@@ -404,7 +416,7 @@ bool GoToRepairStation::isDone()
 
 bool GoToRepairStation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(last_state_succeeded_)
       ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout GoToRepairStation completed successfully");
 

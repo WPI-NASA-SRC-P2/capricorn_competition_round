@@ -19,12 +19,15 @@ Command Line Arguments Required:
 #include <nav_msgs/Odometry.h>
 #include <operations/navigation_algorithm.h>
 #include <operations/Spiral.h>
+#include <std_msgs/UInt8.h>
 
 #define UPDATE_HZ 10
 
-typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
+using namespace COMMON_NAMES;
 
+typedef actionlib::SimpleActionClient<operations::NavigationAction> Client;
 Client *g_client;
+ros::Publisher waypoint_publisher_;
 
 operations::NavigationGoal g_nav_goal;
 perception::ObjectArray g_objects;
@@ -44,7 +47,7 @@ bool g_going_to_goal = false;
 bool g_new_trajectory = false;
 bool resume_spiral = false;
 bool new_stop_call = false;
-const double CHECKPOINT_THRESHOLD = 2.0;
+const double CHECKPOINT_THRESHOLD = 10.0;
 bool was_driving = false;
 std::string robot_name_;
 
@@ -120,9 +123,10 @@ void objectsCallback(const perception::ObjectArray &objs)
  */
 void driveSprial()
 {
+  static int waypoints_covered = 0;
   if (g_spiral_points.size() > 1)
   {
-    // double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
+    double dist = NavigationAlgo::changeInPosition(g_robot_pose, g_spiral_points.at(1));
     bool done_driving = g_client->getState().isDone();// == actionlib::SimpleClientGoalState::SUCCEEDED;
     // bool failed_driving = g_client->getState() == actionlib::SimpleClientGoalState::ABORTED;
 
@@ -160,23 +164,30 @@ void driveSprial()
     // {
       if(done_driving)
       {
-      g_spiral_points.erase(g_spiral_points.begin());
+      if(dist < CHECKPOINT_THRESHOLD)
+      {
+        std_msgs::UInt8 data;
+        data.data = ++waypoints_covered;
+        waypoint_publisher_.publish(data);
+        g_spiral_points.erase(g_spiral_points.begin());
+        ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: Clearing current a waypoint");// << "Going to goal dist:" << dist);
+      }
       geometry_msgs::Point point_0, point_2;
       point_0 = g_spiral_points.at(0).point;
       point_2 = g_spiral_points.at(2).point;
 
-      ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: Clearing current a waypoint");// << "Going to goal dist:" << dist);
 
       g_nav_goal.drive_mode = NAV_TYPE::GOAL;
       g_nav_goal.pose.pose.position = g_spiral_points.at(1).point;
       g_nav_goal.pose.pose.orientation = getOrientation(point_0, point_2);
       g_nav_goal.pose.header.frame_id = MAP;
-      g_nav_goal.epsilon = 1;
+      g_nav_goal.epsilon = 2;
       g_nav_goal.final_rotate = false;
       // g_client->sendGoal(g_nav_goal);
       // g_going_to_goal = true;
       g_new_trajectory = true;
       // was_driving = true;
+
       }
   //   }
   //   else
@@ -276,7 +287,7 @@ int main(int argc, char **argv)
   // Convert char to int
   // https://www.softwaretestinghelp.com/cpp-character-conversion-functions/
   ROBOT_NUMBER = (robot_name_.back()) - 48; 
-  ros::init(argc, argv, robot_name_ + COMMON_NAMES::SCOUT_SEARCH_NODE_NAME);
+  ros::init(argc, argv, robot_name_ + SCOUT_SEARCH_NODE_NAME);
   ros::NodeHandle nh;
 
   bool odom_flag;
@@ -295,9 +306,9 @@ int main(int argc, char **argv)
 		ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Currently using odom from rtabmap\n");
 	// }
 
-  g_client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
+  g_client = new Client(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB, true);
   g_client->waitForServer();
-  g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+  g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
 
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = MAP;
@@ -309,9 +320,10 @@ int main(int argc, char **argv)
     ros::spinOnce();
   }
 
-  ros::Subscriber objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
+  ros::Subscriber objects_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback);
+  waypoint_publisher_ = nh.advertise<std_msgs::UInt8>(CAPRICORN_TOPIC + robot_name_ + SPIRAL_WAYPOINT_PUBLISHER, 1000);
 
-  ros::ServiceServer service = nh.advertiseService(COMMON_NAMES::SCOUT_SEARCH_SERVICE, serviceCB);
+  ros::ServiceServer service = nh.advertiseService(SCOUT_SEARCH_SERVICE, serviceCB);
   ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: " << "Starting Searching - " << robot_name_);
   execute();
 

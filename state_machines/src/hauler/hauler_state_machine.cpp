@@ -162,7 +162,7 @@ bool HaulerGoToScout::isDone()
 
 bool HaulerGoToScout::hasSucceeded() 
 {
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(last_state_succeeded_)
       ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Go to Scout Completed Successfully");
    return last_state_succeeded_;
@@ -277,7 +277,7 @@ void UndockHopper::step()
       ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Undock stepping, first_ = false now");
    }
    // check if undocking is finished before reseting odometry
-   undock_done_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   undock_done_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    
    if(undock_done_ && !first_){
        resetOdom();
@@ -645,7 +645,8 @@ void DumpVolatileAtHopper::goToProcPlant()
    bool is_done = (navigation_vision_client_->getState().isDone());
    if (is_done)
    {
-      if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+      // @HACK! MUST BE DEALT WITH!
+      // if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
          micro_state = PARK_AT_HOPPER;
       // else
          // state go to 0 0
@@ -782,7 +783,7 @@ bool HaulerGoToRepairStation::isDone()
 
 bool HaulerGoToRepairStation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(last_state_succeeded_)
       ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Scout Go to Repair Station Completed Successfully");
    return last_state_succeeded_;
@@ -808,3 +809,13 @@ void HaulerGoToRepairStation::exitPoint()
    navigation_vision_client_->cancelGoal();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  I D L E  S T A T E  C L A S S ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// void IdleState::entryPoint() {
+//   hauler_client_->cancelGoal();
+//   navigation_vision_client_ ->cancelGoal();
+//   navigation_client_->cancelGoal();
+//   park_robot_client_->cancelGoal();
+// }

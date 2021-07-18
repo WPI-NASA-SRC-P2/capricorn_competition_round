@@ -25,6 +25,7 @@
 #include <maploc/ResetOdom.h>
 #include <operations/ParkRobotAction.h>
 #include <maploc/ResetOdom.h>
+#include <std_msgs/UInt8.h>
 
 using namespace COMMON_NAMES;
 
@@ -189,7 +190,11 @@ public:
 
 private:
    operations::Spiral srv;
+   ros::Subscriber covered_waypoint_sub;
+   int total_waypoints_covered = 0, waypoints_covered_yet = 0;
+   const int MAX_WAYPOINTS_BEFORE_RESET = 5;
 
+   void waypointsCoveredCB(std_msgs::UInt8 msg);
 };
 
 /**
@@ -243,7 +248,7 @@ private:
    void goToRepair();
    void idleScout(){}
 
-   bool first_GTPP, first_PAH, first_UFH, first_GTR, macro_state_succeeded, macro_state_done;
+   bool first_GTPP, first_PAH, first_UFH, first_GTR, resetOdomDone_, macro_state_succeeded, macro_state_done;
    
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_PROC_PLANT,
