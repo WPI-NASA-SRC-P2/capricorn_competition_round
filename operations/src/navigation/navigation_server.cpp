@@ -11,7 +11,11 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 
 	nh.param("crab_drive", CRAB_DRIVE_, false);
 
+	ros::Duration(1).sleep();
 	ROS_INFO("[operations | nav_server | %s]: Starting navigation server...\n", robot_name_.c_str());
+	std_msgs::Empty msg;
+	navigation_server_restart_pub_.publish(msg);
+	ros::Duration(1).sleep(); // Otherwise the server may fail to publish the message
 
 	// Action server
 	server_ = new Server(nh, NAVIGATION_ACTIONLIB, boost::bind(&NavigationServer::execute, this, _1), false);
@@ -28,8 +32,6 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 	moveRobotWheels(0);
 	steerRobot(0);
 
-	std_msgs::Empty msg;
-	navigation_server_restart_pub_.publish(msg);
 }
 
 NavigationServer::~NavigationServer()

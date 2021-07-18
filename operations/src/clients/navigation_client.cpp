@@ -19,13 +19,18 @@ std::string robot_name;
 
 void navigationRestartCB(const std_msgs::Empty msg)
 {
+  if (NULL != client) 
   delete client;
   
   client = new Client(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
 
-  printf("Waiting for server...\n");
+  ROS_WARN_STREAM("[ OPERATIONS | navigation_client | "<<robot_name<<" ]: "<<"Navigation Server Restarted! Trying to reconnect");
 
-  bool serverExists = client->waitForServer();
+
+  while(!client->waitForServer(ros::Duration(5.0)))
+    ROS_INFO_STREAM("[ OPERATIONS | navigation_client | "<<robot_name<<" ]: "<<"Waiting to reconnect to Nav Server");
+  
+  ROS_INFO_STREAM("[ OPERATIONS | navigation_client | "<<robot_name<<" ]: "<<"Nav Server reconnected!");
 
 }
 
@@ -67,7 +72,7 @@ void teleopCB(const geometry_msgs::Twist::ConstPtr &twist)
     goal.forward_velocity = twist->linear.x;
   }
 
-  printf("Teleop twist forward: %f\n", twist->linear.x);
+  ROS_INFO_STREAM("[ OPERATIONS | navigation_client | "<<robot_name<<" ]: "<<"Teleop twist forward: " << twist->linear.x);
 
   client->sendGoal(goal);
   ros::Duration(0.1).sleep();
@@ -109,7 +114,7 @@ void navigationCB(const geometry_msgs::Point::ConstPtr &goal_point)
 
     ROS_WARN("[operations | nav_client | %s]: Final rotate: %d", robot_name.c_str(), goal.final_rotate);
 
-    printf("Sending auto goal to actionlib server\n");
+    ROS_INFO_STREAM("[ OPERATIONS | navigation_client | "<<robot_name<<" ]: "<<"Sending auto goal to actionlib server");
     client->sendGoal(goal);
     // ros::Duration(0.1).sleep();
 
@@ -126,7 +131,7 @@ int main(int argc, char **argv)
   if (argc != 2 && argc != 4)
   {
     // Displaying an error message for correct usage of the script, and returning error.
-    ROS_ERROR_STREAM("Not enough arguments! Please pass in robot name with number.");
+    ROS_ERROR_STREAM("[ OPERATIONS | navigation_client | "<<robot_name<<" ]: "<<"Not enough arguments! Please pass in robot name with number.");
     return -1;
   }
   else
@@ -142,22 +147,22 @@ int main(int argc, char **argv)
     ros::Subscriber teleop_sub = nh.subscribe("/cmd_vel", 1000, teleopCB);
     ros::Subscriber navigation_restart_sub = nh.subscribe("/capricorn/" + robot_name + "/" + NAVIGATION_SERVER_RESTART_TOPIC, 1000, navigationRestartCB);
 
-    printf("Nav client: Instantiating client instance\n");
+    ROS_INFO_STREAM("[ OPERATIONS | navigation_client | "<<robot_name<<" ]: "<<"Nav client: Instantiating client instance");
 
     // initialize client
     client = new Client(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
 
-    printf("Waiting for server...\n");
+    ROS_INFO_STREAM("[ OPERATIONS | navigation_client | "<<robot_name<<" ]: "<<"Waiting for server...");
 
     bool serverExists = client->waitForServer();
 
     if (!serverExists)
     {
-      ROS_ERROR_STREAM("Server does not exist! Exiting.\n");
+      ROS_ERROR_STREAM("[ OPERATIONS | navigation_client | "<<robot_name<<" ]: "<<"Server does not exist! Exiting.");
       return -1;
     }
     
-    printf("Done waiting. Spinning\n");
+    ROS_INFO_STREAM("[ OPERATIONS | navigation_client | "<<robot_name<<" ]: "<<"Done waiting. Spinning");
 
     ros::spin();
 
