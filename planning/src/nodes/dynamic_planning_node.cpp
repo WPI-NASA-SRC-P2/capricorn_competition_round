@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
       }
      
     // run at 10hz
-    ros::Rate update_rate(1); // it slowed down pretty much, wont recommend havung it.
+    ros::Rate update_rate(0.3); // it slowed down pretty much, wont recommend havung it.
     update_rate.sleep();
     ros::spinOnce();
   }
