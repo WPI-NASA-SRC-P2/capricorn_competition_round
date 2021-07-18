@@ -412,7 +412,7 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
             ROS_INFO("radius: %f", radius);
             
             
-            if((dist < radius) && (radius < 9))
+            if(dist < radius)
             {
             //    ROS_WARN("distance less than radius");
               float mi = mIntersect(CompletePathParameters.at(l), radius);
@@ -426,10 +426,6 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
                 // ROS_WARN("************************* Obstacle *************************");
                 return true;
               }  
-              else
-              {
-                // ROS_WARN("%%%%%%%%%%%%%%%%%%%%%%%% NOOOOOOOOOO %%%%%%%%%%%%%%%%%%%%%%%%");
-              }
             }
             // ROS_INFO("---------------next obstacle-------------");
         }

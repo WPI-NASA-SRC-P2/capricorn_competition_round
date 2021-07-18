@@ -5,6 +5,8 @@
 #include "planning/TrajectoryWithVelocities.h"
 #include <geometry_msgs/Point.h>
 #include "dyn_planning_2.h"
+#include "planning/GetCSpace.h"
+
 
 //Setting the node's update rate
 #define UPDATE_HZ 10
@@ -18,6 +20,8 @@ ros::Publisher debug_pathPublisher;
 
 std::string robot_name_ = "";
 bool map_received = false;
+int padding = 6;
+ros::ServiceClient client;
 
 bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
@@ -26,8 +30,21 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   locationLock.unlock();
 
 
-  // obstacle threshold = 50, Padding Radius = 6
-  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 2);
+  //calling GetCSpace Service for padded grid
+  planning::GetCSpace cspace_srv;
+  cspace_srv.request.cspace_length = padding;
+  cspace_srv.request.map = global_oGrid_CPY;
+
+  if (client.call(cspace_srv))
+  {
+    ROS_INFO("Calculating CSpace");
+  }
+  else
+  {
+    ROS_ERROR("Failed to Get CSpace service");
+    return false;
+  }
+    auto paddedGrid =  cspace_srv.response.map;
 
   #ifdef DEBUG_INSTRUMENTATION
   debug_oGridPublisher.publish(paddedGrid);
@@ -83,14 +100,18 @@ int main(int argc, char *argv[])
   debug_pathPublisher = nh.advertise<nav_msgs::Path>("/capricorn/"+ robot_name_ + "/debug_path", 1000);
   #endif
 
-  while(!map_received)
+
+  while(!map_received && ros::ok())
   {
     ros::Duration(0.1).sleep();
     ros::spinOnce();
-  }
-
+  } 
+  client = nh.serviceClient<planning::GetCSpace>("calc_cspace");
+  client.waitForExistence();
+  
   //Instantiating ROS server for generating trajectory
   ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &PathServer::trajectoryGeneration, &server);
+
 
   ros::spin();
 
