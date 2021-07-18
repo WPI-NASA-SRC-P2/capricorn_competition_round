@@ -192,7 +192,7 @@ private:
    operations::Spiral srv;
    ros::Subscriber covered_waypoint_sub;
    int total_waypoints_covered = 0, waypoints_covered_yet = 0;
-   const int MAX_WAYPOINTS_BEFORE_RESET = 5;
+   const int MAX_WAYPOINTS_BEFORE_RESET = 2;
 
    void waypointsCoveredCB(std_msgs::UInt8 msg);
 };
