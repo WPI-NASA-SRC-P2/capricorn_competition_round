@@ -356,8 +356,31 @@ bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_
 }
 
 
+ bool DynamicPlanning2::CheckIPwithRobot(geometry_msgs::PoseStamped& current_robot_pose,std::vector<float> iPoints)
+ {
+    float robotx = current_robot_pose.pose.position.x; 
+    float roboty = current_robot_pose.pose.position.y; 
+    float point1x = iPoints.at(0);
+    float point1y = iPoints.at(1);
+    float point2x = iPoints.at(2);
+    float point2y = iPoints.at(3);
+    float safeDistance1 = sqrt(pow((robotx - point1x),2) + pow((roboty - point1y),2));
+    float safeDistance2 = sqrt(pow((robotx - point2x),2) + pow((roboty - point2y),2)); 
 
-bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav_msgs::Path path, std::string robot_name, const tf2_ros::Buffer& tf_buffer)
+    ROS_INFO_STREAM("safedistance1: " << safeDistance1);
+    ROS_INFO_STREAM("safedistance2: " << safeDistance2);
+    if(safeDistance1 < 7 || safeDistance2 < 7)
+    {
+      return true;
+    }
+    else
+    { 
+      return false;
+    }
+ }
+
+
+bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav_msgs::Path path, std::string robot_name, geometry_msgs::PoseStamped current_robot_pose, const tf2_ros::Buffer& tf_buffer)
 {
 
   // ROS_INFO("checkAllObstacles2 started");
@@ -412,7 +435,7 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
             ROS_INFO("radius: %f", radius);
             
             
-            if(dist < radius)
+            if(dist < radius && radius < 9)
             {
             //    ROS_WARN("distance less than radius");
               float mi = mIntersect(CompletePathParameters.at(l), radius);
@@ -423,8 +446,11 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
               
               if(CheckIfBewtweenWaypoints(CompletePathParameters.at(l), iPoints))
               {
-                // ROS_WARN("************************* Obstacle *************************");
-                return true;
+                ROS_INFO_STREAM("pose: " << current_robot_pose);
+                if(CheckIPwithRobot(current_robot_pose,iPoints))
+                {
+                  return true;
+                }
               }  
             }
             // ROS_INFO("---------------next obstacle-------------");

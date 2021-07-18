@@ -19,8 +19,9 @@ ros::Publisher debug_pathPublisher;
 #endif
 
 std::string robot_name_ = "";
+geometry_msgs::PoseStamped robot_pose_;
 bool map_received = false;
-int padding = 6;
+int padding = 2;
 ros::ServiceClient client;
 
 bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
@@ -75,6 +76,8 @@ void PathServer::oGridCallback(nav_msgs::OccupancyGrid oGrid)
   global_oGrid_ = oGrid;
   map_received = true;
 }
+
+
 
 int main(int argc, char *argv[])
 {

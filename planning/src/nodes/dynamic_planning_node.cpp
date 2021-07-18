@@ -11,12 +11,14 @@
 #include<nav_msgs/Odometry.h>
 
 //Setting the node's update rate
-#define UPDATE_HZ 1
+#define UPDATE_HZ 0.5
 
 #define DEBUG_INSTRUMENTATION
 
 ros::Subscriber pathSubscriber;
 ros::Subscriber ObjectDetectionSubscriber; ///
+ros::Subscriber robotPose_subscriber;
+
 ros::Publisher replan_trigger;
 tf2_ros::Buffer buffer_;
 tf2_ros::TransformListener *listener_path_;
@@ -24,6 +26,7 @@ tf2_ros::TransformListener *listener_path_;
 
 
 std::string robot_name_ = "";
+geometry_msgs::PoseStamped robot_pose_;
 bool path_received = false;
 nav_msgs::Path global_path_1;
 std_msgs::Bool result;
@@ -54,6 +57,14 @@ void pathCB(nav_msgs::Path path)
  
 }
 
+void poseCallback(nav_msgs::Odometry odom)
+{
+  robot_pose_.header = odom.header;
+  robot_pose_.pose = odom.pose.pose;
+  DynamicPlanning2::transformPose(robot_pose_, MAP, buffer_);
+  
+}
+
 
 
 int main(int argc, char *argv[])
@@ -63,16 +74,19 @@ int main(int argc, char *argv[])
 
   std::string robot_name(argv[1]);
   robot_name_ = robot_name;
-  geometry_msgs::PoseStamped current_robot_pose;
 
   //ROS Topic names
   std::string ObjectDetection_topic_ = CAPRICORN_TOPIC+robot_name_+OBJECT_DETECTION_OBJECTS_TOPIC;
   std::string path_topic_ = CAPRICORN_TOPIC+robot_name_+"/debug_path";
+  std::string robotPose_topic_ = "/" + robot_name_+"/camera/odom";
+
  
   //create a nodehandle
   ros::NodeHandle nh;
 
   ObjectDetectionSubscriber = nh.subscribe(ObjectDetection_topic_, 1000, DetectionCB);
+  robotPose_subscriber = nh.subscribe(robotPose_topic_, 1000, poseCallback);
+
   listener_path_ = new tf2_ros::TransformListener(buffer_);
   pathSubscriber = nh.subscribe(path_topic_, 1000, pathCB);
 
@@ -85,7 +99,7 @@ int main(int argc, char *argv[])
       if(path_received)
       {
 
-        freePath = DynamicPlanning2::checkAllObstacles2(global_Obstacles_, global_path_1, robot_name_, buffer_);
+        freePath = DynamicPlanning2::checkAllObstacles2(global_Obstacles_, global_path_1, robot_name_, robot_pose_, buffer_);
     
         if(freePath)
         {
@@ -101,7 +115,7 @@ int main(int argc, char *argv[])
       }
      
     // run at 10hz
-    ros::Rate update_rate(0.3); // it slowed down pretty much, wont recommend havung it.
+    ros::Rate update_rate(UPDATE_HZ); // it slowed down pretty much, wont recommend havung it.
     update_rate.sleep();
     ros::spinOnce();
   }
