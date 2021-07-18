@@ -27,6 +27,9 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 
 	moveRobotWheels(0);
 	steerRobot(0);
+
+	std_msgs::Empty msg;
+	navigation_server_restart_pub_.publish(msg);
 }
 
 NavigationServer::~NavigationServer()
@@ -68,6 +71,7 @@ void NavigationServer::initSteerPublisher(ros::NodeHandle& nh, const std::string
 void NavigationServer::initDebugPublishers(ros::NodeHandle& nh, const std::string& robot_name)
 {
 	waypoint_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/vis_poses", 1000);
+	navigation_server_restart_pub_ = nh.advertise<std_msgs::Empty>(NAVIGATION_SERVER_RESTART_TOPIC, 1000);
 }
 
 /**

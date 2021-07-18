@@ -17,6 +17,18 @@ using namespace COMMON_NAMES;
 
 std::string robot_name;
 
+void navigationRestartCB(const std_msgs::Empty msg)
+{
+  delete client;
+  
+  client = new Client(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
+
+  printf("Waiting for server...\n");
+
+  bool serverExists = client->waitForServer();
+
+}
+
 /**
  * @brief Callback for the twist message of teleop message twist
  *        Inspite of us commenting again and again that callback 
@@ -128,6 +140,7 @@ int main(int argc, char **argv)
     // Subscribing to teleop topic
     ros::Subscriber navigation_sub = nh.subscribe("/capricorn/" + robot_name + "/navigation_tester_topic", 1000, navigationCB);
     ros::Subscriber teleop_sub = nh.subscribe("/cmd_vel", 1000, teleopCB);
+    ros::Subscriber navigation_restart_sub = nh.subscribe("/capricorn/" + robot_name + "/navigation_server_restart", 1000, navigationRestartCB);
 
     printf("Nav client: Instantiating client instance\n");
 
@@ -136,7 +149,7 @@ int main(int argc, char **argv)
 
     printf("Waiting for server...\n");
 
-    bool serverExists = client->waitForServer(ros::Duration(5.0));
+    bool serverExists = client->waitForServer();
 
     if (!serverExists)
     {
