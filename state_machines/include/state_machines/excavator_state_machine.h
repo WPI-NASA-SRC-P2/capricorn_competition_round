@@ -88,6 +88,9 @@ public:
       ROS_INFO_STREAM("[ STATE_MACHINES | excavator_state_machine |  [" << getName() << "] - count = " << m_unCount << " ]");
    }
 
+   geometry_msgs::PoseStamped EXCAVATOR_1_LOOKOUT_LOC;
+   geometry_msgs::PoseStamped EXCAVATOR_2_LOOKOUT_LOC;
+
 protected:
 
   uint32_t m_unMaxCount;
@@ -127,7 +130,6 @@ protected:
 /** @brief:
  * Parameters that have to be tuned through testing.*/ 
    float PARAM_EXCAVATOR_HIT_SCOUT = 1.2;  //In STATE 10: EXCAVATOR_PARK_AND_PUB, how far the excavator should go so that it 'just touches' the scout, assuming it is centered to scout.
-
 };
 
 /**
@@ -400,10 +402,11 @@ private:
    void undockFromHopper();
    void resetOdom();
    void goToRepair();
+   void goToLookoutLocation();
    void idleExcavator(){}
 
-   bool first_GTPP, first_PAH, first_UFH, first_GTR, resetOdomDone_, macro_state_succeeded, macro_state_done;
-   
+   bool first_GTPP, first_PAH, first_UFH, first_GTR, first_GTLL, resetOdomDone_, macro_state_succeeded, macro_state_done;
+   geometry_msgs::PoseStamped hardcoded_pose_;
    bool state_done;
 
    enum RESET_ODOM_MICRO_STATES{
@@ -412,6 +415,7 @@ private:
       UNDOCK_FROM_HOPPER,
       RESET_ODOM_AT_HOPPER,
       GO_TO_REPAIR_STATION,
+      GO_TO_LOOKOUT_LOCATION,
       EXCAVATOR_IDLE 
    };
 

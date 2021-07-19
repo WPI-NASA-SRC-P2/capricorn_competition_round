@@ -28,6 +28,16 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   
   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: All excavator action servers started!");
 
+  EXCAVATOR_1_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = -2.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.position.y = 15.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.orientation.w = 1.0;
+
+  EXCAVATOR_2_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.position.x = -2.0;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.position.y = -15.0;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.orientation.w = 1.0;
+
 //   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ExcavatorState::odomCallback, this);
 }
@@ -599,7 +609,9 @@ void ExcavatorResetOdomAtHopper::entryPoint()
    first_PAH = true;
    first_UFH = true;
    first_GTR = true;
+   first_GTLL = true;
    resetOdomDone_ = false;
+   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
@@ -639,6 +651,9 @@ void ExcavatorResetOdomAtHopper::step()
       break;
    case GO_TO_REPAIR_STATION:
       goToRepair();
+      break;
+   case GO_TO_LOOKOUT_LOCATION:
+      goToLookoutLocation();
       break;
    case EXCAVATOR_IDLE:
       idleExcavator();
@@ -737,12 +752,29 @@ void ExcavatorResetOdomAtHopper::goToRepair()
    }
    
    bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)                                                   //Dont care about getting to repair station. 
+   {
+      micro_state = GO_TO_LOOKOUT_LOCATION;
+   }
+}
+
+void ExcavatorResetOdomAtHopper::goToLookoutLocation() 
+{
+   if(first_GTLL)
+   {
+   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+   navigation_action_goal_.pose = hardcoded_pose_;
+   navigation_client_->sendGoal(navigation_action_goal_);
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Lookout Location : " << hardcoded_pose_);
+   first_GTLL = false;
+   }
+   
+   bool is_done = (navigation_client_->getState().isDone());
    if (is_done)
    {
       macro_state_done = true;
-      macro_state_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
-      if (macro_state_succeeded)
-         micro_state = EXCAVATOR_IDLE;
+      macro_state_succeeded = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+      micro_state = EXCAVATOR_IDLE;
       // Dont find a reason it should fail,
    }
 }
@@ -750,6 +782,7 @@ void ExcavatorResetOdomAtHopper::goToRepair()
 void ExcavatorResetOdomAtHopper::exitPoint()
 {
    // none at the moment
+   navigation_client_->cancelGoal();
    navigation_vision_client_->cancelGoal();
    park_robot_client_->cancelGoal();
 }

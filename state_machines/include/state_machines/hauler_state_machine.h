@@ -116,6 +116,9 @@ public:
       ROS_INFO_STREAM("[ STATE_MACHINES | hauler_state_machine | " << getName() << "] - count = " << m_unCount << " ]");
    }
 
+   geometry_msgs::PoseStamped HAULER_1_LOOKOUT_LOC;
+   geometry_msgs::PoseStamped HAULER_2_LOOKOUT_LOC;
+
 protected:
 
   uint32_t m_unMaxCount;
@@ -129,7 +132,7 @@ protected:
   nav_msgs::Odometry odom_;
 //   geometry_msgs::Pose excavator_pose_;
   geometry_msgs::PoseStamped hauler_pose_;
-
+  
   std::mutex objects_mutex_;
   perception::ObjectArray::ConstPtr vision_objects_;
   bool objects_msg_received_ = false;
@@ -522,9 +525,11 @@ private:
    void undockFromHopper();
    void resetOdom();
    void goToRepairStation();
-   void idleScout(){}
+   void goToLookoutLocation();
+   void idleHauler(){}
 
-   bool first_GTPP, first_PAH, first_UFH, first_DV, first_ROH, first_GTRS, macro_state_succeeded, macro_state_done;
+   bool first_GTPP, first_PAH, first_UFH, first_DV, first_ROH, first_GTRS, first_GTLL, macro_state_succeeded, macro_state_done;
+   geometry_msgs::PoseStamped hardcoded_pose_;
    
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_PROC_PLANT,
@@ -533,6 +538,7 @@ private:
       UNDOCK_FROM_HOPPER,
       RESET_ODOM_AT_HOPPER,
       GO_TO_REPAIR_STATION,
+      GO_TO_LOOKOUT_LOCATION,
       HAULER_IDLE
    };
 

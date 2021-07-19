@@ -31,6 +31,16 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   resetHaulerOdometryClient_.waitForExistence();
   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: All hauler action servers started!");
 
+  HAULER_1_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
+  HAULER_1_LOOKOUT_LOC.pose.position.x = -3.5;
+  HAULER_1_LOOKOUT_LOC.pose.position.y = 15.0;
+  HAULER_1_LOOKOUT_LOC.pose.orientation.w = 1.0;
+
+  HAULER_2_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
+  HAULER_2_LOOKOUT_LOC.pose.position.x = -3.5;
+  HAULER_2_LOOKOUT_LOC.pose.position.y = -15.0;
+  HAULER_2_LOOKOUT_LOC.pose.orientation.w = 1.0;
+
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &HaulerState::odomCallback, this);
 
 //   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &HaulerState::objectsCallback, this);
@@ -591,6 +601,8 @@ void DumpVolatileAtHopper::entryPoint()
    first_DV = true;
    first_ROH = true;
    first_GTRS = true;
+   first_GTLL = true;   
+   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::HAULER_1_NAME) ? HAULER_1_LOOKOUT_LOC : HAULER_2_LOOKOUT_LOC;
    micro_state = GO_TO_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
@@ -633,8 +645,11 @@ void DumpVolatileAtHopper::step()
    case GO_TO_REPAIR_STATION:
       goToRepairStation();
       break;
+   case GO_TO_LOOKOUT_LOCATION:
+      goToLookoutLocation();
+      break;
    case HAULER_IDLE:
-      idleScout();
+      idleHauler();
       break;
    default:
       break;
@@ -759,18 +774,39 @@ void DumpVolatileAtHopper::goToRepairStation()
    }
    
    bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)                                                   //Dont care about getting to repair station. 
+   {
+      micro_state = GO_TO_LOOKOUT_LOCATION;
+   }
+}
+
+
+void DumpVolatileAtHopper::goToLookoutLocation() 
+{
+   if(first_GTLL)
+   {
+   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+   navigation_action_goal_.pose = hardcoded_pose_;
+   navigation_client_->sendGoal(navigation_action_goal_);
+   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Going to Lookout Location : " << hardcoded_pose_);
+   first_GTLL = false;
+   }
+   
+   bool is_done = (navigation_client_->getState().isDone());
    if (is_done)
    {
       macro_state_done = true;
-      macro_state_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      macro_state_succeeded = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
       micro_state = HAULER_IDLE;
       // Dont find a reason it should fail,
    }
 }
 
+
 void DumpVolatileAtHopper::exitPoint()
 {
    // none at the moment
+   navigation_client_->cancelGoal();
    navigation_vision_client_->cancelGoal();
    park_robot_client_->cancelGoal();
    hauler_client_->cancelGoal();
