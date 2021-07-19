@@ -97,15 +97,29 @@ int main(int argc, char** argv)
         ros::Duration(0.1).sleep();
         ros::spinOnce();
     }
-    ROS_WARN_STREAM("[STATE_MACHINES | odom_resetter.cpp | "<<robot_name<<"]: Odom Resets Started");
 
     double init_odom_r, init_odom_p, init_odom_y;
     double init_imu_r, init_imu_p, init_imu_y;
     
-    ros::Duration(0.5).sleep();
+    ros::Duration(0.1).sleep();
     ros::spinOnce();
     getOdomRPY(init_odom_r, init_odom_p, init_odom_y);
     getImuRPY(init_imu_r, init_imu_p, init_imu_y);
+
+    while(ros::ok() && (init_imu_r!=init_imu_r || init_imu_p!=init_imu_p || init_imu_y!=init_imu_y) )
+    {
+        getImuRPY(init_imu_r, init_imu_p, init_imu_y);
+        ros::spinOnce();
+    }
+
+    while(ros::ok() && (init_odom_r!=init_odom_r || init_odom_p!=init_odom_p || init_odom_y!=init_odom_y) )
+    {
+        getOdomRPY(init_odom_r, init_odom_p, init_odom_y);
+        ros::spinOnce();
+    }
+
+
+    ROS_WARN_STREAM("[STATE_MACHINES | odom_resetter.cpp | "<<robot_name<<"]: Odom Resets Started");
 
     ROS_INFO_STREAM("[STATE_MACHINES | odom_resetter.cpp | "<<robot_name<<"]:init_imu_r: " << init_imu_r<< "  init_imu_p: " << init_imu_p<< "  init_imu_y: " << init_imu_y);
     

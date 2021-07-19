@@ -369,6 +369,9 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	std::vector<double> wheel_speeds_right = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, -BASE_SPIN_SPEED);
 	std::vector<double> wheel_speeds_left = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, BASE_SPIN_SPEED);
 
+	std::vector<double> wheel_speeds_right_slow = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, -BASE_SPIN_SPEED * BASE_SPIN_SLOW_FACTOR);
+	std::vector<double> wheel_speeds_left_slow = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, BASE_SPIN_SPEED * BASE_SPIN_SLOW_FACTOR);
+
 	// Save starting robot pose to track the change in heading
 	geometry_msgs::PoseStamped starting_pose = getRobotPose();
 
@@ -401,13 +404,19 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 
 		if (delta_heading < 0)
 		{
-			// Turn clockwise	
-			moveRobotWheels(wheel_speeds_right);
+			// Turn clockwise
+			if(abs(delta_heading) < ANGLE_EPSILON * SLOW_SPIN_EPSILON_FACTOR)
+				moveRobotWheels(wheel_speeds_right_slow);
+			else
+				moveRobotWheels(wheel_speeds_right);
 		}
 		else if (delta_heading > 0)
 		{
 			// Turn counter-clockwise
-			moveRobotWheels(wheel_speeds_left);
+			if(abs(delta_heading) < ANGLE_EPSILON * SLOW_SPIN_EPSILON_FACTOR)
+				moveRobotWheels(wheel_speeds_left_slow);
+			else
+				moveRobotWheels(wheel_speeds_left);
 		}
 
 		// Allow ROS to catch up and update our subscribers
