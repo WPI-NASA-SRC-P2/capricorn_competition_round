@@ -217,13 +217,13 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
    {
       if(excavator_done_and_succeeded)
       {
-         ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Succeeded to reach Scout");
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Succeeded to reach Scout");
          if (scout_task == SCOUT_LOCATE_VOLATILE && scout_done_and_succeeded)
             return UNDOCK_SCOUT;
       }
       else if (excavator_done_and_failed)
       {
-         ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Failed to reach Scout");
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Failed to reach Scout");
          return RECOVERY_SCOUT_FINDING;
       }
    }
@@ -231,13 +231,13 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
    {
       if(excavator_done_and_succeeded)
       {
-         ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Succeeded to reach Scout");
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Succeeded to reach Scout");
          if (scout_task == SCOUT_LOCATE_VOLATILE && scout_done_and_succeeded)
             return UNDOCK_SCOUT;
       }
       else if (excavator_done_and_failed)
       {
-         ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Failed to reach Scout");
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Failed to reach Scout");
          return MAKE_EXCAV_HAULER_IDLE;
       }
       return RECOVERY_SCOUT_FINDING;

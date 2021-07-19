@@ -43,6 +43,8 @@ float curr_wrt_pitch = 0;
 bool volatile_found = false; // flag to store value received from scoop_info topic
 std::string robot_name_;
 std::mutex excavator_cancel_goal_mutex;
+tf2_ros::Buffer buffer_;
+tf2_ros::TransformListener *listener_;
 
 int SLEEP_DURATION = 5; // The sleep duration
 
@@ -215,44 +217,47 @@ std::vector<float> getDumpAngleInBase(int tries)
   geometry_msgs::PointStamped initial_point_stamped; // object to store detected hauler point in base frame
   initial_point_stamped.point.z = 1.2; // Default assumed location is [0, 0, 1.2] in left camera frame in case object detection fails
 
-  initial_point_stamped.point = getHaulerPose(initial_point_stamped).pose.position; // try to get hauler location from object detection  
+  initial_point_stamped.point = getHaulerPose(initial_point_stamped).pose.position; // try to get hauler location from object detection 
+  initial_point_stamped.header.frame_id = left_camera_frame; 
   printPoint("Detected point in left camera frame", initial_point_stamped.point);
 
-  geometry_msgs::PointStamped final_point_stamped; // point stamped object to store transformation of point from camera frame to base frame
+  NavigationAlgo::transformPoint(initial_point_stamped, base_frame, buffer_, 0.1, 10);
 
-  /*
-    Set the frames for point stamped objects, required for transformation
-  */
-  initial_point_stamped.header.frame_id = left_camera_frame;
-  final_point_stamped.header.frame_id = base_frame;
+  // geometry_msgs::PointStamped final_point_stamped; // point stamped object to store transformation of point from camera frame to base frame
 
-  while(countTries<tries && !transformSet) {
-        try{
-            tf_listener_.transformPoint(base_frame, initial_point_stamped, final_point_stamped);
-            transformSet = true;
-        }
-        catch (tf::TransformException &ex) {
-            ROS_WARN_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Could not transform hauler detection from " << left_camera_frame << " to " << base_frame);
-            ROS_ERROR("[operations | excavator_server | %s]: %s", robot_name_.c_str(), ex.what());
-            ros::Duration(0.1).sleep();
-            countTries++;
-            continue;
-        }
-    }
+  // /*
+  //   Set the frames for point stamped objects, required for transformation
+  // */
+  // initial_point_stamped.header.frame_id = left_camera_frame;
+  // final_point_stamped.header.frame_id = base_frame;
+
+  // while(countTries<tries && !transformSet) {
+  //       try{
+  //           tf_listener_.transformPoint(base_frame, initial_point_stamped, final_point_stamped);
+  //           transformSet = true;
+  //       }
+  //       catch (tf::TransformException &ex) {
+  //           ROS_WARN_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: " << "Could not transform hauler detection from " << left_camera_frame << " to " << base_frame);
+  //           ROS_ERROR("[operations | excavator_server | %s]: %s", robot_name_.c_str(), ex.what());
+  //           ros::Duration(0.1).sleep();
+  //           countTries++;
+  //           continue;
+  //       }
+  //   }
   
-  printPoint("Detected point in excavator base frame", final_point_stamped.point);
+  printPoint("Detected point in excavator base frame", initial_point_stamped.point);
 
   // This part returns the point in excavator shoulder frame
   geometry_msgs::Point final_wrt_shoulder;
-  final_wrt_shoulder.x = final_point_stamped.point.x - 0.7;
-  final_wrt_shoulder.y = final_point_stamped.point.y - 0.000001;
-  final_wrt_shoulder.z = final_point_stamped.point.z - 0.100000;
+  final_wrt_shoulder.x = initial_point_stamped.point.x - 0.7;
+  final_wrt_shoulder.y = initial_point_stamped.point.y - 0.000001;
+  final_wrt_shoulder.z = initial_point_stamped.point.z - 0.100000;
 
   printPoint("Detected point in excavator shoulder frame", final_wrt_shoulder);
 
 
   std::vector<float> thetas = getDepthHeight(final_wrt_shoulder);
-  float shoulder_yaw = findShoulderAngle(final_point_stamped.point);
+  float shoulder_yaw = findShoulderAngle(initial_point_stamped.point);
   if(shoulder_yaw > 0)
   {
     shoulder_yaw = shoulder_yaw - 0.34*shoulder_yaw/0.78; // Offset for getting precise yaw angle
@@ -408,12 +413,25 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
     }
     else // Else raise the arm and dump the regolith in the right
     {
-      publishAngles(-1.57, -2, 1, 0.4); // This set of values moves the arm to the left and above the surface
-      ros::Duration(SLEEP_DURATION).sleep();
-      publishAngles(-1.57, -2, 1, 1.5); // This set of values moves the scoop to drop regolith on the ground
-      ros::Duration(SLEEP_DURATION).sleep();
-      last_vol_loc_angle = theta;
-      return false;
+      if (volatile_found)
+      {
+        publishAngles(-0.785, -2, 1, -2.6); // Set of values moves the scoop to not drop volatiles
+        ros::Duration(5).sleep();
+        // publishAngles(yaw_angle, 1, 1, -2.6); // Set of values moves the scoop to not drop volatiles
+        // ros::Duration(2).sleep();
+        // publishAngles(yaw_angle, -0.5, 1, -1.1); // Intermediate set of values to raise the arm above the surface
+        // ros::Duration(2).sleep();
+        publishAngles(yaw_angle, -2, 1, 0.4); // This set of values moves the arm over the surface
+      }
+      else // Else raise the arm and dump the regolith in the left
+      {
+        publishAngles(1.57, -2, 1, 0.4); // This set of values moves the arm to the left and above the surface
+        ros::Duration(SLEEP_DURATION).sleep();
+        publishAngles(1.57, -2, 1, 1.5); // This set of values moves the scoop to drop regolith on the ground
+        ros::Duration(SLEEP_DURATION).sleep();
+        last_vol_loc_angle = theta;
+        return false;
+      }
     }
   }
 
@@ -530,6 +548,7 @@ int main(int argc, char **argv)
     ros::Subscriber sub = nh.subscribe("/" + robot_name + SCOOP_INFO, 1000, scoopCallback); // scoop info subscriber
     ros::Subscriber objects_sub = nh.subscribe(CAPRICORN_TOPIC + robot_name + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &objectsCallback); // object array subscriber 
     Server server(nh, EXCAVATOR_ACTIONLIB, boost::bind(&execute, _1, &server), false);
+    listener_ = new tf2_ros::TransformListener(buffer_);
     // server.registerPreemptCallback(&cancelGoal);
     server.start();
     ROS_INFO("[operations | excavator_server | %s]: STARTED EXCAVATOR SERVER", robot_name_.c_str());

@@ -28,9 +28,11 @@ MAP_X_OFFSET = 20
 MAP_Y_OFFSET = 20
 OCCUPIED = 100
 UNOCCUPIED = 0
-OBSTACLE_SCALER = 2
+OBSTACLE_SCALER = 4
 ALL_OBSTACLE_LIST = []
-OBSTACLE_REMEMBRING_FRAMES = 30
+OBSTACLE_REMEMBRING_FRAMES = 30 #10
+SKIP_FRAME = 5 #3
+CURRENT_FRAME = SKIP_FRAME + 1 # To make sure the first frame is plotted
  
 class ObjectPlotter:
     def __init__(self):
@@ -113,13 +115,21 @@ class ObjectPlotter:
         #    rospy.sleep(0.1)
         return new_x, new_y
 
-    def transform(self, input_pose, target_frame):
-        transform = self.tf_buffer.lookup_transform(target_frame,
+    def transform(self, input_pose, target_frame):    
+        # changes copied from Galen's branch tf_fix  
+        # https://github.com/galenbr/capricorn_competition_round/tree/tf_fix  
+        tries = 20
+        # print("inside transform function")
+        while(tries > 0):
+            try:
+                transform = self.tf_buffer.lookup_transform(target_frame,
                                        input_pose.header.frame_id, #source frame
                                        rospy.Time(0), #get the tf at first available time
                                        rospy.Duration(1.0)) #wait for 1 second
-
-        return tf2_geometry_msgs.do_transform_pose(input_pose, transform)
+                return tf2_geometry_msgs.do_transform_pose(input_pose, transform)
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                rospy.sleep(0.1)
+            tries -= 1
 
     # plot single object on the occupancy grid
     # 100 = obstacle, -1 = unexplored, 0 = free
@@ -179,39 +189,47 @@ class ObjectPlotter:
     def addAllObstacles(self):
         global OBSTACLE_SCALER
         global ALL_OBSTACLE_LIST
+        global CURRENT_FRAME
+        global SKIP_FRAME
+
         # check if there are any observed objects
         #rospy.loginfo("Adding Obstacles from Obj list")
         if len(self.obj_list.obj) > 0:
             # rospy.loginfo("Adding Obstacles from Obj list")
             # loop through all objects in the object list and plot them
             ALL_OBSTACLE_LIST.append([])
-            for obj in self.obj_list.obj:
-                obj_wrt_map = self.transform(obj.point, "map")
-                obj_wrt_map.pose.position.z = obj.width
-                ALL_OBSTACLE_LIST[-1].append(obj_wrt_map)
+            if(CURRENT_FRAME>SKIP_FRAME):
+                CURRENT_FRAME = 0
+                for obj in self.obj_list.obj:
+                    obj_wrt_map = self.transform(obj.point, "map")
+                    obj_wrt_map.pose.position.z = obj.width
+                    ALL_OBSTACLE_LIST[-1].append(obj_wrt_map)
+            CURRENT_FRAME += 1
             if(len(ALL_OBSTACLE_LIST) > OBSTACLE_REMEMBRING_FRAMES):
                 del ALL_OBSTACLE_LIST[0]
 
-            for frame in ALL_OBSTACLE_LIST:
-                for obj in frame:
-                        # TODO: TRANSFORM THE POINTS BEFORE RUNNING addObstacle
-                        # head = self.obj_list.header
-                        # obj = self.transform(obj, head)
-                        
-                        # acquire the x and y position of the obstacle w.r.t the robot base by making a simple rotation transform from the camera frame
-                        # TODO: in progress is using an actual transform, but this method is sufficient for roughly accurate plotting as long as camera yaw is unchanged
-                        # - this is also assuming that the Object message uses a PoseStamped as opposed to a Point, (matching the latest commit)
-                        obj_wrt_robot = self.transform(obj, self.robot_name + "_base_footprint")
-                        obx = obj_wrt_robot.pose.position.x
-                        oby = obj_wrt_robot.pose.position.y
-                        
-                        # placeholder for transform method again
-                        #obx, oby = self.transform(obx, oby, self.robot_name)
-                        
-                        # set radius of object to be plotted based on the width of the bounding box observed
-                        radius = (obj.pose.position.z + OBSTACLE_SCALER)/2 ####increasing the obstacle size
-                        # plot the obstacle onto the occupancy grid
-                        self.addObstacle(obx, oby, radius)      
+        for frame in ALL_OBSTACLE_LIST:
+            for obj in frame:
+                    # TODO: TRANSFORM THE POINTS BEFORE RUNNING addObstacle
+                    # head = self.obj_list.header
+                    # obj = self.transform(obj, head)
+                    
+                    # acquire the x and y position of the obstacle w.r.t the robot base by making a simple rotation transform from the camera frame
+                    # TODO: in progress is using an actual transform, but this method is sufficient for roughly accurate plotting as long as camera yaw is unchanged
+                    # - this is also assuming that the Object message uses a PoseStamped as opposed to a Point, (matching the latest commit)
+                    obj_wrt_robot = self.transform(obj, self.robot_name + "_base_footprint")
+                    obx = obj_wrt_robot.pose.position.x
+                    oby = obj_wrt_robot.pose.position.y
+                    
+                    # placeholder for transform method again
+                    #obx, oby = self.transform(obx, oby, self.robot_name)
+                    
+                    # set radius of object to be plotted based on the width of the bounding box observed
+                    radius = (obj.pose.position.z + OBSTACLE_SCALER)/2 ####increasing the obstacle size
+                    # plot the obstacle onto the occupancy grid
+                    if(radius < 10) :
+                        self.addObstacle(obx, oby, radius)  
+                    
         
     # publish the updated occupancy grid
     # - publish self.occ_grid after finished

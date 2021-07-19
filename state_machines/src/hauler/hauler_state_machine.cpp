@@ -671,7 +671,8 @@ void DumpVolatileAtHopper::goToProcPlant()
    bool is_done = (navigation_vision_client_->getState().isDone());
    if (is_done)
    {
-      if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+      // @HACK! MUST BE DEALT WITH!
+      // if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
          micro_state = PARK_AT_HOPPER;
       // else
          // state go to 0 0
