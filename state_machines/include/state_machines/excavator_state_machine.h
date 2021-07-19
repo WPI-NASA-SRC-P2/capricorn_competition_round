@@ -384,6 +384,42 @@ private:
 };
 
 /**
+ * @brief ExcavatorGoToLoc go to a pose 
+ * 
+ * @param isDone() navigation is done
+ * @param hasSucceeded()  navigation succeeds to get to pose with referance to odom
+ */
+class ExcavatorGoToInitLoc : public ExcavatorState {
+public:   
+   ExcavatorGoToInitLoc(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_INIT_LOCATION, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+   bool crs_first_, gtic_first_;
+   enum GO_TO_INIT_LOC_MICRO
+   {
+      CENTER_REPAIR_STATION,
+      GO_TO_INIT_LOC,
+   };
+
+   GO_TO_INIT_LOC_MICRO micro_state;
+   void stepCenterRepairStation();
+   void stepGoToInitLoc();
+};
+
+/**
  * @brief ExcavatorResetOdomAtHopper navigates to hopper, and then resets odom
  * 
  * @param isDone() when naviagtion vision is complete

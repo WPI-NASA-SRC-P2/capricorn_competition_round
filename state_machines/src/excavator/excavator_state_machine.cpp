@@ -29,14 +29,14 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: All excavator action servers started!");
 
   EXCAVATOR_1_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = -2.0;
-  EXCAVATOR_1_LOOKOUT_LOC.pose.position.y = 15.0;
-  EXCAVATOR_1_LOOKOUT_LOC.pose.orientation.w = 1.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = 5.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.position.y = -20.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.orientation.z = 1.0;
 
   EXCAVATOR_2_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
   EXCAVATOR_2_LOOKOUT_LOC.pose.position.x = -2.0;
-  EXCAVATOR_2_LOOKOUT_LOC.pose.position.y = -15.0;
-  EXCAVATOR_2_LOOKOUT_LOC.pose.orientation.w = 1.0;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.position.y = 20;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.orientation.z = 1.0;
 
 //   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ExcavatorState::odomCallback, this);
@@ -132,7 +132,7 @@ void GoToScout::stepCrossZeroXBorder()
    if(czxb_first_)
    {
       ROS_WARN_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Excavator has to cross boundary, going to intermidiate waypoint");
-      
+      ros::spinOnce();
       geometry_msgs::PoseStamped target_loc;
       target_loc.header.frame_id = MAP;
       target_loc.pose.position.x = std::copysign(EXCAVATOR_CROSSING_WAYPOINT_X, 
@@ -189,6 +189,78 @@ bool GoToScout::isDone() {
 
 bool GoToScout::hasSucceeded() {
    last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   return last_state_succeeded_;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// G O _ T O _ I N I T   L O C   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// void GoToScout::entryPoint(const geometry_msgs::PoseStamped &target_loc)
+void ExcavatorGoToInitLoc::entryPoint()
+{
+   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: entrypoint of go_to_init_loc");
+   crs_first_ = true;
+   gtic_first_ = true;
+   micro_state = GO_TO_INIT_LOC; // Centering is not really needed
+}
+
+void ExcavatorGoToInitLoc::step()
+{
+   switch (micro_state)
+   {
+   case GO_TO_INIT_LOC_MICRO::CENTER_REPAIR_STATION:
+      stepCenterRepairStation();
+      break;
+   case GO_TO_INIT_LOC_MICRO::GO_TO_INIT_LOC:
+      stepGoToInitLoc();
+      break;   
+   default:
+      break;
+   }
+}
+
+void ExcavatorGoToInitLoc::stepCenterRepairStation()
+{
+   if (crs_first_)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_CENTER;
+      // navigation_vision_goal_.target_loc = target_loc_;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      crs_first_ = false;
+      ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Centering repair station Step Function!");
+   }
+   if(navigation_vision_client_->getState().isDone())
+      micro_state = GO_TO_INIT_LOC;
+}
+
+void ExcavatorGoToInitLoc::stepGoToInitLoc()
+{
+   if(gtic_first_)
+   {
+      navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+      navigation_action_goal_.pose = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
+      navigation_client_->sendGoal(navigation_action_goal_);
+      gtic_first_ = false;
+   }
+}
+
+void ExcavatorGoToInitLoc::exitPoint() 
+{
+   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: exitpoint of ExcavatorGoToInitLoc, cancelling ExcavatorGoToInitLoc goal");
+   navigation_vision_client_->cancelGoal();
+}
+
+bool ExcavatorGoToInitLoc::isDone() {
+   current_state_done_ = ((navigation_client_->getState().isDone()) && micro_state == GO_TO_INIT_LOC);
+   return current_state_done_;
+} 
+
+bool ExcavatorGoToInitLoc::hasSucceeded() {
+   if(isDone() && !gtic_first_)
+      last_state_succeeded_ = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+
    return last_state_succeeded_;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////

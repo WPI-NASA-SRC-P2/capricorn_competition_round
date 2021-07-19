@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
 		cSchd.addState(new ExcavatorGoToRepairStation(nh, g_robot_name));
 		cSchd.addState(new VolatileRecovery(nh, g_robot_name));
 		cSchd.addState(new ExcavatorGoToScoutRecovery(nh, g_robot_name));
+		cSchd.addState(new ExcavatorGoToInitLoc(nh, g_robot_name));
 		cSchd.setInitialState(ROBOT_IDLE_STATE);
 		cSchd.exec();
 		return 0;
