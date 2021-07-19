@@ -208,28 +208,29 @@ class ObjectPlotter:
             if(len(ALL_OBSTACLE_LIST) > OBSTACLE_REMEMBRING_FRAMES):
                 del ALL_OBSTACLE_LIST[0]
 
-        for frame in ALL_OBSTACLE_LIST:
-            for obj in frame:
-                    # TODO: TRANSFORM THE POINTS BEFORE RUNNING addObstacle
-                    # head = self.obj_list.header
-                    # obj = self.transform(obj, head)
-                    
-                    # acquire the x and y position of the obstacle w.r.t the robot base by making a simple rotation transform from the camera frame
-                    # TODO: in progress is using an actual transform, but this method is sufficient for roughly accurate plotting as long as camera yaw is unchanged
-                    # - this is also assuming that the Object message uses a PoseStamped as opposed to a Point, (matching the latest commit)
-                    obj_wrt_robot = self.transform(obj, self.robot_name + "_base_footprint")
-                    obx = obj_wrt_robot.pose.position.x
-                    oby = obj_wrt_robot.pose.position.y
-                    
-                    # placeholder for transform method again
-                    #obx, oby = self.transform(obx, oby, self.robot_name)
-                    
-                    # set radius of object to be plotted based on the width of the bounding box observed
-                    radius = (obj.pose.position.z + OBSTACLE_SCALER)/2 ####increasing the obstacle size
-                    # plot the obstacle onto the occupancy grid
-                    if(radius < 10) :
-                        self.addObstacle(obx, oby, radius)  
-                    
+            for frame in ALL_OBSTACLE_LIST:
+                for obj in frame:
+                        # TODO: TRANSFORM THE POINTS BEFORE RUNNING addObstacle
+                        # head = self.obj_list.header
+                        # obj = self.transform(obj, head)
+                        
+                        # acquire the x and y position of the obstacle w.r.t the robot base by making a simple rotation transform from the camera frame
+                        # TODO: in progress is using an actual transform, but this method is sufficient for roughly accurate plotting as long as camera yaw is unchanged
+                        # - this is also assuming that the Object message uses a PoseStamped as opposed to a Point, (matching the latest commit)
+                        obj_wrt_robot = self.transform(obj, self.robot_name + "_base_footprint")
+                        obx = obj_wrt_robot.pose.position.x
+                        oby = obj_wrt_robot.pose.position.y
+                        
+                        # placeholder for transform method again
+                        #obx, oby = self.transform(obx, oby, self.robot_name)
+                        
+                        # set radius of object to be plotted based on the width of the bounding box observed
+                        radius = (obj.pose.position.z + OBSTACLE_SCALER)/2 ####increasing the obstacle size
+                        # plot the obstacle onto the occupancy grid
+                        false_radius = 10 # false radius is because of false object detection, ex. excavator 
+                        if(radius < false_radius):
+                             self.addObstacle(obx, oby, radius)     
+                     
         
     # publish the updated occupancy grid
     # - publish self.occ_grid after finished
