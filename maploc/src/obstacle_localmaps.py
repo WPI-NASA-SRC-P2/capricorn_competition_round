@@ -115,13 +115,21 @@ class ObjectPlotter:
         #    rospy.sleep(0.1)
         return new_x, new_y
 
-    def transform(self, input_pose, target_frame):
-        transform = self.tf_buffer.lookup_transform(target_frame,
+    def transform(self, input_pose, target_frame):    
+        # changes copied from Galen's branch tf_fix  
+        # https://github.com/galenbr/capricorn_competition_round/tree/tf_fix  
+        tries = 20
+        # print("inside transform function")
+        while(tries > 0):
+            try:
+                transform = self.tf_buffer.lookup_transform(target_frame,
                                        input_pose.header.frame_id, #source frame
                                        rospy.Time(0), #get the tf at first available time
                                        rospy.Duration(1.0)) #wait for 1 second
-
-        return tf2_geometry_msgs.do_transform_pose(input_pose, transform)
+                return tf2_geometry_msgs.do_transform_pose(input_pose, transform)
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+                rospy.sleep(0.1)
+            tries -= 1
 
     # plot single object on the occupancy grid
     # 100 = obstacle, -1 = unexplored, 0 = free

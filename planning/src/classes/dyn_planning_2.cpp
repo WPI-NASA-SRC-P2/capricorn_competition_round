@@ -80,7 +80,7 @@ float DynamicPlanning2::PerpendicularDistance(std::unordered_map<std::string, fl
     distance = abs(centroidOfObstacle.x - parameters["wp1x"]); 
 
   }
-  ROS_INFO("distance %f", distance);
+  // ROS_INFO("distance %f", distance);
   return distance;
     
 }
@@ -212,12 +212,12 @@ std::vector<float> DynamicPlanning2::PointsofIntersection(geometry_msgs::Point c
   // iPoints.push_back(point2);
   //  ROS_INFO("x0: %f", x_0);
   //  ROS_INFO("y0 : %f", y_0);
-   ROS_INFO("m-slope WP : %f", lineParameters["m"]);
-   ROS_INFO("mi-slope IP : %f", mi);
-   ROS_INFO("iPoint1X : %f", ax);
-   ROS_INFO("iPoint1Y : %f", ay);
-   ROS_INFO("iPoint2X : %f", bx);
-   ROS_INFO("iPoint2Y : %f", by);
+  //  ROS_INFO("m-slope WP : %f", lineParameters["m"]);
+  //  ROS_INFO("mi-slope IP : %f", mi);
+  //  ROS_INFO("iPoint1X : %f", ax);
+  //  ROS_INFO("iPoint1Y : %f", ay);
+  //  ROS_INFO("iPoint2X : %f", bx);
+  //  ROS_INFO("iPoint2Y : %f", by);
 
   return iPoints;
 }
@@ -337,8 +337,8 @@ bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_
 
             dist = PerpendicularDistance( CompletePathParameters[l], centroid);    
             radius = ObstacleRadius(obstacles.obj[j].width);
-            ROS_INFO("distance: %f", dist);
-            ROS_INFO("radius: %f", radius);
+            // ROS_INFO("distance: %f", dist);
+            // ROS_INFO("radius: %f", radius);
             if(dist < radius )
             {
                 return true;
@@ -369,11 +369,11 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
   //generates line parameters for all the line segments that make the path
   int pathsize = path.poses.size();
   ReversePath(path);
-  ROS_INFO_STREAM("pathsize"<< pathsize);
+  // ROS_INFO_STREAM("pathsize"<< pathsize);
     for (int i = 0; i < path.poses.size() - 1; i++) // starting from 1, because robot is located at 1st index
     {
-        ROS_INFO("path points x : %f", path.poses.at(i+1).pose.position.x);
-        ROS_INFO("path points y : %f", path.poses.at(i+1).pose.position.y);
+        // ROS_INFO("path points x : %f", path.poses.at(i+1).pose.position.x);
+        // ROS_INFO("path points y : %f", path.poses.at(i+1).pose.position.y);
         std::unordered_map<std::string, float> parameters = LineEquation(path.poses.at(i).pose.position, path.poses.at(i+1).pose.position );
         CompletePathParameters.push_back(parameters); // should save the parameters of all the segments in path
 
@@ -408,8 +408,8 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
 
             dist = PerpendicularDistance( CompletePathParameters[l], centroid);    
             radius = ObstacleRadius(obstacles.obj[j].width);
-            ROS_INFO("distance: %f", dist);
-            ROS_INFO("radius: %f", radius);
+            // ROS_INFO("distance: %f", dist);
+            // ROS_INFO("radius: %f", radius);
             
             
             if(dist < radius)

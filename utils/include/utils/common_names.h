@@ -107,6 +107,7 @@ namespace COMMON_NAMES
   const std::string PARK_HAULER = "/park_hauler";
   const std::string HAULER_PARKED_TOPIC = "/hauler_parked";
   const std::string NAV_TYPE_TOPIC = "/nav_type_topic";
+  const std::string RAMP_DONE_TOPIC = "/ramp_done";
   const std::string ROBOTS_CURRENT_STATE_TOPIC = "robot_state_status";
   const std::string ROBOTS_DESIRED_STATE_TOPIC = "robot_desired_state";
   const std::string REPLAN_TRAJECTORY = "/replan_trajectory";
@@ -237,6 +238,7 @@ namespace COMMON_NAMES
     HAULER_FACE_PROCESSING_PLANT, //face the processinf plant using NAV_VISION_TYPE::V_CENTER
     HAULER_GO_TO_SCOUT,      // Hauler goes to the scout using NAV_VISION_TYPE::V_NAV_AND_NAV_VISION
     HAULER_GOTO_REPAIR_STATION, // Hauler goes to the repair station using NAV_VISION_TYPE::V_REACH to recharge
+    HAULER_GO_TO_EXCAVATOR_RECOVERY,
     ROBOT_IDLE_STATE,
 
 
