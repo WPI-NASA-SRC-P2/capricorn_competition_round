@@ -203,8 +203,8 @@ std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRadialScanningPoints
   #define PI 3.14159265
 
   float radius = 60;
-  float start_angle = scout_number == 1 ? 10 : -10, theta_x = scout_number == 1 ? 15 : -15;
-  int angle_max = scout_number == 1 ? 175 : -175;
+  float start_angle = scout_number == 1 ? 170 : -10, theta_x = -15;
+  int angle_max = scout_number == 1 ? 5 : -175;
 
   std::vector<geometry_msgs::PointStamped> points;
 
@@ -229,7 +229,7 @@ std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRadialScanningPoints
   // points.push_back(getPoint(0, 0));
   points.push_back(getPoint(0, 0));
 
-  while (abs(start_angle) <= abs(angle_max))
+  while (abs(start_angle) >= 0 && abs(start_angle) <= 180)
   {
     points.push_back(getAnglePoint(start_angle));
     points.push_back(getPoint(scout_number == 1 ? 30 : -30, 0));

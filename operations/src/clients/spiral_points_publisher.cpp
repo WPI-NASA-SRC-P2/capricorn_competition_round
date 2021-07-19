@@ -41,9 +41,9 @@ int main(int argc, char **argv)
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = "map";
   int number_of_points = 120;
-  std::vector<geometry_msgs::PointStamped> spiral_points_1 = NavigationAlgo::getNArchimedeasSpiralPoints(1);
-  std::vector<geometry_msgs::PointStamped> spiral_points_2 = NavigationAlgo::getNArchimedeasSpiralPoints(2);
-  number_of_points = 5;//spiral_points_1.size();
+  std::vector<geometry_msgs::PointStamped> spiral_points_1 = NavigationAlgo::getRadialScanningPoints(1);
+  std::vector<geometry_msgs::PointStamped> spiral_points_2 = NavigationAlgo::getRadialScanningPoints(2);
+  number_of_points = spiral_points_2.size();
 
   marker.points.resize(2*number_of_points);
   marker.colors.resize(2*number_of_points);

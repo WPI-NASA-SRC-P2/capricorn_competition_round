@@ -100,7 +100,7 @@ void GoToScout::entryPoint()
     target_loc_ = m_pcRobotScheduler->getDesiredPose();
     
     float sign_of_multiple = excavator_pose_.pose.position.x * m_pcRobotScheduler->getDesiredPose().pose.position.x;
-    ROS_INFO_STREAM("#########  "<<sign_of_multiple);
+   //  ROS_INFO_STREAM("#########  "<<sign_of_multiple);
     if (sign_of_multiple<0) 
       micro_state = CROSS_ZERO_X_BORDER;
     else
