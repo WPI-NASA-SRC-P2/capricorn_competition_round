@@ -84,7 +84,7 @@ int main(int argc, char** argv)
     std::string robot_name = argv[1];
     
     ros::Subscriber camera_odom_sub = nh.subscribe("/"+ robot_name + COMMON_NAMES::RTAB_ODOM_TOPIC, 223, odom_callback);
-    ros::Subscriber imu_odom_sub = nh.subscribe("/"+ robot_name + COMMON_NAMES::IMU_TOPIC, 223, imu_callback);
+    ros::Subscriber imu_odom_sub = nh.subscribe("/"+ robot_name + COMMON_NAMES::IMU_FILTERED_TOPIC, 223, imu_callback);
     ros::Subscriber robot_state_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::ROBOTS_CURRENT_STATE_TOPIC, 223, robot_state_callback);
 
     ros::ServiceClient reset_odom_to_pose_client = nh.serviceClient<rtabmap_ros::ResetPose>(robot_name + COMMON_NAMES::RESET_POSE_CLIENT);
@@ -118,6 +118,12 @@ int main(int argc, char** argv)
         ros::spinOnce();
     }
 
+    while(ros::ok() && (init_odom_r == 0 || init_odom_p == 0 || init_odom_y == 0) )
+    {
+        getOdomRPY(init_odom_r, init_odom_p, init_odom_y);
+        ros::spinOnce();
+    }
+
 
     ROS_WARN_STREAM("[STATE_MACHINES | odom_resetter.cpp | "<<robot_name<<"]: Odom Resets Started");
 
@@ -135,6 +141,10 @@ int main(int argc, char** argv)
         new_p = init_odom_p + curr_imu_p - init_imu_p;
         new_y = init_odom_y + curr_imu_y - init_imu_y;  
 
+        ROS_INFO_STREAM("init_odom_r:"<< init_odom_r << "  curr_imu_r:"<< curr_imu_r << "  init_imu_r:"<<init_imu_r);
+        ROS_INFO_STREAM("init_odom_p:"<< init_odom_p << "  curr_imu_p:"<< curr_imu_p << "  init_imu_p:"<<init_imu_p);
+        ROS_INFO_STREAM("init_odom_y:"<< init_odom_y << "  curr_imu_y:"<< curr_imu_y << "  init_imu_y:"<<init_imu_y);
+
         // Assemble data into pose for Rosservice call 
         rtabmap_ros::ResetPose pose;
         pose.request.x = global_odometry.pose.pose.position.x;
@@ -146,10 +156,10 @@ int main(int argc, char** argv)
 
         // call the 'reset pose' rosservice to send updated data
         if(reset_odom_to_pose_client.call(pose)){
-            ROS_INFO_STREAM("[STATE_MACHINES | odom_resetter.cpp | " + robot_name + "]: " + "Pose initialized for rtabmap");
+            ROS_INFO_STREAM("[STATE_MACHINES | odom_resetter.cpp | " + robot_name + "]: " + "Pose initialized for rtabmap; Pose: "<<pose.request);
         }
         else{
-            ROS_ERROR_STREAM("[STATE_MACHINES | odom_resetter.cpp | " + robot_name + "]: " + "RTabMap initialize pose failed.");
+            ROS_ERROR_STREAM("[STATE_MACHINES | odom_resetter.cpp | " + robot_name + "]: " + "RTabMap initialize pose failed; Pose: ."<<pose.request);
         }
 
         // Wait 10 seconds and then do it all again

@@ -31,12 +31,11 @@
 	    	<param name="odom_frame_id" type="string" value="odom"/>
             <param name="publish_tf"  type="bool"   value="$(eval not arg('use_robot_localization'))"/>
         
-            <param name="Vis/FeatureType" value="10"/>
-            <!-- <param name="Vis/MinInliers" value="12"/>
+            <param name="Vis/MinInliers" value="12"/>
             <param name="Vis/RoiRatios"  value="0.03 0.03 0.04 0.04"/> 
-			<param name="Odom/Strategy" value="1"/> 
+			<param name="Odom/Strategy" value="1"/>   <!-- Frame-to-Frame -->
 			<param name="Stereo/MaxDisparity" value="256.0"/>
-			<param name="Odom/ResetCountdown" value="1"/> -->
+			<param name="Odom/ResetCountdown" value="1"/>
 	
 			<!-- <remap from="/odom" to="capricorn/$(arg robot_name)/odom/stereo_odom"/> -->
    	        <!--    <remap from="odom" to="/$(arg robot_name)/stereo_odom" /> -->
