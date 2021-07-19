@@ -148,7 +148,7 @@ private:
       GO_TO_SCOUT
    };
    
-   bool czxb_first_, gts_first_;
+   bool czxb_first_, gts_first_, macro_state_done_, macro_state_succeeded_;
    geometry_msgs::PoseStamped target_loc_;
    static constexpr float EXCAVATOR_CROSSING_WAYPOINT_X = 10.0;
    static constexpr float EXCAVATOR_CROSSING_WAYPOINT_Y = 20.0;

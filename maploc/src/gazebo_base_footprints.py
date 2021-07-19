@@ -31,9 +31,9 @@ class Models_state:
         "small_scout_1": Block("small_scout_1", "map"),
         "small_excavator_1": Block("small_excavator_1", "map"),
         "small_hauler_1": Block("small_hauler_1", "map"),
-        "small_scout_2": Block("small_scout_2", "map"),
-        "small_excavator_2": Block("small_excavator_2", "map"),
-        "small_hauler_2": Block("small_hauler_2", "map"),
+        # "small_scout_2": Block("small_scout_2", "map"),
+        # "small_excavator_2": Block("small_excavator_2", "map"),
+        # "small_hauler_2": Block("small_hauler_2", "map"),
     }
 
     def __init__(self):
@@ -46,15 +46,15 @@ class Models_state:
         self.hauler_pub = rospy.Publisher(
             "/capricorn/small_hauler_1/gazebo_pose", PoseStamped, queue_size=1
         )
-        self.scout2_pub = rospy.Publisher(
-            "/capricorn/small_scout_2/gazebo_pose", PoseStamped, queue_size=1
-        )
-        self.excavator2_pub = rospy.Publisher(
-            "/capricorn/small_excavator_2/gazebo_pose", PoseStamped, queue_size=1
-        )
-        self.hauler2_pub = rospy.Publisher(
-            "/capricorn/small_hauler_2/gazebo_pose", PoseStamped, queue_size=1
-        )
+        # self.scout2_pub = rospy.Publisher(
+        #     "/capricorn/small_scout_2/gazebo_pose", PoseStamped, queue_size=1
+        # )
+        # self.excavator2_pub = rospy.Publisher(
+        #     "/capricorn/small_excavator_2/gazebo_pose", PoseStamped, queue_size=1
+        # )
+        # self.hauler2_pub = rospy.Publisher(
+        #     "/capricorn/small_hauler_2/gazebo_pose", PoseStamped, queue_size=1
+        # )
 
     def publish_all(self):
         All_coordinate = []
@@ -76,12 +76,12 @@ class Models_state:
                     self.excavator_pub.publish(gazebo_stamped)
                 elif blockName == "small_hauler_1":
                     self.hauler_pub.publish(gazebo_stamped)
-                elif blockName == "small_scout_2":
-                    self.scout2_pub.publish(gazebo_stamped)
-                elif blockName == "small_excavator_2":
-                    self.excavator2_pub.publish(gazebo_stamped)
-                elif blockName == "small_hauler_2":
-                    self.hauler2_pub.publish(gazebo_stamped)
+                # elif blockName == "small_scout_2":
+                #     self.scout2_pub.publish(gazebo_stamped)
+                # elif blockName == "small_excavator_2":
+                #     self.excavator2_pub.publish(gazebo_stamped)
+                # elif blockName == "small_hauler_2":
+                #     self.hauler2_pub.publish(gazebo_stamped)
 
         except rospy.ServiceException as e:
             rospy.loginfo("Get Model State service call failed:  {0}".format(e))

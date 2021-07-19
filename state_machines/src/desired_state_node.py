@@ -6,7 +6,7 @@ from state_machines.msg import robot_desired_state
 import sys
 
 def targetPoseCallback(target_odom):
-  rospy.loginfo("pose callback")
+  # rospy.loginfo("pose callback")
 
   # convert robot odometry to output message type
   desired_state = robot_desired_state()

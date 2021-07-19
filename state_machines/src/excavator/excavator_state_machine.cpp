@@ -93,6 +93,8 @@ void GoToScout::entryPoint()
    //Set to true to avoid repeatedly giving the goal.
     gts_first_ = true;
     czxb_first_ = true;
+    macro_state_done_ = false;
+    macro_state_succeeded_ = false;
     // setting target_loc manually
    //  target_loc_ = geometry_msgs::PoseStamped();
    //  target_loc_.pose.position.x = 7.6;
@@ -174,7 +176,10 @@ void GoToScout::stepGoToScout()
          czxb_first_ = false; // Just to make sure we are not switching back to the crossing waypoint, in case it wasn't triggered the first time.
         }
         
-   }   
+   } 
+   macro_state_done_ = navigation_vision_client_->getState().isDone(); 
+   if(macro_state_done_)
+      macro_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    // else
       //   ROS_INFO_STREAM("GoToScout stepping, first_ = false now");
 }
@@ -186,12 +191,13 @@ void GoToScout::exitPoint()
 }
 
 bool GoToScout::isDone() {
-   current_state_done_ = navigation_vision_client_->getState().isDone();
+   current_state_done_ = macro_state_done_;
    return current_state_done_;
 } 
 
 bool GoToScout::hasSucceeded() {
-   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+
+   last_state_succeeded_ = macro_state_succeeded_;
    return last_state_succeeded_;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
