@@ -28,15 +28,18 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   
   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: All excavator action servers started!");
 
+  // Locations for excavators to go to in order to clear the traffic at the hopper, HAULER_2 parks near the hopper, HAULER_1 near the repair station. 
   EXCAVATOR_1_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = -2.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = 4.0;
   EXCAVATOR_1_LOOKOUT_LOC.pose.position.y = 15.0;
-  EXCAVATOR_1_LOOKOUT_LOC.pose.orientation.w = 1.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.orientation.z = 0.707;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.orientation.w = 0.707;
 
   EXCAVATOR_2_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  EXCAVATOR_2_LOOKOUT_LOC.pose.position.x = -2.0;
-  EXCAVATOR_2_LOOKOUT_LOC.pose.position.y = -15.0;
-  EXCAVATOR_2_LOOKOUT_LOC.pose.orientation.w = 1.0;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.position.x = 4.0;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.position.y = -5.0;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.orientation.z = -0.707;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.orientation.w = 0.707;
 
 //   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ExcavatorState::odomCallback, this);
@@ -100,7 +103,7 @@ void GoToScout::entryPoint()
     target_loc_ = m_pcRobotScheduler->getDesiredPose();
     
     float sign_of_multiple = excavator_pose_.pose.position.x * m_pcRobotScheduler->getDesiredPose().pose.position.x;
-    ROS_INFO_STREAM("#########  "<<sign_of_multiple);
+   //  ROS_INFO_STREAM("#########  "<<sign_of_multiple);
     if (sign_of_multiple<0) 
       micro_state = CROSS_ZERO_X_BORDER;
     else
@@ -784,10 +787,10 @@ void ExcavatorResetOdomAtHopper::resetOdom()
    resetOdomDone_ = resetOdometryClient.call(srv);
    // macro_state_succeeded = resetOdometryClient.call(srv);
    // macro_state_done = true;
-   micro_state = GO_TO_REPAIR_STATION;
+   micro_state = GO_TO_LOOKOUT_LOCATION;
    return;
 }
-
+// Skipping over this by never setting microstate to this for now. 
 void ExcavatorResetOdomAtHopper::goToRepair()
 {
    if(first_GTR)
@@ -822,7 +825,7 @@ void ExcavatorResetOdomAtHopper::goToLookoutLocation()
    if (is_done)
    {
       macro_state_done = true;
-      macro_state_succeeded = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+      macro_state_succeeded = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
       micro_state = EXCAVATOR_IDLE;
       // Dont find a reason it should fail,
    }
@@ -1116,6 +1119,46 @@ void VolatileRecovery::exitPoint()
 {
    // none at the moment
    excavator_arm_client_->cancelGoal();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  G O  TO  L O O K O U T  L O C A T I O N  S T A T E  C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+void ExcavatorGoToLookoutLocation::entryPoint()
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToLookoutLocation.");
+   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
+   first_ = true;
+}
+void ExcavatorGoToLookoutLocation::step() 
+{
+   if(first_)
+   {
+   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+   navigation_action_goal_.pose = hardcoded_pose_;
+   navigation_client_->sendGoal(navigation_action_goal_);
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Lookout Location : " << hardcoded_pose_);
+   first_ = false;
+   }
+}
+
+bool ExcavatorGoToLookoutLocation::isDone()
+{
+   current_state_done_ = navigation_client_->getState().isDone();
+   return current_state_done_;
+}
+
+bool ExcavatorGoToLookoutLocation::hasSucceeded()
+{
+   last_state_succeeded_ = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   return last_state_succeeded_;
+}
+
+void ExcavatorGoToLookoutLocation::exitPoint()
+{
+   navigation_client_->cancelGoal();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////

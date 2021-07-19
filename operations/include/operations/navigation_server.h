@@ -52,7 +52,11 @@ private:
 
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
     const float BASE_DRIVE_SPEED = 0.6;
-    const float BASE_SPIN_SPEED = 0.3;
+    const float BASE_SPIN_SPEED = 0.1;
+
+    // How much slower robots should rotate when within abs(delta_heading) < ANGLE_EPSILON * SLOW_SPIN_EPSILON_FACTOR
+    const float BASE_SPIN_SLOW_FACTOR = 0.3;
+    const float SLOW_SPIN_EPSILON_FACTOR = 3;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
     const double LARGE_TRAJECTORY_REST_DIST = 5; 

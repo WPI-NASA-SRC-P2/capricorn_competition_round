@@ -536,5 +536,30 @@ private:
    VOLATILE_RECOVERY_MICRO_STATES substate_;
 };
 
+/**
+ * @brief Go to isolated locations to clear traffic near processing plant and repair station. 
+ * 
+ * @param hardcoded_pose_ Defined in the constructor for both EXCAVATOR_1 and EXCAVATOR_2
+ */
+
+
+class ExcavatorGoToLookoutLocation : public ExcavatorState {
+public:   
+   ExcavatorGoToLookoutLocation(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_LOOKOUT_LOCATION, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+
+private:
+   bool first_;
+   geometry_msgs::PoseStamped hardcoded_pose_;
+};
+
 // #endif
 

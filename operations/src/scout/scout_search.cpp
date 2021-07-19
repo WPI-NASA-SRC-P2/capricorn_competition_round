@@ -198,7 +198,7 @@ void driveSprial()
   }
   else
   {
-    g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(ROBOT_NUMBER);
+    g_spiral_points = NavigationAlgo::getRadialScanningPoints(ROBOT_NUMBER);
   }
 }
 
@@ -312,7 +312,7 @@ int main(int argc, char **argv)
 
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = MAP;
-  g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(ROBOT_NUMBER);
+  g_spiral_points = NavigationAlgo::getRadialScanningPoints(ROBOT_NUMBER);
 
   while (ros::ok() && !cb_init)
   {
