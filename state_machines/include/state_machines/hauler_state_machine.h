@@ -572,7 +572,7 @@ private:
 
 /**
  * @brief If GoToExcavator fails, this recovery state creates 4 targets located at 4 corners from it
- *        and looks for the scout at each of those corners. If the scout is found at those corners, it exits the state.
+ *        and looks for the excavator at each of those corners. If the excavator is found at those corners, it exits the state.
  * 
  * @param search_offset_ This is the offset of those targets from initial hauler position. Currently = 10.0 m.
  */
@@ -602,6 +602,31 @@ private:
    float search_offset_;
    bool search_done_, excavator_found_, searches_exhausted_;
 
+};
+
+/**
+ * @brief Go to isolated locations to clear traffic near processing plant and repair station. 
+ * 
+ * @param hardcoded_pose_ Defined in the constructor for both HAULER_1 and HAULER_2
+ */
+
+
+class GoToLookoutLocation : public HaulerState {
+public:   
+   GoToLookoutLocation(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_TO_LOOKOUT_LOCATION, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+
+private:
+   bool first_;
+   geometry_msgs::PoseStamped hardcoded_pose_;
 };
 // class HaulerIdle : public HaulerState {
 // public:   

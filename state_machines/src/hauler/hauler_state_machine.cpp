@@ -31,15 +31,19 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   resetHaulerOdometryClient_.waitForExistence();
   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: All hauler action servers started!");
 
+  // Locations for haulers to go to in order to clear the traffic at the hopper, HAULER_2 parks near the hopper, HAULER_1 near the repair station. 
   HAULER_1_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  HAULER_1_LOOKOUT_LOC.pose.position.x = -3.5;
-  HAULER_1_LOOKOUT_LOC.pose.position.y = 15.0;
-  HAULER_1_LOOKOUT_LOC.pose.orientation.w = 1.0;
+  HAULER_1_LOOKOUT_LOC.pose.position.x    = 10.0;
+  HAULER_1_LOOKOUT_LOC.pose.position.y    = 15.0;
+  HAULER_1_LOOKOUT_LOC.pose.orientation.z = 0.707;
+  HAULER_1_LOOKOUT_LOC.pose.orientation.w = 0.707;
 
   HAULER_2_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  HAULER_2_LOOKOUT_LOC.pose.position.x = -3.5;
-  HAULER_2_LOOKOUT_LOC.pose.position.y = -15.0;
-  HAULER_2_LOOKOUT_LOC.pose.orientation.w = 1.0;
+  HAULER_2_LOOKOUT_LOC.pose.position.x    = 10.0;
+  HAULER_2_LOOKOUT_LOC.pose.position.y    = -5.0;
+  HAULER_2_LOOKOUT_LOC.pose.orientation.z = -0.707;
+  HAULER_2_LOOKOUT_LOC.pose.orientation.w = 0.707;
+
 
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &HaulerState::odomCallback, this);
 
@@ -756,7 +760,7 @@ void DumpVolatileAtHopper::resetOdom()
    is_done = resetOdometryClient.call(srv);
    if(!is_done)
       ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine ]: Failed to reset odom for " << robot_name_);
-   micro_state = GO_TO_REPAIR_STATION;
+   micro_state = GO_TO_LOOKOUT_LOCATION;
    first_ROH = false;
    return;
    }
@@ -764,6 +768,7 @@ void DumpVolatileAtHopper::resetOdom()
    
 }
 
+// Skipping over this by never setting microstate to this for now. 
 void DumpVolatileAtHopper::goToRepairStation() 
 {
    if(first_GTRS)
@@ -797,7 +802,7 @@ void DumpVolatileAtHopper::goToLookoutLocation()
    if (is_done)
    {
       macro_state_done = true;
-      macro_state_succeeded = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+      macro_state_succeeded = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
       micro_state = HAULER_IDLE;
       // Dont find a reason it should fail,
    }
@@ -959,6 +964,47 @@ void GoToExcavatorRecovery::createPoses()
    //                                                                                                    "\n[3] " << recovery_poses_[2] << 
    //                                                                                                    "\n[4] " << recovery_poses_[3] );
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  G O  TO  L O O K O U T  L O C A T I O N  S T A T E  C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+void GoToLookoutLocation::entryPoint()
+{
+   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToLookoutLocation.");
+   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::HAULER_1_NAME) ? HAULER_1_LOOKOUT_LOC : HAULER_2_LOOKOUT_LOC;
+   first_ = true;
+}
+void GoToLookoutLocation::step() 
+{
+   if(first_)
+   {
+   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+   navigation_action_goal_.pose = hardcoded_pose_;
+   navigation_client_->sendGoal(navigation_action_goal_);
+   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Going to Lookout Location : " << hardcoded_pose_);
+   first_ = false;
+   }
+}
+
+bool GoToLookoutLocation::isDone()
+{
+   current_state_done_ = navigation_client_->getState().isDone();
+   return current_state_done_;
+}
+
+bool GoToLookoutLocation::hasSucceeded()
+{
+   last_state_succeeded_ = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   return last_state_succeeded_;
+}
+
+void GoToLookoutLocation::exitPoint()
+{
+   navigation_client_->cancelGoal();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////  I D L E  S T A T E  C L A S S ////////////////////////////////////
