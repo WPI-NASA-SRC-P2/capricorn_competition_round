@@ -139,6 +139,23 @@ protected:
  *  @param hasSucceeded() naviation vision succeeded in going to Scout
  */
 class GoToScout : public ExcavatorState {
+private: 
+   enum GO_TO_SCOUT_MACRO
+   {
+      CROSS_ZERO_X_BORDER,
+      GO_TO_SCOUT
+   };
+   
+   bool czxb_first_, gts_first_;
+   geometry_msgs::PoseStamped target_loc_;
+   static constexpr float EXCAVATOR_CROSSING_WAYPOINT_X = 10.0;
+   static constexpr float EXCAVATOR_CROSSING_WAYPOINT_Y = 20.0;
+
+   GO_TO_SCOUT_MACRO micro_state;
+
+   void stepCrossZeroXBorder();
+   void stepGoToScout();
+   
 public:   
    GoToScout(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_SCOUT, nh, robot_name) {}
 
@@ -154,10 +171,6 @@ public:
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
-
-private: 
-   bool first_;
-   geometry_msgs::PoseStamped target_loc_;
 };
 
 /**

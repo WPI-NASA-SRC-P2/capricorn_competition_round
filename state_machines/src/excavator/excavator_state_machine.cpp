@@ -78,7 +78,8 @@ void ExcavatorState::odomCallback(const nav_msgs::Odometry odom)
 void GoToScout::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
-    first_ = true;
+    gts_first_ = true;
+    czxb_first_ = true;
     // setting target_loc manually
    //  target_loc_ = geometry_msgs::PoseStamped();
    //  target_loc_.pose.position.x = 7.6;
@@ -87,6 +88,13 @@ void GoToScout::entryPoint()
    //  target_loc_.header.frame_id = "map";
     ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: entrypoint of go_to_scout");
     target_loc_ = m_pcRobotScheduler->getDesiredPose();
+    
+    float sign_of_multiple = excavator_pose_.pose.position.x * m_pcRobotScheduler->getDesiredPose().pose.position.x;
+    ROS_INFO_STREAM("#########  "<<sign_of_multiple);
+    if (sign_of_multiple<0) 
+      micro_state = CROSS_ZERO_X_BORDER;
+    else
+      micro_state = GO_TO_SCOUT;
 }
 
 State& GoToScout::transition()
@@ -96,7 +104,47 @@ State& GoToScout::transition()
 
 void GoToScout::step()
 {
-   if(first_)
+   switch (micro_state)
+   {
+   case GO_TO_SCOUT_MACRO::CROSS_ZERO_X_BORDER:
+      stepCrossZeroXBorder();
+      break;
+   case GO_TO_SCOUT_MACRO::GO_TO_SCOUT:
+      stepGoToScout();
+      break;   
+   default:
+      break;
+   }
+}
+
+void GoToScout::stepCrossZeroXBorder()
+{
+   if(czxb_first_)
+   {
+      ROS_WARN_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Excavator has to cross boundary, going to intermidiate waypoint");
+      
+      geometry_msgs::PoseStamped target_loc;
+      target_loc.header.frame_id = MAP;
+      target_loc.pose.position.x = std::copysign(EXCAVATOR_CROSSING_WAYPOINT_X, 
+                                                excavator_pose_.pose.position.x);
+      target_loc.pose.position.y = std::copysign(EXCAVATOR_CROSSING_WAYPOINT_Y, 
+                                                m_pcRobotScheduler->getDesiredPose().pose.position.y);
+
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Requested pose is: "<<target_loc);
+
+      navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+      navigation_action_goal_.pose = target_loc;
+      navigation_client_->sendGoal(navigation_action_goal_);
+      czxb_first_ = false;
+      return;
+   }
+   if(navigation_client_->getState().isDone())
+      micro_state = GO_TO_SCOUT;
+}
+
+void GoToScout::stepGoToScout()
+{
+   if(gts_first_)
    {
         ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to scout");
         navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS;
@@ -109,7 +157,8 @@ void GoToScout::step()
          navigation_vision_goal_.goal_loc = target_loc_;
          navigation_vision_client_->sendGoal(navigation_vision_goal_);
          ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Excavator State Machine: SUCCESSFUL POSE RECEIVED");
-         first_ = false;
+         gts_first_ = false;
+         czxb_first_ = false; // Just to make sure we are not switching back to the crossing waypoint, in case it wasn't triggered the first time.
         }
         
    }   
