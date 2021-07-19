@@ -130,6 +130,9 @@ static void ReversePath(nav_msgs::Path& path);
 static bool checkAllObstacles(perception::ObjectArray obstacles, nav_msgs::Path path, std::string robot_name, const tf2_ros::Buffer& tf_buffer);
 
 
+
+static bool CheckIPwithRobot(geometry_msgs::PoseStamped& current_robot_pose,std::vector<float> iPoints);
+
 /**
  * @brief 
  * 
@@ -140,7 +143,7 @@ static bool checkAllObstacles(perception::ObjectArray obstacles, nav_msgs::Path 
  * @return true 
  * @return false 
  */
-static bool checkAllObstacles2(perception::ObjectArray obstacles, nav_msgs::Path path, std::string robot_name, const tf2_ros::Buffer& tf_buffer);
+static bool checkAllObstacles2(perception::ObjectArray obstacles, nav_msgs::Path path, std::string robot_name, geometry_msgs::PoseStamped current_robot_pose, const tf2_ros::Buffer& tf_buffer);
 
 
 };

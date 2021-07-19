@@ -135,7 +135,7 @@ void GoToScout::stepCrossZeroXBorder()
    if(czxb_first_)
    {
       ROS_WARN_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Excavator has to cross boundary, going to intermidiate waypoint");
-      
+      ros::spinOnce();
       geometry_msgs::PoseStamped target_loc;
       target_loc.header.frame_id = MAP;
       target_loc.pose.position.x = std::copysign(EXCAVATOR_CROSSING_WAYPOINT_X, 
