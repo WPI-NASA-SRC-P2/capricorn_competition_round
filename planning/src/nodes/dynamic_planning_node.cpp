@@ -11,7 +11,7 @@
 #include<nav_msgs/Odometry.h>
 
 //Setting the node's update rate
-#define UPDATE_HZ 0.5
+#define UPDATE_HZ 0.45
 
 #define DEBUG_INSTRUMENTATION
 
@@ -46,6 +46,9 @@ void DetectionCB(perception::ObjectArray obstacles)
 void pathCB(nav_msgs::Path path)
 {
   // ROS_INFO(" Path Received");
+
+  if (path.poses.size() > 2)
+  {
   
   for(int i = 0; i < path.poses.size(); i++)
   {
@@ -54,6 +57,8 @@ void pathCB(nav_msgs::Path path)
 
   global_path_1 = path;
   path_received = true;
+  }
+  
  
 }
 

@@ -52,6 +52,7 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   #endif
 
   auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, 50, robot_name_);
+
   
   #ifdef DEBUG_INSTRUMENTATION
   debug_pathPublisher.publish(path);

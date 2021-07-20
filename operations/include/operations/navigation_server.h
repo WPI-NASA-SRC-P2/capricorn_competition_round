@@ -52,7 +52,7 @@ private:
 
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
     const float BASE_DRIVE_SPEED = 0.6;
-    const float BASE_SPIN_SPEED = 0.3;
+    const float BASE_SPIN_SPEED = 0.25;
 
     // How much slower robots should rotate when within abs(delta_heading) < ANGLE_EPSILON * SLOW_SPIN_EPSILON_FACTOR
     const float BASE_SPIN_SLOW_FACTOR = 0.3;
