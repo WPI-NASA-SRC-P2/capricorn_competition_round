@@ -39,6 +39,11 @@ private:
    std::array<bool, MAX_TEAMS> hauler_for_sale;
 
    static const int resetting_hauler_index = 1;
+   // LAST WEEK FIX!
+   // Assumes that there are 2 robots of each kind
+   bool both_excavators_working = true;
+   bool both_scouts_working = true;
+   bool both_haulers_working = true;
 
    std::array<bool, 10> robots_waiting_to_reset;
    bool hopper_busy;

@@ -277,6 +277,19 @@ void TeamManager::recruitExcavator(int team_index)
       if(excavator_for_sale.at(i))
       {
          ROBOTS_ENUM excavator = all_teams.at(i)->getExcavator();
+
+         // LAST WEEK FIX:
+         // Assumptions: Two robots of each kind
+         //              This state is only effectively called in SCOUT_WAITING
+
+         if(both_excavators_working && both_scouts_working)
+         {
+            if(all_teams.at(team_index)->getScout() == SCOUT_1 && excavator != EXCAVATOR_1)
+               return;
+            else if(all_teams.at(team_index)->getScout() == SCOUT_2 && excavator != EXCAVATOR_2)
+               return;
+         }
+
          all_teams.at(team_index)->setExcavator(excavator);
          all_teams.at(i)->disbandExcavator();
 
@@ -294,6 +307,18 @@ void TeamManager::recruitHauler(int team_index)
       if(hauler_for_sale.at(i))
       {
          ROBOTS_ENUM hauler = all_teams.at(i)->getHauler();
+
+         // LAST WEEK FIX:
+         // Assumptios: Two robots of each kind
+         //              This state is only effectively called in EXCAVATING
+         if(both_excavators_working && both_haulers_working)
+         {
+            if(all_teams.at(team_index)->getExcavator() == EXCAVATOR_1 && hauler != HAULER_1)
+               return;
+            else if(all_teams.at(team_index)->getExcavator() == EXCAVATOR_2 && hauler != HAULER_2)
+               return;
+         }
+
          all_teams.at(team_index)->setHauler(hauler);
          all_teams.at(i)->disbandHauler();
 
@@ -320,8 +345,11 @@ void TeamManager::checkAndRecruitForScoutWaiting(int team_index)
       recruitScout(team_index);
    if(!hasExcavator(team_index))
       recruitExcavator(team_index);
-   if(!hasHauler(team_index))
-      recruitHauler(team_index);
+   // LAST WEEK FIX!
+   // Sending hauler only after the excavator has found the scout
+
+   // if(!hasHauler(team_index))
+   //    recruitHauler(team_index);
 }
 
 void TeamManager::checkAndRecruitForExcavating(int team_index)
