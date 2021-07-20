@@ -122,7 +122,6 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
       paddingPath.push_back(p.poses[i]);
     }
     paddingPath.push_back(poseStampedFromIndex(abandonedIndex, oGrid, robot_name));
-
     p.poses = paddingPath;
     // ROS_INFO("[planning | astar ]: Returning the completed path");
     return p;
@@ -208,9 +207,15 @@ int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
 
 Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, int threshold, std::string &robot_name)
 {
+  //this will fix the right edge - no path error
   // Convert meters -> grid units
   target.x = target.x / oGrid.info.resolution;
   target.y = std::round(target.y / oGrid.info.resolution); //ROUNDING OPERATION NECESSARY - DO NOT CHANGE
+
+  if(target.y == 20/oGrid.info.resolution)
+  {
+    target.y = target.y + 1;
+  }
 
   if (oGrid.data.size() == 0)
   {

@@ -283,7 +283,11 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 
 		if(trajLength >= 2)
 		{
-			traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 2);
+			while(traj.waypoints.at(trajLength - 1).pose.position.x == 0 && traj.waypoints.at(trajLength - 1).pose.position.y == 0)
+			{
+				traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 1);
+			}
+			traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end());
 		} 
 		else 
 		{
