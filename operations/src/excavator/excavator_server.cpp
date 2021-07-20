@@ -392,9 +392,7 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
     publishAngles(last_vol_loc_angle, -2, 1, 0); // Step for safe trajectory to not bump into camera
     ros::Duration(2).sleep();
     publishAngles(last_vol_loc_angle, 1, 1, -2); // This set of values move the scoop under the surface
-    ros::Duration(5).sleep();
-    publishAngles(last_vol_loc_angle, 1, 1, -0.6);
-    ros::Duration(3).sleep();
+    ros::Duration(8).sleep();
 
     thetas = getDumpAngleInBase(3);
 
@@ -410,28 +408,16 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
       publishAngles(yaw_angle, -0.5, 1, -1.1); // Intermediate set of values to raise the arm above the surface
       ros::Duration(2).sleep();
       publishAngles(yaw_angle, -2, 1, 0.4); // This set of values moves the arm over the surface
+      ros::Duration(5).sleep();
     }
     else // Else raise the arm and dump the regolith in the right
     {
-      if (volatile_found)
-      {
-        publishAngles(-0.785, -2, 1, -2.6); // Set of values moves the scoop to not drop volatiles
-        ros::Duration(5).sleep();
-        // publishAngles(yaw_angle, 1, 1, -2.6); // Set of values moves the scoop to not drop volatiles
-        // ros::Duration(2).sleep();
-        // publishAngles(yaw_angle, -0.5, 1, -1.1); // Intermediate set of values to raise the arm above the surface
-        // ros::Duration(2).sleep();
-        publishAngles(yaw_angle, -2, 1, 0.4); // This set of values moves the arm over the surface
-      }
-      else // Else raise the arm and dump the regolith in the left
-      {
-        publishAngles(1.57, -2, 1, 0.4); // This set of values moves the arm to the left and above the surface
-        ros::Duration(SLEEP_DURATION).sleep();
-        publishAngles(1.57, -2, 1, 1.5); // This set of values moves the scoop to drop regolith on the ground
-        ros::Duration(SLEEP_DURATION).sleep();
-        last_vol_loc_angle = theta;
-        return false;
-      }
+      publishAngles(-1.57, -2, 1, 0.4); // This set of values moves the arm to the left and above the surface
+      ros::Duration(SLEEP_DURATION).sleep();
+      publishAngles(-1.57, -2, 1, 1.5); // This set of values moves the scoop to drop regolith on the ground
+      ros::Duration(SLEEP_DURATION).sleep();
+      last_vol_loc_angle = theta;
+      return false;
     }
   }
 
@@ -556,8 +542,8 @@ int main(int argc, char **argv)
     g_client = new Client(CAPRICORN_TOPIC + robot_name + "/" + NAVIGATION_ACTIONLIB, true);
     
     ROS_INFO("[operations | excavator_server | %s]: Waiting for server to start", robot_name_.c_str());
-    g_client->waitForServer();
-    ROS_INFO("[operations | excavator_server | %s]: Server has started", robot_name_.c_str());
+    // g_client->waitForServer();
+    // ROS_INFO("[operations | excavator_server | %s]: Server has started", robot_name_.c_str());
 
     ros::spin();
 
