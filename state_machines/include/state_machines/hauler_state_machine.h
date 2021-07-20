@@ -495,56 +495,62 @@ public:
 };
 
 /**
- * @brief DumpVolatileAtHopper Executes the following:
- *    [0] Navigates to Proc_plant
- *    [1] Parks to the hopper
- *    [2] Dunps volatile
- *    [3] Undocks from hopper to prevent drift accumulation after resetting odom due to 180 deg turn
- *    [4] Resets odom
+ * @brief DumpVolatileAtHopper navigates to hopper, and then resets odom
  * 
- * @param isDone() is done when it has reset Odom
- * @param hasSucceeded() has successfully reset odom
+ * @param isDone() when naviagtion vision is complete
+ * @param hasSucceeded(); when navigation vision succeeds, and resetOdom msg was sent 
+ * 
  */
-class DumpVolatileAtHopper : public HaulerState {
+class DumpVolatileAtHopper: public HaulerState {
 public:   
    DumpVolatileAtHopper(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_DUMP_VOLATILE_TO_PROC_PLANT, nh, robot_name) {}
 
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
    bool hasSucceeded() override;
-   State& transition() override {}
 
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
 
-private:
+private: 
+   bool first_;
+   geometry_msgs::PoseStamped target_loc_;
    void goToProcPlant();
    void parkAtHopper();
-   void dumpVolatile();
    void undockFromHopper();
    void resetOdom();
-   void goToRepairStation();
+   void goToRepair();
    void goToLookoutLocation();
+   void goToRepairRecovery();
+   void goToProcPlantRecovery();
    void idleHauler(){}
 
-   bool first_GTPP, first_PAH, first_UFH, first_DV, first_ROH, first_GTRS, first_GTLL, macro_state_succeeded, macro_state_done;
-   geometry_msgs::PoseStamped hardcoded_pose_;
-   
+   bool first_GTPP, first_GTPPR, second_GTPPR, first_PAH, first_UFH, first_GTR, first_GTRR, second_GTRR, first_GTLL, resetOdomDone_, macro_state_succeeded, macro_state_done;
+   geometry_msgs::PoseStamped hardcoded_pose_, GTRR_pose_, GTPP_pose_;
+   bool state_done;
+
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_PROC_PLANT,
+      GO_TO_PROC_PLANT_RECOVERY,
       PARK_AT_HOPPER,
-      DUMP_VOLATILE,
       UNDOCK_FROM_HOPPER,
       RESET_ODOM_AT_HOPPER,
       GO_TO_REPAIR_STATION,
+      GO_TO_REPAIR_STATION_RECOVERY,
       GO_TO_LOOKOUT_LOCATION,
-      HAULER_IDLE
+      EXCAVATOR_IDLE 
    };
 
-   bool state_done = false;
    RESET_ODOM_MICRO_STATES micro_state;
+
 };
+
 
 /**
  * @brief HaulerGoToRepairStation naviagte to repair station

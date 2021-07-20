@@ -452,18 +452,22 @@ private:
    void resetOdom();
    void goToRepair();
    void goToLookoutLocation();
+   void goToRepairRecovery();
+   void goToProcPlantRecovery();
    void idleExcavator(){}
 
-   bool first_GTPP, first_PAH, first_UFH, first_GTR, first_GTLL, resetOdomDone_, macro_state_succeeded, macro_state_done;
-   geometry_msgs::PoseStamped hardcoded_pose_;
+   bool first_GTPP, first_GTPPR, second_GTPPR, first_PAH, first_UFH, first_GTR, first_GTRR, second_GTRR, first_GTLL, resetOdomDone_, macro_state_succeeded, macro_state_done;
+   geometry_msgs::PoseStamped hardcoded_pose_, GTRR_pose_, GTPP_pose_;
    bool state_done;
 
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_PROC_PLANT,
+      GO_TO_PROC_PLANT_RECOVERY,
       PARK_AT_HOPPER,
       UNDOCK_FROM_HOPPER,
       RESET_ODOM_AT_HOPPER,
       GO_TO_REPAIR_STATION,
+      GO_TO_REPAIR_STATION_RECOVERY,
       GO_TO_LOOKOUT_LOCATION,
       EXCAVATOR_IDLE 
    };

@@ -192,7 +192,7 @@ std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRectangularScanningP
 
   for (auto pt : points)
   {
-    ROS_INFO_STREAM("X: " + std::to_string(pt.point.x) + ", Y: " + std::to_string(pt.point.y));
+    // ROS_INFO_STREAM("X: " + std::to_string(pt.point.x) + ", Y: " + std::to_string(pt.point.y));
   }
 
   return points;
@@ -238,7 +238,7 @@ std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRadialScanningPoints
 
   for (auto pt : points)
   {
-    ROS_INFO_STREAM("X: " + std::to_string(pt.point.x) + ", Y: " + std::to_string(pt.point.y));
+    // ROS_INFO_STREAM("X: " + std::to_string(pt.point.x) + ", Y: " + std::to_string(pt.point.y));
   }
 
   return points;
