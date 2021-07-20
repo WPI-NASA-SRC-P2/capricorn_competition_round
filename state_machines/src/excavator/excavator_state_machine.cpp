@@ -688,7 +688,7 @@ void DigAndDump::dumpVolatile()
 void ExcavatorGoToLoc::entryPoint()
 {
     // declare entrypoint variables
-    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Go To Loc");
+    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Go To Loc");
     // pose of the excavator, supposed to be provided by scheduler
     target_loc_ = m_pcRobotScheduler->getDesiredPose();    
     last_state_succeeded_ = false;
@@ -727,7 +727,18 @@ void ExcavatorGoToLoc::exitPoint()
     ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Reached scout, preparing to park");
 }
 
-/** @TODO: Add resetodom macrostate from when it finally dumps the volatile till it parks at processing plant and then resets odometry */
+/** @TODO: 
+ * States : [1], [2], [5], [7], [9]
+ * 1. Send excavator to Repair Station
+ * 2. If [1] fails, center to Processing Plant ==> Move 10 metres to the right (Potentially add IMU assisted drive to get out of crater)
+ * 3. After [2] DONE, Try [1] again.
+ * 4. [1] Successful ==> [5] ; [1] fails ==> [2]. 
+ * 5. Go To Processing Plant 
+ * 6. [5] Successful ==> [9] ; [5] fails ==> [7].
+ * 7. Center to Repair Station and move 10 m to right. 
+ * 8. After [7] done, try [5] again.
+ * 9. Park At Hopper ==> Undock ==> Reset Odom ==> GoToLookout 
+ * */
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////  R E S E T _ O D O M   C L A S S ////////////////////////////////////
@@ -743,13 +754,25 @@ void ExcavatorResetOdomAtHopper::entryPoint()
    first_PAH = true;
    first_UFH = true;
    first_GTR = true;
+   first_GTRR = true;
+   second_GTRR = true;
    first_GTLL = true;
    resetOdomDone_ = false;
-   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
-   micro_state = GO_TO_PROC_PLANT;
+   micro_state = GO_TO_REPAIR_STATION;
    macro_state_succeeded = false;
    macro_state_done = false;
    state_done =false;
+
+   // Setting poses
+   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
+   
+   // Currently not caring about orientations
+   GTRR_pose_ = excavator_pose_;
+   GTRR_pose_.pose.position.x -= 10.0;
+
+   GTPP_pose_ = excavator_pose_;
+   GTPP_pose_.pose.position.x += 10.0;
+
 }
 
 bool ExcavatorResetOdomAtHopper::isDone()
@@ -789,12 +812,76 @@ void ExcavatorResetOdomAtHopper::step()
    case GO_TO_LOOKOUT_LOCATION:
       goToLookoutLocation();
       break;
+   case GO_TO_REPAIR_STATION_RECOVERY:
+      goToRepairRecovery();
+      break; 
+   case GO_TO_PROC_PLANT_RECOVERY:
+      goToProcPlantRecovery();
+      break;
    case EXCAVATOR_IDLE:
       idleExcavator();
       break;
    default:
       break;
    }
+}
+
+void ExcavatorResetOdomAtHopper::goToRepair()
+{
+   if(first_GTR)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_REACH;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Going to repair station vision goal sent");  
+      first_GTR = false;
+      return;
+   }
+   
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   if(is_done)
+   {
+      if(has_succeeded)
+         micro_state = GO_TO_PROC_PLANT;
+      else
+         micro_state = GO_TO_REPAIR_STATION_RECOVERY;
+   }
+}
+
+void ExcavatorResetOdomAtHopper::goToRepairRecovery()
+{
+   //Send for centering first. 
+   if(first_GTRR)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
+      navigation_vision_goal_.mode = V_CENTER;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Centering to Proc Plant vision goal sent");  
+      first_GTRR = false;
+      return;
+   }
+
+   bool centering_done = (navigation_vision_client_->getState().isDone());
+   bool is_done = false;
+
+   // Once centering completed move 10 metres to the right. 
+   if(centering_done)
+   {
+      if(second_GTRR)
+      {
+         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+         navigation_action_goal_.pose = GTRR_pose_;
+         navigation_client_->sendGoal(navigation_action_goal_);
+         ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Travelling to right of Processing Plant : GOAL : " << GTRR_pose_);
+         second_GTRR = false;
+         return;
+      }
+      else 
+         is_done = navigation_client_->getState().isDone();   
+   }
+   if(is_done)
+      micro_state = GO_TO_REPAIR_STATION;
 }
 
 void ExcavatorResetOdomAtHopper::goToProcPlant()
@@ -805,18 +892,55 @@ void ExcavatorResetOdomAtHopper::goToProcPlant()
       navigation_vision_goal.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
       navigation_vision_goal.mode = V_REACH;
       navigation_vision_client_->sendGoal(navigation_vision_goal);
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Going to Processing Plant vision goal sent");
       first_GTPP = false;
       return;
    }
 
    bool is_done = (navigation_vision_client_->getState().isDone());
-   if (is_done)
+   bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   if(is_done)
    {
-      if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+      if(has_succeeded)
          micro_state = PARK_AT_HOPPER;
-      // else
-         // state go to 0 0
+      else
+         micro_state = GO_TO_PROC_PLANT_RECOVERY;
    }
+}
+
+void ExcavatorResetOdomAtHopper::goToProcPlantRecovery()
+{
+   //Send for centering first. 
+   if(first_GTPPR)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_CENTER;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Centering to Repair Station vision goal sent");  
+      first_GTPPR = false;
+      return;
+   }
+
+   bool centering_done = (navigation_vision_client_->getState().isDone());
+   bool is_done = false;
+
+   // Once centering completed move 10 metres to the right of repair station. 
+   if(centering_done)
+   {
+      if(second_GTPPR)
+      {
+         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+         navigation_action_goal_.pose = GTPP_pose_;
+         navigation_client_->sendGoal(navigation_action_goal_);
+          ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Travelling to right of Repair Station : GOAL : " << GTPP_pose_);
+         second_GTRR = false;
+         return;
+      }
+      else 
+         is_done = navigation_client_->getState().isDone();   
+   }
+   if(is_done)
+      micro_state = GO_TO_PROC_PLANT;
 }
 
 void ExcavatorResetOdomAtHopper::parkAtHopper()
@@ -871,25 +995,6 @@ void ExcavatorResetOdomAtHopper::resetOdom()
    // macro_state_done = true;
    micro_state = GO_TO_LOOKOUT_LOCATION;
    return;
-}
-// Skipping over this by never setting microstate to this for now. 
-void ExcavatorResetOdomAtHopper::goToRepair()
-{
-   if(first_GTR)
-   {
-      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
-      navigation_vision_goal_.mode = V_REACH;
-      navigation_vision_client_->sendGoal(navigation_vision_goal_);
-      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Going to repair station vision goal sent");  
-      first_GTR = false;
-      return;
-   }
-   
-   bool is_done = (navigation_vision_client_->getState().isDone());
-   if (is_done)                                                   //Dont care about getting to repair station. 
-   {
-      micro_state = GO_TO_LOOKOUT_LOCATION;
-   }
 }
 
 void ExcavatorResetOdomAtHopper::goToLookoutLocation() 
