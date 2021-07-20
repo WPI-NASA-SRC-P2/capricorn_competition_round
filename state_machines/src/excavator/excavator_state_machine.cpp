@@ -278,6 +278,7 @@ void GoToDefaultArmPosition::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
     first_ = true;
+    last_state_succeeded_ = false;
     ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: entrypoint of goToDefaultArmPosition");
 }
 
@@ -332,7 +333,8 @@ bool GoToDefaultArmPosition::isDone() {
 
 bool GoToDefaultArmPosition::hasSucceeded() {
 
-   last_state_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    return last_state_succeeded_;
 }
 
@@ -345,6 +347,7 @@ void ParkAndPub::entryPoint()
    //set entry variables
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Parking to Scout");
    first_ = true;
+   last_state_succeeded_ = false;
 }
 
 void ParkAndPub::step()
@@ -373,7 +376,8 @@ bool ParkAndPub::isDone()
 bool ParkAndPub::hasSucceeded() 
 {
    // last_state_succeeded_ = (navigation_result_.result == COMMON_RESULT::SUCCESS);
-   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    // if(last_state_succeeded_)
    //    ROS_WARN_STREAM("Park and Pub to Scout Completed Successfully");
    return last_state_succeeded_;
@@ -687,6 +691,7 @@ void ExcavatorGoToLoc::entryPoint()
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Go To Loc");
     // pose of the excavator, supposed to be provided by scheduler
     target_loc_ = m_pcRobotScheduler->getDesiredPose();    
+    last_state_succeeded_ = false;
     first_ = true;
 }
 
@@ -708,7 +713,8 @@ bool ExcavatorGoToLoc::isDone() {
 } 
 
 bool ExcavatorGoToLoc::hasSucceeded() {
-   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    // if(last_state_succeeded_)
    //    ROS_WARN_STREAM("Go to Scout Completed Successfully");
    return last_state_succeeded_;
@@ -1033,7 +1039,8 @@ void ExcavatorGoToScoutRecovery::searchForScout(int index)
       first_ = false;
    }
    search_done_ = navigation_vision_client_->getState().isDone();
-   scout_found_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   if(search_done_)
+      scout_found_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
 }
 
 // When the excavator's Recovery method is triggered, it creates 4 offset poses from its current location and stores them in recovery_poses_
@@ -1142,7 +1149,8 @@ void VolatileRecovery::step()
          }
          // check if volatile check has been completed and/or has suceeded
          volatile_check_done_ = (excavator_arm_client_->getState().isDone());
-         volatile_found_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+         if(volatile_check_done_)
+            volatile_found_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 
          if(trial_ > 4)
             trials_exhausted_ = true;
@@ -1206,6 +1214,7 @@ void ExcavatorGoToLookoutLocation::entryPoint()
 {
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToLookoutLocation.");
    hardcoded_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
+   last_state_succeeded_ = false;
    first_ = true;
 }
 void ExcavatorGoToLookoutLocation::step() 
@@ -1228,7 +1237,8 @@ bool ExcavatorGoToLookoutLocation::isDone()
 
 bool ExcavatorGoToLookoutLocation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   if(isDone())
+      last_state_succeeded_ = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    return last_state_succeeded_;
 }
 

@@ -405,6 +405,7 @@ void ResetOdomAtHopper::exitPoint()
 void GoToRepairStation::entryPoint()
 {
    first_ = true;
+   last_state_succeeded_ = false;
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout entering goToRepairStation state");
 }
 
@@ -416,7 +417,8 @@ bool GoToRepairStation::isDone()
 
 bool GoToRepairStation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(last_state_succeeded_)
       ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout GoToRepairStation completed successfully");
 
@@ -513,6 +515,7 @@ void ScoutGoToLoc::entryPoint()
     // pose of the excavator, supposed to be provided by scheduler
     target_loc_ = m_pcRobotScheduler->getDesiredPose();    
     first_ = true;
+    last_state_succeeded_ = false;
 }
 
 void ScoutGoToLoc::step()
@@ -536,7 +539,8 @@ bool ScoutGoToLoc::isDone() {
 } 
 
 bool ScoutGoToLoc::hasSucceeded() {
-   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    // if(last_state_succeeded_)
    //    ROS_WARN_STREAM("Go to Scout Completed Successfully");
    return last_state_succeeded_;
