@@ -43,12 +43,19 @@ double excavator_2_x;
 double excavator_2_y;
 double excavator_2_z;
 
-bool scout_1_idle = false;
-bool scout_2_idle = false;
-bool hauler_1_idle = false;
-bool hauler_2_idle = false;
-bool excavator_1_idle = false;
-bool excavator_2_idle = false;
+bool scout_1_should_be_moving = false;
+bool scout_2_should_be_moving = false;
+bool hauler_1_should_be_moving = false;
+bool hauler_2_should_be_moving = false;
+bool excavator_1_should_be_moving = false;
+bool excavator_2_should_be_moving = false;
+
+ros::Time scout_1_start_time;
+ros::Time scout_2_start_time;
+ros::Time hauler_1_start_time;
+ros::Time hauler_2_start_time;
+ros::Time excavator_1_start_time;
+ros::Time excavator_2_start_time;
 
 std::string curr_bot;
 int curr_state;
@@ -107,13 +114,99 @@ void robot_state_callback(state_machines::robot_state_status robot_state_info)
 {   
     curr_bot = robot_state_info.robot_name;
     curr_state = robot_state_info.robot_current_state;
-    
-    scout_1_idle = ((curr_bot == "small_scout_1") && (curr_state == COMMON_NAMES::ROBOT_IDLE_STATE));
-    scout_2_idle = ((curr_bot == "small_scout_2") && (curr_state == COMMON_NAMES::ROBOT_IDLE_STATE));
-    hauler_1_idle = ((curr_bot == "small_hauler_1") && (curr_state == COMMON_NAMES::ROBOT_IDLE_STATE));
-    hauler_2_idle = ((curr_bot == "small_hauler_2") && (curr_state == COMMON_NAMES::ROBOT_IDLE_STATE));
-    excavator_1_idle = ((curr_bot == "small_excavator_1") && (curr_state == COMMON_NAMES::ROBOT_IDLE_STATE));
-    excavator_2_idle = ((curr_bot == "small_excavator_2") && (curr_state == COMMON_NAMES::ROBOT_IDLE_STATE));
+
+    bool was_moving;
+
+    if (curr_bot == "small_scout_1")
+    {
+        was_moving = scout_1_should_be_moving;
+        scout_1_should_be_moving = (curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE || 
+                                    curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_GO_TO_LOC || 
+                                    curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_UNDOCK || 
+                                    curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_RESET_ODOM || 
+                                    curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_GOTO_REPAIR_STATION);
+        if (!was_moving && scout_1_should_be_moving)
+        {
+            scout_1_start_time = ros::Time::now();
+        }
+    }
+    else if (curr_bot == "small_scout_2")
+    {
+        was_moving = scout_2_should_be_moving;
+        scout_2_should_be_moving = scout_1_should_be_moving = (curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE || 
+                                    curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_GO_TO_LOC || 
+                                    curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_UNDOCK || 
+                                    curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_RESET_ODOM || 
+                                    curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_GOTO_REPAIR_STATION);
+        if (!was_moving && scout_2_should_be_moving)
+        {
+            scout_2_start_time = ros::Time::now();
+        }
+    } 
+    else if (curr_bot == "small_hauler_1")
+    {
+        was_moving = hauler_1_should_be_moving;
+        hauler_1_should_be_moving = (curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_TO_LOC || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_DUMP_VOLATILE_TO_PROC_PLANT || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_FOLLOW_EXCAVATOR || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_UNDOCK_EXCAVATOR || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GOTO_REPAIR_STATION || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HUALER_GO_TO_INIT_LOC || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_TO_EXCAVATOR_RECOVERY || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_TO_LOOKOUT_LOCATION);
+        if (!was_moving && hauler_1_should_be_moving)
+        {
+            hauler_1_start_time = ros::Time::now();
+        }
+    } 
+    else if (curr_bot == "small_hauler_2")
+    {
+        was_moving = hauler_2_should_be_moving;
+        hauler_2_should_be_moving = (curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_TO_LOC || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_DUMP_VOLATILE_TO_PROC_PLANT || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_BACK_TO_EXCAVATOR || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_FOLLOW_EXCAVATOR || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_UNDOCK_EXCAVATOR || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GOTO_REPAIR_STATION || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HUALER_GO_TO_INIT_LOC || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_TO_EXCAVATOR_RECOVERY || 
+                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_TO_LOOKOUT_LOCATION);
+        if (!was_moving && hauler_2_should_be_moving)
+        {
+            hauler_2_start_time = ros::Time::now();
+        }
+    } 
+    else if (curr_bot == "small_excavator_1")
+    {
+        was_moving = excavator_1_should_be_moving;
+        excavator_1_should_be_moving = (curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOC || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM_AT_HOPPER || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT_RECOVERY || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_INIT_LOCATION || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOOKOUT_LOCATION);
+        if (!was_moving && excavator_1_should_be_moving)
+        {
+            excavator_1_start_time = ros::Time::now();
+        }
+    } 
+    else if (curr_bot == "small_excavator_2")
+    {
+        was_moving = excavator_2_should_be_moving;
+        excavator_2_should_be_moving = (curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOC || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_REPAIR || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_RESET_ODOM_AT_HOPPER || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_SCOUT_RECOVERY || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_INIT_LOCATION || 
+                                        curr_state == COMMON_NAMES::STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOOKOUT_LOCATION);
+        if (!was_moving && excavator_2_should_be_moving)
+        {
+            excavator_2_start_time = ros::Time::now();
+        }
+    }
 
     state_msg_received = true;
 }
@@ -151,32 +244,32 @@ int main(int argc, char** argv)
     double scout_1_start_x = scout_1_x;
     double scout_1_start_y = scout_1_y;
     double scout_1_start_z = scout_1_z;
-    ros::Time scout_1_start_time = curr_time;
+    scout_1_start_time = curr_time;
 
     double scout_2_start_x = scout_2_x;
     double scout_2_start_y = scout_2_y;
     double scout_2_start_z = scout_2_z;
-    ros::Time scout_2_start_time = curr_time;
+    scout_2_start_time = curr_time;
 
     double hauler_1_start_x = hauler_1_x;
     double hauler_1_start_y = hauler_1_y;
     double hauler_1_start_z = hauler_1_z;
-    ros::Time hauler_1_start_time = curr_time;
+    hauler_1_start_time = curr_time;
 
     double hauler_2_start_x = hauler_2_x;
     double hauler_2_start_y = hauler_2_y;
     double hauler_2_start_z = hauler_2_z;
-    ros::Time hauler_2_start_time = curr_time;
+    hauler_2_start_time = curr_time;
 
     double excavator_1_start_x = excavator_1_x;
     double excavator_1_start_y = excavator_1_y;
     double excavator_1_start_z = excavator_1_z;
-    ros::Time excavator_1_start_time = curr_time;
+    excavator_1_start_time = curr_time;
 
     double excavator_2_start_x = excavator_2_x;
     double excavator_2_start_y = excavator_2_y;
     double excavator_2_start_z = excavator_2_z;
-    ros::Time excavator_2_start_time = curr_time;
+    excavator_2_start_time = curr_time;
 
     ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | Checking if Robot is Out of Commission");
     
@@ -200,7 +293,7 @@ int main(int argc, char** argv)
 
             scout_1_start_time = curr_time;
         }
-        else if (curr_time.sec - scout_1_start_time.sec > 30 && !scout_1_idle)
+        else if (curr_time.sec - scout_1_start_time.sec > 30 && scout_1_should_be_moving)
         {
             std_msgs::String pub_data;
             pub_data.data = "small_scout_1";
@@ -219,7 +312,7 @@ int main(int argc, char** argv)
 
             scout_2_start_time = curr_time;
         }
-        else if (curr_time.sec - scout_2_start_time.sec > 30 && !scout_2_idle)
+        else if (curr_time.sec - scout_2_start_time.sec > 30 && scout_2_should_be_moving)
         {
             std_msgs::String pub_data;
             pub_data.data = "small_scout_2";
@@ -238,7 +331,7 @@ int main(int argc, char** argv)
 
             hauler_1_start_time = curr_time;
         }
-        else if (curr_time.sec - hauler_1_start_time.sec > 30 && !hauler_1_idle)
+        else if (curr_time.sec - hauler_1_start_time.sec > 30 && hauler_1_should_be_moving)
         {
             std_msgs::String pub_data;
             pub_data.data = "small_hauler_1";
@@ -257,7 +350,7 @@ int main(int argc, char** argv)
 
             hauler_2_start_time = curr_time;
         }
-        else if (curr_time.sec - hauler_2_start_time.sec > 30 && !hauler_2_idle)
+        else if (curr_time.sec - hauler_2_start_time.sec > 30 && hauler_2_should_be_moving)
         {
             std_msgs::String pub_data;
             pub_data.data = "small_hauler_2";
@@ -276,7 +369,7 @@ int main(int argc, char** argv)
 
             excavator_1_start_time = curr_time;
         }
-        else if (curr_time.sec - excavator_1_start_time.sec > 30 && !excavator_1_idle)
+        else if (curr_time.sec - excavator_1_start_time.sec > 30 && excavator_1_should_be_moving)
         {
             std_msgs::String pub_data;
             pub_data.data = "small_excavator_1";
@@ -295,7 +388,7 @@ int main(int argc, char** argv)
 
             excavator_2_start_time = curr_time;
         }
-        else if (curr_time.sec - excavator_2_start_time.sec > 30 && !excavator_2_idle)
+        else if (curr_time.sec - excavator_2_start_time.sec > 30 && excavator_2_should_be_moving)
         {
             std_msgs::String pub_data;
             pub_data.data = "small_excavator_2";
@@ -303,169 +396,6 @@ int main(int argc, char** argv)
             ROS_WARN_STREAM("small excavator 2 bad");
         }
         
-        
-        
-        // if (curr_bot == "small_scout_1")
-        // {
-        //     if (curr_state != COMMON_NAMES::ROBOT_IDLE_STATE)
-        //     {
-        //         double curr_x = scout_1_odometry.pose.pose.position.x;
-        //         double curr_y = scout_1_odometry.pose.pose.position.y;
-        //         double curr_z = scout_1_odometry.pose.pose.position.z;
-
-        //         ROS_WARN_STREAM("Curr bot: " << curr_bot << " x " << curr_x << " y " << curr_y << " z " << curr_z);
-
-        //         if (sqrt(pow(curr_x - scout_1_start_x, 2) + pow(curr_y - scout_1_start_y, 2) + pow(curr_z - scout_1_start_z, 2)) > 1)
-        //         {
-                    
-        //             ROS_WARN_STREAM("DISTANCE OK");
-                    
-        //             scout_1_start_x = curr_x;
-        //             scout_1_start_y = curr_y;
-        //             scout_1_start_z = curr_z;
-
-        //             scout_1_start_time = curr_time;
-        //         }
-        //         else if (curr_time.sec - scout_1_start_time.sec > 30)
-        //         {
-        //             std_msgs::String pub_data;
-        //             pub_data.data = "small_scout_1";
-        //             out_of_commission_pub.publish(pub_data);
-        //             ROS_WARN_STREAM("Chris is a genius " << curr_bot);
-        //         }
-        //     }
-        // }        
-        // else if (curr_bot == "small_scout_2")
-        // {
-        //     if (curr_state != COMMON_NAMES::ROBOT_IDLE_STATE)
-        //     {
-        //         double curr_x = scout_2_odometry.pose.pose.position.x;
-        //         double curr_y = scout_2_odometry.pose.pose.position.y;
-        //         double curr_z = scout_2_odometry.pose.pose.position.z;
-
-        //         if (sqrt(pow(curr_x - scout_2_start_x, 2) + pow(curr_y - scout_2_start_y, 2) + pow(curr_z - scout_2_start_z, 2)) > 1)
-        //         {
-        //             scout_2_start_x = curr_x;
-        //             scout_2_start_y = curr_y;
-        //             scout_2_start_z = curr_z;
-
-        //             scout_2_start_time = curr_time;
-        //         }
-        //         else if (curr_time.sec - scout_2_start_time.sec > 30)
-        //         {
-        //             std_msgs::String pub_data;
-        //             pub_data.data = "small_scout_2";
-        //             out_of_commission_pub.publish(pub_data);
-        //             ROS_WARN_STREAM("Chris is a genius " << curr_bot);
-        //         }
-        //     }
-        // }
-        // else if (curr_bot == "small_hauler_1")
-        // {
-        //     if (curr_state != COMMON_NAMES::ROBOT_IDLE_STATE)
-        //     {
-        //         double curr_x = hauler_1_odometry.pose.pose.position.x;
-        //         double curr_y = hauler_1_odometry.pose.pose.position.y;
-        //         double curr_z = hauler_1_odometry.pose.pose.position.z;
-
-        //         if (sqrt(pow(curr_x - hauler_1_start_x, 2) + pow(curr_y - hauler_1_start_y, 2) + pow(curr_z - hauler_1_start_z, 2)) > 1)
-        //         {
-        //             hauler_1_start_x = curr_x;
-        //             hauler_1_start_y = curr_y;
-        //             hauler_1_start_z = curr_z;
-
-        //             hauler_1_start_time = curr_time;
-        //         }
-        //         else if (curr_time.sec - hauler_1_start_time.sec > 30)
-        //         {
-        //             std_msgs::String pub_data;
-        //             pub_data.data = "small_hauler_1";
-        //             out_of_commission_pub.publish(pub_data);
-        //             ROS_WARN_STREAM("Chris is a genius " << curr_bot);
-        //         }
-        //     }
-        // }
-        // else if (curr_bot == "small_hauler_2")
-        // {
-        //     if (curr_state != COMMON_NAMES::ROBOT_IDLE_STATE)
-        //     {
-        //         double curr_x = hauler_2_odometry.pose.pose.position.x;
-        //         double curr_y = hauler_2_odometry.pose.pose.position.y;
-        //         double curr_z = hauler_2_odometry.pose.pose.position.z;
-
-        //         if (sqrt(pow(curr_x - hauler_2_start_x, 2) + pow(curr_y - hauler_2_start_y, 2) + pow(curr_z - hauler_2_start_z, 2)) > 1)
-        //         {
-        //             hauler_2_start_x = curr_x;
-        //             hauler_2_start_y = curr_y;
-        //             hauler_2_start_z = curr_z;
-
-        //             hauler_2_start_time = curr_time;
-        //         }
-        //         else if (curr_time.sec - hauler_2_start_time.sec > 30)
-        //         {
-        //             std_msgs::String pub_data;
-        //             pub_data.data = "small_hauler_2";
-        //             out_of_commission_pub.publish(pub_data);
-        //             ROS_WARN_STREAM("Chris is a genius " << curr_bot);
-        //         }
-        //     }
-        // }
-        // else if (curr_bot == "small_excavator_1")
-        // {
-        //     if (curr_state != COMMON_NAMES::ROBOT_IDLE_STATE)
-        //     {
-        //         double curr_x = excavator_1_odometry.pose.pose.position.x;
-        //         double curr_y = excavator_1_odometry.pose.pose.position.y;
-        //         double curr_z = excavator_1_odometry.pose.pose.position.z;
-
-        //         if (sqrt(pow(curr_x - excavator_1_start_x, 2) + pow(curr_y - excavator_1_start_y, 2) + pow(curr_z - excavator_1_start_z, 2)) > 1)
-        //         {
-        //             excavator_1_start_x = curr_x;
-        //             excavator_1_start_y = curr_y;
-        //             excavator_1_start_z = curr_z;
-
-        //             excavator_1_start_time = curr_time;
-        //         }
-        //         else if (curr_time.sec - excavator_1_start_time.sec > 30)
-        //         {
-        //             std_msgs::String pub_data;
-        //             pub_data.data = "small_excavator_1";
-        //             out_of_commission_pub.publish(pub_data);
-        //             ROS_WARN_STREAM("Chris is a genius " << curr_bot);
-        //         }
-        //     }
-        // }
-        // else if (curr_bot == "small_excavator_2")
-        // {
-        //     if (curr_state != COMMON_NAMES::ROBOT_IDLE_STATE)
-        //     {
-        //         double curr_x = excavator_2_odometry.pose.pose.position.x;
-        //         double curr_y = excavator_2_odometry.pose.pose.position.y;
-        //         double curr_z = excavator_2_odometry.pose.pose.position.z;
-
-        //         if (sqrt(pow(curr_x - excavator_2_start_x, 2) + pow(curr_y - excavator_2_start_y, 2) + pow(curr_z - excavator_2_start_z, 2)) > 1)
-        //         {
-        //             excavator_2_start_x = curr_x;
-        //             excavator_2_start_y = curr_y;
-        //             excavator_2_start_z = curr_z;
-
-        //             excavator_2_start_time = curr_time;
-        //         }
-        //         else if (curr_time.sec - excavator_2_start_time.sec > 30)
-        //         {
-        //             std_msgs::String pub_data;
-        //             pub_data.data = "small_excavator_2";
-        //             out_of_commission_pub.publish(pub_data);
-        //             ROS_WARN_STREAM("Chris is a genius " << curr_bot);
-        //         }
-        //     }
-        // }
-        // else
-        // {
-        //     ROS_ERROR_STREAM("CHRIS IS AN IDIOT");
-        // }
-        
-        // Wait 10 seconds and then do it all again
         ros::Duration(0.05).sleep();
         ros::spinOnce();
     }

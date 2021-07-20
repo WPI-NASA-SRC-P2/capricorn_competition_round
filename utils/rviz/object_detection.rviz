@@ -45,7 +45,7 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Image
-      Enabled: true
+      Enabled: false
       Image Topic: /capricorn/small_excavator_1/object_detection/image
       Max Value: 1
       Median window: 5
@@ -55,7 +55,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: true
+      Value: false
     - Class: rviz/Image
       Enabled: true
       Image Topic: /capricorn/small_scout_1/object_detection/image
@@ -79,7 +79,504 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: false
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Queue Size: 10
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /capricorn/small_scout_1/debug_path
+      Unreliable: false
+      Value: true
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: Map
+      Topic: /capricorn/small_scout_1/object_detection_map
+      Unreliable: false
+      Use Timestamp: false
+      Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        map:
+          Value: true
+        odom:
+          Value: true
+        small_excavator_1_arm_mount:
+          Value: true
+        small_excavator_1_base_footprint:
+          Value: true
+        small_excavator_1_bl_steering_arm_shoulder:
+          Value: true
+        small_excavator_1_bl_steering_arm_tibia:
+          Value: true
+        small_excavator_1_bl_wheel:
+          Value: true
+        small_excavator_1_br_steering_arm_shoulder:
+          Value: true
+        small_excavator_1_br_steering_arm_tibia:
+          Value: true
+        small_excavator_1_br_wheel:
+          Value: true
+        small_excavator_1_fl_steering_arm_shoulder:
+          Value: true
+        small_excavator_1_fl_steering_arm_tibia:
+          Value: true
+        small_excavator_1_fl_wheel:
+          Value: true
+        small_excavator_1_fr_steering_arm_shoulder:
+          Value: true
+        small_excavator_1_fr_steering_arm_tibia:
+          Value: true
+        small_excavator_1_fr_wheel:
+          Value: true
+        small_excavator_1_humerus:
+          Value: true
+        small_excavator_1_imu_link:
+          Value: true
+        small_excavator_1_left_camera_optical:
+          Value: true
+        small_excavator_1_lidar_link:
+          Value: true
+        small_excavator_1_radius:
+          Value: true
+        small_excavator_1_right_camera_optical:
+          Value: true
+        small_excavator_1_scoop:
+          Value: true
+        small_excavator_1_scoop_spawn_zone:
+          Value: true
+        small_excavator_1_sensor_bar:
+          Value: true
+        small_excavator_1_sensor_bar_yaw_motor:
+          Value: true
+        small_excavator_1_shoulder:
+          Value: true
+        small_excavator_1_small_chassis:
+          Value: true
+        small_excavator_2_arm_mount:
+          Value: true
+        small_excavator_2_base_footprint:
+          Value: true
+        small_excavator_2_bl_steering_arm_shoulder:
+          Value: true
+        small_excavator_2_bl_steering_arm_tibia:
+          Value: true
+        small_excavator_2_bl_wheel:
+          Value: true
+        small_excavator_2_br_steering_arm_shoulder:
+          Value: true
+        small_excavator_2_br_steering_arm_tibia:
+          Value: true
+        small_excavator_2_br_wheel:
+          Value: true
+        small_excavator_2_fl_steering_arm_shoulder:
+          Value: true
+        small_excavator_2_fl_steering_arm_tibia:
+          Value: true
+        small_excavator_2_fl_wheel:
+          Value: true
+        small_excavator_2_fr_steering_arm_shoulder:
+          Value: true
+        small_excavator_2_fr_steering_arm_tibia:
+          Value: true
+        small_excavator_2_fr_wheel:
+          Value: true
+        small_excavator_2_humerus:
+          Value: true
+        small_excavator_2_imu_link:
+          Value: true
+        small_excavator_2_left_camera_optical:
+          Value: true
+        small_excavator_2_lidar_link:
+          Value: true
+        small_excavator_2_radius:
+          Value: true
+        small_excavator_2_right_camera_optical:
+          Value: true
+        small_excavator_2_scoop:
+          Value: true
+        small_excavator_2_scoop_spawn_zone:
+          Value: true
+        small_excavator_2_sensor_bar:
+          Value: true
+        small_excavator_2_sensor_bar_yaw_motor:
+          Value: true
+        small_excavator_2_shoulder:
+          Value: true
+        small_excavator_2_small_chassis:
+          Value: true
+        small_hauler_1_base_footprint:
+          Value: true
+        small_hauler_1_bin:
+          Value: true
+        small_hauler_1_bl_steering_arm_shoulder:
+          Value: true
+        small_hauler_1_bl_steering_arm_tibia:
+          Value: true
+        small_hauler_1_bl_wheel:
+          Value: true
+        small_hauler_1_br_steering_arm_shoulder:
+          Value: true
+        small_hauler_1_br_steering_arm_tibia:
+          Value: true
+        small_hauler_1_br_wheel:
+          Value: true
+        small_hauler_1_fl_steering_arm_shoulder:
+          Value: true
+        small_hauler_1_fl_steering_arm_tibia:
+          Value: true
+        small_hauler_1_fl_wheel:
+          Value: true
+        small_hauler_1_fr_steering_arm_shoulder:
+          Value: true
+        small_hauler_1_fr_steering_arm_tibia:
+          Value: true
+        small_hauler_1_fr_wheel:
+          Value: true
+        small_hauler_1_imu_link:
+          Value: true
+        small_hauler_1_left_camera_optical:
+          Value: true
+        small_hauler_1_lidar_link:
+          Value: true
+        small_hauler_1_right_camera_optical:
+          Value: true
+        small_hauler_1_sensor_bar:
+          Value: true
+        small_hauler_1_sensor_bar_yaw_motor:
+          Value: true
+        small_hauler_1_small_chassis:
+          Value: true
+        small_hauler_2_base_footprint:
+          Value: true
+        small_hauler_2_bin:
+          Value: true
+        small_hauler_2_bl_steering_arm_shoulder:
+          Value: true
+        small_hauler_2_bl_steering_arm_tibia:
+          Value: true
+        small_hauler_2_bl_wheel:
+          Value: true
+        small_hauler_2_br_steering_arm_shoulder:
+          Value: true
+        small_hauler_2_br_steering_arm_tibia:
+          Value: true
+        small_hauler_2_br_wheel:
+          Value: true
+        small_hauler_2_fl_steering_arm_shoulder:
+          Value: true
+        small_hauler_2_fl_steering_arm_tibia:
+          Value: true
+        small_hauler_2_fl_wheel:
+          Value: true
+        small_hauler_2_fr_steering_arm_shoulder:
+          Value: true
+        small_hauler_2_fr_steering_arm_tibia:
+          Value: true
+        small_hauler_2_fr_wheel:
+          Value: true
+        small_hauler_2_imu_link:
+          Value: true
+        small_hauler_2_left_camera_optical:
+          Value: true
+        small_hauler_2_lidar_link:
+          Value: true
+        small_hauler_2_right_camera_optical:
+          Value: true
+        small_hauler_2_sensor_bar:
+          Value: true
+        small_hauler_2_sensor_bar_yaw_motor:
+          Value: true
+        small_hauler_2_small_chassis:
+          Value: true
+        small_scout_1_base_footprint:
+          Value: true
+        small_scout_1_bl_steering_arm_shoulder:
+          Value: true
+        small_scout_1_bl_steering_arm_tibia:
+          Value: true
+        small_scout_1_bl_wheel:
+          Value: true
+        small_scout_1_br_steering_arm_shoulder:
+          Value: true
+        small_scout_1_br_steering_arm_tibia:
+          Value: true
+        small_scout_1_br_wheel:
+          Value: true
+        small_scout_1_fl_steering_arm_shoulder:
+          Value: true
+        small_scout_1_fl_steering_arm_tibia:
+          Value: true
+        small_scout_1_fl_wheel:
+          Value: true
+        small_scout_1_fr_steering_arm_shoulder:
+          Value: true
+        small_scout_1_fr_steering_arm_tibia:
+          Value: true
+        small_scout_1_fr_wheel:
+          Value: true
+        small_scout_1_imu_link:
+          Value: true
+        small_scout_1_left_camera_optical:
+          Value: true
+        small_scout_1_lidar_link:
+          Value: true
+        small_scout_1_right_camera_optical:
+          Value: true
+        small_scout_1_sensor_bar:
+          Value: true
+        small_scout_1_sensor_bar_yaw_motor:
+          Value: true
+        small_scout_1_small_chassis:
+          Value: true
+        small_scout_1_volatile_sensor:
+          Value: true
+        small_scout_1_volatile_sensor_guard:
+          Value: true
+        small_scout_1_volatile_sensor_mount:
+          Value: true
+        small_scout_2_base_footprint:
+          Value: true
+        small_scout_2_bl_steering_arm_shoulder:
+          Value: true
+        small_scout_2_bl_steering_arm_tibia:
+          Value: true
+        small_scout_2_bl_wheel:
+          Value: true
+        small_scout_2_br_steering_arm_shoulder:
+          Value: true
+        small_scout_2_br_steering_arm_tibia:
+          Value: true
+        small_scout_2_br_wheel:
+          Value: true
+        small_scout_2_fl_steering_arm_shoulder:
+          Value: true
+        small_scout_2_fl_steering_arm_tibia:
+          Value: true
+        small_scout_2_fl_wheel:
+          Value: true
+        small_scout_2_fr_steering_arm_shoulder:
+          Value: true
+        small_scout_2_fr_steering_arm_tibia:
+          Value: true
+        small_scout_2_fr_wheel:
+          Value: true
+        small_scout_2_imu_link:
+          Value: true
+        small_scout_2_left_camera_optical:
+          Value: true
+        small_scout_2_lidar_link:
+          Value: true
+        small_scout_2_right_camera_optical:
+          Value: true
+        small_scout_2_sensor_bar:
+          Value: true
+        small_scout_2_sensor_bar_yaw_motor:
+          Value: true
+        small_scout_2_small_chassis:
+          Value: true
+        small_scout_2_volatile_sensor:
+          Value: true
+        small_scout_2_volatile_sensor_guard:
+          Value: true
+        small_scout_2_volatile_sensor_mount:
+          Value: true
+      Marker Alpha: 1
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        map:
+          odom:
+            small_excavator_1_base_footprint:
+              small_excavator_1_small_chassis:
+                small_excavator_1_arm_mount:
+                  small_excavator_1_shoulder:
+                    small_excavator_1_humerus:
+                      small_excavator_1_radius:
+                        small_excavator_1_scoop:
+                          small_excavator_1_scoop_spawn_zone:
+                            {}
+                small_excavator_1_bl_steering_arm_shoulder:
+                  small_excavator_1_bl_steering_arm_tibia:
+                    small_excavator_1_bl_wheel:
+                      {}
+                small_excavator_1_br_steering_arm_shoulder:
+                  small_excavator_1_br_steering_arm_tibia:
+                    small_excavator_1_br_wheel:
+                      {}
+                small_excavator_1_fl_steering_arm_shoulder:
+                  small_excavator_1_fl_steering_arm_tibia:
+                    small_excavator_1_fl_wheel:
+                      {}
+                small_excavator_1_fr_steering_arm_shoulder:
+                  small_excavator_1_fr_steering_arm_tibia:
+                    small_excavator_1_fr_wheel:
+                      {}
+                small_excavator_1_imu_link:
+                  {}
+                small_excavator_1_sensor_bar_yaw_motor:
+                  small_excavator_1_sensor_bar:
+                    small_excavator_1_left_camera_optical:
+                      {}
+                    small_excavator_1_lidar_link:
+                      {}
+                    small_excavator_1_right_camera_optical:
+                      {}
+            small_excavator_2_base_footprint:
+              small_excavator_2_small_chassis:
+                small_excavator_2_arm_mount:
+                  small_excavator_2_shoulder:
+                    small_excavator_2_humerus:
+                      small_excavator_2_radius:
+                        small_excavator_2_scoop:
+                          small_excavator_2_scoop_spawn_zone:
+                            {}
+                small_excavator_2_bl_steering_arm_shoulder:
+                  small_excavator_2_bl_steering_arm_tibia:
+                    small_excavator_2_bl_wheel:
+                      {}
+                small_excavator_2_br_steering_arm_shoulder:
+                  small_excavator_2_br_steering_arm_tibia:
+                    small_excavator_2_br_wheel:
+                      {}
+                small_excavator_2_fl_steering_arm_shoulder:
+                  small_excavator_2_fl_steering_arm_tibia:
+                    small_excavator_2_fl_wheel:
+                      {}
+                small_excavator_2_fr_steering_arm_shoulder:
+                  small_excavator_2_fr_steering_arm_tibia:
+                    small_excavator_2_fr_wheel:
+                      {}
+                small_excavator_2_imu_link:
+                  {}
+                small_excavator_2_sensor_bar_yaw_motor:
+                  small_excavator_2_sensor_bar:
+                    small_excavator_2_left_camera_optical:
+                      {}
+                    small_excavator_2_lidar_link:
+                      {}
+                    small_excavator_2_right_camera_optical:
+                      {}
+            small_hauler_1_base_footprint:
+              small_hauler_1_small_chassis:
+                small_hauler_1_bin:
+                  {}
+                small_hauler_1_bl_steering_arm_shoulder:
+                  small_hauler_1_bl_steering_arm_tibia:
+                    small_hauler_1_bl_wheel:
+                      {}
+                small_hauler_1_br_steering_arm_shoulder:
+                  small_hauler_1_br_steering_arm_tibia:
+                    small_hauler_1_br_wheel:
+                      {}
+                small_hauler_1_fl_steering_arm_shoulder:
+                  small_hauler_1_fl_steering_arm_tibia:
+                    small_hauler_1_fl_wheel:
+                      {}
+                small_hauler_1_fr_steering_arm_shoulder:
+                  small_hauler_1_fr_steering_arm_tibia:
+                    small_hauler_1_fr_wheel:
+                      {}
+                small_hauler_1_imu_link:
+                  {}
+                small_hauler_1_sensor_bar_yaw_motor:
+                  small_hauler_1_sensor_bar:
+                    small_hauler_1_left_camera_optical:
+                      {}
+                    small_hauler_1_lidar_link:
+                      {}
+                    small_hauler_1_right_camera_optical:
+                      {}
+            small_hauler_2_base_footprint:
+              small_hauler_2_small_chassis:
+                small_hauler_2_bin:
+                  {}
+                small_hauler_2_bl_steering_arm_shoulder:
+                  small_hauler_2_bl_steering_arm_tibia:
+                    small_hauler_2_bl_wheel:
+                      {}
+                small_hauler_2_br_steering_arm_shoulder:
+                  small_hauler_2_br_steering_arm_tibia:
+                    small_hauler_2_br_wheel:
+                      {}
+                small_hauler_2_fl_steering_arm_shoulder:
+                  small_hauler_2_fl_steering_arm_tibia:
+                    small_hauler_2_fl_wheel:
+                      {}
+                small_hauler_2_fr_steering_arm_shoulder:
+                  small_hauler_2_fr_steering_arm_tibia:
+                    small_hauler_2_fr_wheel:
+                      {}
+                small_hauler_2_imu_link:
+                  {}
+                small_hauler_2_sensor_bar_yaw_motor:
+                  small_hauler_2_sensor_bar:
+                    small_hauler_2_left_camera_optical:
+                      {}
+                    small_hauler_2_lidar_link:
+                      {}
+                    small_hauler_2_right_camera_optical:
+                      {}
+            small_scout_1_base_footprint:
+              small_scout_1_small_chassis:
+                small_scout_1_bl_steering_arm_shoulder:
+                  small_scout_1_bl_steering_arm_tibia:
+                    small_scout_1_bl_wheel:
+                      {}
+                small_scout_1_br_steering_arm_shoulder:
+                  small_scout_1_br_steering_arm_tibia:
+                    small_scout_1_br_wheel:
+                      {}
+                small_scout_1_fl_steering_arm_shoulder:
+                  small_scout_1_fl_steering_arm_tibia:
+                    small_scout_1_fl_wheel:
+                      {}
+                small_scout_1_fr_steering_arm_shoulder:
+                  small_scout_1_fr_steering_arm_tibia:
+                    small_scout_1_fr_wheel:
+                      {}
+                small_scout_1_imu_link:
+                  {}
+                small_scout_1_sensor_bar_yaw_motor:
+                  small_scout_1_sensor_bar:
+                    small_scout_1_left_camera_optical:
+                      {}
+                    small_scout_1_lidar_link:
+                      {}
+                    small_scout_1_right_camera_optical:
+                      {}
+                small_scout_1_volatile_sensor_guard:
+                  {}
+                small_scout_1_volatile_sensor_mount:
+                  small_scout_1_volatile_sensor:
+                    {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -108,7 +605,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10
+      Distance: 33.96105194091797
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -116,17 +613,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 8.262277603149414
+        Y: 5.825345993041992
+        Z: -5.227344512939453
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8103979825973511
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 0.6753979921340942
+      Yaw: 0.04039835184812546
     Saved: ~
 Window Geometry:
   Displays:
@@ -136,7 +633,7 @@ Window Geometry:
   Hide Right Dock: true
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000039a000002bffc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000105000002bf000000c700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000003200000009d0000001600ffffff000000010000010000000365fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003b00000365000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b2000000000000000000000002000003c0000000c4fc0100000005fb0000000a0049006d0061006700650100000000000001350000005a00fffffffb0000000a0049006d006100670065010000013b0000013c0000005a00fffffffb0000000a0049006d006100670065010000027d000001430000005a00fffffffb0000000a0049006d00610067006501000004f50000028b0000000000000000fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000003c000000037fc0100000002fb0000000800540069006d00650100000000000003c00000024400fffffffb0000000800540069006d0065010000000000000450000000000000000000000020000002bf00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000039a0000029bfc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c00610079007301000001050000029b000000c700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000003200000009d0000001600ffffff000000010000010000000365fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003b00000365000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000738000000c4fc0100000005fb0000000a0049006d0061006700650100000000000002560000005a00fffffffb0000000a0049006d006100670065010000025c000002640000005a00fffffffb0000000a0049006d00610067006501000004c6000002720000005a00fffffffb0000000a0049006d00610067006501000004f50000028b0000000000000000fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073800000037fc0100000002fb0000000800540069006d00650100000000000007380000024400fffffffb0000000800540069006d00650100000000000004500000000000000000000003980000029b00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -145,6 +642,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 960
-  X: 1920
-  Y: 0
+  Width: 1848
+  X: 72
+  Y: 27
