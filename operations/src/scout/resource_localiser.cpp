@@ -255,7 +255,7 @@ void getBestPose()
     if(volatile_unseen_counter > MAX_COUNT_FOR_OUT_OF_VOLATILE_RANGE)
       break;
     ros::Duration(0.1).sleep();
-    ROS_INFO_STREAM("Volatile Counter = "<<volatile_unseen_counter);
+    // ROS_INFO_STREAM("Volatile Counter = "<<volatile_unseen_counter);
   }
   return;
 }
