@@ -147,7 +147,7 @@ void TeamManager::recruitment()
          checkAndRecruitForResetAtHopper(i);
          break;
       case GO_TO_INIT_LOC:
-         //DoNothing
+         checkAndRecruitForGoToInitLoc(i);
          break;
       default:
          break;
@@ -284,20 +284,31 @@ void TeamManager::recruitExcavator(int team_index)
 
          if(both_excavators_working && both_scouts_working)
          {
-            if(all_teams.at(team_index)->getScout() == SCOUT_1 && excavator != EXCAVATOR_1)
-               return;
-            else if(all_teams.at(team_index)->getScout() == SCOUT_2 && excavator != EXCAVATOR_2)
-               return;
+            if(all_teams.at(team_index)->getScout() == SCOUT_1 && excavator == EXCAVATOR_1)
+            {
+               if (DEBUG)
+                  ROS_INFO_STREAM("SCOUT_1 HIRED "<<excavator);
+               all_teams.at(team_index)->setExcavator(excavator);
+               all_teams.at(i)->disbandExcavator();
+
+               excavator_for_sale.at(i) = false;
+               teams_need_excavator.at(team_index) = false;
+               break;
+            }
+            else if(all_teams.at(team_index)->getScout() == SCOUT_2 && excavator == EXCAVATOR_2)
+            {
+               if (DEBUG)
+                  ROS_INFO_STREAM("SCOUT_1 HIRED "<<excavator);
+               all_teams.at(team_index)->setExcavator(excavator);
+               all_teams.at(i)->disbandExcavator();
+
+               excavator_for_sale.at(i) = false;
+               teams_need_excavator.at(team_index) = false;
+               break;
+            }
          }
-
-         all_teams.at(team_index)->setExcavator(excavator);
-         all_teams.at(i)->disbandExcavator();
-
-         excavator_for_sale.at(i) = false;
-         teams_need_excavator.at(team_index) = false;
-         break;
       }
-   }
+   }   
 }
 
 void TeamManager::recruitHauler(int team_index)
@@ -313,20 +324,31 @@ void TeamManager::recruitHauler(int team_index)
          //              This state is only effectively called in EXCAVATING
          if(both_excavators_working && both_haulers_working)
          {
-            if(all_teams.at(team_index)->getExcavator() == EXCAVATOR_1 && hauler != HAULER_1)
-               return;
-            else if(all_teams.at(team_index)->getExcavator() == EXCAVATOR_2 && hauler != HAULER_2)
-               return;
+            if(all_teams.at(team_index)->getExcavator() == EXCAVATOR_1 && hauler == HAULER_1)
+            {
+               if (DEBUG)
+                  ROS_INFO_STREAM("EXCAVATOR_1 HIRED "<<hauler);
+               all_teams.at(team_index)->setHauler(hauler);
+               all_teams.at(i)->disbandHauler();
+
+               hauler_for_sale.at(i) = false;
+               teams_need_hauler.at(team_index) = false;
+               break;
+            }
+            else if(all_teams.at(team_index)->getExcavator() == EXCAVATOR_2 && hauler == HAULER_2)
+            {
+               if (DEBUG)
+                  ROS_INFO_STREAM("EXCAVATOR_2 HIRED "<<hauler);
+               all_teams.at(team_index)->setHauler(hauler);
+               all_teams.at(i)->disbandHauler();
+
+               hauler_for_sale.at(i) = false;
+               teams_need_hauler.at(team_index) = false;
+               break;
+            }
          }
-
-         all_teams.at(team_index)->setHauler(hauler);
-         all_teams.at(i)->disbandHauler();
-
-         hauler_for_sale.at(i) = false;
-         teams_need_hauler.at(team_index) = false;
-         break;
       }
-   }
+   }   
 }
 
 
@@ -410,6 +432,13 @@ void TeamManager::checkAndRecruitForWaitForHopperAppointment(int team_index)
 void TeamManager::checkAndRecruitForResetAtHopper(int team_index)
 {
    hopper_busy = true;
+}
+
+void TeamManager::checkAndRecruitForGoToInitLoc(int team_index)
+{
+   // Should not have the scout in the first place
+   fireExcavator(team_index);
+   fireHauler(team_index);
 }
 
 void TeamManager::checkAndRecruitForIdle(int team_index)

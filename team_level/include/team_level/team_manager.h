@@ -103,6 +103,8 @@ private:
    void checkAndRecruitForWaitForHopperAppointment(int team_index);
    
    void checkAndRecruitForResetAtHopper(int team_index);
+
+   void checkAndRecruitForGoToInitLoc(int team_index);
 };
 
 #endif // TEAM_SCHEDULER_H
