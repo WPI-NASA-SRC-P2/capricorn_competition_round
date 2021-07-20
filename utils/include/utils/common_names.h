@@ -229,7 +229,7 @@ namespace COMMON_NAMES
     HAULER_PARK_AT_EXCAVATOR,           // Hauler parks at excavator
     HAULER_FOLLOW_EXCAVATOR,            // Hauler follows excavator
     HAULER_RESET_ODOM,                  // Hauler reset odometry service call state
-    HUALER_GO_TO_INIT_LOC,
+    HAULER_GO_TO_INIT_LOC,
 
     // redundant modes for hauler (everything is taken care by above modes)
     HAULER_GO_TO_PROC_PLANT, // Hauler goes to processing plant
