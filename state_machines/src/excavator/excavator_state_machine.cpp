@@ -3,7 +3,8 @@
 #include <state_machines/RobotStateMachineTaskAction.h>
 #include <actionlib/server/simple_action_server.h>
 
-#define ONE_METRE_DELAY 3.5
+#define ONE_METRE_DELAY_EXCAV_SCOUT 3.5
+#define ONE_METRE_DELAY_EXCAV_HAULER 1.7
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// E X C A V A T O R   B A S E   S T A T E   C L A S S ////////////////////////////////////
@@ -102,11 +103,11 @@ void GoToScout::entryPoint()
     ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: entrypoint of go_to_scout");
     target_loc_ = m_pcRobotScheduler->getDesiredPose();
     
-    float sign_of_multiple = excavator_pose_.pose.position.x * m_pcRobotScheduler->getDesiredPose().pose.position.x;
-   //  ROS_INFO_STREAM("#########  "<<sign_of_multiple);
-    if (sign_of_multiple<0) 
-      micro_state = CROSS_ZERO_X_BORDER;
-    else
+   //  float sign_of_multiple = excavator_pose_.pose.position.x * m_pcRobotScheduler->getDesiredPose().pose.position.x;
+   // //  ROS_INFO_STREAM("#########  "<<sign_of_multiple);
+   //  if (sign_of_multiple<0) 
+   //    micro_state = CROSS_ZERO_X_BORDER;
+   //  else
       micro_state = GO_TO_SCOUT;
 }
 
@@ -404,7 +405,7 @@ void ParkAndPub::closeInToScout()
    navigation_action_goal_.angular_velocity = 0;
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << " closing in to scout");
    navigation_client_->sendGoal(navigation_action_goal_);
-   ros::Duration(ONE_METRE_DELAY).sleep();
+   ros::Duration(ONE_METRE_DELAY_EXCAV_SCOUT).sleep();
    // brake wheels
    navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
    navigation_action_goal_.forward_velocity = 0.0;   
@@ -501,7 +502,7 @@ void PreParkHauler::goToVolatile() {
       navigation_action_goal_.angular_velocity = 0;
       ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "GOING TO VOLATILE");
       navigation_client_->sendGoal(navigation_action_goal_);
-      ros::Duration(ONE_METRE_DELAY).sleep();
+      ros::Duration(ONE_METRE_DELAY_EXCAV_HAULER).sleep();
       // brake wheels
       navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
       navigation_action_goal_.forward_velocity = 0.0;   
@@ -537,7 +538,7 @@ void PreParkHauler::getInArmPosition() {
       navigation_action_goal_.angular_velocity = 0;
       ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "driving to digging position");
       navigation_client_->sendGoal(navigation_action_goal_);
-      ros::Duration(0.5).sleep();
+      ros::Duration(ONE_METRE_DELAY_EXCAV_HAULER).sleep();
       navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
       navigation_action_goal_.forward_velocity = 0.0;   
       navigation_action_goal_.angular_velocity = 0;
