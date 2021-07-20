@@ -44,6 +44,11 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   HAULER_2_LOOKOUT_LOC.pose.orientation.z = -0.707;
   HAULER_2_LOOKOUT_LOC.pose.orientation.w = 0.707;
 
+  HAULER_RETURN_LOC.header.frame_id = COMMON_NAMES::MAP;
+  HAULER_RETURN_LOC.pose.position.x    = 10.0;
+  HAULER_RETURN_LOC.pose.position.y    = 10.0;
+  HAULER_RETURN_LOC.pose.orientation.w = 1;
+
 
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &HaulerState::odomCallback, this);
 
@@ -768,7 +773,8 @@ void DumpVolatileAtHopper::goToProcPlant()
    {
       operations::NavigationVisionGoal navigation_vision_goal;
       navigation_vision_goal.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
-      navigation_vision_goal.mode = V_REACH;
+      navigation_vision_goal.mode = V_NAV_AND_NAV_VISION;
+      navigation_vision_goal_.goal_loc = HAULER_RETURN_LOC;
       navigation_vision_client_->sendGoal(navigation_vision_goal);
       ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Going to Processing Plant vision goal sent");
       first_GTPP = false;

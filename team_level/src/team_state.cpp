@@ -240,7 +240,6 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Failed to reach Scout");
          return MAKE_EXCAV_HAULER_IDLE;
       }
-      return RECOVERY_SCOUT_FINDING;
    }
    if (scout_task == SCOUT_UNDOCK && scout_done_and_succeeded)
       return PARK_EXCAVATOR_AT_SCOUT;

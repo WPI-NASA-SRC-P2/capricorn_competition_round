@@ -40,6 +40,16 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   EXCAVATOR_2_LOOKOUT_LOC.pose.position.y = 20;
   EXCAVATOR_2_LOOKOUT_LOC.pose.orientation.z = 1.0;
 
+  EXCAVATOR_1_RETURN_LOC.header.frame_id = COMMON_NAMES::MAP;
+  EXCAVATOR_1_RETURN_LOC.pose.position.x = 10.0;
+  EXCAVATOR_1_RETURN_LOC.pose.position.y = 0.0;
+  EXCAVATOR_1_RETURN_LOC.pose.orientation.z = 1.0;
+
+  EXCAVATOR_2_RETURN_LOC.header.frame_id = COMMON_NAMES::MAP;
+  EXCAVATOR_2_RETURN_LOC.pose.position.x = -20.0;
+  EXCAVATOR_2_RETURN_LOC.pose.position.y = -0.0;
+  EXCAVATOR_2_RETURN_LOC.pose.orientation.z = 1.0;
+
 //   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ExcavatorState::odomCallback, this);
 }
@@ -766,6 +776,7 @@ void ExcavatorResetOdomAtHopper::entryPoint()
 
    // Setting poses
    hardcoded_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
+   GTRL_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_RETURN_LOC : EXCAVATOR_2_RETURN_LOC;
    
    // Currently not caring about orientations
    GTRR_pose_ = excavator_pose_;
@@ -832,7 +843,8 @@ void ExcavatorResetOdomAtHopper::goToRepair()
    if(first_GTR)
    {
       navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
-      navigation_vision_goal_.mode = V_REACH;
+      navigation_vision_goal_.mode = V_NAV_AND_NAV_VISION;
+      navigation_vision_goal_.goal_loc = GTRL_pose_;
       navigation_vision_client_->sendGoal(navigation_vision_goal_);
       ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Going to repair station vision goal sent");  
       first_GTR = false;

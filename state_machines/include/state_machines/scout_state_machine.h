@@ -141,6 +141,9 @@ protected:
   typedef actionlib::SimpleActionClient<operations::ParkRobotAction> ParkRobotClient;
   ParkRobotClient *park_robot_client_;
   operations::ParkRobotGoal park_robot_goal_;
+
+  geometry_msgs::PoseStamped SCOUT_1_RETURN_LOC;
+  geometry_msgs::PoseStamped SCOUT_2_RETURN_LOC;
 };
 
 /**
@@ -249,6 +252,7 @@ private:
    void idleScout(){}
 
    bool first_GTPP, first_PAH, first_UFH, first_GTR, resetOdomDone_, macro_state_succeeded, macro_state_done;
+   geometry_msgs::PoseStamped GTRL_pose_;
    
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_PROC_PLANT,
