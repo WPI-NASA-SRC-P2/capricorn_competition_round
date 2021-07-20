@@ -98,7 +98,7 @@ void GoToProcPlant::entryPoint()
     // setup initial variable values
     first_ = true;
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to Processing Plant");
-   
+    last_state_succeeded_ = false;
     target_loc_ = m_pcRobotScheduler->getDesiredPose();
 }
 
@@ -138,7 +138,8 @@ bool GoToProcPlant::isDone()
 
 bool GoToProcPlant::hasSucceeded() 
 {
-   last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    return last_state_succeeded_;
 }
 
@@ -159,7 +160,7 @@ void HaulerGoToScout::entryPoint()
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  State Machine: Going to Scout (High Level Goal)");
     // pose of the excavator, supposed to be provided by scheduler
     target_loc_ = m_pcRobotScheduler->getDesiredPose();
-    
+    last_state_succeeded_ = false;
     first_ = true;
 }
 
@@ -187,7 +188,8 @@ bool HaulerGoToScout::isDone()
 
 bool HaulerGoToScout::hasSucceeded() 
 {
-   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(last_state_succeeded_)
       ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Go to Scout Completed Successfully");
    return last_state_succeeded_;
@@ -208,6 +210,7 @@ void ParkAtHopper::entryPoint()
 {
     // set entry variables
     first_ = true;
+    last_state_succeeded_ = false;
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " State Machine: Parking to hopper");
 }
 
@@ -243,7 +246,8 @@ bool ParkAtHopper::isDone()
 
 bool ParkAtHopper::hasSucceeded() 
 {
-   last_state_succeeded_ = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    return last_state_succeeded_;
 }
 
@@ -336,7 +340,7 @@ void GoToExcavator::entryPoint()
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Going Back to Excavator (High Level Goal)");
     // pose of the excavator, supposed to be provided by scheduler
     target_loc_ = m_pcRobotScheduler->getDesiredPose();
-    
+    last_state_succeeded_ = false;
     first_ = true;
 }
 
@@ -375,7 +379,8 @@ bool GoToExcavator::isDone()
 
 bool GoToExcavator::hasSucceeded() 
 {
-   last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    return last_state_succeeded_;
 }
 
@@ -394,6 +399,7 @@ void ParkAtExcavator::entryPoint()
 {
     // set entry variables
     first_ = true;
+    last_state_succeeded_ = false;
     park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_EXCAVATOR_CLASS;
     excavator_name_ = m_pcRobotScheduler->getTargetRobotName();
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  State Machine: Parking at Excavator");
@@ -431,7 +437,8 @@ bool ParkAtExcavator::isDone()
 
 bool ParkAtExcavator::hasSucceeded() 
 {
-   last_state_succeeded_ = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    return last_state_succeeded_;
 }
 
@@ -451,6 +458,7 @@ void UndockExcavator::entryPoint()
    //Set to true to avoid repeatedly giving the goal.
    first_ = true;
    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  entrypoint of undock");
+   last_state_succeeded_ = false;
    
    // update the current status of the robot and publish it
    
@@ -468,7 +476,8 @@ bool UndockExcavator::hasSucceeded()
 {
    // update the status of current state
    // last_state_succeeded_ = (navigation_client_->getState() == actionlib::status::SUCCESS);
-   last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    
    return last_state_succeeded_;
 }
@@ -500,6 +509,7 @@ void DumpVolatile::entryPoint()
 {
     // set entry variables
     first_ = true;
+    last_state_succeeded_ = false;
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Dumping Volatile");
 }
 
@@ -534,7 +544,8 @@ bool DumpVolatile::isDone()
 
 bool DumpVolatile::hasSucceeded() 
 {
-   last_state_succeeded_ = (hauler_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (hauler_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    return last_state_succeeded_;
 }
 
@@ -556,6 +567,7 @@ void HaulerGoToLoc::entryPoint()
     // pose of the excavator, supposed to be provided by scheduler
     target_loc_ = m_pcRobotScheduler->getDesiredPose();    
     first_ = true;
+    last_state_succeeded_ = false;
 }
 
 void HaulerGoToLoc::step()
@@ -578,7 +590,8 @@ bool HaulerGoToLoc::isDone()
 
 bool HaulerGoToLoc::hasSucceeded() 
 {
-   last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    if(last_state_succeeded_)
       ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Go to Scout Completed Successfully");
    return last_state_succeeded_;
@@ -825,6 +838,7 @@ void DumpVolatileAtHopper::exitPoint()
 void HaulerGoToRepairStation::entryPoint()
 {
    first_ = true;
+   last_state_succeeded_ = false;
 }
 
 bool HaulerGoToRepairStation::isDone()
@@ -835,7 +849,8 @@ bool HaulerGoToRepairStation::isDone()
 
 bool HaulerGoToRepairStation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(last_state_succeeded_)
       ROS_WARN_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Scout Go to Repair Station Completed Successfully");
    return last_state_succeeded_;
@@ -935,7 +950,8 @@ void GoToExcavatorRecovery::searchForExcavator(int index)
       first_ = false;
    }
    search_done_ = navigation_vision_client_->getState().isDone();
-   excavator_found_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   if(search_done_)
+      excavator_found_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
 }
 
 // When the excavator's Recovery method is triggered, it creates 4 offset poses from its current location and stores them in recovery_poses_
@@ -975,6 +991,7 @@ void GoToLookoutLocation::entryPoint()
    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToLookoutLocation.");
    hardcoded_pose_ = (robot_name_ == COMMON_NAMES::HAULER_1_NAME) ? HAULER_1_LOOKOUT_LOC : HAULER_2_LOOKOUT_LOC;
    first_ = true;
+   last_state_succeeded_ = false;
 }
 void GoToLookoutLocation::step() 
 {
@@ -996,7 +1013,8 @@ bool GoToLookoutLocation::isDone()
 
 bool GoToLookoutLocation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    return last_state_succeeded_;
 }
 
