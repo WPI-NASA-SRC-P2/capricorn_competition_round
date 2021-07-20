@@ -714,6 +714,68 @@ void WaitForHopperAppointment::exitPoint()
    ROS_INFO("TEAM_LEVEL | team_state | exitpoint of WaitForHopperAppointment, cancelling WaitForHopperAppointment goal");
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// G O _ T O _ I N I T _ L O C   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool GoToInitLoc::entryPoint()
+{
+   //Set to true to avoid repeatedly giving the goal.
+   ROS_INFO("TEAM_LEVEL | team_state | entrypoint of GoToInitLoc");
+
+   if(excavator_in_team == NONE && hauler_in_team == NONE)
+   {
+      ROS_ERROR_STREAM("TEAM_LEVEL | team_state | No robot set for GoToInitLoc!");
+      return false;
+   }
+
+   return true;
+}
+
+bool GoToInitLoc::isDone()
+{
+   if(excavator_in_team != NONE)
+   {
+      STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
+      bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team);// && robot_state_register->hasSucceeded(excavator_in_team);
+
+      return excavator_task == EXCAVATOR_GO_TO_LOOKOUT_LOCATION && excavator_done_and_succeeded;
+   }
+   if(hauler_in_team != NONE)
+   {
+      STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
+      bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team);// && robot_state_register->hasSucceeded(hauler_in_team);
+
+      return hauler_task == HAULER_GO_TO_LOOKOUT_LOCATION && hauler_done_and_succeeded;
+   }
+}
+
+TeamState& GoToInitLoc::transition()
+{
+   if(isDone())
+   {
+      ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to IDLE");
+      return getState(IDLE);
+   }
+   else
+   {
+      return *this;
+   }
+}
+   
+void GoToInitLoc::step()
+{
+   if(excavator_in_team != NONE)
+      robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_GO_TO_LOOKOUT_LOCATION);
+   if(hauler_in_team != NONE)
+      robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOOKOUT_LOCATION);
+}
+
+void GoToInitLoc::exitPoint() 
+{
+   ROS_INFO("TEAM_LEVEL | team_state | exitpoint of GoToInitLoc, cancelling GoToRepairStation goal");
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// R E S E T   A T   H O P P E R   S T A T E   C L A S S ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
