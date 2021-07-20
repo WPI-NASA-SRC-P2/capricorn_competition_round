@@ -9,6 +9,8 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 	initPublishers(nh, robot_name);
 	initSubscribers(nh, robot_name);
 
+	ros::Duration(1).sleep();
+
 	nh.param("crab_drive", CRAB_DRIVE_, false);
 
 	ROS_INFO("[operations | nav_server | %s]: Starting navigation server...\n", robot_name_.c_str());
@@ -283,7 +285,7 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 
 		if(trajLength >= 2)
 		{
-			while(traj.waypoints.at(trajLength - 1).pose.position.x == 0 && traj.waypoints.at(trajLength - 1).pose.position.y == 0)
+			while(traj.waypoints.back().pose.position.x == 0 && traj.waypoints.back().pose.position.y == 0)
 			{
 				traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 1);
 			}
