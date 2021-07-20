@@ -367,8 +367,8 @@ bool DynamicPlanning2::checkAllObstacles(perception::ObjectArray obstacles, nav_
     float safeDistance1 = sqrt(pow((robotx - point1x),2) + pow((roboty - point1y),2));
     float safeDistance2 = sqrt(pow((robotx - point2x),2) + pow((roboty - point2y),2)); 
 
-    ROS_INFO_STREAM("safedistance1: " << safeDistance1);
-    ROS_INFO_STREAM("safedistance2: " << safeDistance2);
+    // ROS_INFO_STREAM("safedistance1: " << safeDistance1);
+    // ROS_INFO_STREAM("safedistance2: " << safeDistance2);
     if(safeDistance1 < 7 || safeDistance2 < 7)
     {
       return true;
@@ -446,7 +446,7 @@ bool DynamicPlanning2::checkAllObstacles2(perception::ObjectArray obstacles, nav
               
               if(CheckIfBewtweenWaypoints(CompletePathParameters.at(l), iPoints))
               {
-                ROS_INFO_STREAM("pose: " << current_robot_pose);
+                // ROS_INFO_STREAM("pose: " << current_robot_pose);
                 if(CheckIPwithRobot(current_robot_pose,iPoints))
                 {
                   return true;
