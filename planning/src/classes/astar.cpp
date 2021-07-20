@@ -117,17 +117,16 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
     // ROS_INFO("[planning | astar ]: Adding the padded point to the A* path");
     std::vector<geometry_msgs::PoseStamped> paddingPath;
 
-    for (int i = 0; i < p.poses.size() - 2; i++)
+    for (int i = 0; i < p.poses.size(); i++)
     {
       paddingPath.push_back(p.poses[i]);
     }
     paddingPath.push_back(poseStampedFromIndex(abandonedIndex, oGrid, robot_name));
-    paddingPath.push_back(p.poses.at(p.poses.size() - 3));
-    paddingPath.push_back(p.poses.at(p.poses.size() - 2));
-
     p.poses = paddingPath;
     // ROS_INFO("[planning | astar ]: Returning the completed path");
+    ROS_INFO_STREAM("path in padding : " << p);
     return p;
+
   }
 
   return p;
