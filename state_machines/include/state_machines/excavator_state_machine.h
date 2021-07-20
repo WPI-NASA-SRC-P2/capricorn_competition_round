@@ -90,6 +90,8 @@ public:
 
    geometry_msgs::PoseStamped EXCAVATOR_1_LOOKOUT_LOC;
    geometry_msgs::PoseStamped EXCAVATOR_2_LOOKOUT_LOC;
+   geometry_msgs::PoseStamped EXCAVATOR_1_RETURN_LOC;
+   geometry_msgs::PoseStamped EXCAVATOR_2_RETURN_LOC;
 
 protected:
 
@@ -457,7 +459,7 @@ private:
    void idleExcavator(){}
 
    bool first_GTPP, first_GTPPR, second_GTPPR, first_PAH, first_UFH, first_GTR, first_GTRR, second_GTRR, first_GTLL, resetOdomDone_, macro_state_succeeded, macro_state_done;
-   geometry_msgs::PoseStamped hardcoded_pose_, GTRR_pose_, GTPP_pose_;
+   geometry_msgs::PoseStamped hardcoded_pose_, GTRR_pose_, GTPP_pose_, GTRL_pose_;
    bool state_done;
 
    enum RESET_ODOM_MICRO_STATES{

@@ -37,6 +37,17 @@ ScoutState::ScoutState(uint32_t un_id, ros::NodeHandle nh, std::string robot_nam
   
   volatile_sub_ = nh_.subscribe("/" + robot_name_ + VOLATILE_SENSOR_TOPIC, 1000, &ScoutState::volatileSensorCB, this);
   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ScoutState::objectsCallback, this);
+
+  SCOUT_1_RETURN_LOC.header.frame_id = COMMON_NAMES::MAP;
+  SCOUT_1_RETURN_LOC.pose.position.x = 10.0;
+  SCOUT_1_RETURN_LOC.pose.position.y = 5.0;
+  SCOUT_1_RETURN_LOC.pose.orientation.z = 1.0;
+
+  SCOUT_2_RETURN_LOC.header.frame_id = COMMON_NAMES::MAP;
+  SCOUT_2_RETURN_LOC.pose.position.x = -20.0;
+  SCOUT_2_RETURN_LOC.pose.position.y = -5;
+  SCOUT_2_RETURN_LOC.pose.orientation.z = 1.0;
+
 }
 
 ScoutState::~ScoutState()
@@ -241,6 +252,8 @@ void ResetOdomAtHopper::entryPoint()
    macro_state_succeeded = false;
    macro_state_done = false;
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout beginning reset odom at hopper macrostate");
+
+   GTRL_pose_ = (robot_name_ == COMMON_NAMES::SCOUT_1_NAME) ? SCOUT_1_RETURN_LOC : SCOUT_2_RETURN_LOC;
 }
 
 bool ResetOdomAtHopper::isDone()
@@ -291,7 +304,8 @@ void ResetOdomAtHopper::goToProcPlant()
    {
       operations::NavigationVisionGoal navigation_vision_goal;
       navigation_vision_goal.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
-      navigation_vision_goal.mode = V_REACH;
+      navigation_vision_goal.mode = V_NAV_AND_NAV_VISION;
+      navigation_vision_goal_.goal_loc = GTRL_pose_;
       navigation_vision_client_->sendGoal(navigation_vision_goal);
       first_GTPP = false;
       return;
