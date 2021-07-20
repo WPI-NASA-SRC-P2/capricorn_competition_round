@@ -27,6 +27,7 @@ void TeamScheduler::addStates(ros::NodeHandle &nh)
     addState(new GoToRepairStation(nh));
     addState(new WaitForHopperAppointment(nh));
     addState(new ResetAtHopper(nh));
+    addState(new GoToInitLoc(nh));
 }
 
 void TeamScheduler::addState(TeamState* pc_state) {

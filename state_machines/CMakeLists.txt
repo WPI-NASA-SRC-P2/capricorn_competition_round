@@ -250,7 +250,7 @@ DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS start_excavator_sm start_scout_sm start_hauler_sm odom_resetter
+install(TARGETS start_excavator_sm start_scout_sm start_hauler_sm odom_resetter imu_lowpass
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

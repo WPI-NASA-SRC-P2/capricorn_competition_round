@@ -49,8 +49,9 @@ void TeamManager::addRobots()
    {
       int robot_index = (int) EXCAVATOR_1 + i;
       ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
-      all_teams.at(i)->setExcavator(robot);
-      all_teams.at(i)->setTeamMacroState(IDLE);
+      int standby_team = getStandbyTeam();
+      all_teams.at(standby_team)->setExcavator(robot);
+      all_teams.at(standby_team)->setTeamMacroState(GO_TO_INIT_LOC);
    }
    
    for(int i = 0; i < MAX_HAULERS; i++)
@@ -59,8 +60,9 @@ void TeamManager::addRobots()
          continue;
       int robot_index = (int) HAULER_1 + i;
       ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
-      all_teams.at(i)->setHauler(robot);
-      all_teams.at(i)->setTeamMacroState(IDLE);
+      int standby_team = getStandbyTeam();
+      all_teams.at(standby_team)->setHauler(robot);
+      all_teams.at(standby_team)->setTeamMacroState(GO_TO_INIT_LOC);
    }      
 }
 
@@ -143,6 +145,9 @@ void TeamManager::recruitment()
          break;
       case RESET_AT_HOPPER:
          checkAndRecruitForResetAtHopper(i);
+         break;
+      case GO_TO_INIT_LOC:
+         //DoNothing
          break;
       default:
          break;

@@ -28,6 +28,7 @@ enum TEAM_MACRO_STATE{
    GO_TO_REPAIR_STATION,   // Will go to Repair Station 
    WAIT_FOR_HOPPER_APPOINTMENT,  // Waits for an appointment at hopper. 
    RESET_AT_HOPPER,     // Only one robot can be in this state at once. 
+   GO_TO_INIT_LOC,      // Send robots to the init locations
 };
 
 enum TEAM_MICRO_STATE{
@@ -251,6 +252,19 @@ public:
 class ResetAtHopper: public TeamState{
 public:
    ResetAtHopper(ros::NodeHandle &nh):TeamState(RESET_AT_HOPPER, "ResetAtHopper", nh){}
+   bool isDone() override ;
+   
+   TeamState& transition() override;
+   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
+   
+   bool entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+};
+
+class GoToInitLoc: public TeamState{
+public:
+   GoToInitLoc(ros::NodeHandle &nh):TeamState(GO_TO_INIT_LOC, "GoToInitLoc", nh){}
    bool isDone() override ;
    
    TeamState& transition() override;
