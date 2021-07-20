@@ -791,21 +791,27 @@ bool ResetAtHopper::isDone()
    if(scout_in_team != NONE)
    {
       STATE_MACHINE_TASK scout_task = robot_state_register->currentState(scout_in_team);
-      bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team) && robot_state_register->hasSucceeded(scout_in_team);
+      bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team);  // && robot_state_register->hasSucceeded(scout_in_team);
+                                                                                    // We dont really care if the robot has successfully completed the
+                                                                                    // Go to lookout location state. All that we care, is that the robot
+                                                                                    // is away from the hopper, and it must be. We are only hoping that
+                                                                                    // the navigation does not fail AT HOPPER and once its away, we ignore
+                                                                                    // if it reached the lookout location or not.
+                                                                                    // -Ashay
 
       return scout_task == SCOUT_RESET_ODOM && scout_done_and_succeeded;
    }
    if(excavator_in_team != NONE)
    {
       STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
-      bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team) && robot_state_register->hasSucceeded(excavator_in_team);
+      bool excavator_done_and_succeeded = robot_state_register->isDone(excavator_in_team);// && robot_state_register->hasSucceeded(excavator_in_team);
 
       return excavator_task == EXCAVATOR_RESET_ODOM_AT_HOPPER && excavator_done_and_succeeded;
    }
    if(hauler_in_team != NONE)
    {
       STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
-      bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team) && robot_state_register->hasSucceeded(hauler_in_team);
+      bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team);// && robot_state_register->hasSucceeded(hauler_in_team);
 
       return hauler_task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_done_and_succeeded;
    }
