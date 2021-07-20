@@ -607,7 +607,7 @@ void HaulerGoToLoc::exitPoint()
 
 /** @TODO: 
  * States : [1], [2], [5], [7], [9]
- * 1. Send excavator to Repair Station
+ * 1. Send hauler to Repair Station
  * 2. If [1] fails, center to Processing Plant ==> Move 10 metres to the right (Potentially add IMU assisted drive to get out of crater)
  * 3. After [2] DONE, Try [1] again.
  * 4. [1] Successful ==> [5] ; [1] fails ==> [2]. 
@@ -646,10 +646,10 @@ void DumpVolatileAtHopper::entryPoint()
    
    // Currently not caring about orientations
    GTRR_pose_ = hauler_pose_;
-   GTRR_pose_.pose.position.x -= 10.0;
+   GTRR_pose_.pose.position.x -= 8.0;
 
    GTPP_pose_ = hauler_pose_;
-   GTPP_pose_.pose.position.x += 10.0;
+   GTPP_pose_.pose.position.x += 8.0;
 
 }
 
