@@ -69,6 +69,13 @@ int curr_state;
 bool curr_state_done;
 bool last_state_succeeded;
 
+void publish(std::string data)
+{
+    std_msgs::String pub_data;
+    pub_data.data = data;
+    out_of_commission_pub.publish(pub_data);
+}
+
 void scout_1_odom_callback(nav_msgs::Odometry odom_data) 
 {   
     scout_1_x = odom_data.pose.pose.position.x;
@@ -140,7 +147,7 @@ void robot_state_callback(state_machines::robot_state_status robot_state_info)
     else if (curr_bot == "small_scout_2")
     {
         was_moving = scout_2_should_be_moving;
-        scout_2_should_be_moving = scout_1_should_be_moving = (curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE || 
+        scout_2_should_be_moving = (curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_SEARCH_VOLATILE || 
                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_GO_TO_LOC || 
                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_UNDOCK || 
                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::SCOUT_RESET_ODOM || 
@@ -293,9 +300,6 @@ int main(int argc, char** argv)
         // Else, if it should be moving, that is a problem. Increment the counter to move the robot closer to "out of commission" status
         if (sqrt(pow(scout_1_x - scout_1_start_x, 2) + pow(scout_1_y - scout_1_start_y, 2) + pow(scout_1_z - scout_1_start_z, 2)) > 1)
         {
-            
-            ROS_WARN_STREAM("SCOUT 1 DISTANCE OK");
-            
             scout_1_start_x = scout_1_x;
             scout_1_start_y = scout_1_y;
             scout_1_start_z = scout_1_z;
@@ -306,14 +310,11 @@ int main(int argc, char** argv)
         else if (scout_1_should_be_moving)
         {
             scout_1_count++;
-            ROS_WARN_STREAM("small scout 1 bad");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_scout_1 is not moving");
         }
 
         if (sqrt(pow(scout_2_x - scout_2_start_x, 2) + pow(scout_2_y - scout_2_start_y, 2) + pow(scout_2_z - scout_2_start_z, 2)) > 1)
         {
-            
-            ROS_WARN_STREAM("SCOUT 2 DISTANCE OK");
-            
             scout_2_start_x = scout_2_x;
             scout_2_start_y = scout_2_y;
             scout_2_start_z = scout_2_z;
@@ -324,14 +325,11 @@ int main(int argc, char** argv)
         else if (scout_2_should_be_moving)
         {
             scout_2_count++;
-            ROS_WARN_STREAM("small scout 2 bad");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_scout_2 is not moving");
         }
 
         if (sqrt(pow(hauler_1_x - hauler_1_start_x, 2) + pow(hauler_1_y - hauler_1_start_y, 2) + pow(hauler_1_z - hauler_1_start_z, 2)) > 1)
         {
-            
-            ROS_WARN_STREAM("HAULER 1 DISTANCE OK");
-            
             hauler_1_start_x = hauler_1_x;
             hauler_1_start_y = hauler_1_y;
             hauler_1_start_z = hauler_1_z;
@@ -342,14 +340,11 @@ int main(int argc, char** argv)
         else if (hauler_1_should_be_moving)
         {
             hauler_1_count++;
-            ROS_WARN_STREAM("small hauler 1 bad");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_hauler_1 is not moving");
         }
 
         if (sqrt(pow(hauler_2_x - hauler_2_start_x, 2) + pow(hauler_2_y - hauler_2_start_y, 2) + pow(hauler_2_z - hauler_2_start_z, 2)) > 1)
         {
-            
-            ROS_WARN_STREAM("HAULER 2 DISTANCE OK");
-            
             hauler_2_start_x = hauler_2_x;
             hauler_2_start_y = hauler_2_y;
             hauler_2_start_z = hauler_2_z;
@@ -360,14 +355,11 @@ int main(int argc, char** argv)
         else if (hauler_2_should_be_moving)
         {
             hauler_2_count++;
-            ROS_WARN_STREAM("small hauler 2 bad");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_hauler_2 is not moving");
         }
 
         if (sqrt(pow(excavator_1_x - excavator_1_start_x, 2) + pow(excavator_1_y - excavator_1_start_y, 2) + pow(excavator_1_z - excavator_1_start_z, 2)) > 1)
         {
-            
-            ROS_WARN_STREAM("EXCAVATOR 1 DISTANCE OK");
-            
             excavator_1_start_x = excavator_1_x;
             excavator_1_start_y = excavator_1_y;
             excavator_1_start_z = excavator_1_z;
@@ -378,14 +370,11 @@ int main(int argc, char** argv)
         else if (excavator_1_should_be_moving)
         {
             excavator_1_count++;
-            ROS_WARN_STREAM("small excavator 1 bad");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_excavator_1 is not moving");
         }
 
         if (sqrt(pow(excavator_2_x - excavator_2_start_x, 2) + pow(excavator_2_y - excavator_2_start_y, 2) + pow(excavator_2_z - excavator_2_start_z, 2)) > 1)
         {
-            
-            ROS_WARN_STREAM("EXCAVATOR 2 DISTANCE OK");
-            
             excavator_2_start_x = excavator_2_x;
             excavator_2_start_y = excavator_2_y;
             excavator_2_start_z = excavator_2_z;
@@ -396,45 +385,33 @@ int main(int argc, char** argv)
         else if (excavator_2_should_be_moving)
         {
             excavator_2_count++;
-            ROS_WARN_STREAM("small excavator 2 bad");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_excavator_2 is not moving");
         }
 
         // If the robot has been stopped for at least 2 minutes, it is out of commission
         if (scout_1_count > 5)
         {
-            std_msgs::String pub_data;
-            pub_data.data = "small_scout_1";
-            out_of_commission_pub.publish(pub_data);
+            publish("small_scout_1"):
         }
         if (scout_2_count > 5)
         {
-            std_msgs::String pub_data;
-            pub_data.data = "small_scout_2";
-            out_of_commission_pub.publish(pub_data);
+            publish("small_scout_2"):
         }
         if (hauler_1_count > 5)
         {
-            std_msgs::String pub_data;
-            pub_data.data = "small_hauler_1";
-            out_of_commission_pub.publish(pub_data);
+            publish("small_hauler_1"):
         }
         if (hauler_2_count > 5)
         {
-            std_msgs::String pub_data;
-            pub_data.data = "small_hauler_2";
-            out_of_commission_pub.publish(pub_data);
+            publish("small_hauler_2"):
         }
         if (excavator_1_count > 5)
         {
-            std_msgs::String pub_data;
-            pub_data.data = "small_excavator_1";
-            out_of_commission_pub.publish(pub_data);
+            publish("small_excavator_1"):
         }
         if (excavator_2_count > 5)
         {
-            std_msgs::String pub_data;
-            pub_data.data = "small_excavator_2";
-            out_of_commission_pub.publish(pub_data);
+            publish("small_excavator_2"):
         }
 
         ros::Duration(20).sleep();
