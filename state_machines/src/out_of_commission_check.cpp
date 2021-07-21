@@ -168,7 +168,6 @@ void robot_state_callback(state_machines::robot_state_status robot_state_info)
                                      curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_FOLLOW_EXCAVATOR || 
                                      curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_UNDOCK_EXCAVATOR || 
                                      curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GOTO_REPAIR_STATION || 
-                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HUALER_GO_TO_INIT_LOC || 
                                      curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_TO_EXCAVATOR_RECOVERY || 
                                      curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_TO_LOOKOUT_LOCATION);
         if (!was_moving && hauler_1_should_be_moving)
@@ -185,7 +184,6 @@ void robot_state_callback(state_machines::robot_state_status robot_state_info)
                                      curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_FOLLOW_EXCAVATOR || 
                                      curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_UNDOCK_EXCAVATOR || 
                                      curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GOTO_REPAIR_STATION || 
-                                     curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HUALER_GO_TO_INIT_LOC || 
                                      curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_TO_EXCAVATOR_RECOVERY || 
                                      curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_GO_TO_LOOKOUT_LOCATION);
         if (!was_moving && hauler_2_should_be_moving)
@@ -312,7 +310,7 @@ int main(int argc, char** argv)
         else if (scout_1_should_be_moving)
         {
             scout_1_count++;
-            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_scout_1 is not moving");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_scout_1 is not moving for last "<<scout_1_count<<" counts");
         }
 
         if (sqrt(pow(scout_2_x - scout_2_start_x, 2) + pow(scout_2_y - scout_2_start_y, 2) + pow(scout_2_z - scout_2_start_z, 2)) > 1)
@@ -327,7 +325,7 @@ int main(int argc, char** argv)
         else if (scout_2_should_be_moving)
         {
             scout_2_count++;
-            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_scout_2 is not moving");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_scout_2 is not moving for last "<<scout_2_count<<" counts");
         }
 
         if (sqrt(pow(hauler_1_x - hauler_1_start_x, 2) + pow(hauler_1_y - hauler_1_start_y, 2) + pow(hauler_1_z - hauler_1_start_z, 2)) > 1)
@@ -342,7 +340,7 @@ int main(int argc, char** argv)
         else if (hauler_1_should_be_moving)
         {
             hauler_1_count++;
-            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_hauler_1 is not moving");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_hauler_1 is not moving for last "<<hauler_1_count<<" counts");
         }
 
         if (sqrt(pow(hauler_2_x - hauler_2_start_x, 2) + pow(hauler_2_y - hauler_2_start_y, 2) + pow(hauler_2_z - hauler_2_start_z, 2)) > 1)
@@ -357,7 +355,7 @@ int main(int argc, char** argv)
         else if (hauler_2_should_be_moving)
         {
             hauler_2_count++;
-            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_hauler_2 is not moving");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_hauler_2 is not moving for last "<<hauler_2_count<<" counts");
         }
 
         if (sqrt(pow(excavator_1_x - excavator_1_start_x, 2) + pow(excavator_1_y - excavator_1_start_y, 2) + pow(excavator_1_z - excavator_1_start_z, 2)) > 1)
@@ -372,7 +370,7 @@ int main(int argc, char** argv)
         else if (excavator_1_should_be_moving)
         {
             excavator_1_count++;
-            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_excavator_1 is not moving");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_excavator_1 is not moving for last "<<excavator_1_count<<" counts");
         }
 
         if (sqrt(pow(excavator_2_x - excavator_2_start_x, 2) + pow(excavator_2_y - excavator_2_start_y, 2) + pow(excavator_2_z - excavator_2_start_z, 2)) > 1)
@@ -387,7 +385,7 @@ int main(int argc, char** argv)
         else if (excavator_2_should_be_moving)
         {
             excavator_2_count++;
-            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_excavator_2 is not moving");
+            ROS_WARN_STREAM("[STATE_MACHINES | out_of_commission_check.cpp | small_excavator_2 is not moving for last "<<excavator_2_count<<" counts");
         }
 
         // If the robot has been stopped for at least 2 minutes, it is out of commission

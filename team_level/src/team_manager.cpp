@@ -3,11 +3,13 @@
 TeamManager::TeamManager(ros::NodeHandle nh)
 {
    initTeams(nh);
+   robot_state_register = new RobotStateRegister(nh);
 }
 
 TeamManager::~TeamManager()
 {
    deleteTeams();
+   delete robot_state_register;
 }
 
 void TeamManager::deleteTeams()
@@ -437,6 +439,41 @@ void TeamManager::checkAndRecruitForWaitForHopperAppointment(int team_index)
 
 void TeamManager::checkAndRecruitForResetAtHopper(int team_index)
 {
+   if(all_teams.at(team_index)->isScoutHired())
+   {
+      bool scout_dead = robot_state_register->isRobotOutOfCommission(all_teams.at(team_index)->getScout());
+      if(scout_dead)
+      {
+         all_teams.at(team_index)->disbandScout();
+         hopper_busy = false;
+         return;
+      }
+   }
+   else if(all_teams.at(team_index)->isExcavatorHired())
+   {
+      bool excavator_dead = robot_state_register->isRobotOutOfCommission(all_teams.at(team_index)->getExcavator());
+      if(excavator_dead)
+      {
+         all_teams.at(team_index)->disbandExcavator();
+         hopper_busy = false;
+         return;
+      }
+   }
+   else if(all_teams.at(team_index)->isHaulerHired())
+   {
+      bool hauler_dead = robot_state_register->isRobotOutOfCommission(all_teams.at(team_index)->getHauler());
+      if(hauler_dead)
+      {
+         all_teams.at(team_index)->disbandHauler();
+         hopper_busy = false;
+         return;
+      }
+   }
+   else
+   {
+      ROS_WARN_STREAM("[TEAM_LEVEL | team_manager.cpp ]: NONE robot was set for the hopper reset");
+      hopper_busy = false;
+   }
    hopper_busy = true;
 }
 
