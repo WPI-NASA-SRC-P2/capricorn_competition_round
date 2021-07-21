@@ -660,6 +660,9 @@ void DumpVolatileAtHopper::step()
    case PARK_AT_HOPPER:
       parkAtHopper();
       break;
+   case DUMP_VOLATILE:
+      dumpVolatile();
+      break;
    case UNDOCK_FROM_HOPPER:
       undockFromHopper();
       break;
@@ -762,9 +765,31 @@ void DumpVolatileAtHopper::parkAtHopper()
    {
       if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS){
          first_UFH = true;
-         micro_state = UNDOCK_FROM_HOPPER;  
+         micro_state = DUMP_VOLATILE;  
       }
    }
+}
+
+void DumpVolatileAtHopper::dumpVolatile()
+{
+    if (first_DV)
+    {
+        hauler_goal_.desired_state = true;
+        hauler_client_->sendGoal(hauler_goal_);
+        first_DV = false;
+    }
+       
+    bool is_done = (hauler_client_->getState().isDone());
+    if (is_done)
+    {
+        if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+            micro_state = UNDOCK_FROM_HOPPER;
+        else
+        {
+            first_DV = true;
+            micro_state = DUMP_VOLATILE;
+        }
+    }
 }
 
 void DumpVolatileAtHopper::undockFromHopper()

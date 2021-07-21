@@ -530,9 +530,11 @@ private:
    void goToLookoutLocation();
    void goToRepairRecovery();
    void goToProcPlantRecovery();
+   void dumpVolatile();
    void idleHauler(){}
 
-   bool first_GTPP, first_GTPPR, second_GTPPR, first_PAH, first_UFH, first_GTR, first_GTRR, second_GTRR, first_GTLL, resetOdomDone_, macro_state_succeeded, macro_state_done;
+   bool first_GTPP, first_GTPPR, second_GTPPR, first_PAH, first_UFH, first_GTR, first_GTRR, second_GTRR, 
+         first_GTLL, resetOdomDone_, macro_state_succeeded, macro_state_done, first_DV;
    geometry_msgs::PoseStamped hardcoded_pose_, GTRR_pose_, GTPP_pose_;
    bool state_done;
 
@@ -540,6 +542,7 @@ private:
       GO_TO_PROC_PLANT,
       GO_TO_PROC_PLANT_RECOVERY,
       PARK_AT_HOPPER,
+      DUMP_VOLATILE,
       UNDOCK_FROM_HOPPER,
       RESET_ODOM_AT_HOPPER,
       GO_TO_REPAIR_STATION,
