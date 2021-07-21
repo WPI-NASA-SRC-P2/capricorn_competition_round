@@ -545,7 +545,7 @@ private:
       GO_TO_REPAIR_STATION,
       GO_TO_REPAIR_STATION_RECOVERY,
       GO_TO_LOOKOUT_LOCATION,
-      EXCAVATOR_IDLE 
+      HAULER_IDLE 
    };
 
    RESET_ODOM_MICRO_STATES micro_state;
@@ -573,8 +573,22 @@ public:
    void step() override;
    void exitPoint() override;
 
+   void goToRepair();
+   void goToRepairRecovery();
+   void idleHauler() {}
+
 private:
-   bool first_;
+   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
+   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
+   operations::NavigationGoal navigation_action_goal_;
+
+   enum RESET_ODOM_MICRO_STATES{
+      GO_TO_REPAIR,
+      GO_TO_REPAIR_RECOVERY,
+      HAULER_IDLE
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
 };
 
 /**

@@ -730,7 +730,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			future_waypoint.header.stamp = ros::Time(0);
 			NavigationAlgo::transformPose(future_waypoint, MAP, buffer_, 0.1);
 
-			trajectory_reset_dist = LARGE_TRAJECTORY_REST_DIST;
+			//trajectory_reset_dist = LARGE_TRAJECTORY_REST_DIST;
 
 			if(smooth)
 			{
@@ -739,11 +739,11 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 				//Kludge for reducing reset distance after hard turns. Gets reset
 				// on receiving a new trajectory.
-				if(abs(delta_heading) > HALF_VIEWING)
-				{
-					trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
-					ROS_INFO("[operations | nav_server | %s]: Sharp turn detected, using small reset distance", robot_name_.c_str());
-				}
+				// if(abs(delta_heading) > HALF_VIEWING)
+				// {
+				// 	trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
+				// 	ROS_INFO("[operations | nav_server | %s]: Sharp turn detected, using small reset distance", robot_name_.c_str());
+				// }
 
 				if (delta_heading >= MAX_TURNING_RAD || delta_heading <= MIN_TURNING_RAD)
 				{

@@ -245,7 +245,6 @@ namespace COMMON_NAMES
     HAULER_GO_TO_LOOKOUT_LOCATION,
     ROBOT_IDLE_STATE,
 
-
     /***************ROBOTS MACRO STATES***************/
     //41
     SCOUT_MACRO_UNDOCK,

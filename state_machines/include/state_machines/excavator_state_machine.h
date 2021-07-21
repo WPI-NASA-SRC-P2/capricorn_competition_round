@@ -92,6 +92,7 @@ public:
    geometry_msgs::PoseStamped EXCAVATOR_2_LOOKOUT_LOC;
    geometry_msgs::PoseStamped EXCAVATOR_1_RETURN_LOC;
    geometry_msgs::PoseStamped EXCAVATOR_2_RETURN_LOC;
+   geometry_msgs::PoseStamped BESIDE_REPAIR_STATION;
 
 protected:
 
@@ -498,9 +499,21 @@ public:
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
+   void goToRepair();
+   void goToRepairRecovery();
+   void idleExcavator() {}
 
 private:
-   bool first_;
+   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
+   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
+
+   enum RESET_ODOM_MICRO_STATES{
+      GO_TO_REPAIR,
+      GO_TO_REPAIR_RECOVERY,
+      EXCAVATOR_IDLE
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
 };
 
 /**
