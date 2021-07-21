@@ -1125,6 +1125,54 @@ void GoToLookoutLocation::exitPoint()
    navigation_client_->cancelGoal();
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  B A L L E T  D A N C I N G  S T A T E  C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HaulerBalletDancing::entryPoint() 
+{
+   first_ = true;
+}
+
+void HaulerBalletDancing::step() 
+{
+   if(first_)
+   {
+      // Move forward 0.3 metres 
+      navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+      navigation_action_goal_.forward_velocity = -0.6;
+      navigation_action_goal_.angular_velocity = 0;
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << " backing away from excavator");
+      navigation_client_->sendGoal(navigation_action_goal_);
+      ros::Duration(0.5).sleep();
+      // brake wheels
+      navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+      navigation_action_goal_.forward_velocity = 0.0;   
+      navigation_action_goal_.angular_velocity = 0;
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << " finished backing away from excavator");
+      navigation_client_->sendGoal(navigation_action_goal_);
+      ros::Duration(0.5).sleep();
+      first_ = false;
+   }
+}
+
+bool HaulerBalletDancing::isDone() {
+   current_state_done_ = navigation_client_->getState().isDone();
+   return current_state_done_;
+} 
+
+bool HaulerBalletDancing::hasSucceeded() {
+   if(isDone() && !(first_))
+      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   return last_state_succeeded_;
+}
+
+void HaulerBalletDancing::exitPoint()
+{
+    // clean up (cancel goals)
+    navigation_client_->cancelGoal();
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////  I D L E  S T A T E  C L A S S ////////////////////////////////////

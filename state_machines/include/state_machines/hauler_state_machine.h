@@ -652,6 +652,30 @@ private:
    bool first_;
    geometry_msgs::PoseStamped hardcoded_pose_;
 };
+
+/**
+ * @brief Compensates for pushing the excavator behind which would put it off the volatile
+ * 
+ * @param distance Tuned by controlling the sleep duration
+ */
+
+
+class HaulerBalletDancing : public HaulerState {
+public:   
+   HaulerBalletDancing(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_BALLET_DANCING, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+
+private:
+   bool first_;
+};
 // class HaulerIdle : public HaulerState {
 // public:   
 //    HaulerIdle(ros::NodeHandle nh, std::string robot_name) : HaulerState(ROBOT_IDLE_STATE, nh, robot_name) {}
