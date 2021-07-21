@@ -316,7 +316,7 @@ void ResetOdomAtHopper::goToProcPlant()
    {
       if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
          micro_state = PARK_AT_HOPPER;
-      // else
+      // else 
          // state go to 0 0
    }
 }
@@ -418,8 +418,13 @@ void ResetOdomAtHopper::exitPoint()
 
 void GoToRepairStation::entryPoint()
 {
-   first_ = true;
-   last_state_succeeded_ = false;
+   first_GTR  = true;
+   first_GTRR = true;
+   second_GTRR = true;
+   macro_state_done_ = false;
+   macro_state_succeeded_ = false;
+   GTRL_pose_ = (robot_name_ == COMMON_NAMES::SCOUT_1_NAME) ? SCOUT_1_RETURN_LOC : SCOUT_2_RETURN_LOC;
+   micro_state = GO_TO_REPAIR;
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout entering goToRepairStation state");
 }
 
@@ -431,27 +436,97 @@ bool GoToRepairStation::isDone()
 
 bool GoToRepairStation::hasSucceeded()
 {
-   if(isDone() && !(first_))
-      last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
-   if(last_state_succeeded_)
-      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout GoToRepairStation completed successfully");
-
+   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    return last_state_succeeded_;
 }
 
 void GoToRepairStation::step()
 {
-
-   if (first_)
+   switch (micro_state)
    {
-      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
-      navigation_vision_goal_.mode = V_REACH;
-      // navigation_vision_goal_.target_loc = target_loc_;
-      navigation_vision_client_->sendGoal(navigation_vision_goal_);
-      first_ = false;
-      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Going to repair station vision goal sent");
+   case GO_TO_REPAIR: 
+      goToRepair();
+      break;
+   case GO_TO_REPAIR_RECOVERY:
+      goToRepairRecovery();
+      break;
+   case SCOUT_IDLE:
+      idleScout();
+      break;
+   default:
+      break;
    }
 }
+
+void GoToRepairStation::goToRepair()
+{
+   if(first_GTR)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_NAV_AND_NAV_VISION;
+      navigation_vision_goal_.goal_loc = GTRL_pose_;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Going to repair station vision goal sent");  
+      first_GTR = false;
+      return;
+   }
+   
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   if(is_done)
+   {
+      macro_state_done_ = true;
+      if(!has_succeeded)
+      {
+         micro_state = GO_TO_REPAIR_RECOVERY;
+         first_GTRR = true;
+         second_GTRR = true;
+      }
+      else 
+         macro_state_succeeded_ = true;
+         
+   }
+}
+
+void GoToRepairStation::goToRepairRecovery()
+{
+   //Send for centering first. 
+   if(first_GTRR)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
+      navigation_vision_goal_.mode = V_CENTER;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Centering to Proc Plant vision goal sent");  
+      first_GTRR = false;
+      return;
+   }
+
+   bool centering_done = (navigation_vision_client_->getState().isDone());
+   bool is_done = false;
+
+   // Once centering completed move 10 metres to the right. 
+   if(centering_done)
+   {
+      if(second_GTRR)
+      {
+         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+         navigation_action_goal_.pose = GTRR_pose_;
+         navigation_client_->sendGoal(navigation_action_goal_);
+         ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Travelling to right of Processing Plant : GOAL : " << GTRR_pose_);
+         second_GTRR = false;
+         return;
+      }
+      else 
+         is_done = navigation_client_->getState().isDone();   
+   }
+   if(is_done)
+   {
+      micro_state = GO_TO_REPAIR;
+      first_GTR = true;
+   }
+      
+}
+
 
 void GoToRepairStation::exitPoint()
 {

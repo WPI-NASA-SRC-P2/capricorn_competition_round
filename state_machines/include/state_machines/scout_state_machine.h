@@ -309,8 +309,22 @@ public:
    void step() override;
    void exitPoint() override;
 
+   void goToRepair();
+   void goToRepairRecovery();
+   void idleScout() {}
+
 private:
-   bool first_;
+   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
+   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
+   operations::NavigationGoal navigation_action_goal_;
+
+   enum RESET_ODOM_MICRO_STATES{
+      GO_TO_REPAIR,
+      GO_TO_REPAIR_RECOVERY,
+      SCOUT_IDLE
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
 };
 
 /**
