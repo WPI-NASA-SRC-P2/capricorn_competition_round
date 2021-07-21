@@ -51,6 +51,7 @@ enum TEAM_MICRO_STATE{
    PRE_PARK_MANEUVER_EXCAVATOR,
    PARK_AT_EXCAVATOR_HAULER,
    DIG_AND_DUMP,
+   BALLET_ONCE,
    UNDOCK_HAULER,
 
    // DUMPING
@@ -201,11 +202,13 @@ public:
    void exitPoint() override;
 
 private:
+   bool ballet_once;
    TEAM_MICRO_STATE micro_state;
    void stepWaitForHauler();
    void stepPreParkManeuverExcavator();
    void stepParkHauler();
    void stepDigAndDump();
+   void stepBalletOnce();
    void stepUndockHauler();
    void stepRecoveryExcavatorFinding();
 };
