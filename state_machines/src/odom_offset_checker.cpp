@@ -15,6 +15,8 @@ NASA SPACE ROBOTICS CHALLENGE
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <state_machines/robot_state_status.h>
 
+#define UPDATE_HZ 10
+
 bool imu_message_received = false;
 bool odom_message_received = false;
 bool wait_till_reset = false;
@@ -79,6 +81,7 @@ int main(int argc, char** argv)
     // ****** Initialization stuff ******
     ros::init(argc, argv, "odom_offset_checker");
     ros::NodeHandle nh;
+    ros::Rate update_rate(UPDATE_HZ);
 
     std::string robot_name = argv[1];
     
@@ -111,6 +114,24 @@ int main(int argc, char** argv)
     // Convert initial odom/imu from quat to rpy
     getOdomRPY(init_odom_r, init_odom_p, init_odom_y);
     getImuRPY(init_imu_r, init_imu_p, init_imu_y);
+
+    while(ros::ok() && (init_imu_r!=init_imu_r || init_imu_p!=init_imu_p || init_imu_y!=init_imu_y) )
+    {
+        getImuRPY(init_imu_r, init_imu_p, init_imu_y);
+        ros::spinOnce();
+    }
+
+    while(ros::ok() && (init_odom_r!=init_odom_r || init_odom_p!=init_odom_p || init_odom_y!=init_odom_y) )
+    {
+        getOdomRPY(init_odom_r, init_odom_p, init_odom_y);
+        ros::spinOnce();
+    }
+
+    while(ros::ok() && (init_odom_r == 0 || init_odom_p == 0 || init_odom_y == 0) )
+    {
+        getOdomRPY(init_odom_r, init_odom_p, init_odom_y);
+        ros::spinOnce();
+    }
     
     // Inf loop
     while(ros::ok())
@@ -151,10 +172,10 @@ int main(int argc, char** argv)
 
                 // call the 'reset pose' rosservice to send updated data
                 if(reset_odom_to_pose_client.call(pose)){
-                    ROS_INFO_STREAM("[STATE_MACHINES | odom_resetter.cpp | " + robot_name + "]: " + "Odometry has been reset");
+                    ROS_INFO_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name + "]: " + "Odometry has been reset");
                 }
                 else{
-                    ROS_ERROR_STREAM("[STATE_MACHINES | odom_resetter.cpp | " + robot_name + "]: " + "Odometry reset has failed.");
+                    ROS_ERROR_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name + "]: " + "Odometry reset has failed.");
                 }
             }
             else
@@ -164,7 +185,7 @@ int main(int argc, char** argv)
                 prev_odom_y = new_odom_y;
                 prev_odom_z = new_odom_z;
 
-                ROS_INFO_STREAM("[STATE_MACHINES | odom_resetter.cpp | " + robot_name + "]: " + "Odometry is ok");
+                ROS_INFO_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name + "]: " + "Odometry is ok");
             }
 
             // Set this false so we can check to see when we get the next odom message
@@ -172,9 +193,8 @@ int main(int argc, char** argv)
 
         }
 
-        // Wait 10 seconds and then do it all again
-        ros::Duration(1).sleep();
         ros::spinOnce();
+        update_rate.sleep();
     }
 
     ros::spin();
