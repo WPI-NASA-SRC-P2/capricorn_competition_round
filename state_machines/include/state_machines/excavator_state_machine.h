@@ -92,6 +92,7 @@ public:
    geometry_msgs::PoseStamped EXCAVATOR_2_LOOKOUT_LOC;
    geometry_msgs::PoseStamped EXCAVATOR_1_RETURN_LOC;
    geometry_msgs::PoseStamped EXCAVATOR_2_RETURN_LOC;
+   geometry_msgs::PoseStamped BESIDE_REPAIR_STATION;
 
 protected:
 

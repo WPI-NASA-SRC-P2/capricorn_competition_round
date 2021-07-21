@@ -30,6 +30,7 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: All excavator action servers started!");
 
   // Locations for excavators to go to in order to clear the traffic at the hopper, HAULER_2 parks near the hopper, HAULER_1 near the repair station. 
+  /** @brief : If there's a problem with rotation, check the orientations of these hardcoded poses */
   EXCAVATOR_1_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
   EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = 5.0;
   EXCAVATOR_1_LOOKOUT_LOC.pose.position.y = -20.0;
@@ -49,6 +50,11 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   EXCAVATOR_2_RETURN_LOC.pose.position.x = -20.0;
   EXCAVATOR_2_RETURN_LOC.pose.position.y = -0.0;
   EXCAVATOR_2_RETURN_LOC.pose.orientation.z = 1.0;
+
+  BESIDE_REPAIR_STATION.header.frame_id = COMMON_NAMES::MAP;
+  BESIDE_REPAIR_STATION.pose.position.x = -5.0;
+  BESIDE_REPAIR_STATION.pose.position.y = -25.0;
+  BESIDE_REPAIR_STATION.pose.orientation.z = 1.0;
 
 //   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ExcavatorState::odomCallback, this);
@@ -877,7 +883,7 @@ void ExcavatorResetOdomAtHopper::goToProcPlantRecovery()
          navigation_action_goal_.pose = GTPP_pose_;
          navigation_client_->sendGoal(navigation_action_goal_);
           ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Travelling to right of Repair Station in order to see Procesing plant: GOAL : " << GTPP_pose_);
-         second_GTRR = false;
+         second_GTPPR = false;
          return;
       }
       else 
@@ -986,6 +992,8 @@ void ExcavatorGoToRepairStation::entryPoint()
    macro_state_done_ = false;
    macro_state_succeeded_ = false;
    GTRL_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_RETURN_LOC : EXCAVATOR_2_RETURN_LOC;
+   GTRR_pose_ = excavator_pose_;             
+   GTRR_pose_.pose.position.x -= 10.0;
    micro_state = GO_TO_REPAIR;
 }
 
@@ -1071,7 +1079,6 @@ void ExcavatorGoToRepairStation::goToRepairRecovery()
       if(second_GTRR)
       {
          navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-         // where is GTRR_pose_ declared though?
          navigation_action_goal_.pose = GTRR_pose_;
          navigation_client_->sendGoal(navigation_action_goal_);
          ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Travelling to right of Processing Plant : GOAL : " << GTRR_pose_);
@@ -1085,8 +1092,7 @@ void ExcavatorGoToRepairStation::goToRepairRecovery()
    {
       micro_state = GO_TO_REPAIR;
       first_GTR = true;
-   }
-      
+   }    
 }
 
 
@@ -1094,6 +1100,7 @@ void ExcavatorGoToRepairStation::exitPoint()
 {
    // none at the moment
    navigation_vision_client_->cancelGoal();
+   navigation_client_->cancelGoal();
 }
 
 
