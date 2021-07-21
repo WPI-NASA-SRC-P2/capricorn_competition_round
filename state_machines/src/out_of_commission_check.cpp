@@ -64,6 +64,8 @@ ros::Time hauler_2_start_time;
 ros::Time excavator_1_start_time;
 ros::Time excavator_2_start_time;
 
+ros::Publisher out_of_commission_pub;
+
 std::string curr_bot;
 int curr_state;
 bool curr_state_done;
@@ -239,14 +241,14 @@ int main(int argc, char** argv)
 
     ros::Subscriber robot_state_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::ROBOTS_CURRENT_STATE_TOPIC, 223, robot_state_callback);
 
-    ros::Publisher out_of_commission_pub = nh.advertise<std_msgs::String>("/capricorn/" + COMMON_NAMES::ROBOTS_OUT_OF_COMMISSION_TOPIC, 223);
+    out_of_commission_pub = nh.advertise<std_msgs::String>("/capricorn/" + COMMON_NAMES::ROBOTS_OUT_OF_COMMISSION_TOPIC, 223);
 
     // Wait until we have received a message from all odoms
-    bool all_odoms_received = scout_1_odom_msg_received/* && scout_2_odom_msg_received && hauler_1_odom_msg_received && hauler_2_odom_msg_received && excavator_1_odom_msg_received && excavator_2_odom_msg_received*/;
+    bool all_odoms_received = scout_1_odom_msg_received && scout_2_odom_msg_received && hauler_1_odom_msg_received && hauler_2_odom_msg_received && excavator_1_odom_msg_received && excavator_2_odom_msg_received;
     
     while(ros::ok() && !(state_msg_received && all_odoms_received))
     {
-        all_odoms_received = scout_1_odom_msg_received/* && scout_2_odom_msg_received && hauler_1_odom_msg_received && hauler_2_odom_msg_received && excavator_1_odom_msg_received && excavator_2_odom_msg_received*/;
+        all_odoms_received = scout_1_odom_msg_received && scout_2_odom_msg_received && hauler_1_odom_msg_received && hauler_2_odom_msg_received && excavator_1_odom_msg_received && excavator_2_odom_msg_received;
         ros::Duration(0.1).sleep();
         ros::spinOnce();
     }
@@ -391,27 +393,27 @@ int main(int argc, char** argv)
         // If the robot has been stopped for at least 2 minutes, it is out of commission
         if (scout_1_count > 5)
         {
-            publish("small_scout_1"):
+            publish("small_scout_1");
         }
         if (scout_2_count > 5)
         {
-            publish("small_scout_2"):
+            publish("small_scout_2");
         }
         if (hauler_1_count > 5)
         {
-            publish("small_hauler_1"):
+            publish("small_hauler_1");
         }
         if (hauler_2_count > 5)
         {
-            publish("small_hauler_2"):
+            publish("small_hauler_2");
         }
         if (excavator_1_count > 5)
         {
-            publish("small_excavator_1"):
+            publish("small_excavator_1");
         }
         if (excavator_2_count > 5)
         {
-            publish("small_excavator_2"):
+            publish("small_excavator_2");
         }
 
         ros::Duration(20).sleep();
