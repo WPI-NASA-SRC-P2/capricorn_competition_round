@@ -1002,6 +1002,8 @@ void GoToExcavatorRecovery::entryPoint()
    search_done_ = false;
    first_ = true;
    excavator_found_ = false;
+   macro_state_done_ = false;
+   macro_state_succeeded_ = false;
 }
 
 void GoToExcavatorRecovery::step() 
@@ -1016,20 +1018,22 @@ void GoToExcavatorRecovery::step()
       first_ = true;
       ++pose_index_;
    }
+   macro_state_done_ = (searches_exhausted_ || excavator_found_);
+   macro_state_succeeded_ = excavator_found_;
 }
 
 // If the excavator finds the scout or all the recovery_poses_ are exhausted, this recovery state is done.
 bool GoToExcavatorRecovery::isDone()
 {
    // scout_found_ is updated in searchForScout()
-   current_state_done_ = (searches_exhausted_ || excavator_found_);
+   current_state_done_ = macro_state_done_;
    return current_state_done_;
 }
 
 bool GoToExcavatorRecovery::hasSucceeded()
 {
    // succeeds if scout is found successfully 
-   last_state_succeeded_ = excavator_found_;
+   last_state_succeeded_ = macro_state_succeeded_;
    return last_state_succeeded_;
 }
 

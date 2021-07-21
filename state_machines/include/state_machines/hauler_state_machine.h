@@ -624,7 +624,7 @@ private:
 
    int pose_index_;
    float search_offset_;
-   bool search_done_, excavator_found_, searches_exhausted_;
+   bool search_done_, excavator_found_, searches_exhausted_, macro_state_done_, macro_state_succeeded_;
 
 };
 

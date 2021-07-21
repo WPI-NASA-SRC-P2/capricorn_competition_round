@@ -45,7 +45,7 @@ void robot_state_callback(state_machines::robot_state_status robot_state_info)
     bool curr_state_done = robot_state_info.current_state_done;
     bool last_state_succeeded = robot_state_info.last_state_succeeded;
 
-    wait_till_reset = (curr_bot == COMMON_NAMES::HAULER_1_NAME && 
+    wait_till_reset = (curr_bot == COMMON_NAMES::HAULER_2_NAME && 
                                                  curr_state == COMMON_NAMES::HAULER_DUMP_VOLATILE_TO_PROC_PLANT && 
                                                  curr_state_done == true && 
                                                  last_state_succeeded == true);
@@ -90,9 +90,10 @@ int main(int argc, char** argv)
     ros::ServiceClient reset_odom_to_pose_client = nh.serviceClient<rtabmap_ros::ResetPose>(robot_name + COMMON_NAMES::RESET_POSE_CLIENT);
 
     // Wait until we have received a message from both odom and imu
-    bool name_is_not_hauler_1 = robot_name != COMMON_NAMES::HAULER_1_NAME;
+    bool name_is_not_hauler_2 = robot_name != COMMON_NAMES::HAULER_2_NAME;
     
-    while(ros::ok() && !((imu_message_received && odom_message_received) && (name_is_not_hauler_1 || wait_till_reset)))
+    ros::Duration(1).sleep();
+    while(ros::ok() && !((imu_message_received && odom_message_received) && (name_is_not_hauler_2 || wait_till_reset)))
     {
         ros::Duration(0.1).sleep();
         ros::spinOnce();
@@ -118,6 +119,7 @@ int main(int argc, char** argv)
         ros::spinOnce();
     }
 
+    // Assumption is that the values are erroneous
     while(ros::ok() && (init_odom_r == 0 || init_odom_p == 0 || init_odom_y == 0) )
     {
         getOdomRPY(init_odom_r, init_odom_p, init_odom_y);
