@@ -111,6 +111,7 @@ namespace COMMON_NAMES
   const std::string ROBOTS_CURRENT_STATE_TOPIC = "robot_state_status";
   const std::string ROBOTS_DESIRED_STATE_TOPIC = "robot_desired_state";
   const std::string REPLAN_TRAJECTORY = "/replan_trajectory";
+  const std::string ROBOTS_OUT_OF_COMMISSION_TOPIC = "robots_out_of_commission";
   const std::string IMU_TOPIC = "/imu";
   const std::string IMU_FILTERED_TOPIC = "/imu_filtered";
   const std::string SPIRAL_WAYPOINT_PUBLISHER = "/covered_waypoints";
