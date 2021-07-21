@@ -51,7 +51,7 @@ const int HAULER_HEIGHT_THRESH = 130, ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESH_
 const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0, ROBOT_ANTENNA_DEPTH_THRESH = 2.5;
 bool g_parked = false, g_found_orientation = false, g_cancel_called = false, g_revolve_direction_set = false;
 float g_revolve_direction = EXC_FORWARD_VELOCITY;
-float HAULER_EXCAVATOR_PARKING_FORWARD_TIME = 21.0, HAULER_EXCAVATOR_PARKING_BACKWARD_TIME = 1.5;
+float HAULER_EXCAVATOR_PARKING_FORWARD_TIME = 21.5, HAULER_EXCAVATOR_PARKING_BACKWARD_TIME = 1.5;
 int g_times_excavator = 0;
 
 // global variables for park hopper

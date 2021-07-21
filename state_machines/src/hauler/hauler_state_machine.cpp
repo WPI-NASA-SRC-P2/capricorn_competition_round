@@ -619,6 +619,7 @@ void DumpVolatileAtHopper::entryPoint()
    first_UFH = true;
    first_GTR = true;
    first_GTRR = true;
+   first_DV = true;
    second_GTRR = true;
    first_GTLL = true;
    resetOdomDone_ = false;
@@ -786,7 +787,6 @@ void DumpVolatileAtHopper::dumpVolatile()
             micro_state = UNDOCK_FROM_HOPPER;
         else
         {
-            first_DV = true;
             micro_state = DUMP_VOLATILE;
         }
     }
