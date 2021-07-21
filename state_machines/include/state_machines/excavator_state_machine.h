@@ -603,5 +603,22 @@ private:
    geometry_msgs::PoseStamped hardcoded_pose_;
 };
 
+class ExcavatorBalletDancing : public ExcavatorState {
+public:   
+   ExcavatorBalletDancing(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_BALLET_DANCING, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+
+private:
+   bool first_;
+};
+
 // #endif
 
