@@ -111,6 +111,7 @@ namespace COMMON_NAMES
   const std::string ROBOTS_CURRENT_STATE_TOPIC = "robot_state_status";
   const std::string ROBOTS_DESIRED_STATE_TOPIC = "robot_desired_state";
   const std::string REPLAN_TRAJECTORY = "/replan_trajectory";
+  const std::string ROBOTS_OUT_OF_COMMISSION_TOPIC = "robots_out_of_commission";
   const std::string IMU_TOPIC = "/imu";
   const std::string IMU_FILTERED_TOPIC = "/imu_filtered";
   const std::string SPIRAL_WAYPOINT_PUBLISHER = "/covered_waypoints";
@@ -218,6 +219,7 @@ namespace COMMON_NAMES
     EXCAVATOR_VOLATILE_RECOVERY,
     EXCAVATOR_GO_TO_INIT_LOCATION,
     EXCAVATOR_GO_TO_LOOKOUT_LOCATION,
+    EXCAVATOR_BALLET_DANCING,
     
     /**************HAULER STATES**************/
     //25
@@ -243,6 +245,7 @@ namespace COMMON_NAMES
     HAULER_GOTO_REPAIR_STATION, // Hauler goes to the repair station using NAV_VISION_TYPE::V_REACH to recharge
     HAULER_GO_TO_EXCAVATOR_RECOVERY,
     HAULER_GO_TO_LOOKOUT_LOCATION,
+    HAULER_BALLET_DANCING,
     ROBOT_IDLE_STATE,
 
     /***************ROBOTS MACRO STATES***************/

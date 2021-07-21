@@ -430,6 +430,12 @@ TEAM_MICRO_STATE Excavating::getMicroState()
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");
          return RECOVERY_EXCAVATOR_FINDING;
       }
+   if((excavator_task == EXCAVATOR_VOLATILE_RECOVERY && excavator_done_and_succeeded)
+      && hauler_task == HAULER_GO_TO_EXCAVATOR_RECOVERY && hauler_done_and_succeeded)
+      {
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");
+         return PRE_PARK_MANEUVER_EXCAVATOR;
+      }
    if(hauler_task == HAULER_GO_BACK_TO_EXCAVATOR && !hauler_done_and_succeeded)
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");

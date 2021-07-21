@@ -452,21 +452,22 @@ void GoToRepairStation::entryPoint()
    macro_state_done_ = false;
    macro_state_succeeded_ = false;
    GTRL_pose_ = (robot_name_ == COMMON_NAMES::SCOUT_1_NAME) ? SCOUT_1_RETURN_LOC : SCOUT_2_RETURN_LOC;
-   GTRR_pose_ = scout_pose_;
-   GTRR_pose_.pose.position.x -= 10.0; 
+   GTRR_pose_.header.frame_id = robot_name_ + ROBOT_BASE;
+   GTRR_pose_.pose.position.y = -10.0; 
+   GTRR_pose_.pose.orientation.w = 1;
    micro_state = GO_TO_REPAIR;
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout entering goToRepairStation state");
 }
 
 bool GoToRepairStation::isDone()
 {
-   current_state_done_ = navigation_vision_client_->getState().isDone();
+   current_state_done_ = macro_state_done_;
    return current_state_done_;
 }
 
 bool GoToRepairStation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = macro_state_succeeded_;
    return last_state_succeeded_;
 }
 
@@ -505,16 +506,17 @@ void GoToRepairStation::goToRepair()
    bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(is_done)
    {
-      macro_state_done_ = true;
       if(!has_succeeded)
       {
          micro_state = GO_TO_REPAIR_RECOVERY;
          first_GTRR = true;
          second_GTRR = true;
       }
-      else 
+      else
+      {
          macro_state_succeeded_ = true;
-         
+         macro_state_done_ = true;
+      }          
    }
 }
 

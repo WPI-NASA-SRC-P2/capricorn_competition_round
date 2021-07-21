@@ -63,6 +63,9 @@ private:
     const double SMALL_TRAJECTORY_REST_DIST = 3; 
     double trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
 
+    // If dist(current_pose, start_pose) > EXPECTED_TRAVEL_FACTOR * dist(start_pose, goal_pose), replan
+    const double EXPECTED_TRAVEL_FACTOR = 1.5;
+
     std::string robot_name_;
 
     // The actionlib server
