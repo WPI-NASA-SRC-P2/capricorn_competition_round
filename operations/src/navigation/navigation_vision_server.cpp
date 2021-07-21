@@ -45,6 +45,9 @@ std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex, g_clock_mutex;
 std::string g_desired_label;
 bool g_reached_goal = false, g_cancel_called = false, g_goal_failed = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false, g_nav_vision_called = false, g_last_nav_vision_call = false;
 int g_height_threshold = 400;
+const float EXCAVATOR_FALSE_DETECTION_WIDTH = 8;
+const int EXCAVATOR_FALSE_DETECTION_SIZE_X_THRESHOLD = (int) 0.9*640; // 90% of the maximum width
+const int EXCAVATOR_FALSE_DETECTION_SIZE_Y_THRESHOLD = (int) 0.9*480; // 90% of the maximum height
 
 enum HEIGHT_THRESHOLD
 {
@@ -666,6 +669,14 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         if (object.label == g_desired_label)
         {
             // Store the object's center
+            if(g_desired_label == OBJECT_DETECTION_EXCAVATOR_CLASS)
+            {
+                bool impossible_width = (object.width > EXCAVATOR_FALSE_DETECTION_WIDTH);
+                bool full_screen_detection = ((object.size_x > EXCAVATOR_FALSE_DETECTION_SIZE_X_THRESHOLD) 
+                                            && (object.size_x > EXCAVATOR_FALSE_DETECTION_SIZE_Y_THRESHOLD)) ;
+                if(impossible_width || full_screen_detection)
+                    return;
+            }
             object_found = true;
         }
     }
