@@ -277,7 +277,7 @@ TeamState& ScoutWaiting::transition()
    }
    else if (micro_state == MAKE_EXCAV_HAULER_IDLE)
    {
-      return getState(IDLE);
+      return getState(GO_TO_REPAIR_STATION);
    }
    else
    {
@@ -456,8 +456,10 @@ TEAM_MICRO_STATE Excavating::getMicroState()
 TeamState& Excavating::transition()
 {
    STATE_MACHINE_TASK excavator_task = robot_state_register->currentState(excavator_in_team);
+   STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
    bool excavator_done_and_failed = robot_state_register->isDone(excavator_in_team) && !(robot_state_register->hasSucceeded(excavator_in_team));
-   
+   bool hauler_done_and_failed = robot_state_register->isDone(hauler_in_team) && !robot_state_register->hasSucceeded(hauler_in_team);
+
    if(isDone())
    {
       ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to DUMPING");
@@ -465,13 +467,18 @@ TeamState& Excavating::transition()
    }
    else if (excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_failed)
    {
-      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to IDLE");
-      return getState(IDLE);
+      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to GO_TO_REPAIR_STATION");
+      return getState(GO_TO_REPAIR_STATION);
    }
    else if(excavator_task == EXCAVATOR_VOLATILE_RECOVERY && excavator_done_and_failed)
    {
-      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to IDLE");
-      return getState(IDLE);
+      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to GO_TO_REPAIR_STATION");
+      return getState(GO_TO_REPAIR_STATION);
+   }
+   else if(hauler_task == HAULER_GO_TO_EXCAVATOR_RECOVERY && hauler_done_and_failed)
+   {
+      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to GO_TO_REPAIR_STATION");
+      return getState(GO_TO_REPAIR_STATION);
    }
    else
    {
