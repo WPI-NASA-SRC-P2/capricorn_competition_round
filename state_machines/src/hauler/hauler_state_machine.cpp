@@ -76,8 +76,6 @@ void HaulerState::odomCallback(const nav_msgs::Odometry odom)
    
 }
 
-/** TODO: Check if the object detection callback is needed*/
-
 /** TODO: Implememt entrypoint, transition, step and exit points for all states mentioned in the flow shown by ashay
     *   HAULER_GO_TO_LOC,                    //
     8-> HAULER_DUMP_VOLATILE_TO_PROC_PLANT, // 
@@ -818,7 +816,7 @@ void DumpVolatileAtHopper::goToLookoutLocation()
    if (is_done)
    {
       macro_state_done = true;
-      macro_state_succeeded = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      macro_state_succeeded = true;
       micro_state = HAULER_IDLE;
       // Dont find a reason it should fail,
    }
