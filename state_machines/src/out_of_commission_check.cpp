@@ -50,6 +50,13 @@ bool hauler_2_should_be_moving = false;
 bool excavator_1_should_be_moving = false;
 bool excavator_2_should_be_moving = false;
 
+int scout_1_count = 0;
+int scout_2_count = 0;
+int hauler_1_count = 0;
+int hauler_2_count = 0;
+int excavator_1_count = 0;
+int excavator_2_count = 0;
+
 ros::Time scout_1_start_time;
 ros::Time scout_2_start_time;
 ros::Time hauler_1_start_time;
@@ -282,6 +289,8 @@ int main(int argc, char** argv)
 
         ros::Time curr_time = ros::Time::now();
 
+        // If the robot has moved at least 1 meter, then it is still good
+        // Else, if it should be moving, that is a problem. Increment the counter to move the robot closer to "out of commission" status
         if (sqrt(pow(scout_1_x - scout_1_start_x, 2) + pow(scout_1_y - scout_1_start_y, 2) + pow(scout_1_z - scout_1_start_z, 2)) > 1)
         {
             
@@ -292,12 +301,11 @@ int main(int argc, char** argv)
             scout_1_start_z = scout_1_z;
 
             scout_1_start_time = curr_time;
+            scout_1_count = 0;
         }
-        else if (curr_time.sec - scout_1_start_time.sec > 30 && scout_1_should_be_moving)
+        else if (scout_1_should_be_moving)
         {
-            std_msgs::String pub_data;
-            pub_data.data = "small_scout_1";
-            out_of_commission_pub.publish(pub_data);
+            scout_1_count++;
             ROS_WARN_STREAM("small scout 1 bad");
         }
 
@@ -311,12 +319,11 @@ int main(int argc, char** argv)
             scout_2_start_z = scout_2_z;
 
             scout_2_start_time = curr_time;
+            scout_2_count = 0;
         }
-        else if (curr_time.sec - scout_2_start_time.sec > 30 && scout_2_should_be_moving)
+        else if (scout_2_should_be_moving)
         {
-            std_msgs::String pub_data;
-            pub_data.data = "small_scout_2";
-            out_of_commission_pub.publish(pub_data);
+            scout_2_count++;
             ROS_WARN_STREAM("small scout 2 bad");
         }
 
@@ -330,12 +337,11 @@ int main(int argc, char** argv)
             hauler_1_start_z = hauler_1_z;
 
             hauler_1_start_time = curr_time;
+            hauler_1_count = 0;
         }
-        else if (curr_time.sec - hauler_1_start_time.sec > 30 && hauler_1_should_be_moving)
+        else if (hauler_1_should_be_moving)
         {
-            std_msgs::String pub_data;
-            pub_data.data = "small_hauler_1";
-            out_of_commission_pub.publish(pub_data);
+            hauler_1_count++;
             ROS_WARN_STREAM("small hauler 1 bad");
         }
 
@@ -349,12 +355,11 @@ int main(int argc, char** argv)
             hauler_2_start_z = hauler_2_z;
 
             hauler_2_start_time = curr_time;
+            hauler_2_count = 0;
         }
-        else if (curr_time.sec - hauler_2_start_time.sec > 30 && hauler_2_should_be_moving)
+        else if (hauler_2_should_be_moving)
         {
-            std_msgs::String pub_data;
-            pub_data.data = "small_hauler_2";
-            out_of_commission_pub.publish(pub_data);
+            hauler_2_count++;
             ROS_WARN_STREAM("small hauler 2 bad");
         }
 
@@ -368,12 +373,11 @@ int main(int argc, char** argv)
             excavator_1_start_z = excavator_1_z;
 
             excavator_1_start_time = curr_time;
+            excavator_1_count = 0;
         }
-        else if (curr_time.sec - excavator_1_start_time.sec > 30 && excavator_1_should_be_moving)
+        else if (excavator_1_should_be_moving)
         {
-            std_msgs::String pub_data;
-            pub_data.data = "small_excavator_1";
-            out_of_commission_pub.publish(pub_data);
+            excavator_1_count++;
             ROS_WARN_STREAM("small excavator 1 bad");
         }
 
@@ -387,16 +391,53 @@ int main(int argc, char** argv)
             excavator_2_start_z = excavator_2_z;
 
             excavator_2_start_time = curr_time;
+            excavator_2_count = 0;
         }
-        else if (curr_time.sec - excavator_2_start_time.sec > 30 && excavator_2_should_be_moving)
+        else if (excavator_2_should_be_moving)
+        {
+            excavator_2_count++;
+            ROS_WARN_STREAM("small excavator 2 bad");
+        }
+
+        // If the robot has been stopped for at least 2 minutes, it is out of commission
+        if (scout_1_count > 5)
+        {
+            std_msgs::String pub_data;
+            pub_data.data = "small_scout_1";
+            out_of_commission_pub.publish(pub_data);
+        }
+        if (scout_2_count > 5)
+        {
+            std_msgs::String pub_data;
+            pub_data.data = "small_scout_2";
+            out_of_commission_pub.publish(pub_data);
+        }
+        if (hauler_1_count > 5)
+        {
+            std_msgs::String pub_data;
+            pub_data.data = "small_hauler_1";
+            out_of_commission_pub.publish(pub_data);
+        }
+        if (hauler_2_count > 5)
+        {
+            std_msgs::String pub_data;
+            pub_data.data = "small_hauler_2";
+            out_of_commission_pub.publish(pub_data);
+        }
+        if (excavator_1_count > 5)
+        {
+            std_msgs::String pub_data;
+            pub_data.data = "small_excavator_1";
+            out_of_commission_pub.publish(pub_data);
+        }
+        if (excavator_2_count > 5)
         {
             std_msgs::String pub_data;
             pub_data.data = "small_excavator_2";
             out_of_commission_pub.publish(pub_data);
-            ROS_WARN_STREAM("small excavator 2 bad");
         }
-        
-        ros::Duration(0.05).sleep();
+
+        ros::Duration(20).sleep();
         ros::spinOnce();
     }
 
