@@ -219,7 +219,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
 
   if (oGrid.data.size() == 0)
   {
-    ROS_WARN("[planning | astar | %s]: Occupancy Grid is Empty.", robot_name);
+    ROS_WARN("[planning | astar | %s]: Occupancy Grid is Empty.", robot_name.c_str());
     return Path();
   }
   // A Star Implementation based off https://en.wikipedia.org/wiki/A*_search_algorithm
@@ -235,7 +235,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   //this code takes care of the case when the starting pose is in the padding area
   if (oGrid.data[centerIndex] > threshold)
   {
-    ROS_WARN("[planning | astar | %s]: Start pose in the padding...", robot_name);
+    ROS_WARN("[planning | astar | %s]: Start pose in the padding...", robot_name.c_str());
     abandonedIndex = centerIndex;
     centerIndex = adjustIndex(centerIndex, oGrid, threshold);
   }
@@ -329,7 +329,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   // Check if the final destination is occupied.
   if (oGrid.data[endIndex] > threshold)
   {
-    ROS_WARN("[planning | astar | %s]: TARGET IN OCCUPIED SPACE, RESETTING THE INDEX", robot_name);
+    ROS_WARN("[planning | astar | %s]: TARGET IN OCCUPIED SPACE, RESETTING THE INDEX", robot_name.c_str());
 
     endIndex = adjustIndex(endIndex, oGrid, threshold);
     //return Path();
