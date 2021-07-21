@@ -524,6 +524,9 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		// Initialize the current traveled distance to 0. Used to terminate the loop, and to request a new trajectory.
 	double distance_traveled = 0;
 
+    // If dist(current_pose, start_pose) > EXPECTED_TRAVEL_FACTOR * dist(start_pose, goal_pose), replan
+	double expected_travel_dist = distance_to_waypoint;
+
 	// While we're not at the waypoint
 	while((distance_to_waypoint > c_dist_epsilon_) && ros::ok())
 	{
@@ -545,6 +548,14 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		}
 
 		distance_traveled = abs(NavigationAlgo::changeInPosition(starting_pose, getRobotPose()));
+
+    	// If dist(current_pose, start_pose) > EXPECTED_TRAVEL_FACTOR * dist(start_pose, goal_pose), replan
+		if(distance_traveled > EXPECTED_TRAVEL_FACTOR * expected_travel_dist)
+		{
+			requestNewTrajectory(true);
+
+			return true;
+		}
 
 		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
 		// we want to get a new trajectory from the planner.
