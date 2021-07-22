@@ -1159,7 +1159,7 @@ void HaulerBalletDancing::step()
       navigation_action_goal_.angular_velocity = 0;
       ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << " backing away from excavator");
       navigation_client_->sendGoal(navigation_action_goal_);
-      ros::Duration(0.5).sleep();
+      ros::Duration(1).sleep();
       // brake wheels
       navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
       navigation_action_goal_.forward_velocity = 0.0;   

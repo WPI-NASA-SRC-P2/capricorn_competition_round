@@ -202,7 +202,7 @@ public:
    void exitPoint() override;
 
 private:
-   bool ballet_once;
+   bool ballet_once, digging_re_attempted;
    TEAM_MICRO_STATE micro_state;
    void stepWaitForHauler();
    void stepPreParkManeuverExcavator();

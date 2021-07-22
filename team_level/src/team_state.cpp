@@ -381,6 +381,7 @@ bool Excavating::entryPoint()
    }
 
    ballet_once = true;
+   digging_re_attempted = false;
 
    volatile_site_location = robot_pose_register->getRobotPose(excavator_in_team);
    return true;
@@ -413,15 +414,26 @@ TEAM_MICRO_STATE Excavating::getMicroState()
       }
    if(excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_failed && ballet_once)
       {
-         ballet_once = false;
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: UNDOCK_HAULER  2");
          return BALLET_ONCE;
       }
-   if((excavator_task == EXCAVATOR_BALLET_DANCING) && (hauler_task == HAULER_BALLET_DANCING))
+   if(excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE)
+   {
+      if(!ballet_once)
+      {
+         digging_re_attempted = true;
+         return DIG_AND_DUMP;
+      }
+   }
+   if(((excavator_task == EXCAVATOR_BALLET_DANCING) || (hauler_task == HAULER_BALLET_DANCING)) && !digging_re_attempted)
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: UNDOCK_HAULER  2");
-         if(excavator_done_and_succeeded && hauler_done_and_succeeded)
-            return DIG_AND_DUMP;
+         if((excavator_done_and_succeeded && hauler_done_and_succeeded)
+            && (excavator_task == EXCAVATOR_BALLET_DANCING) && (hauler_task == HAULER_BALLET_DANCING))
+            {
+               ballet_once = false;
+               return DIG_AND_DUMP;
+            }
          else
             return BALLET_ONCE;
       }
@@ -487,7 +499,7 @@ TeamState& Excavating::transition()
       ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to DUMPING");
       return getState(GO_TO_REPAIR_STATION);
    }
-   else if (excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_failed && !ballet_once)
+   else if (excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_failed && digging_re_attempted)
    {
       ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to GO_TO_REPAIR_STATION");
       return getState(GO_TO_REPAIR_STATION);
