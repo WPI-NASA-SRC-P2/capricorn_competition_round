@@ -843,7 +843,7 @@ void DumpVolatileAtHopper::goToLookoutLocation()
    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
    navigation_action_goal_.pose = hardcoded_pose_;
    navigation_client_->sendGoal(navigation_action_goal_);
-   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Lookout Location : " << hardcoded_pose_);
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Common Undocking Location : " << hardcoded_pose_);
    first_GTLL = false;
    }
    
