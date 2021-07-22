@@ -26,6 +26,8 @@
 #include <operations/ParkRobotAction.h>
 #include <maploc/ResetOdom.h>
 #include <std_msgs/UInt8.h>
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseArray.h> 
 
 using namespace COMMON_NAMES;
 
@@ -75,6 +77,7 @@ class ScoutState : public State {
 private:
   ros::Subscriber volatile_sub_;
   ros::Subscriber objects_sub_;
+  ros::Subscriber odom_sub_;
   
   /**
    * @brief Volatile sensor callback
@@ -89,6 +92,11 @@ private:
    * @param objs 
    */
   void objectsCallback(const perception::ObjectArray::ConstPtr objs);
+
+    /** @param odom
+   * Odometry callback for hauler_pose_
+  */
+  void odomCallback(const nav_msgs::Odometry odom);
 
   
 public:
@@ -118,6 +126,11 @@ protected:
   int robot_desired_state_;
   state_machines::robot_state_status status_;
 
+  // For odometry callback
+  nav_msgs::Odometry odom_;
+  // geometry_msgs::Pose excavator_pose_;
+  geometry_msgs::PoseStamped scout_pose_;
+
   ros::ServiceClient spiralClient_;
 
   bool near_volatile_ = false;       //
@@ -134,6 +147,7 @@ protected:
 
   typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient;
   NavigationClient *navigation_client_;
+  operations::NavigationGoal navigation_action_goal_;
 
   typedef actionlib::SimpleActionClient<operations::ResourceLocaliserAction> ResourceLocaliserClient_;
   ResourceLocaliserClient_ *resource_localiser_client_;
@@ -141,6 +155,9 @@ protected:
   typedef actionlib::SimpleActionClient<operations::ParkRobotAction> ParkRobotClient;
   ParkRobotClient *park_robot_client_;
   operations::ParkRobotGoal park_robot_goal_;
+
+  geometry_msgs::PoseStamped SCOUT_1_RETURN_LOC;
+  geometry_msgs::PoseStamped SCOUT_2_RETURN_LOC;
 };
 
 /**
@@ -165,6 +182,8 @@ public:
 
 private: 
    bool first_;
+   bool state_done_;
+   bool state_success_;
    operations::NavigationGoal navigation_action_goal_;
    operations::NavigationVisionGoal navigation_vision_goal_;
 };
@@ -192,7 +211,7 @@ private:
    operations::Spiral srv;
    ros::Subscriber covered_waypoint_sub;
    int total_waypoints_covered = 0, waypoints_covered_yet = 0;
-   const int MAX_WAYPOINTS_BEFORE_RESET = 5;
+   const int MAX_WAYPOINTS_BEFORE_RESET = 2;
 
    void waypointsCoveredCB(std_msgs::UInt8 msg);
 };
@@ -219,6 +238,8 @@ public:
 private:
    operations::ResourceLocaliserGoal goal;
    bool first_;
+   bool state_done_;
+   bool state_success_;
 };
 
 /**
@@ -242,16 +263,19 @@ public:
 
 private:
    void goToProcPlant();
+   void goToProcPlantRecovery();
    void parkAtHopper();
    void undockFromHopper();
    void resetOdom();
    void goToRepair();
    void idleScout(){}
 
-   bool first_GTPP, first_PAH, first_UFH, first_GTR, resetOdomDone_, macro_state_succeeded, macro_state_done;
+   bool first_GTPP, first_GTPPR, second_GTPPR, first_PAH, first_UFH, first_GTR, resetOdomDone_, macro_state_succeeded, macro_state_done;
+   geometry_msgs::PoseStamped GTPP_pose_;
    
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_PROC_PLANT,
+      GO_TO_PROC_PLANT_RECOVERY,
       PARK_AT_HOPPER,
       UNDOCK_FROM_HOPPER,
       RESET_ODOM_AT_HOPPER,
@@ -305,8 +329,22 @@ public:
    void step() override;
    void exitPoint() override;
 
+   void goToRepair();
+   void goToRepairRecovery();
+   void idleScout() {}
+
 private:
-   bool first_;
+   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
+   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
+   operations::NavigationGoal navigation_action_goal_;
+
+   enum RESET_ODOM_MICRO_STATES{
+      GO_TO_REPAIR,
+      GO_TO_REPAIR_RECOVERY,
+      SCOUT_IDLE
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
 };
 
 /**
@@ -330,6 +368,8 @@ public:
 
 private:
    bool first_;
+   bool state_done_;
+   bool state_success_;
    geometry_msgs::PoseStamped target_loc_;
    operations::NavigationGoal navigation_action_goal_;
 };

@@ -2,6 +2,7 @@
 
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/Bool.h>
 #include <sensor_msgs/Imu.h>
 #include <planning/TrajectoryWithVelocities.h>
 #include <planning/trajectory.h>
@@ -45,18 +46,25 @@ private:
     float c_dist_epsilon_ = DIST_EPSILON;
 
     // Delta heading limits for smooth drive
-    const float HALF_VIEWING = M_PI/6;
-    const float MAX_TURNING_RAD = HALF_VIEWING - ANGLE_EPSILON;
-    const float MIN_TURNING_RAD = -HALF_VIEWING + ANGLE_EPSILON;
+    //const float HALF_VIEWING = M_PI/6;
+    const float MAX_TURNING_RAD = ANGLE_EPSILON;
+    const float MIN_TURNING_RAD = -ANGLE_EPSILON;
 
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
     const float BASE_DRIVE_SPEED = 0.6;
-    const float BASE_SPIN_SPEED = 0.3;
+    const float BASE_SPIN_SPEED = 0.2;
+
+    // How much slower robots should rotate when within abs(delta_heading) < ANGLE_EPSILON * SLOW_SPIN_EPSILON_FACTOR
+    const float BASE_SPIN_SLOW_FACTOR = 0.3;
+    const float SLOW_SPIN_EPSILON_FACTOR = 3;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
     const double LARGE_TRAJECTORY_REST_DIST = 5; 
     const double SMALL_TRAJECTORY_REST_DIST = 3; 
     double trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
+
+    // If dist(current_pose, start_pose) > EXPECTED_TRAVEL_FACTOR * dist(start_pose, goal_pose), replan
+    const double EXPECTED_TRAVEL_FACTOR = 1.5;
 
     std::string robot_name_;
 
@@ -75,6 +83,9 @@ private:
 
     // Used to get the current robot pose
     ros::Subscriber update_current_robot_pose_;
+
+    // Triggered when a plan reset is requested
+    ros::Subscriber replan_sub_;
 
     ros::ServiceClient brake_client_;
 
@@ -135,7 +146,14 @@ private:
     */
     void updateRobotPose(const nav_msgs::Odometry::ConstPtr &msg);
 
-    geometry_msgs::PoseStamped *getRobotPose();
+    geometry_msgs::PoseStamped getRobotPose();
+
+    /**
+     * @brief Callback from the planer to replan.
+     * 
+     * @param msg Empty message. Whenever its received, we reset the trajectory
+     */
+    void replanCB(const std_msgs::Bool::ConstPtr &msg);
 
     /**
     * @brief Initialize the subscriber for robot position
@@ -244,10 +262,10 @@ private:
     bool driveDistance(double delta_distance);
 
     /**
-     * @brief Only used to request a new trajectory after the robot has performed the inital turn upon receiving new goal. Helps with obstacle detection.
-     *
+     * @brief Used to request a new trajectory after the robot has performed the inital turn upon receiving new goal (Helps with obstacle detection) OR to handle replan requests from planner.
+     * @param replan_request Used to indicate whether the new trajectory request was called for an initial turn double traj check or for replan request for dynamic planning.
      */
-    void requestNewTrajectory(void);
+    void requestNewTrajectory(bool replan_request = false);
 
     /**
      * @brief Execute a smooth drive to a waypoint. WARNING: Will keep moving after termination.

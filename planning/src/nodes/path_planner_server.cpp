@@ -4,6 +4,9 @@
 #include <astar.h>
 #include "planning/TrajectoryWithVelocities.h"
 #include <geometry_msgs/Point.h>
+#include "dyn_planning_2.h"
+#include "planning/GetCSpace.h"
+
 
 //Setting the node's update rate
 #define UPDATE_HZ 10
@@ -16,7 +19,10 @@ ros::Publisher debug_pathPublisher;
 #endif
 
 std::string robot_name_ = "";
+geometry_msgs::PoseStamped robot_pose_;
 bool map_received = false;
+int padding = 2;
+ros::ServiceClient client;
 
 bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planning::trajectory::Response &res)
 {
@@ -25,15 +31,27 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
   locationLock.unlock();
 
 
-  // obstacle threshold = 50, Padding Radius = 6
-  auto paddedGrid = CSpace::getCSpace(global_oGrid_CPY, 50, 6);
+  //calling GetCSpace Service for padded grid
+  planning::GetCSpace cspace_srv;
+  cspace_srv.request.cspace_length = padding;
+  cspace_srv.request.map = global_oGrid_CPY;
+
+  if (client.call(cspace_srv))
+  {
+    ROS_INFO("Calculating CSpace");
+  }
+  else
+  {
+    ROS_ERROR("Failed to Get CSpace service");
+    return false;
+  }
+    auto paddedGrid =  cspace_srv.response.map;
 
   #ifdef DEBUG_INSTRUMENTATION
   debug_oGridPublisher.publish(paddedGrid);
   #endif
 
   auto path = AStar::findPathOccGrid(paddedGrid, req.targetPose.pose.position, 50, robot_name_);
-
   
   #ifdef DEBUG_INSTRUMENTATION
   debug_pathPublisher.publish(path);
@@ -59,6 +77,8 @@ void PathServer::oGridCallback(nav_msgs::OccupancyGrid oGrid)
   map_received = true;
 }
 
+
+
 int main(int argc, char *argv[])
 {
   //initialize node
@@ -79,18 +99,22 @@ int main(int argc, char *argv[])
   server.oGrid_subscriber = nh.subscribe(oGrid_topic_, 1000, &PathServer::oGridCallback, &server);
 
   #ifdef DEBUG_INSTRUMENTATION
-  debug_oGridPublisher = nh.advertise<nav_msgs::OccupancyGrid>("/galaga/debug_oGrid", 1000);
-  debug_pathPublisher = nh.advertise<nav_msgs::Path>("/galaga/debug_path", 1000);
+  debug_oGridPublisher = nh.advertise<nav_msgs::OccupancyGrid>("/capricorn/" + robot_name_ + "/debug_oGrid", 1000);
+  debug_pathPublisher = nh.advertise<nav_msgs::Path>("/capricorn/"+ robot_name_ + "/debug_path", 1000);
   #endif
 
-  while(!map_received)
+
+  while(!map_received && ros::ok())
   {
     ros::Duration(0.1).sleep();
     ros::spinOnce();
-  }
-
+  } 
+  client = nh.serviceClient<planning::GetCSpace>("calc_cspace");
+  client.waitForExistence();
+  
   //Instantiating ROS server for generating trajectory
   ros::ServiceServer service = nh.advertiseService("trajectoryGenerator", &PathServer::trajectoryGeneration, &server);
+
 
   ros::spin();
 

@@ -229,6 +229,18 @@ target_link_libraries(imu_lowpass
   ${catkin_LIBRARIES}
 )
 
+add_executable(out_of_commission_check src/out_of_commission_check.cpp)
+add_dependencies(out_of_commission_check ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(out_of_commission_check
+${catkin_LIBRARIES}
+)
+
+add_executable(odom_offset_checker src/odom_offset_checker.cpp)
+add_dependencies(odom_offset_checker ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(odom_offset_checker
+  ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
@@ -250,7 +262,8 @@ DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS start_excavator_sm start_scout_sm start_hauler_sm odom_resetter
+install(TARGETS start_excavator_sm start_scout_sm start_hauler_sm odom_resetter imu_lowpass 
+                out_of_commission_check odom_offset_checker
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

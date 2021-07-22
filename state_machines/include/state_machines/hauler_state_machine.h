@@ -27,7 +27,9 @@
 #include <maploc/ResetOdom.h>
 
 #include <state_machines/common_robot_state_machine.h>
-#include "perception/ObjectArray.h"     
+#include "perception/ObjectArray.h"    
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseArray.h> 
 
 using namespace COMMON_NAMES;
 
@@ -85,7 +87,13 @@ private:
   ros::Subscriber objects_sub_;
    /*** @param objs 
    */
+  ros::Subscriber odom_sub_;
   void objectsCallback(const perception::ObjectArray::ConstPtr objs);
+
+  /** @param odom
+   * Odometry callback for hauler_pose_
+  */
+  void odomCallback(const nav_msgs::Odometry odom);
 
 public:
    
@@ -108,6 +116,10 @@ public:
       ROS_INFO_STREAM("[ STATE_MACHINES | hauler_state_machine | " << getName() << "] - count = " << m_unCount << " ]");
    }
 
+   geometry_msgs::PoseStamped HAULER_1_LOOKOUT_LOC;
+   geometry_msgs::PoseStamped HAULER_2_LOOKOUT_LOC;
+   geometry_msgs::PoseStamped HAULER_RETURN_LOC;
+
 protected:
 
   uint32_t m_unMaxCount;
@@ -117,6 +129,11 @@ protected:
 
   std::string robot_name_;
 
+  // For odometry callback
+  nav_msgs::Odometry odom_;
+//   geometry_msgs::Pose excavator_pose_;
+  geometry_msgs::PoseStamped hauler_pose_;
+  
   std::mutex objects_mutex_;
   perception::ObjectArray::ConstPtr vision_objects_;
   bool objects_msg_received_ = false;
@@ -479,53 +496,65 @@ public:
 };
 
 /**
- * @brief DumpVolatileAtHopper Executes the following:
- *    [0] Navigates to Proc_plant
- *    [1] Parks to the hopper
- *    [2] Dunps volatile
- *    [3] Undocks from hopper to prevent drift accumulation after resetting odom due to 180 deg turn
- *    [4] Resets odom
+ * @brief DumpVolatileAtHopper navigates to hopper, and then resets odom
  * 
- * @param isDone() is done when it has reset Odom
- * @param hasSucceeded() has successfully reset odom
+ * @param isDone() when naviagtion vision is complete
+ * @param hasSucceeded(); when navigation vision succeeds, and resetOdom msg was sent 
+ * 
  */
-class DumpVolatileAtHopper : public HaulerState {
+class DumpVolatileAtHopper: public HaulerState {
 public:   
    DumpVolatileAtHopper(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_DUMP_VOLATILE_TO_PROC_PLANT, nh, robot_name) {}
 
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
    bool hasSucceeded() override;
-   State& transition() override {}
 
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
 
-private:
+private: 
+   bool first_;
+   geometry_msgs::PoseStamped target_loc_;
    void goToProcPlant();
    void parkAtHopper();
-   void dumpVolatile();
    void undockFromHopper();
    void resetOdom();
-   void goToRepairStation();
-   void idleScout(){}
+   void goToRepair();
+   void goToLookoutLocation();
+   void goToRepairRecovery();
+   void goToProcPlantRecovery();
+   void dumpVolatile();
+   void idleHauler(){}
 
-   bool first_GTPP, first_PAH, first_UFH, first_DV, first_ROH, first_GTRS, macro_state_succeeded, macro_state_done;
-   
+   bool first_GTPP, first_GTPPR, second_GTPPR, first_PAH, first_UFH, first_GTR, first_GTRR, second_GTRR, 
+         first_GTLL, resetOdomDone_, macro_state_succeeded, macro_state_done, first_DV;
+   geometry_msgs::PoseStamped hardcoded_pose_, GTRR_pose_, GTPP_pose_;
+   bool state_done;
+
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_PROC_PLANT,
+      GO_TO_PROC_PLANT_RECOVERY,
       PARK_AT_HOPPER,
       DUMP_VOLATILE,
       UNDOCK_FROM_HOPPER,
       RESET_ODOM_AT_HOPPER,
       GO_TO_REPAIR_STATION,
-      HAULER_IDLE
+      GO_TO_REPAIR_STATION_RECOVERY,
+      GO_TO_LOOKOUT_LOCATION,
+      HAULER_IDLE 
    };
 
-   bool state_done = false;
    RESET_ODOM_MICRO_STATES micro_state;
+
 };
+
 
 /**
  * @brief HaulerGoToRepairStation naviagte to repair station
@@ -546,6 +575,103 @@ public:
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
+
+   void goToRepair();
+   void goToRepairRecovery();
+   void idleHauler() {}
+
+private:
+   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
+   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
+   operations::NavigationGoal navigation_action_goal_;
+
+   enum RESET_ODOM_MICRO_STATES{
+      GO_TO_REPAIR,
+      GO_TO_REPAIR_RECOVERY,
+      HAULER_IDLE
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
+};
+
+/**
+ * @brief If GoToExcavator fails, this recovery state creates 4 targets located at 4 corners from it
+ *        and looks for the excavator at each of those corners. If the excavator is found at those corners, it exits the state.
+ * 
+ * @param search_offset_ This is the offset of those targets from initial hauler position. Currently = 10.0 m.
+ */
+
+class GoToExcavatorRecovery : public HaulerState {
+public:   
+   GoToExcavatorRecovery(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_TO_EXCAVATOR_RECOVERY, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+   void createPoses();
+   void searchForExcavator(int index);
+
+private:
+   bool first_;
+   geometry_msgs::PoseStamped recovery_poses_[4];
+   geometry_msgs::PoseStamped recovery_pose_;
+   geometry_msgs::PoseStamped target_loc_;
+
+   int pose_index_;
+   float search_offset_;
+   bool search_done_, excavator_found_, searches_exhausted_, macro_state_done_, macro_state_succeeded_;
+
+};
+
+/**
+ * @brief Go to isolated locations to clear traffic near processing plant and repair station. 
+ * 
+ * @param hardcoded_pose_ Defined in the constructor for both HAULER_1 and HAULER_2
+ */
+
+
+class GoToLookoutLocation : public HaulerState {
+public:   
+   GoToLookoutLocation(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_GO_TO_LOOKOUT_LOCATION, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+
+private:
+   bool first_;
+   geometry_msgs::PoseStamped hardcoded_pose_;
+};
+
+/**
+ * @brief Compensates for pushing the excavator behind which would put it off the volatile
+ * 
+ * @param distance Tuned by controlling the sleep duration
+ */
+
+
+class HaulerBalletDancing : public HaulerState {
+public:   
+   HaulerBalletDancing(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_BALLET_DANCING, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
 
 private:
    bool first_;

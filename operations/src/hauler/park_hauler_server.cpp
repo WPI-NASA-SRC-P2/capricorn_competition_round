@@ -51,6 +51,7 @@ const int HAULER_HEIGHT_THRESH = 130, ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESH_
 const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0, ROBOT_ANTENNA_DEPTH_THRESH = 2.5;
 bool g_parked = false, g_found_orientation = false, g_cancel_called = false, g_revolve_direction_set = false;
 float g_revolve_direction = EXC_FORWARD_VELOCITY;
+float HAULER_EXCAVATOR_PARKING_FORWARD_TIME = 21.5, HAULER_EXCAVATOR_PARKING_BACKWARD_TIME = 1.0;
 int g_times_excavator = 0;
 
 // global variables for park hopper
@@ -390,7 +391,7 @@ void parkWrtExcavator()
         g_nav_client->sendGoal(g_nav_goal);
 
 
-        ros::Duration(18).sleep();
+        ros::Duration(HAULER_EXCAVATOR_PARKING_FORWARD_TIME).sleep();
 
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = -0.5;
@@ -400,7 +401,7 @@ void parkWrtExcavator()
         g_nav_client->sendGoal(g_nav_goal);
         g_nav_client->sendGoal(g_nav_goal);
 
-        ros::Duration(1).sleep();
+        ros::Duration(HAULER_EXCAVATOR_PARKING_BACKWARD_TIME).sleep();
 
 
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;

@@ -15,7 +15,9 @@
         <arg name="use_robot_localization" value="$(arg use_robot_localization)"/>
     </include>
 
-    <node pkg="state_machines" type="odom_resetter" name="$(arg robot_name)_odom_resetter" args="$(arg robot_name)" />
+    <node pkg="state_machines" type="odom_resetter" name="$(arg robot_name)_odom_resetter" args="$(arg robot_name)" output="log"/>
+    <node pkg="state_machines" type="imu_lowpass" name="$(arg robot_name)_imu_lowpass" args="$(arg robot_name)" output="log" />
+    <node pkg="state_machines" type="odom_offset_checker" name="$(arg robot_name)_odom_offset_checker" args="$(arg robot_name)" output="log" />
 
     <group ns="/capricorn/$(arg robot_name)">        
         <include file="$(find planning)/launch/planner.launch">

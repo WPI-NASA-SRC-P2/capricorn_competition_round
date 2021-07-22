@@ -11,6 +11,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   nav_msgs
   geometry_msgs
+  perception
+  utils
+  tf2
+  tf2_ros
   message_generation
   #TrajectoryWithVelocities
 )
@@ -54,6 +58,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
   FILES
   TrajectoryWithVelocities.msg
+  
  )
 
 ## Generate services in the 'srv' folder
@@ -66,6 +71,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_service_files(
    FILES
    trajectory.srv
+   GetCSpace.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -119,7 +125,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES planning
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs nav_msgs message_runtime
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs nav_msgs message_runtime 
 #  DEPENDS system_lib
 )
 ###########
@@ -137,8 +143,7 @@ include_directories(
 # )
 add_library(${PROJECT_NAME} 
   # src/nodes/path_planner_server.cpp
-  src/classes/astar.cpp 
-  src/classes/cspace.cpp
+  src/classes/astar.cpp src/classes/cspace.cpp src/classes/dyn_planning_2.cpp 
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
@@ -171,6 +176,13 @@ target_link_libraries(trajectory_client
   ${catkin_LIBRARIES} ${PROJECT_NAME}
 )
 
+##dynamic planning node
+add_executable(dynamic_planning_node src/nodes/dynamic_planning_node.cpp)
+add_dependencies(dynamic_planning_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(dynamic_planning_node
+  ${catkin_LIBRARIES} ${PROJECT_NAME}
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -190,13 +202,13 @@ target_link_libraries(trajectory_client
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+catkin_install_python(PROGRAMS
+  src/nodes/cspace_py.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS ${PROJECT_NAME}_node trajectory_client
+install(TARGETS ${PROJECT_NAME}_node trajectory_client dynamic_planning_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 ## Mark libraries for installation

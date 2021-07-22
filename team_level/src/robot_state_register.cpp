@@ -4,6 +4,8 @@ RobotStateRegister::RobotStateRegister(ros::NodeHandle nh)
 {
    robot_state_subscriber = nh.subscribe(CAPRICORN_TOPIC + ROBOTS_CURRENT_STATE_TOPIC, 1000, &RobotStateRegister::robotStateCB, this);
 
+   robot_out_of_commission_subscriber = nh.subscribe(CAPRICORN_TOPIC + ROBOTS_OUT_OF_COMMISSION_TOPIC, 1000, &RobotStateRegister::robotOutOfCommissionCB, this);
+
    robot_state_publisher = nh.advertise<state_machines::robot_desired_state>(COMMON_NAMES::CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 1, true);
 }
 
@@ -19,6 +21,33 @@ void RobotStateRegister::robotStateCB(state_machines::robot_state_status msg)
    else 
    {
       ROS_ERROR_STREAM("[TEAM_LEVEL | robot_state_register.cpp ]: " << ROBOTS_CURRENT_STATE_TOPIC << " published with an irregular robot name. Provided name: " << msg.robot_name);
+   }
+}
+
+void RobotStateRegister::robotOutOfCommissionCB(std_msgs::String msg)
+{
+   std::string robot_name = msg.data;
+   if(ROBOT_NAME_TO_ENUM_MAP.find(robot_name) != ROBOT_NAME_TO_ENUM_MAP.end()) 
+   {
+      ROBOTS_ENUM robot_enum = ROBOT_NAME_TO_ENUM_MAP[robot_name];
+      robot_out_of_commission_map[robot_enum] = true;
+   }
+   else 
+   {
+      ROS_ERROR_STREAM("[TEAM_LEVEL | robot_state_register.cpp ]: " << ROBOTS_CURRENT_STATE_TOPIC << " published with an irregular robot name. Provided name: " << msg.data);
+   }
+}
+
+bool RobotStateRegister::isRobotOutOfCommission(ROBOTS_ENUM robot)
+{
+   if(robot_out_of_commission_map.find(robot) != robot_out_of_commission_map.end()) 
+   {
+      return robot_out_of_commission_map[robot];
+   }
+   else 
+   {
+      // ROS_INFO_STREAM("Haven't received any message for the robot enum"<< robot <<" yet");
+      return false;
    }
 }
 

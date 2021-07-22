@@ -88,6 +88,12 @@ public:
       ROS_INFO_STREAM("[ STATE_MACHINES | excavator_state_machine |  [" << getName() << "] - count = " << m_unCount << " ]");
    }
 
+   geometry_msgs::PoseStamped EXCAVATOR_1_LOOKOUT_LOC;
+   geometry_msgs::PoseStamped EXCAVATOR_2_LOOKOUT_LOC;
+   geometry_msgs::PoseStamped EXCAVATOR_1_RETURN_LOC;
+   geometry_msgs::PoseStamped EXCAVATOR_2_RETURN_LOC;
+   geometry_msgs::PoseStamped BESIDE_REPAIR_STATION;
+
 protected:
 
   uint32_t m_unMaxCount;
@@ -127,7 +133,6 @@ protected:
 /** @brief:
  * Parameters that have to be tuned through testing.*/ 
    float PARAM_EXCAVATOR_HIT_SCOUT = 1.2;  //In STATE 10: EXCAVATOR_PARK_AND_PUB, how far the excavator should go so that it 'just touches' the scout, assuming it is centered to scout.
-
 };
 
 /**
@@ -139,6 +144,23 @@ protected:
  *  @param hasSucceeded() naviation vision succeeded in going to Scout
  */
 class GoToScout : public ExcavatorState {
+private: 
+   enum GO_TO_SCOUT_MACRO
+   {
+      CROSS_ZERO_X_BORDER,
+      GO_TO_SCOUT
+   };
+   
+   bool czxb_first_, gts_first_, macro_state_done_, macro_state_succeeded_;
+   geometry_msgs::PoseStamped target_loc_;
+   static constexpr float EXCAVATOR_CROSSING_WAYPOINT_X = 10.0;
+   static constexpr float EXCAVATOR_CROSSING_WAYPOINT_Y = 20.0;
+
+   GO_TO_SCOUT_MACRO micro_state;
+
+   void stepCrossZeroXBorder();
+   void stepGoToScout();
+   
 public:   
    GoToScout(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_SCOUT, nh, robot_name) {}
 
@@ -154,10 +176,6 @@ public:
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
-
-private: 
-   bool first_;
-   geometry_msgs::PoseStamped target_loc_;
 };
 
 /**
@@ -369,6 +387,42 @@ private:
 };
 
 /**
+ * @brief ExcavatorGoToLoc go to a pose 
+ * 
+ * @param isDone() navigation is done
+ * @param hasSucceeded()  navigation succeeds to get to pose with referance to odom
+ */
+class ExcavatorGoToInitLoc : public ExcavatorState {
+public:   
+   ExcavatorGoToInitLoc(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_INIT_LOCATION, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+   bool crs_first_, gtic_first_;
+   enum GO_TO_INIT_LOC_MICRO
+   {
+      CENTER_REPAIR_STATION,
+      GO_TO_INIT_LOC,
+   };
+
+   GO_TO_INIT_LOC_MICRO micro_state;
+   void stepCenterRepairStation();
+   void stepGoToInitLoc();
+};
+
+/**
  * @brief ExcavatorResetOdomAtHopper navigates to hopper, and then resets odom
  * 
  * @param isDone() when naviagtion vision is complete
@@ -400,18 +454,24 @@ private:
    void undockFromHopper();
    void resetOdom();
    void goToRepair();
+   void goToLookoutLocation();
+   void goToRepairRecovery();
+   void goToProcPlantRecovery();
    void idleExcavator(){}
 
-   bool first_GTPP, first_PAH, first_UFH, first_GTR, resetOdomDone_, macro_state_succeeded, macro_state_done;
-   
+   bool first_GTPP, first_GTPPR, second_GTPPR, first_PAH, first_UFH, first_GTR, first_GTRR, second_GTRR, first_GTLL, resetOdomDone_, macro_state_succeeded, macro_state_done;
+   geometry_msgs::PoseStamped hardcoded_pose_, GTRR_pose_, GTPP_pose_, GTRL_pose_;
    bool state_done;
 
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_PROC_PLANT,
+      GO_TO_PROC_PLANT_RECOVERY,
       PARK_AT_HOPPER,
       UNDOCK_FROM_HOPPER,
       RESET_ODOM_AT_HOPPER,
       GO_TO_REPAIR_STATION,
+      GO_TO_REPAIR_STATION_RECOVERY,
+      GO_TO_LOOKOUT_LOCATION,
       EXCAVATOR_IDLE 
    };
 
@@ -439,9 +499,21 @@ public:
    void entryPoint() override;
    void step() override;
    void exitPoint() override;
+   void goToRepair();
+   void goToRepairRecovery();
+   void idleExcavator() {}
 
 private:
-   bool first_;
+   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
+   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
+
+   enum RESET_ODOM_MICRO_STATES{
+      GO_TO_REPAIR,
+      GO_TO_REPAIR_RECOVERY,
+      EXCAVATOR_IDLE
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
 };
 
 /**
@@ -517,6 +589,48 @@ private:
    };
 
    VOLATILE_RECOVERY_MICRO_STATES substate_;
+};
+
+/**
+ * @brief Go to isolated locations to clear traffic near processing plant and repair station. 
+ * 
+ * @param hardcoded_pose_ Defined in the constructor for both EXCAVATOR_1 and EXCAVATOR_2
+ */
+
+
+class ExcavatorGoToLookoutLocation : public ExcavatorState {
+public:   
+   ExcavatorGoToLookoutLocation(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_GO_TO_LOOKOUT_LOCATION, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+
+private:
+   bool first_;
+   geometry_msgs::PoseStamped hardcoded_pose_;
+};
+
+class ExcavatorBalletDancing : public ExcavatorState {
+public:   
+   ExcavatorBalletDancing(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_BALLET_DANCING, nh, robot_name) {}
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+   State& transition() override{}
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+
+private:
+   bool first_;
 };
 
 // #endif

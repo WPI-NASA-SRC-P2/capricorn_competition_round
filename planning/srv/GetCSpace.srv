@@ -1,0 +1,4 @@
+uint8 cspace_length # padding
+nav_msgs/OccupancyGrid map
+---
+nav_msgs/OccupancyGrid map

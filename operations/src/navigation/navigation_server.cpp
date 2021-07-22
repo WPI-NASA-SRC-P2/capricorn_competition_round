@@ -9,6 +9,8 @@ NavigationServer::NavigationServer(ros::NodeHandle& nh, std::string robot_name)
 	initPublishers(nh, robot_name);
 	initSubscribers(nh, robot_name);
 
+	ros::Duration(1).sleep();
+
 	nh.param("crab_drive", CRAB_DRIVE_, false);
 
 	ROS_INFO("[operations | nav_server | %s]: Starting navigation server...\n", robot_name_.c_str());
@@ -81,6 +83,18 @@ void NavigationServer::initPublishers(ros::NodeHandle& nh, const std::string& ro
 	initDebugPublishers(nh, robot_name);
 }
 
+void NavigationServer::replanCB(const std_msgs::Bool::ConstPtr &msg)
+{
+	// ROS_INFO("**************Inside CB************************/n");
+	
+	if(msg->data && get_new_trajectory_ == false)
+	{
+		// ROS_INFO("**************calling new trajectory************************");
+		get_new_trajectory_ = true;
+		// brakeRobot(true);
+	}
+}
+
 /**
  * @brief Subscribes to an odometry topic, and updates the global robot_pose
  * 
@@ -94,10 +108,10 @@ void NavigationServer::updateRobotPose(const nav_msgs::Odometry::ConstPtr& msg)
 	return;
 }
 
-geometry_msgs::PoseStamped* NavigationServer::getRobotPose()
+geometry_msgs::PoseStamped NavigationServer::getRobotPose()
 {
 	std::lock_guard<std::mutex> pose_lock(pose_mutex_);
-	return &robot_pose_;
+	return robot_pose_;
 }
 
 // TODO: Move to not here
@@ -131,6 +145,7 @@ void NavigationServer::initSubscribers(ros::NodeHandle& nh, std::string& robot_n
 	nh.getParam("cheat_odom", odom_flag);
 
 	update_current_robot_pose_ = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
+	replan_sub_ = nh.subscribe(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB + REPLAN_TRAJECTORY, 1000, &NavigationServer::replanCB, this);
 
 	if (odom_flag)
 	{
@@ -264,11 +279,17 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 	{
 		ROS_INFO("[operations | nav_server | %s]: Trajectory client call succeeded", robot_name_.c_str());
 		traj = srv.response.trajectory;
+
 		//TODO: Delete hotfix once planner issue with extra waypoints has been solved
 		int trajLength = traj.waypoints.size();
+
 		if(trajLength >= 2)
 		{
-			traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 2);
+			while(traj.waypoints.back().pose.position.x == 0 && traj.waypoints.back().pose.position.y == 0)
+			{
+				traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end() - 1);
+			}
+			traj.waypoints = std::vector<geometry_msgs::PoseStamped>(traj.waypoints.begin(), traj.waypoints.end());
 		} 
 		else 
 		{
@@ -277,7 +298,6 @@ planning::TrajectoryWithVelocities NavigationServer::sendGoalToPlanner(const geo
 			traj.waypoints.resize(0);
 			return traj;
 		}
-		
 	}
 	else
 	{
@@ -293,7 +313,7 @@ planning::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const pla
 	planning::TrajectoryWithVelocities in_map_frame;
 
 	ROS_INFO("[operations | nav_server | %s]: Getting traj in map frame", robot_name_.c_str());
-	ROS_INFO("[operations | nav_server | %s]: Traj length: %d", robot_name_.c_str(), traj.waypoints.size());
+	ROS_INFO("[operations | nav_server | %s]: Traj length: %lu", robot_name_.c_str(), traj.waypoints.size());
 
 	// For each waypoint in the trajectories message
 	for(int pt = 0; pt < traj.waypoints.size(); pt++)
@@ -308,7 +328,6 @@ planning::TrajectoryWithVelocities NavigationServer::getTrajInMapFrame(const pla
 		std_msgs::Float64 temp_vel;
 		temp_vel.data = 0;
 		in_map_frame.velocities.push_back(temp_vel);
-
 	}
 
 	//Reverse trajectory waypoints from planner
@@ -336,7 +355,7 @@ bool NavigationServer::rotateWheels(const geometry_msgs::PoseStamped& target_rob
 	brakeRobot(false);
 
 	// Calculate the change in heading between the current and target pose
-	double delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), target_robot_pose, robot_name_, buffer_);
+	double delta_heading = NavigationAlgo::changeInHeading(getRobotPose(), target_robot_pose, robot_name_, buffer_);
 	
 	ROS_INFO("[operations | nav_server | %s]: Steering wheels to %frad\n", robot_name_.c_str(), delta_heading);
 	steerRobot(delta_heading);
@@ -356,8 +375,11 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	std::vector<double> wheel_speeds_right = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, -BASE_SPIN_SPEED);
 	std::vector<double> wheel_speeds_left = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, BASE_SPIN_SPEED);
 
+	std::vector<double> wheel_speeds_right_slow = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, -BASE_SPIN_SPEED * BASE_SPIN_SLOW_FACTOR);
+	std::vector<double> wheel_speeds_left_slow = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_robot, BASE_SPIN_SPEED * BASE_SPIN_SLOW_FACTOR);
+
 	// Save starting robot pose to track the change in heading
-	geometry_msgs::PoseStamped starting_pose = *getRobotPose();
+	geometry_msgs::PoseStamped starting_pose = getRobotPose();
 
 	double delta_heading = NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_);
 	
@@ -373,8 +395,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	// While we have not turned the desired amount
 	while (abs(delta_heading) > ANGLE_EPSILON && ros::ok())
 	{
-		delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), target_robot_pose, robot_name_, buffer_);
-		// printf("Current delta heading: %frad\n", delta_heading);
+		delta_heading = NavigationAlgo::changeInHeading(getRobotPose(), target_robot_pose, robot_name_, buffer_);
 
 		// target_robot_pose in the robot's frame of reference
 		geometry_msgs::PoseStamped target_in_robot_frame = target_robot_pose;
@@ -389,13 +410,19 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 
 		if (delta_heading < 0)
 		{
-			// Turn clockwise	
-			moveRobotWheels(wheel_speeds_right);
+			// Turn clockwise
+			if(abs(delta_heading) < ANGLE_EPSILON * SLOW_SPIN_EPSILON_FACTOR)
+				moveRobotWheels(wheel_speeds_right_slow);
+			else
+				moveRobotWheels(wheel_speeds_right);
 		}
 		else if (delta_heading > 0)
 		{
 			// Turn counter-clockwise
-			moveRobotWheels(wheel_speeds_left);
+			if(abs(delta_heading) < ANGLE_EPSILON * SLOW_SPIN_EPSILON_FACTOR)
+				moveRobotWheels(wheel_speeds_left_slow);
+			else
+				moveRobotWheels(wheel_speeds_left);
 		}
 
 		// Allow ROS to catch up and update our subscribers
@@ -422,7 +449,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 	ROS_INFO("[operations | nav_server | %s]: Driving forwards %fm\n", robot_name_.c_str(), delta_distance);
 
 	// Save the starting robot pose so we can track delta distance
-	geometry_msgs::PoseStamped starting_pose = *getRobotPose();
+	geometry_msgs::PoseStamped starting_pose = getRobotPose();
 
 	// Initialize the current traveled distance to 0. Used to terminate the loop, and to request a new trajectory.
 	double distance_traveled = 0;
@@ -439,23 +466,30 @@ bool NavigationServer::driveDistance(double delta_distance)
 			return false;
 		}
 
-		distance_traveled = abs(NavigationAlgo::changeInPosition(starting_pose, *getRobotPose()));
+		// Check trajectory flag before continuing
+		if(get_new_trajectory_ == true)
+		{
+			requestNewTrajectory(true);
+			return false;
+		}
+
+		distance_traveled = abs(NavigationAlgo::changeInPosition(starting_pose, getRobotPose()));
 
 		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
 		// we want to get a new trajectory from the planner.
-		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
-		{
-			ROS_INFO("[operations | nav_server | %s]: driveDistance detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
+		// if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
+		// {
+		// 	ROS_INFO("[operations | nav_server | %s]: driveDistance detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
 
-			moveRobotWheels(0);
-			brakeRobot(true);
+		// 	moveRobotWheels(0);
+		// 	brakeRobot(true);
 
-			// Reset the distance traveled
-			total_distance_traveled_ = 0;
+		// 	// Reset the distance traveled
+		// 	total_distance_traveled_ = 0;
 
-			get_new_trajectory_ = true;
-			return true;
-		}
+		// 	get_new_trajectory_ = true;
+		// 	return true;
+		// }
 
 		// Move the wheels forward at a constant speed
 		moveRobotWheels(BASE_DRIVE_SPEED);
@@ -484,11 +518,14 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	brakeRobot(false);
 
 	// Save the starting robot pose so we can track delta distance
-	geometry_msgs::PoseStamped starting_pose = *getRobotPose();
+	geometry_msgs::PoseStamped starting_pose = getRobotPose();
 
-	double distance_to_waypoint = NavigationAlgo::changeInPosition(*getRobotPose(), waypoint);
+	double distance_to_waypoint = NavigationAlgo::changeInPosition(getRobotPose(), waypoint);
 		// Initialize the current traveled distance to 0. Used to terminate the loop, and to request a new trajectory.
 	double distance_traveled = 0;
+
+    // If dist(current_pose, start_pose) > EXPECTED_TRAVEL_FACTOR * dist(start_pose, goal_pose), replan
+	double expected_travel_dist = distance_to_waypoint;
 
 	// While we're not at the waypoint
 	while((distance_to_waypoint > c_dist_epsilon_) && ros::ok())
@@ -503,27 +540,41 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 			return false;
 		}
 
-		distance_traveled = abs(NavigationAlgo::changeInPosition(starting_pose, *getRobotPose()));
-
-		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
-		// we want to get a new trajectory from the planner.
-		if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
+		// Check trajectory flag before continuing
+		if(get_new_trajectory_ == true)
 		{
-			ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
-			ROS_INFO_STREAM("[operations | nav_server | "<<robot_name_<<"] "<<"Current distance traveled" << distance_traveled);
-
-			moveRobotWheels(0);
-			brakeRobot(true);
-
-			// Reset the distance traveled
-			total_distance_traveled_ = 0;
-
-			get_new_trajectory_ = true;
+			requestNewTrajectory(true);
 			return true;
 		}
 
+		distance_traveled = abs(NavigationAlgo::changeInPosition(starting_pose, getRobotPose()));
+
+    	// If dist(current_pose, start_pose) > EXPECTED_TRAVEL_FACTOR * dist(start_pose, goal_pose), replan
+		if(distance_traveled > EXPECTED_TRAVEL_FACTOR * expected_travel_dist)
+		{
+			requestNewTrajectory(true);
+
+			return true;
+		}
+
+		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
+		// we want to get a new trajectory from the planner.
+		// if(distance_traveled + total_distance_traveled_ > trajectory_reset_dist)
+		// {
+		// 	ROS_INFO("[operations | nav_server | %s]: smoothDriving detected total distance > trajectory reset, setting trajectory flag.\n", robot_name_.c_str());
+
+		// 	moveRobotWheels(0);
+		// 	brakeRobot(true);
+
+		// 	// Reset the distance traveled
+		// 	total_distance_traveled_ = 0;
+
+		// 	get_new_trajectory_ = true;
+		// 	return true;
+		// }
+
 		// Calculate the current dist to waypoint
-		double current_distance_to_waypoint = NavigationAlgo::changeInPosition(*getRobotPose(), waypoint);
+		double current_distance_to_waypoint = NavigationAlgo::changeInPosition(getRobotPose(), waypoint);
 
 		// Calculate the delta heading
 		double delta_heading, center_radius;
@@ -531,9 +582,9 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		// Start steering towards the next waypoint's heading when the robot is half its length away from it
 		// NOTE: Add c_dist_epsilon_ to calculation if we want to start turning torwards the next heading sooner
 		if (current_distance_to_waypoint < (current_distance_to_waypoint - NavigationAlgo::wheel_sep_length_/2))
-			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), future_waypoint, robot_name_, buffer_);
+			delta_heading = NavigationAlgo::changeInHeading(getRobotPose(), future_waypoint, robot_name_, buffer_);
 		else
-			delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), waypoint, robot_name_, buffer_);
+			delta_heading = NavigationAlgo::changeInHeading(getRobotPose(), waypoint, robot_name_, buffer_);
 
 		//ROS_WARN("[operations | nav_server | %s]: Delta heading %f", robot_name_.c_str(), delta_heading);
 
@@ -564,7 +615,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		moveRobotWheels(wheel_velocities);
 
 		// Update distance to waypoint
-		distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, *getRobotPose());
+		distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, getRobotPose());
 
 		update_rate_->sleep();
 		ros::spinOnce();
@@ -580,17 +631,23 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	return true;
 }
 
-void NavigationServer::requestNewTrajectory(void)
+void NavigationServer::requestNewTrajectory(bool replan_request)
 {
-	ROS_INFO("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
-
 	moveRobotWheels(0);
 	brakeRobot(true);
 
 	// Reset the distance traveled
 	total_distance_traveled_ = 0;
 
-	get_new_trajectory_ = true;
+	if(replan_request)
+	{
+		ROS_WARN("[operations | nav_server | %s]: Resetting trajectory flag after obstacle detected in path by planner.\n", robot_name_.c_str());
+	}
+	else
+	{
+		ROS_WARN("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
+	}
+		get_new_trajectory_ = true;
 }
 
 void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server, bool smooth)
@@ -684,20 +741,20 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			future_waypoint.header.stamp = ros::Time(0);
 			NavigationAlgo::transformPose(future_waypoint, MAP, buffer_, 0.1);
 
-			trajectory_reset_dist = LARGE_TRAJECTORY_REST_DIST;
+			//trajectory_reset_dist = LARGE_TRAJECTORY_REST_DIST;
 
 			if(smooth)
 			{
 				// Initial check for delta heading in case it is above the max turning limit for ackermann steering
-				double delta_heading = NavigationAlgo::changeInHeading(*getRobotPose(), current_waypoint, robot_name_, buffer_);
+				double delta_heading = NavigationAlgo::changeInHeading(getRobotPose(), current_waypoint, robot_name_, buffer_);
 
 				//Kludge for reducing reset distance after hard turns. Gets reset
 				// on receiving a new trajectory.
-				if(abs(delta_heading) > HALF_VIEWING)
-				{
-					trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
-					ROS_INFO("[operations | nav_server | %s]: Sharp turn detected, using small reset distance", robot_name_.c_str());
-				}
+				// if(abs(delta_heading) > HALF_VIEWING)
+				// {
+				// 	trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
+				// 	ROS_INFO("[operations | nav_server | %s]: Sharp turn detected, using small reset distance", robot_name_.c_str());
+				// }
 
 				if (delta_heading >= MAX_TURNING_RAD || delta_heading <= MIN_TURNING_RAD)
 				{
@@ -718,13 +775,18 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 					ros::Duration(1.0).sleep();
 
-					if(initial_turn_completed == false)
+					// if(!initial_turn_completed)
+					// {
+					// 	//Request new trajectory after inital turn in case new obstacles have appeared
+					// 	requestNewTrajectory(false);
+					// 	initial_turn_completed = true;
+					// 	break;
+					// }
+
+					if(get_new_trajectory_)
 					{
-						//Request new trajectory after inital turn in case new obstacles have appeared
-						requestNewTrajectory();
-						initial_turn_completed = true;
-						break;
-						
+						i = trajectory.waypoints.size();
+						continue;
 					}
 
 					if (!turned_successfully)
@@ -772,7 +834,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 					return;
 				}
-				
+
+				if(get_new_trajectory_)
+				{
+					i = trajectory.waypoints.size();
+					continue;
+				}
 			}
 			else
 			{
@@ -814,8 +881,14 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 					return;
 				}
 
+				if(get_new_trajectory_)
+				{
+					i = trajectory.waypoints.size();
+					continue;
+				}
+
 				//Get current pose + position from odometry
-				geometry_msgs::PoseStamped current_robot_pose = *getRobotPose();
+				geometry_msgs::PoseStamped current_robot_pose = getRobotPose();
 
 				//Calculate delta distance
 				float delta_distance = NavigationAlgo::changeInPosition(current_robot_pose, current_waypoint);
@@ -824,12 +897,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				ROS_INFO("[operations | nav_server | %s]: Going the distance, going for speed", robot_name_.c_str());
 				bool drove_successfully = driveDistance(delta_distance);
 
-				// If driveDistance set the get_new_trajectory_ flag, we should quit out of the for loop, which will get a new trajectory.
 				if(get_new_trajectory_)
 				{
-					ROS_INFO("[operations | nav_server | %s]: Distance planner interrupt. Getting new trajectory.", robot_name_.c_str());
-
-					// Setting i to the length of the trajectory will terminate the for loop.
 					i = trajectory.waypoints.size();
 					continue;
 				}
@@ -859,7 +928,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 	if(goal->final_rotate)
 	{
-		geometry_msgs::PoseStamped current_robot_pose = *getRobotPose();
+		geometry_msgs::PoseStamped current_robot_pose = getRobotPose();
 
 		// The final pose is on top of the robot, we only care about orientation
 		final_pose.pose.position.x = current_robot_pose.pose.position.x;
@@ -886,15 +955,12 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				//AAAH ERROR
 				ROS_ERROR("[operations | nav_server | %s]: Final turn did not succeed. Exiting.", robot_name_.c_str());
 				res.result = COMMON_RESULT::FAILED;
-				
 			}
 			action_server->setSucceeded(res);
 
 			return;
 		}
 	}
-
-	
 
 	ROS_INFO("[operations | nav_server | %s]: Finished automatic goal!", robot_name_.c_str());
 

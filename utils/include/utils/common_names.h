@@ -107,8 +107,11 @@ namespace COMMON_NAMES
   const std::string PARK_HAULER = "/park_hauler";
   const std::string HAULER_PARKED_TOPIC = "/hauler_parked";
   const std::string NAV_TYPE_TOPIC = "/nav_type_topic";
+  const std::string RAMP_DONE_TOPIC = "/ramp_done";
   const std::string ROBOTS_CURRENT_STATE_TOPIC = "robot_state_status";
   const std::string ROBOTS_DESIRED_STATE_TOPIC = "robot_desired_state";
+  const std::string REPLAN_TRAJECTORY = "/replan_trajectory";
+  const std::string ROBOTS_OUT_OF_COMMISSION_TOPIC = "robots_out_of_commission";
   const std::string IMU_TOPIC = "/imu";
   const std::string IMU_FILTERED_TOPIC = "/imu_filtered";
   const std::string SPIRAL_WAYPOINT_PUBLISHER = "/covered_waypoints";
@@ -214,6 +217,9 @@ namespace COMMON_NAMES
     EXCAVATOR_RESET_ODOM_AT_HOPPER,    // Excavator resets odometry at hopper
     EXCAVATOR_GO_TO_SCOUT_RECOVERY,
     EXCAVATOR_VOLATILE_RECOVERY,
+    EXCAVATOR_GO_TO_INIT_LOCATION,
+    EXCAVATOR_GO_TO_LOOKOUT_LOCATION,
+    EXCAVATOR_BALLET_DANCING,
     
     /**************HAULER STATES**************/
     //25
@@ -225,6 +231,7 @@ namespace COMMON_NAMES
     HAULER_PARK_AT_EXCAVATOR,           // Hauler parks at excavator
     HAULER_FOLLOW_EXCAVATOR,            // Hauler follows excavator
     HAULER_RESET_ODOM,                  // Hauler reset odometry service call state
+    HAULER_GO_TO_INIT_LOC,
 
     // redundant modes for hauler (everything is taken care by above modes)
     HAULER_GO_TO_PROC_PLANT, // Hauler goes to processing plant
@@ -236,8 +243,10 @@ namespace COMMON_NAMES
     HAULER_FACE_PROCESSING_PLANT, //face the processinf plant using NAV_VISION_TYPE::V_CENTER
     HAULER_GO_TO_SCOUT,      // Hauler goes to the scout using NAV_VISION_TYPE::V_NAV_AND_NAV_VISION
     HAULER_GOTO_REPAIR_STATION, // Hauler goes to the repair station using NAV_VISION_TYPE::V_REACH to recharge
+    HAULER_GO_TO_EXCAVATOR_RECOVERY,
+    HAULER_GO_TO_LOOKOUT_LOCATION,
+    HAULER_BALLET_DANCING,
     ROBOT_IDLE_STATE,
-
 
     /***************ROBOTS MACRO STATES***************/
     //41

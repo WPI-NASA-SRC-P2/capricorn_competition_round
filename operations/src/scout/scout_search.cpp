@@ -170,12 +170,12 @@ void driveSprial()
         data.data = ++waypoints_covered;
         waypoint_publisher_.publish(data);
         g_spiral_points.erase(g_spiral_points.begin());
+        ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: Clearing current a waypoint");// << "Going to goal dist:" << dist);
       }
       geometry_msgs::Point point_0, point_2;
       point_0 = g_spiral_points.at(0).point;
       point_2 = g_spiral_points.at(2).point;
 
-      ROS_INFO_STREAM("[OPERATIONS | scout_search.cpp | " << robot_name_ << "]: Clearing current a waypoint");// << "Going to goal dist:" << dist);
 
       g_nav_goal.drive_mode = NAV_TYPE::GOAL;
       g_nav_goal.pose.pose.position = g_spiral_points.at(1).point;
@@ -198,7 +198,7 @@ void driveSprial()
   }
   else
   {
-    g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(ROBOT_NUMBER);
+    g_spiral_points = NavigationAlgo::getRadialScanningPoints(ROBOT_NUMBER);
   }
 }
 
@@ -312,7 +312,7 @@ int main(int argc, char **argv)
 
   geometry_msgs::PointStamped zero_point;
   zero_point.header.frame_id = MAP;
-  g_spiral_points = NavigationAlgo::getNArchimedeasSpiralPoints(ROBOT_NUMBER);
+  g_spiral_points = NavigationAlgo::getRadialScanningPoints(ROBOT_NUMBER);
 
   while (ros::ok() && !cb_init)
   {
