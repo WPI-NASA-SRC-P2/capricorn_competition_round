@@ -49,6 +49,11 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   HAULER_RETURN_LOC.pose.position.y    = 10.0;
   HAULER_RETURN_LOC.pose.orientation.w = 1;
 
+  UNDOCK_LOCATION.header.frame_id = COMMON_NAMES::MAP;
+  UNDOCK_LOCATION.pose.position.x = 6.0;
+  UNDOCK_LOCATION.pose.position.y = 8.0;
+  UNDOCK_LOCATION.pose.orientation.w = 1.0;
+
 
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &HaulerState::odomCallback, this);
 
@@ -634,7 +639,7 @@ void DumpVolatileAtHopper::entryPoint()
    state_done =false;
 
    // Setting poses
-   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::HAULER_1_NAME) ? HAULER_1_LOOKOUT_LOC : HAULER_2_LOOKOUT_LOC;
+   hardcoded_pose_ = UNDOCK_LOCATION;
    
    // Currently not caring about orientations
    GTPP_pose_ = hauler_pose_;
