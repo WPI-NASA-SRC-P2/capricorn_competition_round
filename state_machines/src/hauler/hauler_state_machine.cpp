@@ -880,13 +880,13 @@ void HaulerGoToRepairStation::entryPoint()
 
 bool HaulerGoToRepairStation::isDone()
 {
-   current_state_done_ = navigation_vision_client_->getState().isDone();
+   current_state_done_ = macro_state_done_;
    return current_state_done_;
 }
 
 bool HaulerGoToRepairStation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = macro_state_succeeded_;
    return last_state_succeeded_;
 }
 
