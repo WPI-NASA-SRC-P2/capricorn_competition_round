@@ -94,6 +94,7 @@ public:
    geometry_msgs::PoseStamped EXCAVATOR_2_RETURN_LOC;
    geometry_msgs::PoseStamped BESIDE_REPAIR_STATION;
    geometry_msgs::PoseStamped UNDOCK_LOCATION;
+   geometry_msgs::PoseStamped PROC_PLANT_LOCATION;
 
 protected:
 

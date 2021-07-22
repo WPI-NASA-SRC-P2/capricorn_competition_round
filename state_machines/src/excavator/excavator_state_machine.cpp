@@ -61,8 +61,6 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   UNDOCK_LOCATION.pose.position.y = 8.0;
   UNDOCK_LOCATION.pose.orientation.w = 1.0;
 
-
-
 //   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ExcavatorState::odomCallback, this);
 }
@@ -848,7 +846,8 @@ void ExcavatorResetOdomAtHopper::goToProcPlant()
    {
       operations::NavigationVisionGoal navigation_vision_goal;
       navigation_vision_goal.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
-      navigation_vision_goal.mode = V_REACH;
+      navigation_vision_goal.mode = V_NAV_AND_NAV_VISION;
+      navigation_vision_goal_.goal_loc = PROC_PLANT_LOCATION;
       navigation_vision_client_->sendGoal(navigation_vision_goal);
       ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Going to Processing Plant vision goal sent");
       first_GTPP = false;

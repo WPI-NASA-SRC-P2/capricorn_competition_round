@@ -120,6 +120,7 @@ public:
    geometry_msgs::PoseStamped HAULER_2_LOOKOUT_LOC;
    geometry_msgs::PoseStamped HAULER_RETURN_LOC;
    geometry_msgs::PoseStamped UNDOCK_LOCATION;
+   geometry_msgs::PoseStamped PROC_PLANT_LOCATION;
 
 protected:
 
