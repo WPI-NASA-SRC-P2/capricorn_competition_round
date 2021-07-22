@@ -227,6 +227,9 @@ void ExcavatorGoToInitLoc::entryPoint()
    crs_first_ = true;
    gtic_first_ = true;
    micro_state = GO_TO_INIT_LOC; // Centering is not really needed
+
+   current_state_done_ = false;
+   last_state_succeeded_ = false;
 }
 
 void ExcavatorGoToInitLoc::step()
@@ -242,6 +245,10 @@ void ExcavatorGoToInitLoc::step()
    default:
       break;
    }
+
+   current_state_done_ = ((navigation_client_->getState().isDone()) && micro_state == GO_TO_INIT_LOC);
+   if(current_state_done_ && !gtic_first_)
+      last_state_succeeded_ = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
 }
 
 void ExcavatorGoToInitLoc::stepCenterRepairStation()
@@ -277,14 +284,10 @@ void ExcavatorGoToInitLoc::exitPoint()
 }
 
 bool ExcavatorGoToInitLoc::isDone() {
-   current_state_done_ = ((navigation_client_->getState().isDone()) && micro_state == GO_TO_INIT_LOC);
    return current_state_done_;
 } 
 
 bool ExcavatorGoToInitLoc::hasSucceeded() {
-   if(isDone() && !gtic_first_)
-      last_state_succeeded_ = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
-
    return last_state_succeeded_;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -295,6 +298,7 @@ void GoToDefaultArmPosition::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
     first_ = true;
+    current_state_done_ = false;
     last_state_succeeded_ = false;
     ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: entrypoint of goToDefaultArmPosition");
 }
@@ -332,8 +336,10 @@ void GoToDefaultArmPosition::step()
       //   excavator_arm_client_->waitForResult();
         first_ = false;
    }   
-   else
-        ROS_WARN_STREAM("GoToDefaultArmPosition stepping, first_ = false now");
+   
+   current_state_done_ = excavator_arm_client_->getState().isDone();
+   if(current_state_done_ && !(first_))
+      last_state_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 void GoToDefaultArmPosition::exitPoint() 
@@ -344,14 +350,11 @@ void GoToDefaultArmPosition::exitPoint()
 }
 
 bool GoToDefaultArmPosition::isDone() {
-   current_state_done_ = excavator_arm_client_->getState().isDone();
    return current_state_done_;
 } 
 
 bool GoToDefaultArmPosition::hasSucceeded() {
 
-   if(isDone() && !(first_))
-      last_state_succeeded_ = (excavator_arm_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    return last_state_succeeded_;
 }
 
@@ -364,6 +367,7 @@ void ParkAndPub::entryPoint()
    //set entry variables
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Parking to Scout");
    first_ = true;
+   current_state_done_ = false;
    last_state_succeeded_ = false;
 }
 
@@ -373,6 +377,9 @@ void ParkAndPub::step()
          closeInToScout();
          first_ = false;
       }
+   current_state_done_ = navigation_client_->getState().isDone();
+   if(current_state_done_ && !(first_))
+      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 void ParkAndPub::exitPoint()
@@ -384,7 +391,6 @@ void ParkAndPub::exitPoint()
 
 bool ParkAndPub::isDone() 
 {
-   current_state_done_ = navigation_client_->getState().isDone();
    // if(current_state_done_)
       // ROS_WARN_STREAM("Park and Pub Done");
    return current_state_done_;
@@ -393,8 +399,6 @@ bool ParkAndPub::isDone()
 bool ParkAndPub::hasSucceeded() 
 {
    // last_state_succeeded_ = (navigation_result_.result == COMMON_RESULT::SUCCESS);
-   if(isDone() && !(first_))
-      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    // if(last_state_succeeded_)
    //    ROS_WARN_STREAM("Park and Pub to Scout Completed Successfully");
    return last_state_succeeded_;
@@ -440,6 +444,8 @@ void PreParkHauler::entryPoint()
    //set entry variables
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Pre-parking to Hauler");
    first_ = true;
+   current_state_done_ = false;
+   last_state_succeeded_ = false;
    goToVolatileDone_ = false;
    centerHaulerDone_ = false;
    getInArmPositionDone_ = false;
@@ -476,6 +482,9 @@ void PreParkHauler::step()
       ROS_WARN_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Incorrect goal found:"<<goal_);
       break;
    }
+
+   current_state_done_ = getInArmPositionDone_;
+   last_state_succeeded_ = getInArmPositionDone_ && centerHaulerDone_;
 }
 
 
@@ -493,7 +502,6 @@ bool PreParkHauler::isDone() {
    // bool nav_done = navigation_client_->getState().isDone();
    
    // current_state_done_ = vis_nav_done && nav_done;
-   current_state_done_ = getInArmPositionDone_;
    // if(current_state_done_)
    //    ROS_WARN_STREAM("PreParkHauler Completed");
    return current_state_done_;
@@ -502,7 +510,6 @@ bool PreParkHauler::isDone() {
 
 bool PreParkHauler::hasSucceeded() {
 
-   last_state_succeeded_ = getInArmPositionDone_ && centerHaulerDone_;
    // if(last_state_succeeded_)
    //    ROS_WARN_STREAM("PreParkHauler Completed Successfully");
    return last_state_succeeded_;
@@ -721,19 +728,18 @@ void ExcavatorGoToLoc::step()
         navigation_action_goal_.pose = target_loc_;
         navigation_client_->sendGoal(navigation_action_goal_);
         first_ = false;
-    }//new ma
+    }
+   
+   current_state_done_ = navigation_client_->getState().isDone();
+   if(current_state_done_ && !(first_))
+      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool ExcavatorGoToLoc::isDone() {
-   current_state_done_ = navigation_client_->getState().isDone();
    return current_state_done_;
 } 
 
 bool ExcavatorGoToLoc::hasSucceeded() {
-   if(isDone() && !(first_))
-      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   // if(last_state_succeeded_)
-   //    ROS_WARN_STREAM("Go to Scout Completed Successfully");
    return last_state_succeeded_;
 }
 
@@ -999,13 +1005,13 @@ void ExcavatorGoToRepairStation::entryPoint()
 
 bool ExcavatorGoToRepairStation::isDone()
 {
-   current_state_done_ = navigation_vision_client_->getState().isDone();
+   current_state_done_ = macro_state_done_;
    return current_state_done_;
 }
 
 bool ExcavatorGoToRepairStation::hasSucceeded()
 {
-   last_state_succeeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+   last_state_succeeded_ = macro_state_succeeded_;
    return last_state_succeeded_;
 }
 
@@ -1044,15 +1050,18 @@ void ExcavatorGoToRepairStation::goToRepair()
    bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(is_done)
    {
-      macro_state_done_ = true;
       if(!has_succeeded)
       {
          micro_state = GO_TO_REPAIR_RECOVERY;
          first_GTRR = true;
          second_GTRR = true;
       }
-      else 
+      else
+      {
+         macro_state_done_ = true;
          macro_state_succeeded_ = true;
+      } 
+      
          
    }
 }
@@ -1142,20 +1151,21 @@ void ExcavatorGoToScoutRecovery::step()
       first_ = true;
       pose_index_++;
    }
+   
+   current_state_done_ = (searches_exhausted_ || scout_found_);
+   last_state_succeeded_ = scout_found_;
 }
 
 // If the excavator finds the scout or all the recovery_poses_ are exhausted, this recovery state is done.
 bool ExcavatorGoToScoutRecovery::isDone()
 {
    // scout_found_ is updated in searchForScout()
-   current_state_done_ = (searches_exhausted_ || scout_found_);
    return current_state_done_;
 }
 
 bool ExcavatorGoToScoutRecovery::hasSucceeded()
 {
    // succeeds if scout is found successfully 
-   last_state_succeeded_ = scout_found_;
    return last_state_succeeded_;
 }
 
@@ -1229,19 +1239,19 @@ void VolatileRecovery::entryPoint()
    trials_exhausted_ = false;
    // substate_ = CROSS_MOVEMENT;
    substate_ = CHECK_VOLATILE;
+
+   current_state_done_ = false;
+   last_state_succeeded_ = false;
 }
 
 bool VolatileRecovery::isDone()
 {
    // base isDone on excavator arm client done (recovery failed) or if found volatile
-   current_state_done_ = (macro_state_done_ || volatile_found_);
    return current_state_done_;
 }
 
 bool VolatileRecovery::hasSucceeded()
 {
-   // base succeeded on if a volatile was found
-   last_state_succeeded_ = volatile_found_;
    // if(last_state_succeeded_)
    //    ROS_WARN_STREAM("Excavator Go to Repair Station Completed Successfully");
    return last_state_succeeded_;
@@ -1317,6 +1327,9 @@ void VolatileRecovery::step()
          break;
       
    }
+   current_state_done_ = (macro_state_done_ || volatile_found_);
+   // base succeeded on if a volatile was found
+   last_state_succeeded_ = volatile_found_;
 }
 
 void VolatileRecovery::crossMovement(const int& trial)
@@ -1353,6 +1366,7 @@ void ExcavatorGoToLookoutLocation::entryPoint()
 {
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToLookoutLocation.");
    hardcoded_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
+   current_state_done_ = false;
    last_state_succeeded_ = false;
    first_ = true;
 }
@@ -1366,18 +1380,19 @@ void ExcavatorGoToLookoutLocation::step()
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Lookout Location : " << hardcoded_pose_);
    first_ = false;
    }
+
+   current_state_done_ = navigation_client_->getState().isDone();
+   if(current_state_done_ && !(first_))
+      last_state_succeeded_ = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
 }
 
 bool ExcavatorGoToLookoutLocation::isDone()
 {
-   current_state_done_ = navigation_client_->getState().isDone();
    return current_state_done_;
 }
 
 bool ExcavatorGoToLookoutLocation::hasSucceeded()
 {
-   if(isDone())
-      last_state_succeeded_ = (navigation_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    return last_state_succeeded_;
 }
 
@@ -1393,6 +1408,8 @@ void ExcavatorGoToLookoutLocation::exitPoint()
 void ExcavatorBalletDancing::entryPoint() 
 {
    first_ = true;
+   current_state_done_ = false;
+   last_state_succeeded_ = false;
 }
 
 void ExcavatorBalletDancing::step() 
@@ -1415,16 +1432,17 @@ void ExcavatorBalletDancing::step()
       ros::Duration(0.5).sleep();
       first_ = false;
    }
+   
+   current_state_done_ = navigation_client_->getState().isDone();
+   if(current_state_done_ && !(first_))
+      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool ExcavatorBalletDancing::isDone() {
-   current_state_done_ = navigation_client_->getState().isDone();
    return current_state_done_;
 } 
 
 bool ExcavatorBalletDancing::hasSucceeded() {
-   if(isDone() && !(first_))
-      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
    return last_state_succeeded_;
 }
 

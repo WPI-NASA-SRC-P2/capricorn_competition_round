@@ -182,6 +182,8 @@ public:
 
 private: 
    bool first_;
+   bool state_done_;
+   bool state_success_;
    operations::NavigationGoal navigation_action_goal_;
    operations::NavigationVisionGoal navigation_vision_goal_;
 };
@@ -236,6 +238,8 @@ public:
 private:
    operations::ResourceLocaliserGoal goal;
    bool first_;
+   bool state_done_;
+   bool state_success_;
 };
 
 /**
@@ -364,6 +368,8 @@ public:
 
 private:
    bool first_;
+   bool state_done_;
+   bool state_success_;
    geometry_msgs::PoseStamped target_loc_;
    operations::NavigationGoal navigation_action_goal_;
 };
