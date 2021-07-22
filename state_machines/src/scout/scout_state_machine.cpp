@@ -655,28 +655,3 @@ void ScoutGoToLoc::exitPoint()
     ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Reached scout, preparing to park");
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////// M A I N ////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////
-
-
-// int main(int argc, char** argv)
-// {
-//    ros::init(argc, argv, "scout_state_machine");
-//    ros::NodeHandle nh;
-
-//    try {
-//       ScoutScheduler cSchd;
-//       // cSchd.initROS(nh, SCOUT_1_NAME);
-//       cSchd.addState(new Search(nh, SCOUT_1_NAME));
-//       cSchd.addState(new Undock(nh, SCOUT_1_NAME));
-//       cSchd.addState(new Locate(nh, SCOUT_1_NAME));
-//       cSchd.setInitialState(SCOUT_SEARCH_VOLATILE);
-//       // cSchd.setInitialState(SCOUT_UNDOCK);
-//       cSchd.exec();
-//       return 0;
-//    }
-//    catch(StateMachineException& ex) {
-//       std::cerr << "[ERROR] " << ex.getMessage() << std::endl;
-//    }
-// }

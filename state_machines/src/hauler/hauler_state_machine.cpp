@@ -769,8 +769,8 @@ void DumpVolatileAtHopper::parkAtHopper()
    bool is_done = (park_robot_client_->getState().isDone());
    if (is_done)
    {
-      if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS){
-         first_UFH = true;
+      if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+      {
          micro_state = DUMP_VOLATILE;  
       }
    }
@@ -788,7 +788,7 @@ void DumpVolatileAtHopper::dumpVolatile()
     bool is_done = (hauler_client_->getState().isDone());
     if (is_done)
     {
-        if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+        if (hauler_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
             micro_state = UNDOCK_FROM_HOPPER;
         else
         {

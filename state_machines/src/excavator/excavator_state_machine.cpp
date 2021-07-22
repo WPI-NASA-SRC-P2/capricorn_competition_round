@@ -1452,15 +1452,3 @@ void ExcavatorBalletDancing::exitPoint()
     navigation_client_->cancelGoal();
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////  I D L E  S T A T E  C L A S S ////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// void IdleState::entryPoint() {
-//   excavator_arm_client_->cancelGoal();
-//   navigation_vision_client_ ->cancelGoal();
-//   navigation_client_->cancelGoal();
-//   park_robot_client_->cancelGoal();
-
-//   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Excavator has entered idle state, awaiting new state...");
-// }
