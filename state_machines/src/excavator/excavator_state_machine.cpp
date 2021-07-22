@@ -56,6 +56,13 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   BESIDE_REPAIR_STATION.pose.position.y = -25.0;
   BESIDE_REPAIR_STATION.pose.orientation.z = 1.0;
 
+  UNDOCK_LOCATION.header.frame_id = COMMON_NAMES::MAP;
+  UNDOCK_LOCATION.pose.position.x = 6.0;
+  UNDOCK_LOCATION.pose.position.y = 8.0;
+  UNDOCK_LOCATION.pose.orientation.w = 1.0;
+
+
+
 //   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ExcavatorState::odomCallback, this);
 }
@@ -783,7 +790,7 @@ void ExcavatorResetOdomAtHopper::entryPoint()
    state_done =false;
 
    // Setting poses
-   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
+   hardcoded_pose_ = UNDOCK_LOCATION;
    // Currently not caring about orientations
    GTPP_pose_ = excavator_pose_;         // Go to Proc plant Recovery pose (supposedly getting to this pose will enable 'seeing' the Proc plant as it is assumed the 
                                          // rover is at the left of repair station and hence cant see it. If its in a crater, hopefully travelling this 10m will get it out of it.)         
@@ -964,7 +971,7 @@ void ExcavatorResetOdomAtHopper::goToLookoutLocation()
    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
    navigation_action_goal_.pose = hardcoded_pose_;
    navigation_client_->sendGoal(navigation_action_goal_);
-   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Lookout Location : " << hardcoded_pose_);
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Common Undocking Location  : " << hardcoded_pose_);
    first_GTLL = false;
    }
    

@@ -876,7 +876,7 @@ TeamState& ResetAtHopper::transition()
       if(scout_in_team != NONE)
          return getState(SEARCH);
       else
-         return getState(IDLE);
+         return getState(GO_TO_INIT_LOC);
    }
    else
    {
