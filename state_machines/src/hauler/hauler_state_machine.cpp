@@ -1008,7 +1008,7 @@ void GoToExcavatorRecovery::entryPoint()
 {
    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Entrypoint of GoToExcavatorRecovery.");
    // define the offset distance for generating poses
-   search_offset_ = 10.0;
+   search_offset_ = 5.0; //previous value = 10
    // set up the four recovery poses
    createPoses();
    // reset the pose that is going to be checked
