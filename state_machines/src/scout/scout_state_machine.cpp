@@ -102,13 +102,16 @@ void Undock::entryPoint()
 {
    //Set to true to avoid repeatedly giving the goal.
    first_ = true;
+   state_done_ = false;
+   state_success_ = false;
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Entrypoint of undock");   
 }
 
 bool Undock::isDone()
 {
    // update the status of current state
-   current_state_done_ = navigation_vision_client_->getState().isDone();
+   // current_state_done_ = navigation_vision_client_->getState().isDone();
+   current_state_done_ = state_done_;
    return current_state_done_;
 }
 
@@ -116,7 +119,8 @@ bool Undock::hasSucceeded()
 {
    // update the status of current state
    // last_state_succeeded_ = (navigation_client_->getState() == actionlib::status::SUCCESS);
-   last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   // last_state_succeeded_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   last_state_succeeded_ = state_success_;
    return last_state_succeeded_;
 }
 
@@ -133,6 +137,9 @@ void Undock::step()
       first_ = false; 
       ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Undock stepping, first_ = false now");
    }
+   // update whether the state is done and is successful
+   state_done_ = navigation_vision_client_->getState().isDone();
+   state_success_ = (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 void Undock::exitPoint() 
@@ -208,6 +215,8 @@ void Locate::entryPoint()
    // we assume we are near the volatile
    near_volatile_ = true;
    first_ = true;
+   state_done_ = false;
+   state_success_ = false;
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout is beginning to locate volatile");
 
 }
@@ -215,7 +224,8 @@ void Locate::entryPoint()
 bool Locate::isDone()
 {
    // switch states once completed with locating the volatile
-   current_state_done_ = (resource_localiser_client_->getState().isDone());
+   // current_state_done_ = (resource_localiser_client_->getState().isDone());
+   current_state_done_ = state_done_;
    return current_state_done_;
 }
 
@@ -223,7 +233,8 @@ bool Locate::hasSucceeded()
 {
    // state succeeded once rover is parked on top of volatile
    // last_state_succeeded_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
-   last_state_succeeded_ = (resource_localiser_client_->getState().isDone());
+   // last_state_succeeded_ = (resource_localiser_client_->getState().isDone());
+   last_state_succeeded_ = state_success_;
    return last_state_succeeded_;
 }
 
@@ -235,6 +246,9 @@ void Locate::step()
       ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Sending resource localization goal");
       first_ = false;
    }
+   // update whether the state is done and is successful
+   state_done_ = (resource_localiser_client_->getState().isDone());
+   state_success_ = (resource_localiser_client_->getState().isDone());
 }
 
 void Locate::exitPoint()
@@ -566,47 +580,6 @@ void GoToRepairStation::exitPoint()
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout finished going to repair station (exitpoint)");
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////  P A R K  A T  R E P A I R  S T A T I O N  S T A T E  C L A S S ////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// void ParkAtRepairStation::entryPoint()
-// {
-//    first_ = true;
-// }
-
-// bool ParkAtRepairStation::isDone()
-// {
-//    current_state_done_ = park_robot_client_->getState().isDone();
-//    return current_state_done_;
-// }
-
-// bool ParkAtRepairStation::hasSucceeded()
-// {
-//    last_state_succeeded_ = (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS);
-//    if(last_state_succeeded_)
-//       ROS_WARN_STREAM("Scout Park at Repair Station Completed Successfully");
-//    return last_state_succeeded_;
-// }
-
-// void ParkAtRepairStation::step()
-// {
-
-//    if (first_)
-//    {
-//       park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_REPAIR_STATION_CLASS;
-//       park_robot_client_->sendGoal(park_robot_goal_);
-//       first_ = false;
-//    }
-//    ROS_INFO_STREAM("Going to repair station Step Function!");
-// }
-
-// void ParkAtRepairStation::exitPoint()
-// {
-//    // none at the moment
-//    park_robot_client_->cancelGoal();
-// }
-
 //////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// I D L E ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
@@ -630,12 +603,13 @@ void IdleState::entryPoint()
 
 void ScoutGoToLoc::entryPoint()
 {
-    // declare entrypoint variables
-    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: State Machine: Go To Loc");
-    // pose of the excavator, supposed to be provided by scheduler
-    target_loc_ = m_pcRobotScheduler->getDesiredPose();    
-    first_ = true;
-    last_state_succeeded_ = false;
+   // declare entrypoint variables
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: State Machine: Go To Loc");
+   // pose of the excavator, supposed to be provided by scheduler
+   target_loc_ = m_pcRobotScheduler->getDesiredPose();    
+   first_ = true;
+   state_done_ = false;
+   state_success_ = false;
 }
 
 void ScoutGoToLoc::step()
@@ -651,18 +625,21 @@ void ScoutGoToLoc::step()
         navigation_client_->sendGoal(navigation_action_goal_);
         first_ = false;
     }
+   // update whether the state is done and is successful
+   state_done_ = navigation_client_->getState().isDone();
+   state_success_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
 
 bool ScoutGoToLoc::isDone() {
-   current_state_done_ = navigation_client_->getState().isDone();
+   // current_state_done_ = navigation_client_->getState().isDone();
+   current_state_done_ = state_done_;
    return current_state_done_;
 } 
 
 bool ScoutGoToLoc::hasSucceeded() {
-   if(isDone() && !(first_))
-      last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   // if(last_state_succeeded_)
-   //    ROS_WARN_STREAM("Go to Scout Completed Successfully");
+   // if(isDone() && !(first_))
+   //    last_state_succeeded_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+   last_state_succeeded_ = state_success_;
    return last_state_succeeded_;
 }
 
