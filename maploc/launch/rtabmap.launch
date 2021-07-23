@@ -24,7 +24,7 @@
         <node if="$(arg launch_stereo_proc)" pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc_rtab" />	
 
         <!-- Odometry -->
-        <node pkg="rtabmap_ros" type="stereo_odometry" name="stereo_odometry">
+        <node pkg="rtabmap_ros" type="stereo_odometry" name="stereo_odometry" respawn="true">
             <param name="frame_id" type="string" value="$(arg robot_name)_base_footprint"/>
             <param name="approx_sync" type="bool" value="true"/>
             <param name="queue_size" type="int" value="5"/>

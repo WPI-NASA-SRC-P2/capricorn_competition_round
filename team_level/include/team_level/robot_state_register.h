@@ -5,8 +5,11 @@
 #include <state_machines/robot_state_status.h>
 #include <state_machines/robot_desired_state.h>
 #include <geometry_msgs/PoseStamped.h>
+#include "std_msgs/String.h"
 
 using namespace COMMON_NAMES;
+
+#define DEBUG false
 
 class RobotStateRegister
 {
@@ -19,13 +22,28 @@ class RobotStateRegister
       void setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_task);
       void setRobotState(ROBOTS_ENUM robot, ROBOTS_ENUM target_robot, STATE_MACHINE_TASK desired_task);
       void setRobotState(ROBOTS_ENUM robot, STATE_MACHINE_TASK desired_task, geometry_msgs::PoseStamped target_pose);
+
+      bool isRobotOutOfCommission(ROBOTS_ENUM robot);
       
    private:
-      ros::Subscriber robot_state_subscriber;
+      ros::Subscriber robot_state_subscriber, robot_out_of_commission_subscriber;
       ros::Publisher robot_state_publisher;
       void robotStateCB(state_machines::robot_state_status msg);
+      void robotOutOfCommissionCB(std_msgs::String msg);
+      
       std::map<ROBOTS_ENUM, std::pair<bool, bool>> robot_isDone_hasSucceeded_map;
       std::map<ROBOTS_ENUM, STATE_MACHINE_TASK> robot_state_map;
+      
+      std::map<ROBOTS_ENUM, bool> robot_out_of_commission_map = {
+                                                      {SCOUT_1, false},
+                                                      {SCOUT_2, false},
+                                                      {SCOUT_3, false},
+                                                      {EXCAVATOR_1, false},
+                                                      {EXCAVATOR_2, false},
+                                                      {EXCAVATOR_3, false},
+                                                      {HAULER_1, false},
+                                                      {HAULER_2, false},
+                                                      {HAULER_3, false}};
 
       std::map<std::string, ROBOTS_ENUM> ROBOT_NAME_TO_ENUM_MAP = {
                                                       {SCOUT_1_NAME, SCOUT_1},

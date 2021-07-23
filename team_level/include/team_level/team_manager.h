@@ -8,6 +8,7 @@
 #include <utils/common_names.h>
 #include "ros/ros.h"
 #include <team_level/team_scheduler.h>
+#include <team_level/robot_state_register.h>
 
 using namespace COMMON_NAMES;
 
@@ -15,6 +16,7 @@ using namespace COMMON_NAMES;
 #define MAX_EXCAVATORS 2
 #define MAX_HAULERS 2
 #define MAX_TEAMS 8
+#define MAX_ROBOTS 9
 
 class TeamManager {
    
@@ -37,7 +39,19 @@ private:
    std::array<bool, MAX_TEAMS> teams_need_hauler;
    std::array<bool, MAX_TEAMS> hauler_for_sale;
 
+   RobotStateRegister *robot_state_register;
+
    static const int resetting_hauler_index = 1;
+   // LAST WEEK FIX!
+   // Assumes that there are 2 robots of each kind
+   bool both_excavators_working = true;
+   bool both_scouts_working = true;
+   bool both_haulers_working = true;
+
+   std::array<bool, 10> robots_waiting_to_reset;
+   bool hopper_busy;
+
+   int getStandbyTeam();
 
    void initTeams(ros::NodeHandle nh);
 
@@ -73,6 +87,8 @@ private:
 
    void recruitHauler(int team_index);
 
+   void transferRobotToStandbyTeam(ROBOTS_ENUM transfered_robot, TEAM_MACRO_STATE desired_state_of_team, int current_team_index);
+
    void checkAndRecruitForSearch(int team_index);
 
    void checkAndRecruitForScoutWaiting(int team_index);
@@ -84,6 +100,14 @@ private:
    void checkAndRecruitForIdle(int team_index);
 
    void checkAndRecruitForStandby(int team_index);
+
+   void checkAndRecruitForGoToRepairStation(int team_index);
+   
+   void checkAndRecruitForWaitForHopperAppointment(int team_index);
+   
+   void checkAndRecruitForResetAtHopper(int team_index);
+
+   void checkAndRecruitForGoToInitLoc(int team_index);
 };
 
 #endif // TEAM_SCHEDULER_H

@@ -192,7 +192,7 @@ std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRectangularScanningP
 
   for (auto pt : points)
   {
-    ROS_INFO_STREAM("X: " + std::to_string(pt.point.x) + ", Y: " + std::to_string(pt.point.y));
+    // ROS_INFO_STREAM("X: " + std::to_string(pt.point.x) + ", Y: " + std::to_string(pt.point.y));
   }
 
   return points;
@@ -202,9 +202,9 @@ std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRadialScanningPoints
 {
   #define PI 3.14159265
 
-  float radius = 80;
-  float start_angle = scout_number == 1 ? 10 : -10, theta_x = scout_number == 1 ? 15 : -15;
-  int angle_max = scout_number == 1 ? 175 : -175;
+  float radius = 60;
+  float start_angle = scout_number == 1 ? 170 : -10, theta_x = -15;
+  int angle_max = scout_number == 1 ? 5 : -175;
 
   std::vector<geometry_msgs::PointStamped> points;
 
@@ -226,19 +226,19 @@ std::vector<geometry_msgs::PointStamped> NavigationAlgo::getRadialScanningPoints
     return msg;
   };
 
-  points.push_back(getPoint(0, 0));
+  // points.push_back(getPoint(0, 0));
   points.push_back(getPoint(0, 0));
 
-  while (abs(start_angle) <= abs(angle_max))
+  while (abs(start_angle) >= 0 && abs(start_angle) <= 180)
   {
     points.push_back(getAnglePoint(start_angle));
-    points.push_back(getPoint(scout_number == 1 ? 20 : -20, 0));
+    points.push_back(getPoint(scout_number == 1 ? 30 : -30, 0));
     start_angle += theta_x;
   }
 
   for (auto pt : points)
   {
-    ROS_INFO_STREAM("X: " + std::to_string(pt.point.x) + ", Y: " + std::to_string(pt.point.y));
+    // ROS_INFO_STREAM("X: " + std::to_string(pt.point.x) + ", Y: " + std::to_string(pt.point.y));
   }
 
   return points;
@@ -316,12 +316,12 @@ double NavigationAlgo::changeInPosition(const geometry_msgs::PoseStamped& curren
 
 double NavigationAlgo::changeInHeading(const geometry_msgs::PoseStamped& current_robot_pose, const geometry_msgs::PoseStamped& current_waypoint, const std::string& robot_name, const tf2_ros::Buffer& tf_buffer)
 {
-  // Hack (kind of) for Ashay. If the two poses are within 15cm of each other, we assume that we want to match orientations, not turn to face a waypoint
-  // TODO: Make sure planner team doesn't give us two waypoints that is within this tolerance
-  if(changeInPosition(current_robot_pose, current_waypoint) < 0.15)
-  {
-    return changeInOrientation(current_waypoint, robot_name, tf_buffer);
-  }
+  // // Hack (kind of) for Ashay. If the two poses are within 15cm of each other, we assume that we want to match orientations, not turn to face a waypoint
+  // // TODO: Make sure planner team doesn't give us two waypoints that is within this tolerance
+  // if(changeInPosition(current_robot_pose, current_waypoint) < 0.15)
+  // {
+  //   return changeInOrientation(current_waypoint, robot_name, tf_buffer);
+  // }
 
 	// Get the next waypoint in the robot's frame
 	geometry_msgs::PoseStamped waypoint_relative_to_robot = current_waypoint;

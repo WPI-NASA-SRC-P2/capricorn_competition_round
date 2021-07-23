@@ -107,10 +107,14 @@ namespace COMMON_NAMES
   const std::string PARK_HAULER = "/park_hauler";
   const std::string HAULER_PARKED_TOPIC = "/hauler_parked";
   const std::string NAV_TYPE_TOPIC = "/nav_type_topic";
+  const std::string RAMP_DONE_TOPIC = "/ramp_done";
   const std::string ROBOTS_CURRENT_STATE_TOPIC = "robot_state_status";
   const std::string ROBOTS_DESIRED_STATE_TOPIC = "robot_desired_state";
+  const std::string REPLAN_TRAJECTORY = "/replan_trajectory";
+  const std::string ROBOTS_OUT_OF_COMMISSION_TOPIC = "robots_out_of_commission";
   const std::string IMU_TOPIC = "/imu";
   const std::string IMU_FILTERED_TOPIC = "/imu_filtered";
+  const std::string SPIRAL_WAYPOINT_PUBLISHER = "/covered_waypoints";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
@@ -195,7 +199,7 @@ namespace COMMON_NAMES
     SCOUT_PARK_REPAIR_STATION,   // Scout parks at repair station
 
     /**************EXCAVATOR STATES**************/  
-    //10
+    //11
     EXCAVATOR_GO_TO_LOC,             // Takes Excavator to a location from which it will
                                          // be quicker to get to the digging location
     EXCAVATOR_GO_TO_SCOUT,           // Get close to the volatile when it is detected
@@ -211,10 +215,14 @@ namespace COMMON_NAMES
     EXCAVATOR_FACE_PROCESSING_PLANT,  //Face processing plant using NAV_VISION::V_CENTER
     EXCAVATOR_GO_TO_REPAIR,           //Go to repair station using NAV_VISION
     EXCAVATOR_RESET_ODOM_AT_HOPPER,    // Excavator resets odometry at hopper
+    EXCAVATOR_GO_TO_SCOUT_RECOVERY,
     EXCAVATOR_VOLATILE_RECOVERY,
+    EXCAVATOR_GO_TO_INIT_LOCATION,
+    EXCAVATOR_GO_TO_LOOKOUT_LOCATION,
+    EXCAVATOR_BALLET_DANCING,
     
     /**************HAULER STATES**************/
-    //23
+    //25
     HAULER_GO_TO_LOC,                    // Takes Hauler to a location
     HAULER_DUMP_VOLATILE_TO_PROC_PLANT, // Undocks hauler from excavator, goes to processing plant,
                                              // parks hauler to processing plant, dumps volatile and
@@ -223,6 +231,7 @@ namespace COMMON_NAMES
     HAULER_PARK_AT_EXCAVATOR,           // Hauler parks at excavator
     HAULER_FOLLOW_EXCAVATOR,            // Hauler follows excavator
     HAULER_RESET_ODOM,                  // Hauler reset odometry service call state
+    HAULER_GO_TO_INIT_LOC,
 
     // redundant modes for hauler (everything is taken care by above modes)
     HAULER_GO_TO_PROC_PLANT, // Hauler goes to processing plant
@@ -234,11 +243,13 @@ namespace COMMON_NAMES
     HAULER_FACE_PROCESSING_PLANT, //face the processinf plant using NAV_VISION_TYPE::V_CENTER
     HAULER_GO_TO_SCOUT,      // Hauler goes to the scout using NAV_VISION_TYPE::V_NAV_AND_NAV_VISION
     HAULER_GOTO_REPAIR_STATION, // Hauler goes to the repair station using NAV_VISION_TYPE::V_REACH to recharge
+    HAULER_GO_TO_EXCAVATOR_RECOVERY,
+    HAULER_GO_TO_LOOKOUT_LOCATION,
+    HAULER_BALLET_DANCING,
     ROBOT_IDLE_STATE,
 
-
     /***************ROBOTS MACRO STATES***************/
-    //36
+    //41
     SCOUT_MACRO_UNDOCK,
     EXCAVATOR_MACRO_GO_TO_SCOUT,
     EXCAVATOR_MACRO_DIG,
@@ -265,9 +276,10 @@ namespace COMMON_NAMES
 enum EXCAVATOR_ARM_TASK
 {
   START_DIGGING = 1,
-  START_UNLOADING = 2,
-  GO_TO_DEFAULT = 3,
-  RECOVERY = 4,
+  CHECK_VOLATILE = 2,
+  START_UNLOADING = 3,
+  GO_TO_DEFAULT = 4,
+  RECOVERY = 5,
 };
 
 

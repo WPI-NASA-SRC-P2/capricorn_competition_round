@@ -38,20 +38,23 @@ rosgraph_msgs::Clock g_start_clock;
 std::string g_robot_name;
 geometry_msgs::PoseStamped g_robot_pose;
 
-const int ANGLE_THRESHOLD_NARROW = 10, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5;
+const int ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5, NAV_LOC_DIST_THRESH = 15;
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 1, g_angular_vel_step_size = 0.05, TIMER_THRESH = 20.0;
 const double NOT_AVOID_OBSTACLE_THRESHOLD = 5.0;
 std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex, g_clock_mutex;
 std::string g_desired_label;
-bool g_reached_goal = false, g_cancel_called = false, g_goal_failed = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false, g_nav_vision_called = false;
+bool g_reached_goal = false, g_cancel_called = false, g_goal_failed = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false, g_nav_vision_called = false, g_last_nav_vision_call = false;
 int g_height_threshold = 400;
+const float EXCAVATOR_FALSE_DETECTION_WIDTH = 8;
+const int EXCAVATOR_FALSE_DETECTION_SIZE_X_THRESHOLD = (int) 0.9*640; // 90% of the maximum width
+const int EXCAVATOR_FALSE_DETECTION_SIZE_Y_THRESHOLD = (int) 0.9*480; // 90% of the maximum height
 
 enum HEIGHT_THRESHOLD
 {
     EXCAVATOR = 170,
     SCOUT = 220,
     HAULER = 200,
-    PROCESSING_PLANT = 340,
+    PROCESSING_PLANT = 320,
     REPAIR_STATION = 340,
     FURNACE = 150,
     OTHER = 50,
@@ -345,14 +348,14 @@ void hardcodedUndock()
     g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
-    ros::Duration(2).sleep();
+    ros::Duration(3).sleep();
     g_nav_goal.direction = 0;
     g_nav_goal.forward_velocity = 0.0;
     g_nav_goal.angular_velocity = 0.5;
     g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
     g_client->sendGoal(g_nav_goal);
-    ros::Duration(2).sleep();
+    ros::Duration(4).sleep();
     // g_nav_goal.direction = 0;
     // g_nav_goal.forward_velocity = 0.5;
     // g_nav_goal.angular_velocity = 0;
@@ -606,7 +609,18 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
     if(g_nav_vision_called) 
     {
         visionNavigation();
-        return;
+
+        if(g_goal_failed && !g_last_nav_vision_call)
+        {
+            g_goal_failed = false;
+            g_send_nav_goal = true;
+            g_nav_vision_called = false;
+            g_previous_state_is_go_to = false;
+        }
+        else
+        {
+            return;
+        }
     } 
 
     g_start_clock = g_clock;
@@ -629,12 +643,13 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
         g_nav_vision_called = true;
+        g_last_nav_vision_call = true;
     }
 
     const std::lock_guard<std::mutex> odom_lock(g_odom_mutex);
     double distance = NavigationAlgo::changeInPosition(g_robot_pose, goal_loc);
 
-    if (distance > 15)
+    if (distance > NAV_LOC_DIST_THRESH)
     {
         return;
     }
@@ -654,6 +669,14 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         if (object.label == g_desired_label)
         {
             // Store the object's center
+            if(g_desired_label == OBJECT_DETECTION_EXCAVATOR_CLASS)
+            {
+                bool impossible_width = (object.width > EXCAVATOR_FALSE_DETECTION_WIDTH);
+                bool full_screen_detection = ((object.size_x > EXCAVATOR_FALSE_DETECTION_SIZE_X_THRESHOLD) 
+                                            && (object.size_x > EXCAVATOR_FALSE_DETECTION_SIZE_Y_THRESHOLD)) ;
+                if(impossible_width || full_screen_detection)
+                    return;
+            }
             object_found = true;
         }
     }
@@ -733,6 +756,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     g_reached_goal = false;
     g_goal_failed = false;
     g_nav_vision_called = false;
+    g_last_nav_vision_call = false;
 
     ros::Rate update_rate(UPDATE_HZ);
 
@@ -799,6 +823,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
     {
         g_goal_failed = false;
         result.result = COMMON_RESULT::FAILED;
+        ROS_INFO_STREAM(getString("TASK FAILED FINALLY"));
         as->setSucceeded(result, "Failed Goal");
         return;
     }

@@ -27,6 +27,10 @@ static const double VOLATILE_DISTANCE_THRESHOLD = 0.005;
 static const int FLIP_ROTATION_COUNT_MAX = 3;
 static const int REPEAT_COUNT_MAX = 2;
 static const float VOLATILE_SENSOR_TO_BASE_DISTANCE = 0.670;
+static const int MAX_COUNT_FOR_OUT_OF_VOLATILE_RANGE = 100; // If the volaile depletes or due to some unforeseen cases,
+                                                               // scout no longer finds the volatile, to keep it from getting
+                                                               // stuck there, we are using this counter. 
+                                                               // Will wait for 10 seconds
 
 bool near_volatile_ = false;
 bool new_message_received = false;
@@ -130,7 +134,7 @@ void driveRobotStraight(DrivingDirection rotate_direction, const float rotationa
   
   goal.forward_velocity = rotate_direction * DRIVING_VELOCITY * rotational_velocity_multiplier;
   goal.angular_velocity = 0;
-  ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Driving robot straight");
+  // ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Driving robot straight");
 
   navigation_client_->sendGoal(goal);
   ros::Duration(0.1).sleep();
@@ -160,6 +164,7 @@ void getBestPose()
   rotateRobot(driving_direction, 1.0);
   rotateRobot(driving_direction, 1.0);
   DrivingMode driving_execution;
+  int volatile_unseen_counter = 0;
 
   while (rotate_robot && ros::ok())
   {
@@ -181,7 +186,7 @@ void getBestPose()
       else if ((volatile_distance_ - best_volatile_distance) > VOLATILE_DISTANCE_THRESHOLD)
       {
         best_volatile_distance =  MAX_DETECT_DIST + 1;
-        ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Going far");
+        // ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Going far");
         if (flip_rotation_count < FLIP_ROTATION_COUNT_MAX)
         {
           ROS_INFO_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Flipping Direction");
@@ -227,6 +232,12 @@ void getBestPose()
           }
         }
       }
+      
+      if (volatile_distance_ == MAX_DETECT_DIST + 1)
+        volatile_unseen_counter++;
+      else
+        volatile_unseen_counter = 0;
+      
       if (driving_execution == ROTATE_ROBOT)
         rotateRobot(driving_direction, 1 / (flip_rotation_count + 1));
       else 
@@ -241,7 +252,10 @@ void getBestPose()
       // This case may not arise normally, but can arise during battery low situation
       // as volatile sensor stops working in battery low mode
     }
+    if(volatile_unseen_counter > MAX_COUNT_FOR_OUT_OF_VOLATILE_RANGE)
+      break;
     ros::Duration(0.1).sleep();
+    // ROS_INFO_STREAM("Volatile Counter = "<<volatile_unseen_counter);
   }
   return;
 }

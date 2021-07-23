@@ -25,6 +25,10 @@ enum TEAM_MACRO_STATE{
                   // Excavator and Hauler busy digging and collecting
    DUMPING, // Hauler going to dump the volatile
             // No or idle Excavator
+   GO_TO_REPAIR_STATION,   // Will go to Repair Station 
+   WAIT_FOR_HOPPER_APPOINTMENT,  // Waits for an appointment at hopper. 
+   RESET_AT_HOPPER,     // Only one robot can be in this state at once. 
+   GO_TO_INIT_LOC,      // Send robots to the init locations
 };
 
 enum TEAM_MICRO_STATE{
@@ -37,13 +41,18 @@ enum TEAM_MICRO_STATE{
    ROBOTS_TO_GOAL,
    UNDOCK_SCOUT,
    PARK_EXCAVATOR_AT_SCOUT,
+   RECOVERY_SCOUT_FINDING,
    MAKE_EXCAV_HAULER_IDLE,
 
    // EXCAVATING
    WAIT_FOR_HAULER,
+   RECOVERY_EXCAVATOR_FINDING,
+   CHECK_FOR_VOLATILE,
    PRE_PARK_MANEUVER_EXCAVATOR,
    PARK_AT_EXCAVATOR_HAULER,
    DIG_AND_DUMP,
+   BALLET_ONCE,
+   UNDOCK_HAULER,
 
    // DUMPING
    DUMP_COLLECTION,
@@ -112,7 +121,7 @@ protected:
    RobotStateRegister *robot_state_register;
    RobotPoseRegister *robot_pose_register;
    geometry_msgs::PoseStamped volatile_site_location;
-   bool reset_robot_odometry;
+   bool reset_robot_odometry = false;
 };
 
 // // All the states as per the diagram
@@ -176,6 +185,7 @@ private:
    void stepRobotsToGoal();
    void stepUndockScout();
    void stepParkExcavatorAtScout();
+   void stepRecoveryScoutFinding();
    void stepMakeExcavHaulerIdle();
 };
 
@@ -192,16 +202,72 @@ public:
    void exitPoint() override;
 
 private:
+   bool ballet_once, digging_re_attempted;
    TEAM_MICRO_STATE micro_state;
    void stepWaitForHauler();
    void stepPreParkManeuverExcavator();
    void stepParkHauler();
    void stepDigAndDump();
+   void stepBalletOnce();
+   void stepUndockHauler();
+   void stepRecoveryExcavatorFinding();
 };
 
 class Dumping: public TeamState{
 public:
    Dumping(ros::NodeHandle &nh):TeamState(DUMPING, "Dumping", nh){}
+   bool isDone() override ;
+   
+   TeamState& transition() override;
+   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
+   
+   bool entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+};
+
+class GoToRepairStation: public TeamState{
+public:
+   GoToRepairStation(ros::NodeHandle &nh):TeamState(GO_TO_REPAIR_STATION, "GoToRepairStation", nh){}
+   bool isDone() override ;
+   
+   TeamState& transition() override;
+   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
+   
+   bool entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+};
+
+class WaitForHopperAppointment: public TeamState{
+public:
+   WaitForHopperAppointment(ros::NodeHandle &nh):TeamState(WAIT_FOR_HOPPER_APPOINTMENT, "WaitForHopperAppointment", nh){}
+   bool isDone() override ;
+   
+   TeamState& transition() override;
+   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
+   
+   bool entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+};
+
+class ResetAtHopper: public TeamState{
+public:
+   ResetAtHopper(ros::NodeHandle &nh):TeamState(RESET_AT_HOPPER, "ResetAtHopper", nh){}
+   bool isDone() override ;
+   
+   TeamState& transition() override;
+   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
+   
+   bool entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+};
+
+class GoToInitLoc: public TeamState{
+public:
+   GoToInitLoc(ros::NodeHandle &nh):TeamState(GO_TO_INIT_LOC, "GoToInitLoc", nh){}
    bool isDone() override ;
    
    TeamState& transition() override;

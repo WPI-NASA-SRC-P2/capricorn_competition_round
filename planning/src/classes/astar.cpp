@@ -114,7 +114,7 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
 
   if (abandonedIndex != 0)
   {
-    ROS_INFO("[planning | astar ]: Adding the padded point to the A* path");
+    // ROS_INFO("[planning | astar ]: Adding the padded point to the A* path");
     std::vector<geometry_msgs::PoseStamped> paddingPath;
 
     for (int i = 0; i < p.poses.size(); i++)
@@ -122,9 +122,8 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
       paddingPath.push_back(p.poses[i]);
     }
     paddingPath.push_back(poseStampedFromIndex(abandonedIndex, oGrid, robot_name));
-
     p.poses = paddingPath;
-    ROS_INFO("[planning | astar ]: Returning the completed path");
+    // ROS_INFO("[planning | astar ]: Returning the completed path");
     return p;
   }
 
@@ -208,13 +207,19 @@ int AStar::adjustIndex(int index, nav_msgs::OccupancyGrid oGrid, int threshold)
 
 Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, int threshold, std::string &robot_name)
 {
+  //this will fix the right edge - no path error
   // Convert meters -> grid units
   target.x = target.x / oGrid.info.resolution;
   target.y = std::round(target.y / oGrid.info.resolution); //ROUNDING OPERATION NECESSARY - DO NOT CHANGE
 
+  if(target.y == 20/oGrid.info.resolution)
+  {
+    target.y = target.y + 1;
+  }
+
   if (oGrid.data.size() == 0)
   {
-    ROS_WARN("[planning | astar | %s]: Occupancy Grid is Empty.", robot_name);
+    ROS_WARN("[planning | astar | %s]: Occupancy Grid is Empty.", robot_name.c_str());
     return Path();
   }
   // A Star Implementation based off https://en.wikipedia.org/wiki/A*_search_algorithm
@@ -225,12 +230,12 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   int endIndex = 0;
   int centerIndex = (oGrid.info.height / 2) * oGrid.info.width + oGrid.info.width / 2;
 
-  ROS_INFO("[planning | astar | %s]: centerIndex calculated", robot_name.c_str());
+  // ROS_INFO("[planning | astar | %s]: centerIndex calculated", robot_name.c_str());
 
   //this code takes care of the case when the starting pose is in the padding area
   if (oGrid.data[centerIndex] > threshold)
   {
-    ROS_WARN("[planning | astar | %s]: Start pose in the padding...", robot_name);
+    ROS_WARN("[planning | astar | %s]: Start pose in the padding...", robot_name.c_str());
     abandonedIndex = centerIndex;
     centerIndex = adjustIndex(centerIndex, oGrid, threshold);
   }
@@ -248,7 +253,7 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   // If it is, we need to find the closest point on the edge of the occupancy grid to the target.
   if ((int)target.x > (int)oGrid.info.width / 2 || (int)target.x < (int)-(oGrid.info.width / 2) || (int)target.y > (int)oGrid.info.height / 2 || (int)target.y < (int)-(oGrid.info.height / 2))
   {
-    ROS_INFO("[planning | astar | %s]: Finding New index...", robot_name.c_str());
+    // ROS_INFO("[planning | astar | %s]: Finding New index...", robot_name.c_str());
     float distFromRobot = INFINITY;
     float minDist = INFINITY;
     float optmlDist = INFINITY;
@@ -319,12 +324,12 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   {
     // If the target point was on the grid, just calculate the index of the point (with the center being 0,0)
     endIndex = (target.y + (oGrid.info.height / 2)) * oGrid.info.width + (target.x + (oGrid.info.width / 2));
-    ROS_INFO("[planning | astar | %s]: Calculated Index: %d", robot_name.c_str(), endIndex);
+    // ROS_INFO("[planning | astar | %s]: Calculated Index: %d", robot_name.c_str(), endIndex);
   }
   // Check if the final destination is occupied.
   if (oGrid.data[endIndex] > threshold)
   {
-    ROS_WARN("[planning | astar | %s]: TARGET IN OCCUPIED SPACE, RESETTING THE INDEX", robot_name);
+    ROS_WARN("[planning | astar | %s]: TARGET IN OCCUPIED SPACE, RESETTING THE INDEX", robot_name.c_str());
 
     endIndex = adjustIndex(endIndex, oGrid, threshold);
     //return Path();
