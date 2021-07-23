@@ -268,7 +268,7 @@ void TeamManager::recruitScout(int team_index)
          all_teams.at(team_index)->setScout(scout);
          all_teams.at(i)->disbandScout();
 
-         all_teams.at(team_index)->setTeamMacroState(GO_TO_REPAIR_STATION);
+         all_teams.at(team_index)->setTeamMacroState(SEARCH);
          all_teams.at(team_index)->setResetRobot(true);
 
          scout_for_sale.at(i) = false;
@@ -430,11 +430,13 @@ void TeamManager::checkAndRecruitForGoToRepairStation(int team_index)
       ROBOTS_ENUM excavator = all_teams.at(team_index)->getExcavator();
       transferRobotToStandbyTeam(excavator, GO_TO_REPAIR_STATION, team_index);
    }
+
+   fireExcavator(team_index);
 }
 
 void TeamManager::checkAndRecruitForWaitForHopperAppointment(int team_index)
 {
-   // Do Nothing
+   fireExcavator(team_index);
 }
 
 void TeamManager::checkAndRecruitForResetAtHopper(int team_index)

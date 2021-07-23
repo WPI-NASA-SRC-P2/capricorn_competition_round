@@ -56,6 +56,7 @@ class EncoderOdom
             joint_sub_ = nh_.subscribe("/" + robot_name_ + "/joint_states", 1000, &EncoderOdom::joint_state_callback, this);
             gazebo_sub = nh_.subscribe("/gazebo/model_states", 1000, &EncoderOdom::gazebo_callback, this);
             odom_pub_ = nh_.advertise<nav_msgs::Odometry>(robot_name_ + "/encoder_odom", 1000, true);
+            start_ = std::clock();
         }
 
         /**
@@ -244,18 +245,38 @@ class EncoderOdom
         }
 
         /**
+         * @brief   Updates positions based on velocities
+         * 
+         * @param:  nothing
+         */
+
+        void updatePose()
+        {
+            // Integrate to obtain position Data
+            double dt = ( std::clock() - start_)/ (double)CLOCKS_PER_SEC * 100;
+
+            // ---------- Declare lin_vel_x & clock-----
+            x_pos_ += linear_x_flat_ * dt;
+            y_pos_ += linear_y_flat_ * dt;
+            yaw_   += angular_z_flat_* dt;
+
+            start_ = std::clock();
+        }
+
+
+        /**
          * @brief   Publishes odometry after all velocity calculations are done. 
          * 
          * @param:  round/no round on velocities
          */
-        void robotVelocityPublisher() {
+        void robotOdomPublisher() {
 
             // DEBUG STATEMENTS
             // std::cout << "The linear velocity of IMU in z direction is: " << linear_z_imu_ << std::endl;
             // std::cout << "The ground truth (in robot frame) is:\n "<< x_dot << " " << y_dot << " " << theta_dot << std::endl;
             // std::cout << "The robot encoder velocity before imu transformation are:\n "<< linear_x_<< " " << linear_y_ << " " << angular_z_ << std::endl;
             // std::cout << "The robot encoder velocity is:\n "<< linear_x_flat_ << " " << linear_y_flat_ << " " << angular_z_ << std::endl;
-
+            updatePose();
             output_odom_.twist.twist.linear.x = round(linear_x_flat_);
             output_odom_.twist.twist.linear.y = round(linear_y_flat_);
             output_odom_.twist.twist.linear.z = 0.0;
@@ -311,7 +332,7 @@ class EncoderOdom
             robotVelocity2D(); 
             
             //The final publishing of odometry. 
-            robotVelocityPublisher();
+            robotOdomPublisher();
         }
 
         std::vector<double> debug_x_;
@@ -336,6 +357,8 @@ class EncoderOdom
         ros::Publisher odom_pub_;   
         std::mutex encoder_odom_mutex_;
 
+        long int start_;
+
         // Header
         std_msgs::Header header_;
         // positions (instantiated here to not clog up constructor)
@@ -351,8 +374,9 @@ class EncoderOdom
 
         float linear_x_, linear_y_, angular_z_;
         float linear_x_imu_, linear_y_imu_, linear_z_imu_, angular_z_imu_;
-        float linear_x_flat_, linear_y_flat_, angular_z_flat_;
+        float linear_x_flat_, linear_y_flat_, angular_z_flat_;                // Final velocities 
         float orient_x_, orient_y_, orient_z_, orient_w_;
+        float x_pos_, y_pos_, yaw_;
 
         /** gazebo attributes TODO: Get rid of these before submission, only used for testing */ 
         int scout_index;

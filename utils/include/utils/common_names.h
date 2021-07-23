@@ -197,6 +197,7 @@ namespace COMMON_NAMES
     SCOUT_RESET_ODOM_GROUND_TRUTH, // reset odometry of scout w.r.t. its starting position in sim
     SCOUT_GOTO_REPAIR_STATION,   // Scout goes to repair station
     SCOUT_PARK_REPAIR_STATION,   // Scout parks at repair station
+    SCOUT_RESET_ODOM_AT_REPAIR_STATION,
 
     /**************EXCAVATOR STATES**************/  
     //11

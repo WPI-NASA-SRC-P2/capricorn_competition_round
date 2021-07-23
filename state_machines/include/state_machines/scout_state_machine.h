@@ -317,7 +317,7 @@ public:
  * @param hasSucceeded() navigation vision has succeeded at getting to the repair station
  */
 class GoToRepairStation : public ScoutState {
-public:   
+public:     
    GoToRepairStation(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_GOTO_REPAIR_STATION, nh, robot_name) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
@@ -374,6 +374,29 @@ private:
    operations::NavigationGoal navigation_action_goal_;
 };
 
+/**
+ * @brief Sends the scout to the given goal
+ * 
+ * @param isDone() when near a volatile
+ * @param hasSucceeded() when near a volatile
+ */
+class ResetOdomAtRepairStation : public ScoutState {
+public:   
+   ResetOdomAtRepairStation(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_RESET_ODOM_AT_REPAIR_STATION, nh, robot_name) {}
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+   float getProcPlantDepth();
+private:
+   bool first_, proc_plant_in_vision_, resetOdomDone_;
+   float proc_plant_distance_, camera_offset_ = 0.4;
+};
+
+
 // class ParkAtRepairStation : public ScoutState {
 // public:   
 //    ParkAtRepairStation(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_PARK_REPAIR_STATION, nh, robot_name) {}
@@ -393,7 +416,7 @@ private:
 
 // class SolarCharge: public ScoutState
 // {
-// public:
+// public:  ros::Subscriber IMU_sub_;
 //   bool entryPoint();
 //   bool exec();
 //   bool exitPoint();

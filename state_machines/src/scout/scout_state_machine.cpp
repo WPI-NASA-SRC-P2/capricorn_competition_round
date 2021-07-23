@@ -49,7 +49,6 @@ ScoutState::ScoutState(uint32_t un_id, ros::NodeHandle nh, std::string robot_nam
   SCOUT_2_RETURN_LOC.pose.orientation.z = 1.0;
 
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ScoutState::odomCallback, this);
-
 }
 
 ScoutState::~ScoutState()
@@ -655,3 +654,68 @@ void ScoutGoToLoc::exitPoint()
     ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Reached scout, preparing to park");
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// R E S E T  O D O M  A T  R E P A I R  S T A T I O N   S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ResetOdomAtRepairStation::entryPoint()
+{
+   // declare entrypoint variables
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to reset odom at Repair Station"); 
+   first_ = true;
+   proc_plant_distance_ = 0.0;
+   proc_plant_in_vision_ = false;
+}
+
+void ResetOdomAtRepairStation::step()
+{
+    // go to excavator using planner+vision goal
+    if(first_) {
+
+      ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+      maploc::ResetOdom srv;
+      proc_plant_distance_ = getProcPlantDepth();
+      
+      srv.request.target_robot_name = robot_name_;
+      srv.request.at_repair_station.at_repair_station = true;
+      srv.request.at_repair_station. depth = proc_plant_distance_;
+      srv.request.at_repair_station.orientation = odom_.pose.pose.orientation;
+      resetOdomDone_ = resetOdometryClient.call(srv);
+      return;
+    }
+}
+
+bool ResetOdomAtRepairStation::isDone() {
+   return current_state_done_;
+} 
+
+bool ResetOdomAtRepairStation::hasSucceeded() {
+
+   return last_state_succeeded_;
+}
+
+void ResetOdomAtRepairStation::exitPoint()
+{
+    ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Exiting Reset odom at repair station");
+}
+
+float ResetOdomAtRepairStation::getProcPlantDepth() {
+   if(vision_objects_->obj.size() == 0)
+   {
+      ROS_INFO_STREAM("No objects in vision!");
+      return 0.0;
+   }
+   for(int i{}; i < vision_objects_->obj.size() ; i++ )
+   {
+      if(vision_objects_->obj.at(i).label == "processingPlant")
+      {
+         proc_plant_in_vision_ = true;
+         ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Got distance to processing plant, resetting odom now");
+         float camera_depth = vision_objects_->obj.at(i).point.pose.position.z;
+         return (std::sqrt(std::pow(camera_depth, 2) - std::pow(camera_offset_, 2)) + camera_offset_);  // Accounting for the fact that the image is taken by camera which is both X-Y offset
+         
+      }
+   }
+   if(!proc_plant_in_vision_)
+      return 0.0;
+}
