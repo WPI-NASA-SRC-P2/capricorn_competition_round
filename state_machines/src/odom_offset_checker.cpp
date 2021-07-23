@@ -10,19 +10,16 @@ NASA SPACE ROBOTICS CHALLENGE
 #include "std_msgs/String.h"
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <sensor_msgs/Imu.h>
 #include <rtabmap_ros/ResetPose.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <state_machines/robot_state_status.h>
 
 #define UPDATE_HZ 10
 
-bool imu_message_received = false;
 bool odom_message_received = false;
 bool wait_till_reset = false;
 
 nav_msgs::Odometry global_odometry;
-sensor_msgs::Imu global_imu;
 
 double prev_odom_x, prev_odom_y, prev_odom_z;
 
@@ -75,8 +72,8 @@ int main(int argc, char** argv)
     bool name_is_not_hauler_2 = robot_name != COMMON_NAMES::HAULER_2_NAME;
     // **********************************
 
-    // Wait until we have received a message from both the imu and odom
-    while(ros::ok() && !(name_is_not_hauler_2 || wait_till_reset))
+    // Wait until we have received a message from odom
+    while(ros::ok() && !(name_is_not_hauler_2 || wait_till_reset) && !odom_message_received)
     {
         ros::Duration(0.1).sleep();
         ros::spinOnce();
@@ -99,16 +96,23 @@ int main(int argc, char** argv)
         // Run the loop only once we've received another message
         if (odom_message_received)    
         {
-            // Initialize variables
-
-            // Store the latest odometry position readings
+            // Store the latest odometry position and orientation readings
+            new_odom_x = global_odometry.pose.pose.position.x;
+            new_odom_y = global_odometry.pose.pose.position.y;
+            new_odom_z = global_odometry.pose.pose.position.z;
+            getOdomRPY(new_r, new_p, new_y);
             
             // Calculate distance between previous odometry position and new odometry position
             double distance = sqrt(pow(new_odom_x - prev_odom_x, 2) + pow(new_odom_y - prev_odom_y, 2));
 
+            // ROS_WARN_STREAM("New X: " << new_odom_x << " New Y: " << new_odom_y << " New Z: " << new_odom_z);
+            // ROS_WARN_STREAM("Prev X: " << prev_odom_x << " Prev Y: " << prev_odom_y << " Prev Z: " << prev_odom_z);
+
             // If the distance > 1, then reset odom to the previous value
             if (distance > 1.0)
             {
+                ROS_WARN_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name + "]: " + "Distance is too large");
+                
                 // Assemble data into pose for Rosservice call 
                 //      Use previous positions and new orientation
                 rtabmap_ros::ResetPose pose;
