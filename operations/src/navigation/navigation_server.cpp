@@ -40,6 +40,15 @@ NavigationServer::~NavigationServer()
 }
 
 /**
+ * @brief Initialise the publisher for wheel ramping
+ * 
+ */
+void NavigationServer::initVelocityPublisherNew(ros::NodeHandle& nh, const std::string& robot_name)
+{
+	wheel_ramp_pub_ = nh.advertise<operations::WheelVelocities>(CAPRICORN_TOPIC + robot_name + "/desired_wheel_velocities", 1000);
+}
+
+/**
  * @brief Initialise the publishers for wheel velocities
  * 
  */
@@ -79,6 +88,7 @@ void NavigationServer::initDebugPublishers(ros::NodeHandle& nh, const std::strin
 void NavigationServer::initPublishers(ros::NodeHandle& nh, const std::string& robot_name)
 {
 	initVelocityPublisher(nh, robot_name);
+	initVelocityPublisherNew(nh, robot_name);
 	initSteerPublisher(nh, robot_name);
 	initDebugPublishers(nh, robot_name);
 }
@@ -108,7 +118,19 @@ void NavigationServer::updateRobotPose(const nav_msgs::Odometry::ConstPtr& msg)
 	return;
 }
 
-geometry_msgs::PoseStamped NavigationServer::getRobotPose()
+/**
+ * @brief Subscribes to the ramping topic and updates whether the robot is still ramping
+ * No mutex because of how inconsequential this is
+ * 
+ * @param msg bool indicating if ramp has finished
+ */
+void NavigationServer::updateRobotRamping(const std_msgs::Bool::ConstPtr& msg)
+{
+	ramp_finished_ = msg->data;
+	return;
+}
+
+geometry_msgs::PoseStamped* NavigationServer::getRobotPose()
 {
 	std::lock_guard<std::mutex> pose_lock(pose_mutex_);
 	return robot_pose_;
@@ -147,6 +169,8 @@ void NavigationServer::initSubscribers(ros::NodeHandle& nh, std::string& robot_n
 	update_current_robot_pose_ = nh.subscribe("/" + robot_name + RTAB_ODOM_TOPIC, 1000, &NavigationServer::updateRobotPose, this);
 	replan_sub_ = nh.subscribe(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB + REPLAN_TRAJECTORY, 1000, &NavigationServer::replanCB, this);
 
+	ramp_finished_client_ = nh.subscribe("/" + robot_name + RAMP_DONE_TOPIC, 50, &NavigationServer::updateRobotRamping, this);
+
 	if (odom_flag)
 	{
 		ROS_INFO("[operations | nav_server | %s]: Currently using cheat odom from Gazebo", robot_name_.c_str());
@@ -184,39 +208,36 @@ void NavigationServer::publishMessage(ros::Publisher& publisher, float data)
 
 	publisher.publish(pub_data);
 }
-
-/**
- * @brief Steers the robot wheels for the angles
- * 
- * @param angles Steering angles
-	 *                  The vector will be in order:
-	 *                  Clockwise from top, starting with FRONT_LEFT
-	 * 
-	 *          element 0: Front Left Wheel
-	 *          element 1: Front Right Wheel
-	 *          element 2: Back Right Wheel
-	 *          element 3: Back Left Wheel
- */
-void NavigationServer::steerRobot(const std::vector<double>& angles)
+void NavigationServer::driveRobot(const std::vector<double>& speeds)
 {
-	publishMessage(front_left_steer_pub_, angles.at(0));
-	publishMessage(front_right_steer_pub_, angles.at(1));
-	publishMessage(back_right_steer_pub_, angles.at(2));
-	publishMessage(back_left_steer_pub_, angles.at(3));
+	operations::WheelVelocities vels;
+
+	vels.velocities = speeds;
+	vels.drive_mode = current_mode_;
+
+	wheel_ramp_pub_.publish(vels);
 }
 
-/**
- * @brief Steers the robot wheels for the angles
- * 
- * @param angle Angles at which the robot wheels will be steered
- */
+// Steers the robot wheels for the angles. Calls the other version
 void NavigationServer::steerRobot(const double angle)
 {
-	publishMessage(front_left_steer_pub_, angle);
-	publishMessage(front_right_steer_pub_, angle);
-	publishMessage(back_right_steer_pub_, angle);
-	publishMessage(back_left_steer_pub_, angle);
+	std::vector<double> angles = {angle, angle, angle, angle};
+
+	steerRobot(angles);
 }
+
+// Steers the robot wheels for the angles
+void NavigationServer::steerRobot(const std::vector<double>& angles)
+{
+	publishMessage(front_left_steer_pub_,  angles.at(0));
+	publishMessage(front_right_steer_pub_, angles.at(1));
+	publishMessage(back_right_steer_pub_,  angles.at(2));
+	publishMessage(back_left_steer_pub_,   angles.at(3));
+}
+
+/*********************************************************************/
+/******************       ROBOT VELOCITY LOGIC      ******************/
+/*********************************************************************/
 
 /**
  * @brief Move robot wheels with the given velocities
@@ -232,17 +253,18 @@ void NavigationServer::steerRobot(const double angle)
  */
 void NavigationServer::moveRobotWheels(const std::vector<double> velocity)
 {
-	std::vector<double> angular_vels;
+	moveRobotWheelsNew(velocity);
+	// std::vector<double> angular_vels;
 
-	for(int i = 0; i < velocity.size(); i++)
-	{
-		angular_vels.push_back(NavigationAlgo::linearToAngularVelocity(velocity.at(i)));
-	}
+	// for(int i = 0; i < velocity.size(); i++)
+	// {
+	// 	angular_vels.push_back(NavigationAlgo::linearToAngularVelocity(velocity.at(i)));
+	// }
 
-	publishMessage(front_left_vel_pub_, angular_vels.at(0));
-	publishMessage(front_right_vel_pub_, angular_vels.at(1));
-	publishMessage(back_right_vel_pub_, angular_vels.at(2));
-	publishMessage(back_left_vel_pub_, angular_vels.at(3));
+	// publishMessage(front_left_vel_pub_, angular_vels.at(0));
+	// publishMessage(front_right_vel_pub_, angular_vels.at(1));
+	// publishMessage(back_right_vel_pub_, angular_vels.at(2));
+	// publishMessage(back_left_vel_pub_, angular_vels.at(3));
 }
 
 /**
@@ -252,12 +274,51 @@ void NavigationServer::moveRobotWheels(const std::vector<double> velocity)
  */
 void NavigationServer::moveRobotWheels(const double velocity)
 {
-	double angular_velocity = NavigationAlgo::linearToAngularVelocity(velocity);
+	moveRobotWheelsNew(velocity);
+	// double angular_velocity = NavigationAlgo::linearToAngularVelocity(velocity);
 
-	publishMessage(front_left_vel_pub_, angular_velocity);
-	publishMessage(front_right_vel_pub_, angular_velocity);
-	publishMessage(back_left_vel_pub_, angular_velocity);
-	publishMessage(back_right_vel_pub_, angular_velocity);
+	// publishMessage(front_left_vel_pub_, angular_velocity);
+	// publishMessage(front_right_vel_pub_, angular_velocity);
+	// publishMessage(back_left_vel_pub_, angular_velocity);
+	// publishMessage(back_right_vel_pub_, angular_velocity);
+}
+
+// Ramp robot wheels at a given velocity. Calls the other version
+void NavigationServer::moveRobotWheelsNew(const double velocity)
+{
+	std::vector<double> velocities = {velocity, velocity, velocity, velocity};
+
+	moveRobotWheelsNew(velocities);
+}
+
+// Ramp robot wheels at the velocity given in the vector. Will send velocities to the
+// ramp node to properly interpolate velociies
+void NavigationServer::moveRobotWheelsNew(const std::vector<double> velocity)
+{
+	std::vector<double> angular_vels;
+
+	for(int i = 0; i < velocity.size(); i++)
+	{
+		angular_vels.push_back(NavigationAlgo::linearToAngularVelocity(velocity.at(i)));
+	}
+
+	changeWheelSpeeds(angular_vels);
+}
+
+void NavigationServer::changeWheelSpeeds(std::vector<double> desired_velocities)
+{
+	// If we are changing drive modes, ramp to 0, then ramp to our new velocity
+	if(last_mode_ != current_mode_)
+	{
+		std::vector<double> zeros {0, 0, 0, 0};
+		driveRobot(zeros);
+	}
+
+	// Ramp to desired_velocity
+	driveRobot(desired_velocities);
+
+	// Update mode after checking it's state
+	last_mode_ = current_mode_;
 }
 
 
@@ -350,6 +411,28 @@ void NavigationServer::brakeRobot(bool brake)
 	brake_client_.call(srv);
 }
 
+void NavigationServer::brakeRobotNew(bool brake)
+{
+	srcp2_msgs::BrakeRoverSrv srv;
+
+	// Its better to stop wheels from rotating if we are braking
+	moveRobotWheelsNew(0);
+	ramp_finished_ = false;
+
+	while(!ramp_finished_)
+	{
+		ros::spinOnce();
+		update_rate_->sleep();
+	}
+
+	if(brake)
+		srv.request.brake_force = 1000;
+	else
+		srv.request.brake_force = 0;
+
+	brake_client_.call(srv);
+}
+
 bool NavigationServer::rotateWheels(const geometry_msgs::PoseStamped& target_robot_pose)
 {
 	brakeRobot(false);
@@ -396,10 +479,6 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	while (abs(delta_heading) > ANGLE_EPSILON && ros::ok())
 	{
 		delta_heading = NavigationAlgo::changeInHeading(getRobotPose(), target_robot_pose, robot_name_, buffer_);
-<<<<<<< HEAD
-		// printf("Current delta heading: %frad\n", delta_heading);
-=======
->>>>>>> dfbe976930d0db10219369a76b7441d8864b381e
 
 		// target_robot_pose in the robot's frame of reference
 		geometry_msgs::PoseStamped target_in_robot_frame = target_robot_pose;
@@ -442,7 +521,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	// Reset steering of wheels
 	steerRobot(0);
 
-	brakeRobot(true);
+	brakeRobotNew(true);
 
 	return true;
 }
@@ -464,14 +543,12 @@ bool NavigationServer::driveDistance(double delta_distance)
 		if(manual_driving_)
 		{
 			// Stop moving the robot, as we were interrupted.
-			moveRobotWheels(0);
-			brakeRobot(true);
+			// moveRobotWheels(0);
+			brakeRobotNew(true);
 
 			return false;
 		}
 
-<<<<<<< HEAD
-=======
 		// Check trajectory flag before continuing
 		if(get_new_trajectory_ == true)
 		{
@@ -479,7 +556,6 @@ bool NavigationServer::driveDistance(double delta_distance)
 			return false;
 		}
 
->>>>>>> dfbe976930d0db10219369a76b7441d8864b381e
 		distance_traveled = abs(NavigationAlgo::changeInPosition(starting_pose, getRobotPose()));
 
 		// If the current distance we've traveled plus the distance since the last reset is greater than the set constant, then
@@ -499,7 +575,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 		// }
 
 		// Move the wheels forward at a constant speed
-		moveRobotWheels(BASE_DRIVE_SPEED);
+		moveRobotWheelsNew(BASE_DRIVE_SPEED);
 
 		// Allow ROS to catch up and update our subscribers
 		ros::spinOnce();
@@ -514,8 +590,8 @@ bool NavigationServer::driveDistance(double delta_distance)
 	printf("Done driving forwards\n");
 
 	// Stop moving the robot after we are done moving
-	moveRobotWheels(0);
-	brakeRobot(true);
+	// moveRobotWheels(0);
+	brakeRobotNew(true);
 
 	return true;
 }
@@ -541,8 +617,8 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		if(manual_driving_)
 		{	
 			// Stop moving the robot, as we were interrupted.
-			moveRobotWheels(0);
-			brakeRobot(true);
+			// moveRobotWheelsNew(0);
+			brakeRobotNew(true);
 
 			return false;
 		}
@@ -619,7 +695,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		steerRobot(wheel_angles);
 
 		// Set wheels at speed
-		moveRobotWheels(wheel_velocities);
+		moveRobotWheelsNew(wheel_velocities);
 
 		// Update distance to waypoint
 		distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, getRobotPose());
@@ -632,16 +708,18 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	total_distance_traveled_ += distance_traveled;
 
 	// Stop moving the robot after we are done moving
-	moveRobotWheels(0);
-	brakeRobot(true);
+	// moveRobotWheelsNew(0);
+	brakeRobotNew(true);
 
 	return true;
 }
 
 void NavigationServer::requestNewTrajectory(bool replan_request)
 {
-	moveRobotWheels(0);
-	brakeRobot(true);
+	ROS_INFO("[operations | nav_server | %s]: Resetting trajectory flag after inital turn of new goal.\n", robot_name_.c_str());
+
+	// moveRobotWheels(0);
+	brakeRobotNew(true);
 
 	// Reset the distance traveled
 	total_distance_traveled_ = 0;
@@ -971,7 +1049,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 
 	ROS_INFO("[operations | nav_server | %s]: Finished automatic goal!", robot_name_.c_str());
 
-	brakeRobot(true);
+	brakeRobotNew(true);
 
 	operations::NavigationResult res;
 	res.result = COMMON_RESULT::SUCCESS;
@@ -990,7 +1068,7 @@ void NavigationServer::linearDriving(const operations::NavigationGoalConstPtr &g
 	if(0 == goal->forward_velocity)
 	{
 		printf("0 linear, braking\n");
-		brakeRobot(true);
+		brakeRobotNew(true);
 	}
 	
 	operations::NavigationResult res;
@@ -1087,6 +1165,9 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 	// Zero out the total distance traveled when we receive a new goal
 	total_distance_traveled_ = 0;
 
+	// Update the new drive mode. Used for wheel velocity ramping
+	current_mode_ = NAV_TYPE(goal->drive_mode);
+
 	switch(goal->drive_mode)
 	{
 		case NAV_TYPE::MANUAL:
@@ -1140,6 +1221,6 @@ void NavigationServer::cancelGoal()
 {
 	manual_driving_ = true;
 	steerRobot(0);
-	brakeRobot(true);
+	brakeRobotNew(true);
 	ROS_WARN("[operations | nav_server | %s]: Clearing current goal, got a new one", robot_name_.c_str());
 }

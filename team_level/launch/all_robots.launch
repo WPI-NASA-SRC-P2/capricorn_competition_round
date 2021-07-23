@@ -27,6 +27,7 @@
         <arg name="output" value="$(arg output)" />
         <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
         <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
+        <arg name="get_true_pose" value="false" />
     </include>
 
     <include file="$(find state_machines)/launch/start_scout.launch">
