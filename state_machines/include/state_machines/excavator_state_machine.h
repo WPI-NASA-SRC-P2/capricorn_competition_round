@@ -503,15 +503,21 @@ public:
    void exitPoint() override;
    void goToRepair();
    void goToRepairRecovery();
+   void centerToProcPlant();
+   void visualResetOdom();
+   float getProcPlantDepth();
    void idleExcavator() {}
 
 private:
-   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
+   bool first_GTR, first_GTRR, second_GTRR, first_CPP, first_VRO, resetOdomDone_, proc_plant_in_vision_, macro_state_done_, macro_state_succeeded_;
    geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
+   float camera_offset_ = 0.4, proc_plant_distance_;
 
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_REPAIR,
       GO_TO_REPAIR_RECOVERY,
+      CENTER_TO_PROC_PLANT,
+      VISUAL_RESET_ODOM,
       EXCAVATOR_IDLE
    };
 

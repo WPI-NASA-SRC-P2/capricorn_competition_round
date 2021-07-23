@@ -331,16 +331,22 @@ public:
 
    void goToRepair();
    void goToRepairRecovery();
+   void centerToProcPlant();
+   void visualResetOdom();
+   float getProcPlantDepth();
    void idleScout() {}
 
 private:
-   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
+   bool first_GTR, first_GTRR, second_GTRR, first_CPP, first_VRO, macro_state_done_, macro_state_succeeded_, proc_plant_in_vision_, resetOdomDone_;
    geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
    operations::NavigationGoal navigation_action_goal_;
+   float proc_plant_distance_, camera_offset_ = 0.4;
 
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_REPAIR,
       GO_TO_REPAIR_RECOVERY,
+      CENTER_TO_PROC_PLANT,
+      VISUAL_RESET_ODOM,
       SCOUT_IDLE
    };
 
