@@ -68,6 +68,7 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    OdomError.msg
    PosePR.msg
+   RSReset.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -267,6 +268,7 @@ install(DIRECTORY launch/
 install(FILES
   msg/OdomError.msg
   msg/PosePR.msg
+  msg/RSReset.msg
   srv/ResetOdom.srv
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

@@ -1,5 +1,6 @@
 /*
 CREATED BY: Team Bebop
+EMAIL : mmuqeetjibran@wpi.edu
 Slack: #team_bebop
 
 TEAM CAPRICORN
@@ -43,7 +44,13 @@ using namespace COMMON_NAMES;
 
 // stored ground truth at hopper
 geometry_msgs::PoseStamped common_gt_pose_value;
+// have a global geometry_msgs::Quaternion which will be updated in imu callback
 bool common_gt_pose_saved = false;
+
+const float DIST_PROCESSING_PLANT_HOPPER = 6.0; // Distance between the robot reset position and the processing plant center
+const float DIST_PROCESSING_PLANT_REPAIR_STATION = 13.0; // Distance between the estimated robot parking position and 
+                                                        // the center of the processing plant
+
 
 // stored whether first ground truth call made for each robot
 std::unordered_set<std::string> used_groundtruth, expected_robot_names{SCOUT_1_NAME, SCOUT_2_NAME, SCOUT_3_NAME, EXCAVATOR_1_NAME, EXCAVATOR_2_NAME, EXCAVATOR_3_NAME, HAULER_1_NAME, HAULER_2_NAME, HAULER_3_NAME};
@@ -215,6 +222,31 @@ bool resetOdomPose(const std::string& ref_robot, const std::string& target_name)
     }
 }
 
+double getYawFromQuaternion(const geometry_msgs::Quaternion &msg) {
+    
+    tf::Quaternion q(
+        msg.x,
+        msg.y,
+        msg.z,
+        msg.w);
+    tf::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+    return yaw;
+}
+
+// void getOdomRPY(double &r, double &p, double &y)
+// {
+//     geometry_msgs::Quaternion init_quat = global_odometry.pose.pose.orientation;//pose.pose.orientation from odom
+//     tf2::Quaternion init_tf_quat(init_quat.x,
+//                                  init_quat.y,
+//                                  init_quat.z,
+//                                  init_quat.w);
+    
+//     tf2::Matrix3x3 init_m(init_tf_quat);
+//     init_m.getRPY(r, p, y);
+// }
+
 // service callback function that resets the odometry of the specified rover w.r.t. the specified pose
 // if use_ground_truth
 // method returns a boolean due to services needing to have a boolean return statement and to provide feedback on success of service call
@@ -226,6 +258,7 @@ bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res
     std::string ref_robot_name = req.ref_robot_name;
     bool use_ground_truth = req.use_ground_truth;
     bool at_hopper = req.at_hopper;
+    bool visual_reset = req.visual_reset.visual_reset;
 
     // if the robot called does not exist, throw an exception
     // TODO: make sure this throws an exception 
@@ -268,6 +301,90 @@ bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res
         if (res.success)
         {        
             ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: " + " At Hopper Reset Successful");
+        }
+        return res.success;
+    }
+
+/** @brief: 
+ * In order to avoid parking at hopper to reset odom, we instead reset at the repair station itself.
+ * The hauler parks at the hopper intially and resets its odom with the ground truth and stores it here.
+ * We know the pose of hopper wrt the hauler, therefore, we know where the processing plant is. 
+ * In the resetAtRepairStation state, we look at the processing plant, record the distance. We then 
+ * simply add/subtract (depending on viewpoint, the yaw takes care of that)
+ * to the processing plant pose to get the pose of the robot.
+ * Hurray!
+ * */ 
+
+    if(visual_reset)
+    {
+        if(!common_gt_pose_saved)
+        {
+            ROS_ERROR_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: Request to reset at Repair Station before Hopper denied");
+            res.success = false;
+            return false;
+        }
+
+        geometry_msgs::PoseStamped robot_reset_pose;
+        robot_reset_pose.header = common_gt_pose_value.header;
+        float pp_center_x = common_gt_pose_value.pose.position.x - DIST_PROCESSING_PLANT_HOPPER;  //The offset we need to get the location of the procesing plant itself.
+        float pp_center_y = common_gt_pose_value.pose.position.y;
+        float depth_pp = req.visual_reset.depth_pp;
+        geometry_msgs::Quaternion imu_orientation_pp = req.visual_reset.orientation_pp;
+        float imu_yaw_pp = getYawFromQuaternion(imu_orientation_pp);
+
+        //reset wrt repair station
+        float rs_center_x = common_gt_pose_value.pose.position.x;
+        float rs_center_y = common_gt_pose_value.pose.position.y;
+        float depth_rs = req.visual_reset.depth_rs;
+        geometry_msgs::Quaternion imu_orientation_rs = req.visual_reset.orientation_rs;
+        float imu_yaw_rs = getYawFromQuaternion(imu_orientation_rs);
+
+
+        // If we cant see the processing plant, we don't pass in depth, so that its set to zero and we use this edge-case-pose instead. 
+        // if(req.visual_reset.depth == 0)
+        // {
+        //     robot_reset_pose_rs.pose.position.x = pp_center_x;
+        //     robot_reset_pose_rs.pose.position.y = pp_center_y - DIST_PROCESSING_PLANT_REPAIR_STATION;
+        //     robot_reset_pose.pose.orientation.z = 0.707;                // Looking at 90-degrees, basically we ended up beside the repair station, which is where we cant see the processing plant. 
+        //     robot_reset_pose.pose.orientation.w = 0.707;
+        // }
+
+        float temp_x = 0, temp_y = 0, data_points = 0;
+        if(depth_pp != 0)
+        {
+            temp_x += pp_center_x - (depth_rs * std::cos(imu_yaw_pp));
+            temp_y += pp_center_y - (depth_rs * std::sin(imu_yaw_pp));
+            data_points++;
+        }
+        if(depth_rs != 0)     
+        {
+            temp_x += rs_center_x - (depth_pp * std::cos(imu_yaw_rs));
+            temp_y += rs_center_y - (depth_pp * std::sin(imu_yaw_rs));
+            data_points++;
+        } 
+        
+        if(data_points == 0)
+        {
+            ROS_ERROR_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: Both the Repair station and Proc Plant depths not provided");
+            res.success = false;
+            return false;
+        }
+        else
+        {
+            temp_x /= data_points;
+            temp_y /= data_points;
+            robot_reset_pose.pose.position.x = temp_x;
+            robot_reset_pose.pose.position.y = temp_y;
+            robot_reset_pose.pose.position.z = 0;
+            robot_reset_pose.pose.orientation = req.visual_reset.robot_orientation;
+        }
+
+
+        ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: " << "Reset Pose:" << robot_reset_pose);
+        res.success = resetOdomPose(target_robot_name, robot_reset_pose);
+        if (res.success)
+        {        
+            ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: " + " At RepariStation Reset Successful");
         }
         return res.success;
     }
@@ -321,6 +438,7 @@ int main(int argc, char *argv[])
 
     // set up service for reseting the odometry of the rover 
     ros::ServiceServer service = nh.advertiseService(CAPRICORN_TOPIC + RESET_ODOMETRY, resetOdom);
+    
 
     // indicate that reset is complete
     ROS_INFO("[MAPLOC | reset_odom.cpp | SERVICE]: reset rover odometry service, online");

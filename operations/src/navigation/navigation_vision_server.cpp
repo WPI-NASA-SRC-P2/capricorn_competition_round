@@ -38,7 +38,8 @@ rosgraph_msgs::Clock g_start_clock;
 std::string g_robot_name;
 geometry_msgs::PoseStamped g_robot_pose;
 
-const int ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5, NAV_LOC_DIST_THRESH = 15;
+const int ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5, NAV_LOC_DIST_THRESH = 10;
+const int CONTINUOUS_DETECTION_FRAMES = 5;
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 1, g_angular_vel_step_size = 0.05, TIMER_THRESH = 20.0;
 const double NOT_AVOID_OBSTACLE_THRESHOLD = 5.0;
 std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex, g_clock_mutex;
@@ -190,7 +191,7 @@ bool center()
     static float prev_angular_velocity;
     static int lost_detection_times = 0, true_detection_times = 0, revolve_direction = -1, centered_times = 0;
 
-    if (centered_times > 10)
+    if (centered_times > CONTINUOUS_DETECTION_FRAMES)
     {
         g_nav_goal.angular_velocity = 0;
         centered_times = 0;
@@ -245,7 +246,7 @@ bool center()
             // if the bounding box is in the center of image following the narrow angle
             centered_times++;
 
-            if (centered_times > 10)
+            if (centered_times > CONTINUOUS_DETECTION_FRAMES)
             {
                 g_nav_goal.angular_velocity = 0;
             }
@@ -690,7 +691,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         object_found_frames = 0;
     }
 
-    if (object_found_frames > 10)
+    if (object_found_frames > CONTINUOUS_DETECTION_FRAMES)
     {
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;

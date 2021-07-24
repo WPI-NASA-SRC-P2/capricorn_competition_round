@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 		cSchd.addState(new IdleState(nh, g_robot_name));
 		cSchd.addState(new GoToRepairStation(nh, g_robot_name));
 		cSchd.addState(new ScoutGoToLoc(nh, g_robot_name));
+		cSchd.addState(new VisualResetOfOdometry(nh, g_robot_name));
 		cSchd.setInitialState(ROBOT_IDLE_STATE);
 		// cSchd.setInitialState(SCOUT_UNDOCK);
 		cSchd.exec();

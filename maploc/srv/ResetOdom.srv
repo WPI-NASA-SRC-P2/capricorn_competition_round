@@ -3,5 +3,7 @@ string target_robot_name
 string ref_robot_name
 bool use_ground_truth
 bool at_hopper
+RSReset visual_reset
+
 ---
 bool success

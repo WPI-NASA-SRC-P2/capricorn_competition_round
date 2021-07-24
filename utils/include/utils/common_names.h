@@ -197,6 +197,7 @@ namespace COMMON_NAMES
     SCOUT_RESET_ODOM_GROUND_TRUTH, // reset odometry of scout w.r.t. its starting position in sim
     SCOUT_GOTO_REPAIR_STATION,   // Scout goes to repair station
     SCOUT_PARK_REPAIR_STATION,   // Scout parks at repair station
+    SCOUT_VISUAL_RESET_ODOM,
 
     /**************EXCAVATOR STATES**************/  
     //11
@@ -220,6 +221,7 @@ namespace COMMON_NAMES
     EXCAVATOR_GO_TO_INIT_LOCATION,
     EXCAVATOR_GO_TO_LOOKOUT_LOCATION,
     EXCAVATOR_BALLET_DANCING,
+    EXCAVATOR_VISUAL_RESET_ODOM,
     
     /**************HAULER STATES**************/
     //25
@@ -246,6 +248,7 @@ namespace COMMON_NAMES
     HAULER_GO_TO_EXCAVATOR_RECOVERY,
     HAULER_GO_TO_LOOKOUT_LOCATION,
     HAULER_BALLET_DANCING,
+    HAULER_VISUAL_RESET_ODOM,
     ROBOT_IDLE_STATE,
 
     /***************ROBOTS MACRO STATES***************/

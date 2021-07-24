@@ -56,7 +56,12 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   BESIDE_REPAIR_STATION.pose.position.y = -25.0;
   BESIDE_REPAIR_STATION.pose.orientation.z = 1.0;
 
-//   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
+  UNDOCK_LOCATION.header.frame_id = COMMON_NAMES::MAP;
+  UNDOCK_LOCATION.pose.position.x = 6.0;
+  UNDOCK_LOCATION.pose.position.y = 8.0;
+  UNDOCK_LOCATION.pose.orientation.w = 1.0;
+
+  objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ExcavatorState::odomCallback, this);
 }
 
@@ -82,7 +87,12 @@ void ExcavatorState::odomCallback(const nav_msgs::Odometry odom)
    
 }
 
-/** TODO: Check if the object detection callback is needed*/
+void ExcavatorState::objectsCallback(const perception::ObjectArray::ConstPtr objs)
+{
+  const std::lock_guard<std::mutex> lock(objects_mutex_);
+  vision_objects_ = objs;
+  objects_msg_received_ = true;
+}
 
 /** TODO: Implememt entrypoint, transition, step and exit points for all states mentioned in the flow shown by ashay
  *  STATE_MACHINE_TASK::EXCAVATOR_GO_TO_LOC,  --> 2
@@ -783,7 +793,7 @@ void ExcavatorResetOdomAtHopper::entryPoint()
    state_done =false;
 
    // Setting poses
-   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
+   hardcoded_pose_ = UNDOCK_LOCATION;
    // Currently not caring about orientations
    GTPP_pose_ = excavator_pose_;         // Go to Proc plant Recovery pose (supposedly getting to this pose will enable 'seeing' the Proc plant as it is assumed the 
                                          // rover is at the left of repair station and hence cant see it. If its in a crater, hopefully travelling this 10m will get it out of it.)         
@@ -841,7 +851,8 @@ void ExcavatorResetOdomAtHopper::goToProcPlant()
    {
       operations::NavigationVisionGoal navigation_vision_goal;
       navigation_vision_goal.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
-      navigation_vision_goal.mode = V_REACH;
+      navigation_vision_goal.mode = V_NAV_AND_NAV_VISION;
+      navigation_vision_goal_.goal_loc = PROC_PLANT_LOCATION;
       navigation_vision_client_->sendGoal(navigation_vision_goal);
       ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Going to Processing Plant vision goal sent");
       first_GTPP = false;
@@ -964,7 +975,7 @@ void ExcavatorResetOdomAtHopper::goToLookoutLocation()
    navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
    navigation_action_goal_.pose = hardcoded_pose_;
    navigation_client_->sendGoal(navigation_action_goal_);
-   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Lookout Location : " << hardcoded_pose_);
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Common Undocking Location  : " << hardcoded_pose_);
    first_GTLL = false;
    }
    
@@ -1112,7 +1123,6 @@ void ExcavatorGoToRepairStation::exitPoint()
    navigation_client_->cancelGoal();
 }
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////  G O  TO  S C O U T  R E C O V E R Y  S T A T E  C L A S S /////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1123,6 +1133,7 @@ void ExcavatorGoToScoutRecovery::entryPoint()
    // define the offset distance for generating poses
    search_offset_ = 10.0;
    // set up the four recovery poses
+   scout_pose_ = m_pcRobotScheduler->getDesiredPose();  
    createPoses();
    // reset the pose that is going to be checked
    pose_index_ = 0;
@@ -1144,7 +1155,7 @@ void ExcavatorGoToScoutRecovery::step()
    // Send on search whenever previous search is done [AND] searches are not exhausted [AND] The goal hasn't been sent yet [AND] scout hasn't been found yet.
    searchForScout(pose_index_);
    // Check if searches are exhausted.
-   searches_exhausted_ = (pose_index_ > 3);
+   searches_exhausted_ = (pose_index_ > 4);
    // Reset flags to enable searching on a new pose, gven conditions mentioned above
    if(search_done_ && !(searches_exhausted_) && !(scout_found_)) 
    {
@@ -1197,21 +1208,22 @@ void ExcavatorGoToScoutRecovery::createPoses()
 {
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Creating poses.");
    
+   recovery_poses_[0] = scout_pose_;
    recovery_pose_ = excavator_pose_;
    recovery_pose_.pose.position.x += search_offset_;
-   recovery_poses_[0] = recovery_pose_;
-
-   recovery_pose_ = excavator_pose_;
-   recovery_pose_.pose.position.x -= search_offset_;
    recovery_poses_[1] = recovery_pose_;
 
    recovery_pose_ = excavator_pose_;
-   recovery_pose_.pose.position.y += search_offset_;
+   recovery_pose_.pose.position.x -= search_offset_;
    recovery_poses_[2] = recovery_pose_;
 
    recovery_pose_ = excavator_pose_;
-   recovery_pose_.pose.position.y -= search_offset_;
+   recovery_pose_.pose.position.y += search_offset_;
    recovery_poses_[3] = recovery_pose_;
+
+   recovery_pose_ = excavator_pose_;
+   recovery_pose_.pose.position.y -= search_offset_;
+   recovery_poses_[4] = recovery_pose_;
 
    // ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << " Poses created: [1] " << recovery_poses_[0] << 
    //                                                                                                    "\n[2] " << recovery_poses_[1] << 
@@ -1452,3 +1464,170 @@ void ExcavatorBalletDancing::exitPoint()
     navigation_client_->cancelGoal();
 }
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// V I S U A L  R E S E T  O D O M  S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ExcavatorVisualResetOfOdometry::entryPoint()
+{
+   // declare entrypoint variables
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to do visual odom-reset"); 
+   proc_plant_distance_ = 0.0;
+   repair_station_distance_ = 0.0;
+   no_of_measurements_ = 20;
+   MAX_TRIES = 300;
+   first_ = true;
+
+   micro_state = CENTER_TO_PROC_PLANT;
+}
+
+void ExcavatorVisualResetOfOdometry::step()
+{
+   switch (micro_state)
+   {
+   case CENTER_TO_PROC_PLANT: 
+      centerToObject(OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
+      break;
+   case GET_PROC_PLANT_DISTANCE:
+      proc_plant_distance_ = getObjectDepth(OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
+      break;
+   case CENTER_TO_REPAIR_STATION:
+      centerToObject(OBJECT_DETECTION_REPAIR_STATION_CLASS);
+      break;
+   case GET_REPAIR_STATION_DISTANCE:
+      repair_station_distance_ = getObjectDepth(OBJECT_DETECTION_REPAIR_STATION_CLASS);
+      break;
+   case CALL_RESET:
+      visualResetOdom();
+      break;
+   case EXCAVATOR_IDLE:
+      idleExcavator();
+      break;
+   default:
+      break;
+   }
+}
+
+bool ExcavatorVisualResetOfOdometry::isDone()
+{
+   current_state_done_ = macro_state_done_;
+   return current_state_done_;
+}
+
+bool ExcavatorVisualResetOfOdometry::hasSucceeded()
+{
+   last_state_succeeded_ = macro_state_succeeded_;
+   return last_state_succeeded_;
+}
+
+void ExcavatorVisualResetOfOdometry::exitPoint()
+{
+   navigation_vision_client_->cancelGoal();
+}
+
+void ExcavatorVisualResetOfOdometry::centerToObject(const std::string& centering_object)
+{
+   if(first_)
+   {
+      navigation_vision_goal_.desired_object_label = centering_object;
+      navigation_vision_goal_.mode = V_CENTER;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Centering to " << centering_object << " vision goal sent"); 
+      first_ = false;
+   }
+
+   // If centering is done, check if it has succeeded. If it does, we proceed to obtain its depth and orientation
+   // If it doesnt succeed, we instead try to center to repair station.
+   bool is_done = navigation_vision_client_->getState().isDone();
+   bool has_succeeded = false;
+   if(is_done)
+   {
+      has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      if(has_succeeded)
+      {
+         if(centering_object == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+         {
+            proc_plant_orientation_ = odom_.pose.pose.orientation;
+            micro_state = GET_PROC_PLANT_DISTANCE;
+         }
+            
+         else
+         {
+            repair_station_orientation_ = odom_.pose.pose.orientation;
+            micro_state = GET_REPAIR_STATION_DISTANCE;
+         }
+      }
+         
+      else
+      {
+         if(centering_object == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+            micro_state = CENTER_TO_REPAIR_STATION;
+         else
+            micro_state = CALL_RESET;
+      }         
+      first_ = true;
+   }  
+}
+
+float ExcavatorVisualResetOfOdometry::getObjectDepth(const std::string& centering_object) 
+{
+   // Try to get an image with the proc_plant in it, tries ==> no_of_attempts, reading_count ==> no_of_time we actually get a reading.
+   int reading_count = 0, tries = 0;
+   float sum_of_all_readings;
+   while(ros::ok() && ((reading_count < no_of_measurements_) && (tries < MAX_TRIES))) // Can get stuck 
+   {
+      tries++;
+      if(!objects_msg_received_)
+      {
+         ros::Duration(0.01).sleep();
+         continue;
+      }
+
+      for(int i{}; i < vision_objects_->obj.size() ; i++ )
+      {
+         if(vision_objects_->obj.at(i).label == centering_object);
+         {
+            reading_count++;
+            float camera_depth = vision_objects_->obj.at(i).point.pose.position.z;
+            sum_of_all_readings += (std::sqrt(std::pow(camera_depth, 2) - std::pow(camera_offset_, 2)) + camera_offset_); 
+            ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Got distance to " << centering_object);
+         }
+      }
+   }
+
+   if(centering_object == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+      micro_state = CENTER_TO_REPAIR_STATION;
+   if(centering_object == OBJECT_DETECTION_REPAIR_STATION_CLASS)
+      micro_state = CALL_RESET;
+
+   if(reading_count == 0)
+      return 0.0;
+   else   
+      return sum_of_all_readings/reading_count;
+   
+}
+
+void ExcavatorVisualResetOfOdometry::visualResetOdom()
+{
+
+   ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+   maploc::ResetOdom srv;
+
+   srv.request.target_robot_name = robot_name_;
+   srv.request.visual_reset.visual_reset = true;
+   srv.request.visual_reset. depth_pp = proc_plant_distance_;
+   srv.request.visual_reset. depth_rs = repair_station_distance_;
+   srv.request.visual_reset.orientation_pp = proc_plant_orientation_;
+   srv.request.visual_reset.orientation_rs = repair_station_orientation_;
+   srv.request.visual_reset.robot_orientation = odom_.pose.pose.orientation;
+   
+   resetOdomDone_ = resetOdometryClient.call(srv);  
+   macro_state_done_ = true;
+   macro_state_succeeded_ = resetOdomDone_;
+
+   if(resetOdomDone_)
+      ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Odom reset successful!");
+   else 
+      ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Reset didn't happen, good luck wherever you are going."); 
+}

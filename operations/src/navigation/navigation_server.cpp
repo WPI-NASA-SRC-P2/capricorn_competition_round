@@ -1190,18 +1190,18 @@ void NavigationServer::execute(const operations::NavigationGoalConstPtr &goal)
 		return;
 	}
 
-	ROS_INFO("[operations | nav_server | %s]: Bool for final rotate: %d", robot_name_.c_str(), goal->final_rotate);
+	// ROS_INFO("[operations | nav_server | %s]: Bool for final rotate: %d", robot_name_.c_str(), goal->final_rotate);
 
-  	ROS_INFO("[operations | nav_server | %s]: Received NavigationGoal, dispatching", robot_name_.c_str());
+  	// ROS_INFO("[operations | nav_server | %s]: Received NavigationGoal, dispatching", robot_name_.c_str());
 	if(goal->epsilon == 0.0)
 	{
 		c_dist_epsilon_ = DIST_EPSILON;
-		ROS_INFO("[operations | nav_server | %s]: Default epsilon", robot_name_.c_str());
+		// ROS_INFO("[operations | nav_server | %s]: Default epsilon", robot_name_.c_str());
 	}
 	else
 	{
 		c_dist_epsilon_ = goal->epsilon;
-		ROS_INFO("[operations | nav_server | %s]: Got epsilon of %f", robot_name_.c_str(), c_dist_epsilon_);
+		// ROS_INFO("[operations | nav_server | %s]: Got epsilon of %f", robot_name_.c_str(), c_dist_epsilon_);
 	}
 
 	// Zero out the total distance traveled when we receive a new goal
