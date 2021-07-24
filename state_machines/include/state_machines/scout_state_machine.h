@@ -331,22 +331,16 @@ public:
 
    void goToRepair();
    void goToRepairRecovery();
-   void centerToProcPlant();
-   void visualResetOdom();
-   float getProcPlantDepth();
    void idleScout() {}
 
 private:
-   bool first_GTR, first_GTRR, second_GTRR, first_CPP, first_VRO, macro_state_done_, macro_state_succeeded_, proc_plant_in_vision_, resetOdomDone_;
+   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
    geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
    operations::NavigationGoal navigation_action_goal_;
-   float proc_plant_distance_, camera_offset_ = 0.4;
 
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_REPAIR,
       GO_TO_REPAIR_RECOVERY,
-      CENTER_TO_PROC_PLANT,
-      VISUAL_RESET_ODOM,
       SCOUT_IDLE
    };
 
@@ -381,25 +375,44 @@ private:
 };
 
 /**
- * @brief Sends the scout to the given goal
+ * @brief Resets the odom by triangulating its position wrt to the proc_plant and repair station.
  * 
- * @param isDone() when near a volatile
- * @param hasSucceeded() when near a volatile
+ * @param isDone() if it tries to reset once
+ * @param hasSucceeded() if reset is successful
  */
-class ResetOdomAtRepairStation : public ScoutState {
+class VisualResetOfOdometry : public ScoutState {
 public:   
-   ResetOdomAtRepairStation(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_RESET_ODOM_AT_REPAIR_STATION, nh, robot_name) {}
+   VisualResetOfOdometry(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_VISUAL_RESET_ODOM, nh, robot_name) {}
    bool isDone() override;
    // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
    bool hasSucceeded() override;
 
    void entryPoint() override;
    void step() override;
+   State& transition() override{}
    void exitPoint() override;
-   float getProcPlantDepth();
+   void centerToObject(const std::string& centering_object);
+   float getObjectDepth(const std::string& centering_object);
+   void visualResetOdom();
+   void idleScout() {}
+
+
 private:
-   bool first_, proc_plant_in_vision_, resetOdomDone_;
-   float proc_plant_distance_, camera_offset_ = 0.4;
+   bool first_, resetOdomDone_, macro_state_done_, macro_state_succeeded_;
+   float proc_plant_distance_, camera_offset_ = 0.4, repair_station_distance_;
+   geometry_msgs::Quaternion proc_plant_orientation_, repair_station_orientation_;
+   int no_of_measurements_, MAX_TRIES;
+
+   enum RESET_ODOM_MICRO_STATES{
+      CENTER_TO_PROC_PLANT,
+      GET_PROC_PLANT_DISTANCE,
+      CENTER_TO_REPAIR_STATION,
+      GET_REPAIR_STATION_DISTANCE,
+      CALL_RESET,
+      SCOUT_IDLE
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
 };
 
 

@@ -1197,6 +1197,172 @@ void HaulerBalletDancing::exitPoint()
     navigation_client_->cancelGoal();
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// V I S U A L  R E S E T  O D O M  S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void HaulerVisualResetOfOdometry::entryPoint()
+{
+   // declare entrypoint variables
+   ROS_INFO_STREAM("[STATE_MACHINES | excahauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to do visual odom-reset"); 
+   proc_plant_distance_ = 0.0;
+   repair_station_distance_ = 0.0;
+   no_of_measurements_ = 20;
+   MAX_TRIES = 300;
+   first_ = true;
+
+   micro_state = CENTER_TO_PROC_PLANT;
+}
+
+void HaulerVisualResetOfOdometry::step()
+{
+   switch (micro_state)
+   {
+   case CENTER_TO_PROC_PLANT: 
+      centerToObject(OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
+      break;
+   case GET_PROC_PLANT_DISTANCE:
+      proc_plant_distance_ = getObjectDepth(OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
+      break;
+   case CENTER_TO_REPAIR_STATION:
+      centerToObject(OBJECT_DETECTION_REPAIR_STATION_CLASS);
+      break;
+   case GET_REPAIR_STATION_DISTANCE:
+      repair_station_distance_ = getObjectDepth(OBJECT_DETECTION_REPAIR_STATION_CLASS);
+      break;
+   case CALL_RESET:
+      visualResetOdom();
+      break;
+   case HAULER_IDLE:
+      idleHauler();
+      break;
+   default:
+      break;
+   }
+}
+
+bool HaulerVisualResetOfOdometry::isDone()
+{
+   current_state_done_ = macro_state_done_;
+   return current_state_done_;
+}
+
+bool HaulerVisualResetOfOdometry::hasSucceeded()
+{
+   last_state_succeeded_ = macro_state_succeeded_;
+   return last_state_succeeded_;
+}
+
+void HaulerVisualResetOfOdometry::exitPoint()
+{
+   navigation_vision_client_->cancelGoal();
+}
+
+void HaulerVisualResetOfOdometry::centerToObject(const std::string& centering_object)
+{
+   if(first_)
+   {
+      navigation_vision_goal_.desired_object_label = centering_object;
+      navigation_vision_goal_.mode = V_CENTER;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | excahauler_state_machine.cpp | " << robot_name_ << "]: Centering to " << centering_object << " vision goal sent"); 
+      first_ = false;
+   }
+
+   // If centering is done, check if it has succeeded. If it does, we proceed to obtain its depth and orientation
+   // If it doesnt succeed, we instead try to center to repair station.
+   bool is_done = navigation_vision_client_->getState().isDone();
+   bool has_succeeded = false;
+   if(is_done)
+   {
+      has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      if(has_succeeded)
+      {
+         if(centering_object == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+         {
+            proc_plant_orientation_ = odom_.pose.pose.orientation;
+            micro_state = GET_PROC_PLANT_DISTANCE;
+         }
+            
+         else
+         {
+            repair_station_orientation_ = odom_.pose.pose.orientation;
+            micro_state = GET_REPAIR_STATION_DISTANCE;
+         }
+      }
+         
+      else
+      {
+         if(centering_object == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+            micro_state = CENTER_TO_REPAIR_STATION;
+         else
+            micro_state = CALL_RESET;
+      }         
+      first_ = true;
+   }  
+}
+
+float HaulerVisualResetOfOdometry::getObjectDepth(const std::string& centering_object) 
+{
+   // Try to get an image with the proc_plant in it, tries ==> no_of_attempts, reading_count ==> no_of_time we actually get a reading.
+   int reading_count = 0, tries = 0;
+   float sum_of_all_readings;
+   while(ros::ok() && ((reading_count < no_of_measurements_) && (tries < MAX_TRIES))) // Can get stuck 
+   {
+      tries++;
+      if(!objects_msg_received_)
+      {
+         ros::Duration(0.01).sleep();
+         continue;
+      }
+
+      for(int i{}; i < vision_objects_->obj.size() ; i++ )
+      {
+         if(vision_objects_->obj.at(i).label == centering_object);
+         {
+            reading_count++;
+            float camera_depth = vision_objects_->obj.at(i).point.pose.position.z;
+            sum_of_all_readings += (std::sqrt(std::pow(camera_depth, 2) - std::pow(camera_offset_, 2)) + camera_offset_); 
+            ROS_INFO_STREAM("STATE_MACHINES | excahauler_state_machine | " << robot_name_ << " ]: Got distance to " << centering_object);
+         }
+      }
+   }
+
+   if(centering_object == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+      micro_state = CENTER_TO_REPAIR_STATION;
+   if(centering_object == OBJECT_DETECTION_REPAIR_STATION_CLASS)
+      micro_state = CALL_RESET;
+
+   if(reading_count == 0)
+      return 0.0;
+   else   
+      return sum_of_all_readings/reading_count;
+   
+}
+
+void HaulerVisualResetOfOdometry::visualResetOdom()
+{
+
+   ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+   maploc::ResetOdom srv;
+
+   srv.request.target_robot_name = robot_name_;
+   srv.request.visual_reset.visual_reset = true;
+   srv.request.visual_reset. depth_pp = proc_plant_distance_;
+   srv.request.visual_reset. depth_rs = repair_station_distance_;
+   srv.request.visual_reset.orientation_pp = proc_plant_orientation_;
+   srv.request.visual_reset.orientation_rs = repair_station_orientation_;
+   srv.request.visual_reset.robot_orientation = odom_.pose.pose.orientation;
+   
+   resetOdomDone_ = resetOdometryClient.call(srv);  
+   macro_state_done_ = true;
+   macro_state_succeeded_ = resetOdomDone_;
+
+   if(resetOdomDone_)
+      ROS_INFO_STREAM("STATE_MACHINES | hauler_state_machine | " << robot_name_ << " ]: Odom reset successful!");
+   else 
+      ROS_INFO_STREAM("STATE_MACHINES | hauler_state_machine | " << robot_name_ << " ]: Reset didn't happen, good luck wherever you are going."); 
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////  I D L E  S T A T E  C L A S S ////////////////////////////////////
