@@ -220,13 +220,15 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
       if(excavator_done_and_succeeded)
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Succeeded to reach Scout");
-         if (scout_task == SCOUT_LOCATE_VOLATILE && scout_done_and_succeeded)
+         if (scout_task == SCOUT_VISUAL_RESET_ODOM && robot_state_register->isDone(scout_in_team))
+            return UNDOCK_SCOUT;
+         if (scout_task == SCOUT_LOCATE_VOLATILE && robot_state_register->isDone(scout_in_team))
             return UNDOCK_SCOUT;
       }
       else if (excavator_done_and_failed)
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Failed to reach Scout");
-         return RECOVERY_SCOUT_FINDING;
+         return RESET_SCOUT_EXCAV_ODOM;
       }
    }
    if (excavator_task == EXCAVATOR_GO_TO_SCOUT_RECOVERY)
@@ -234,7 +236,9 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
       if(excavator_done_and_succeeded)
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ] Excavator Succeeded to reach Scout");
-         if (scout_task == SCOUT_LOCATE_VOLATILE && scout_done_and_succeeded)
+         if (scout_task == SCOUT_VISUAL_RESET_ODOM && robot_state_register->isDone(scout_in_team))
+            return UNDOCK_SCOUT;
+         if (scout_task == SCOUT_LOCATE_VOLATILE && robot_state_register->isDone(scout_in_team))
             return UNDOCK_SCOUT;
       }
       else if (excavator_done_and_failed)
@@ -245,6 +249,13 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
    }
    if (scout_task == SCOUT_UNDOCK && scout_done_and_succeeded)
       return PARK_EXCAVATOR_AT_SCOUT;
+   if (scout_task == SCOUT_VISUAL_RESET_ODOM && robot_state_register->isDone(scout_in_team))
+   {
+      if(excavator_task == EXCAVATOR_VISUAL_RESET_ODOM && robot_state_register->isDone(excavator_in_team))
+      {
+         return RECOVERY_SCOUT_FINDING;
+      }
+   }
    if (scout_task == SCOUT_LOCATE_VOLATILE)
    {
       bool excav_in_process = excavator_task == EXCAVATOR_GO_TO_SCOUT;
@@ -301,6 +312,9 @@ void ScoutWaiting::step()
    case MAKE_EXCAV_HAULER_IDLE:
       stepMakeExcavHaulerIdle();
       break;
+   case RESET_SCOUT_EXCAV_ODOM:
+      stepResetScoutExcavOdom();
+      break;
    case UNDOCK_SCOUT:
       stepUndockScout();
       break;
@@ -323,6 +337,13 @@ void ScoutWaiting::stepRobotsToGoal()
 
    // Hauler Goal
    // robot_state_register->setRobotState(hauler_in_team, HAULER_GO_BACK_TO_EXCAVATOR, volatile_site_location);
+}
+
+void ScoutWaiting::stepResetScoutExcavOdom()
+{
+   robot_state_register->setRobotState(excavator_in_team, SCOUT_VISUAL_RESET_ODOM);
+
+   robot_state_register->setRobotState(scout_in_team, EXCAVATOR_VISUAL_RESET_ODOM);
 }
 
 void ScoutWaiting::stepMakeExcavHaulerIdle()
@@ -455,10 +476,17 @@ TEAM_MICRO_STATE Excavating::getMicroState()
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: PRE_PARK_MANEUVER_EXCAVATOR  5");
          return PRE_PARK_MANEUVER_EXCAVATOR;
       }
+   if (hauler_task == HAULER_VISUAL_RESET_ODOM && robot_state_register->isDone(scout_in_team))
+   {
+      if(excavator_task == EXCAVATOR_VISUAL_RESET_ODOM && robot_state_register->isDone(excavator_in_team))
+      {
+         return RECOVERY_EXCAVATOR_FINDING;
+      }
+   }
    if(hauler_task == HAULER_GO_BACK_TO_EXCAVATOR && hauler_done_and_failed)
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");
-         return RECOVERY_EXCAVATOR_FINDING;
+         return RESET_EXCAV_HAULER_ODOM;
       }
    if((excavator_task == EXCAVATOR_VOLATILE_RECOVERY && excavator_done_and_succeeded)
       && hauler_task == HAULER_GO_TO_EXCAVATOR_RECOVERY && hauler_done_and_succeeded)
@@ -530,6 +558,9 @@ void Excavating::step()
    case WAIT_FOR_HAULER:
       stepWaitForHauler();
       break;
+   case RESET_EXCAV_HAULER_ODOM:
+      stepResetExcavHaulerOdom();
+      break;
    case RECOVERY_EXCAVATOR_FINDING:
       stepRecoveryExcavatorFinding();
       break;
@@ -559,9 +590,18 @@ void Excavating::stepWaitForHauler()
    robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_VOLATILE_RECOVERY); 
 }
 
+void ScoutWaiting::stepResetExcavHaulerOdom()
+{
+   robot_state_register->setRobotState(excavator_in_team, SCOUT_VISUAL_RESET_ODOM);
+
+   robot_state_register->setRobotState(hauler_in_team, HAULER_VISUAL_RESET_ODOM);
+}
+
 void Excavating::stepRecoveryExcavatorFinding()
 {
    robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_EXCAVATOR_RECOVERY);
+
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_VOLATILE_RECOVERY); 
 }
 
 void Excavating::stepPreParkManeuverExcavator()

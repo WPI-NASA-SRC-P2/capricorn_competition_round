@@ -40,6 +40,7 @@ enum TEAM_MICRO_STATE{
 
    // SCOUT_WAITING
    ROBOTS_TO_GOAL,
+   RESET_SCOUT_EXCAV_ODOM,
    UNDOCK_SCOUT,
    PARK_EXCAVATOR_AT_SCOUT,
    RECOVERY_SCOUT_FINDING,
@@ -51,6 +52,7 @@ enum TEAM_MICRO_STATE{
    CHECK_FOR_VOLATILE,
    PRE_PARK_MANEUVER_EXCAVATOR,
    PARK_AT_EXCAVATOR_HAULER,
+   RESET_EXCAV_HAULER_ODOM,
    DIG_AND_DUMP,
    BALLET_ONCE,
    UNDOCK_HAULER,
@@ -190,6 +192,7 @@ private:
    void stepParkExcavatorAtScout();
    void stepRecoveryScoutFinding();
    void stepMakeExcavHaulerIdle();
+   void stepResetScoutExcavOdom();
 };
 
 class Excavating: public TeamState{
