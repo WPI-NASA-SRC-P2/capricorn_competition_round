@@ -130,7 +130,7 @@ void NavigationServer::updateRobotRamping(const std_msgs::Bool::ConstPtr& msg)
 	return;
 }
 
-geometry_msgs::PoseStamped* NavigationServer::getRobotPose()
+geometry_msgs::PoseStamped NavigationServer::getRobotPose()
 {
 	std::lock_guard<std::mutex> pose_lock(pose_mutex_);
 	return robot_pose_;
@@ -484,7 +484,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 		// d = 1/2 * a * t^2
 		double distance_to_stop = 0.5 * NavigationAlgo::CONST_ACCEL * time_to_stop * time_to_stop;
 
-		double robot_radius = std::sqrt(std::pow(NavigationAlgo::wheel_separation_length_/2, 2), std::pow(NavigationAlgo::wheel_separation_width_/2, 2));
+		double robot_radius = std::sqrt(std::pow(NavigationAlgo::wheel_sep_length_/2, 2)+ std::pow(NavigationAlgo::wheel_sep_width_/2, 2));
 
 		// Arc length formula: arclen = radius*theta => theta = arclen/radius
 		double radians_to_stop = distance_to_stop/robot_radius;
@@ -493,7 +493,7 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 		if(delta_heading > 0)
 			delta_heading -= radians_to_stop;
 		else
-			delta_heading += radians_to_stop
+			delta_heading += radians_to_stop;
 	}
 
 	ROS_INFO("[operations | nav_server | %s]: Turning %frad", robot_name_.c_str(), delta_heading);
@@ -642,10 +642,10 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		std::vector<double> desired_speeds = {0, 0, 0, 0};
 
 		// Get the time for the robot to stop
-		double time_to_stop = NavigationAlgos::getLongestRampTime(current_speeds, desired_speeds);
+		double time_to_stop = NavigationAlgo::getLongestRampTime(current_speeds, desired_speeds);
 
 		// d = 1/2 * a * t^2
-		double distance_to_stop = 0.5 * Navigation_Algos::CONST_ACCEL * time_to_stop * time_to_stop;
+		double distance_to_stop = 0.5 * NavigationAlgo::CONST_ACCEL * time_to_stop * time_to_stop;
 
 		// Take this distance off of the distances
 		distance_to_waypoint -= distance_to_stop;

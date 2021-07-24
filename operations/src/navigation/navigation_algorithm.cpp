@@ -531,7 +531,7 @@ double NavigationAlgo::getRampTime(double vel_offset)
     return abs(vel_offset / CONST_ACCEL);
 }
 
-double getLongestRampTime(const std::vector<double>& current_velocities, const std::vector<double>& desired_velocities)
+double NavigationAlgo::getLongestRampTime(const std::vector<double>& current_velocities, const std::vector<double>& desired_velocities)
 {
     std::vector<double> ramp_times;
     // Can't be lower than 0

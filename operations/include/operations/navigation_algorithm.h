@@ -39,7 +39,7 @@ public:
   static constexpr float wheel_sep_length_ = 1.076;
   static constexpr float wheel_rad_ = 0.17;
 
-  static const CONST_ACCEL = 0.50/0.19;
+  static constexpr float CONST_ACCEL = 0.50/0.19;
 
   /**
    * @brief **DEPRICATED** Get the Steering Angles for Making Radial Turn 

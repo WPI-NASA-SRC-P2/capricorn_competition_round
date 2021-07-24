@@ -176,7 +176,7 @@ private:
     */
     void updateRobotRamping(const std_msgs::Bool::ConstPtr& msg);
 
-    geometry_msgs::PoseStamped *getRobotPose();
+    geometry_msgs::PoseStamped getRobotPose();
 
     /**
     * @brief Initialize the subscriber for robot position
@@ -357,9 +357,9 @@ private:
     void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server, bool smooth);
 
     /**
-     * @brief 
+     * @brief Manual drive in a straight line.
      * 
-     */
+     *
      * 
      * @param goal The goal of the action. Uses the forward_velocity member to choose a velocity
      * @param action_server The action server that this function is operating on.

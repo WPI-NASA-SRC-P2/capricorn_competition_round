@@ -8,7 +8,7 @@
 //How fast the main loop of the node will run.
 #define UPDATE_HZ 50
 
-using namespace COMMON_NAMES;
+// using namespace COMMON_NAMES;
 
 //We store the robot name globally, in case it is needed in functions other than main.
 std::string robot_name;
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
         last_velocity.velocities = {0, 0, 0, 0};
 
         std::vector<double> current_velocities = {0, 0, 0, 0};
-        std::vector<double> desired_velocities;
+        std::vector<double> desired_velocities = {0, 0, 0, 0};
 
         ROS_INFO("[operations | ramp_wheel_velocities | %s]: Ramp wheel velocities started.", robot_name.c_str());
 
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
                 desired_velocities = getLastVelocityMsg().velocities;
 
                 // Get the time to ramp between current and desired velocities for each wheel
-                double longest_time_d = NavigationAlgos::getLongestRampTime(current_velocities, desired_velocities);
+                double longest_time_d = NavigationAlgo::getLongestRampTime(current_velocities, desired_velocities);
                 ros::Duration longest_time(longest_time_d);
 
                 ROS_INFO("[operations | ramp_wheel_velocities | %s]: Saving start time %f", robot_name.c_str(), longest_time_d);
