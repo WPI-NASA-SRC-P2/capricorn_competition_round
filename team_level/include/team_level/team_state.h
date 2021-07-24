@@ -4,6 +4,7 @@
 #include <state_machines/set_robot_state.h>
 #include <team_level/robot_state_register.h>
 #include <team_level/robot_pose_register.h>
+#include<team_level/detected_volatile_register.h>
 
 // #include <team_level/team_scheduler.h>
 
@@ -75,6 +76,7 @@ public:
    {
       delete robot_state_register;
       delete robot_pose_register;
+      delete volatile_register;
    }
 
    uint64_t getId() const { return m_unId; }
@@ -120,6 +122,7 @@ protected:
    ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
    RobotStateRegister *robot_state_register;
    RobotPoseRegister *robot_pose_register;
+   DetectedVolatileRegister *volatile_register;
    geometry_msgs::PoseStamped volatile_site_location;
    bool reset_robot_odometry = false;
 };

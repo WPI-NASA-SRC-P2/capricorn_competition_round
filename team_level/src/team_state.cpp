@@ -7,6 +7,7 @@ TeamState::TeamState(uint64_t un_id, const std::string& str_name, ros::NodeHandl
 {
     robot_state_register = new RobotStateRegister(nh);
     robot_pose_register = new RobotPoseRegister(nh);
+    volatile_register = new DetectedVolatileRegister(nh);
 }
 
 void TeamState::setTeam(TeamScheduler& c_robot_scheduler) {
@@ -101,8 +102,8 @@ bool Search::isDone()
 {
    STATE_MACHINE_TASK scout_task = robot_state_register->currentState(scout_in_team);
    bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team) && robot_state_register->hasSucceeded(scout_in_team);
-
-   return scout_task == SCOUT_SEARCH_VOLATILE && scout_done_and_succeeded;
+   bool is_new_volatile = volatile_register->isNewVolatile(scout_in_team, robot_pose_register->getRobotPose(scout_in_team));
+   return ((scout_task == SCOUT_SEARCH_VOLATILE && scout_done_and_succeeded) && is_new_volatile);
 }
 
 TEAM_MICRO_STATE Search::getMicroState()
@@ -186,6 +187,7 @@ bool ScoutWaiting::entryPoint()
    micro_state = ROBOTS_TO_GOAL;
 
    volatile_site_location = robot_pose_register->getRobotPose(scout_in_team);
+   volatile_register->registerNewVolatile(scout_in_team, volatile_site_location);
    return true;
 }
 
