@@ -186,7 +186,7 @@ bool center()
     const std::lock_guard<std::mutex> lock(g_objects_mutex);
     perception::ObjectArray objects = g_objects;
     // Initialize location and size variables
-    float center_obj = INIT_VALUE, error_angle = WIDTH_IMAGE;
+    float center_obj = INIT_VALUE, error_angle = WIDTH_IMAGE, z_obj = INIT_VALUE;
 
     static float prev_angular_velocity;
     static int lost_detection_times = 0, true_detection_times = 0, revolve_direction = -1, centered_times = 0;
@@ -207,20 +207,7 @@ bool center()
         {
             // Store the object's center
             center_obj = object.center.x;
-        }
-    }
-
-    if (center_obj < HEIGHT_THRESHOLD::MINIMUM_THRESH && g_desired_label == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
-    {
-        // Find the desired objects
-        for (int i = 0; i < objects.number_of_objects; i++)
-        {
-            perception::Object object = objects.obj.at(i);
-            if (object.label == OBJECT_DETECTION_REPAIR_STATION_CLASS)
-            {
-                // Store the object's center
-                center_obj = object.center.x;
-            }
+            z_obj = object.point.pose.position.z;
         }
     }
 
@@ -280,6 +267,10 @@ bool center()
             {
                 g_nav_goal.angular_velocity = prev_angular_velocity + g_angular_vel_step_size;
             }
+        }
+        if (z_obj > 30)
+        {
+            g_nav_goal.angular_velocity /= 2;
         }
     }
 
