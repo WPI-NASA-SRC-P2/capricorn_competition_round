@@ -355,7 +355,7 @@ private:
  */
 class ScoutGoToLoc : public ScoutState {
 public:   
-   ScoutGoToLoc(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_SEARCH_VOLATILE, nh, robot_name) {}
+   ScoutGoToLoc(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_GO_TO_LOC, nh, robot_name) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;

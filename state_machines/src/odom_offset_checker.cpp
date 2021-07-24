@@ -71,14 +71,14 @@ int main(int argc, char** argv)
 
     bool name_is_not_hauler_2 = robot_name != COMMON_NAMES::HAULER_2_NAME;
     // **********************************
-
     // Wait until we have received a message from odom
-    while(ros::ok() && !(name_is_not_hauler_2 || wait_till_reset) && !odom_message_received)
+    while(ros::ok() && !((name_is_not_hauler_2 || wait_till_reset) && odom_message_received))
     {
         ros::Duration(0.1).sleep();
         ros::spinOnce();
     }
 
+    
     ros::Duration(10).sleep();
     ros::spinOnce();
     double new_odom_x = global_odometry.pose.pose.position.x;
