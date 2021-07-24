@@ -210,6 +210,20 @@ bool center()
         }
     }
 
+    if (center_obj < HEIGHT_THRESHOLD::MINIMUM_THRESH && g_desired_label == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+    {
+        // Find the desired objects
+        for (int i = 0; i < objects.number_of_objects; i++)
+        {
+            perception::Object object = objects.obj.at(i);
+            if (object.label == OBJECT_DETECTION_REPAIR_STATION_CLASS)
+            {
+                // Store the object's center
+                center_obj = object.center.x;
+            }
+        }
+    }
+
     if (center_obj < HEIGHT_THRESHOLD::MINIMUM_THRESH)
     {
         // object not detected, rotate on robot's axis to find the object
