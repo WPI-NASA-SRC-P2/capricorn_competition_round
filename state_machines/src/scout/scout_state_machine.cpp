@@ -814,6 +814,7 @@ void VisualResetOfOdometry::visualResetOdom()
    resetOdomDone_ = resetOdometryClient.call(srv);  
    macro_state_done_ = true;
    macro_state_succeeded_ = resetOdomDone_;
+   micro_state = SCOUT_IDLE;
 
    if(resetOdomDone_)
       ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Odom reset successful!");

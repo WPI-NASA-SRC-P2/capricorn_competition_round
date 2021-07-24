@@ -1360,6 +1360,7 @@ void HaulerVisualResetOfOdometry::visualResetOdom()
    resetOdomDone_ = resetOdometryClient.call(srv);  
    macro_state_done_ = true;
    macro_state_succeeded_ = resetOdomDone_;
+   micro_state = HAULER_IDLE;
 
    if(resetOdomDone_)
       ROS_INFO_STREAM("STATE_MACHINES | hauler_state_machine | " << robot_name_ << " ]: Odom reset successful!");
