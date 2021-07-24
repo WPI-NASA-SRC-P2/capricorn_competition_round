@@ -217,6 +217,7 @@ private:
    void stepBalletOnce();
    void stepUndockHauler();
    void stepRecoveryExcavatorFinding();
+   void stepResetExcavHaulerOdom();
 };
 
 class Dumping: public TeamState{

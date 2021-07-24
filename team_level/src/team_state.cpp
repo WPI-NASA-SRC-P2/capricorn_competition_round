@@ -590,7 +590,7 @@ void Excavating::stepWaitForHauler()
    robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_VOLATILE_RECOVERY); 
 }
 
-void ScoutWaiting::stepResetExcavHaulerOdom()
+void Excavating::stepResetExcavHaulerOdom()
 {
    robot_state_register->setRobotState(excavator_in_team, SCOUT_VISUAL_RESET_ODOM);
 

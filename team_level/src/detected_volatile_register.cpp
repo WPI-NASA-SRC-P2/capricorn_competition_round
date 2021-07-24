@@ -36,19 +36,15 @@ bool DetectedVolatileRegister::isNewVolatile(ROBOTS_ENUM robot, const geometry_m
     bool same_volatile = false;
     for(auto each_volatile = std::begin(DetectedVolatileRegister::detected_volatile_list); each_volatile < std::end(DetectedVolatileRegister::detected_volatile_list); each_volatile++)
     {
-        ROS_INFO("checking");
         if(each_volatile->first == volatile_name)
         {
-            ROS_INFO("Same volailte type");
             if(isCloseEnough(each_volatile->second, robot_pose.pose.position))
             {
-                ROS_INFO("NEW VOLATILE");
                 same_volatile = true;
                 break;
             }
         }
     }
-    ROS_INFO_STREAM("The list:");
     for(auto each_volatile = std::begin(DetectedVolatileRegister::detected_volatile_list); each_volatile < std::end(DetectedVolatileRegister::detected_volatile_list); each_volatile++)
         ROS_INFO_STREAM(each_volatile->first<<"  "<<each_volatile->second);
     return !same_volatile;
