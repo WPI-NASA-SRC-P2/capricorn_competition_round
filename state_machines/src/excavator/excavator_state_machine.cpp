@@ -1133,6 +1133,7 @@ void ExcavatorGoToScoutRecovery::entryPoint()
    // define the offset distance for generating poses
    search_offset_ = 10.0;
    // set up the four recovery poses
+   scout_pose_ = m_pcRobotScheduler->getDesiredPose();  
    createPoses();
    // reset the pose that is going to be checked
    pose_index_ = 0;
@@ -1154,7 +1155,7 @@ void ExcavatorGoToScoutRecovery::step()
    // Send on search whenever previous search is done [AND] searches are not exhausted [AND] The goal hasn't been sent yet [AND] scout hasn't been found yet.
    searchForScout(pose_index_);
    // Check if searches are exhausted.
-   searches_exhausted_ = (pose_index_ > 3);
+   searches_exhausted_ = (pose_index_ > 4);
    // Reset flags to enable searching on a new pose, gven conditions mentioned above
    if(search_done_ && !(searches_exhausted_) && !(scout_found_)) 
    {
@@ -1207,21 +1208,22 @@ void ExcavatorGoToScoutRecovery::createPoses()
 {
    ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Creating poses.");
    
+   recovery_poses_[0] = scout_pose_;
    recovery_pose_ = excavator_pose_;
    recovery_pose_.pose.position.x += search_offset_;
-   recovery_poses_[0] = recovery_pose_;
-
-   recovery_pose_ = excavator_pose_;
-   recovery_pose_.pose.position.x -= search_offset_;
    recovery_poses_[1] = recovery_pose_;
 
    recovery_pose_ = excavator_pose_;
-   recovery_pose_.pose.position.y += search_offset_;
+   recovery_pose_.pose.position.x -= search_offset_;
    recovery_poses_[2] = recovery_pose_;
 
    recovery_pose_ = excavator_pose_;
-   recovery_pose_.pose.position.y -= search_offset_;
+   recovery_pose_.pose.position.y += search_offset_;
    recovery_poses_[3] = recovery_pose_;
+
+   recovery_pose_ = excavator_pose_;
+   recovery_pose_.pose.position.y -= search_offset_;
+   recovery_poses_[4] = recovery_pose_;
 
    // ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << " Poses created: [1] " << recovery_poses_[0] << 
    //                                                                                                    "\n[2] " << recovery_poses_[1] << 

@@ -1010,6 +1010,7 @@ void GoToExcavatorRecovery::entryPoint()
    // define the offset distance for generating poses
    search_offset_ = 5.0; //previous value = 10
    // set up the four recovery poses
+   excavator_pose_ = m_pcRobotScheduler->getDesiredPose();  
    createPoses();
    // reset the pose that is going to be checked
    pose_index_ = 0;
@@ -1026,7 +1027,7 @@ void GoToExcavatorRecovery::step()
    // Send on search whenever previous search is done [AND] searches are not exhausted [AND] The goal hasn't been sent yet [AND] scout hasn't been found yet.
    searchForExcavator(pose_index_);
    // Check if searches are exhausted.
-   searches_exhausted_ = (pose_index_ > 3);
+   searches_exhausted_ = (pose_index_ > 4);
    // Reset flags to enable searching on a new pose, gven conditions mentioned above
    if(search_done_ && !(searches_exhausted_) && !(excavator_found_)) 
    {
@@ -1081,21 +1082,23 @@ void GoToExcavatorRecovery::createPoses()
 {
    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Creating poses.");
    
-   recovery_pose_ = hauler_pose_;
-   recovery_pose_.pose.position.x += search_offset_;
-   recovery_poses_[0] = recovery_pose_;
+   recovery_poses_[0] = excavator_pose_;
 
    recovery_pose_ = hauler_pose_;
-   recovery_pose_.pose.position.x -= search_offset_;
+   recovery_pose_.pose.position.x += search_offset_;
    recovery_poses_[1] = recovery_pose_;
 
    recovery_pose_ = hauler_pose_;
-   recovery_pose_.pose.position.y += search_offset_;
+   recovery_pose_.pose.position.x -= search_offset_;
    recovery_poses_[2] = recovery_pose_;
 
    recovery_pose_ = hauler_pose_;
-   recovery_pose_.pose.position.y -= search_offset_;
+   recovery_pose_.pose.position.y += search_offset_;
    recovery_poses_[3] = recovery_pose_;
+
+   recovery_pose_ = hauler_pose_;
+   recovery_pose_.pose.position.y -= search_offset_;
+   recovery_poses_[4] = recovery_pose_;
 
    // ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << " Poses created: [1] " << recovery_poses_[0] << 
    //                                                                                                    "\n[2] " << recovery_poses_[1] << 

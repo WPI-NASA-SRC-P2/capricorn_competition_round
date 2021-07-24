@@ -542,8 +542,9 @@ public:
 private:
    bool first_;
    // geometry_msgs::PoseArray recovery_poses_;
-   geometry_msgs::PoseStamped recovery_poses_[4];
+   geometry_msgs::PoseStamped recovery_poses_[5];
    geometry_msgs::PoseStamped recovery_pose_;
+   geometry_msgs::PoseStamped scout_pose_;
    geometry_msgs::PoseStamped target_loc_;
 
    int pose_index_;
