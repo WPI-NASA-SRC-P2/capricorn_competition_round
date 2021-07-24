@@ -3,6 +3,7 @@
 #include <std_msgs/Bool.h>
 #include <operations/WheelVelocities.h>
 #include <utils/common_names.h>
+#include <operations/navigation_algorithm.h>
 
 //How fast the main loop of the node will run.
 #define UPDATE_HZ 50
@@ -17,8 +18,7 @@ std::mutex vel_mutex;
 operations::WheelVelocities last_velocity;
 
 bool interrupt_ramp;
-// Maximum acceleration we allow for the robot. 0.5 m/s linear, (0.5 / 0.19) rad/s angular
-const float CONST_ACCEL = 0.50 / 0.19;
+
 const float VEL_EPSILON = 0.01;
 
 ros::Publisher front_left_vel_pub_;
@@ -77,16 +77,6 @@ void publishMessage(ros::Publisher& publisher, double data)
     pub_data.data = data;
 
     publisher.publish(pub_data);
-}
-
-/**
- * @brief Helper function to calculate ramp times
- * 
- * @param vel_offset distance in meters to travel
- */
-double getRampTime(double vel_offset)
-{
-    return abs(vel_offset / CONST_ACCEL);
 }
 
 /**
@@ -165,24 +155,8 @@ int main(int argc, char *argv[])
                 desired_velocities = getLastVelocityMsg().velocities;
 
                 // Get the time to ramp between current and desired velocities for each wheel
-                std::vector<double> ramp_times;
-                // Can't be lower than 0
-                ramp_times.push_back(0.0);
-                for (int i = 0; i < desired_velocities.size(); i++)
-                {
-                    double vel_offset = desired_velocities[i] - current_velocities[i];
-                    
-                    ramp_times.push_back(getRampTime(vel_offset));
-                }
-
-                ROS_INFO("[operations | ramp_wheel_velocities | %s]: Getting longest time", robot_name.c_str());
-
-                // Get the longest time any wheel takes to ramp
-                ros::Duration longest_time(*std::max_element(ramp_times.begin(), ramp_times.end()));
-
-                ROS_INFO("[operations | ramp_wheel_velocities | %s]: Got longest time", robot_name.c_str());
-
-                double longest_time_d = longest_time.toNSec() * 1e-9;
+                double longest_time_d = NavigationAlgos::getLongestRampTime(current_velocities, desired_velocities);
+                ros::Duration longest_time(longest_time_d);
 
                 ROS_INFO("[operations | ramp_wheel_velocities | %s]: Saving start time %f", robot_name.c_str(), longest_time_d);
 

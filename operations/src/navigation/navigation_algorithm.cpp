@@ -525,3 +525,24 @@ geometry_msgs::Pose NavigationAlgo::getPointCloserToOrigin(const geometry_msgs::
 
   return out_point;
 }
+
+double NavigationAlgo::getRampTime(double vel_offset)
+{
+    return abs(vel_offset / CONST_ACCEL);
+}
+
+double getLongestRampTime(const std::vector<double>& current_velocities, const std::vector<double>& desired_velocities)
+{
+    std::vector<double> ramp_times;
+    // Can't be lower than 0
+    ramp_times.push_back(0.0);
+    for (int i = 0; i < desired_velocities.size(); i++)
+    {
+        double vel_offset = desired_velocities[i] - current_velocities[i];
+        
+        ramp_times.push_back(getRampTime(vel_offset));
+    }
+
+    // Get the longest time any wheel takes to ramp
+    return *std::max_element(ramp_times.begin(), ramp_times.end());
+}

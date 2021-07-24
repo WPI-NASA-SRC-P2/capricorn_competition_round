@@ -465,11 +465,35 @@ bool NavigationServer::rotateRobot(const geometry_msgs::PoseStamped& target_robo
 	geometry_msgs::PoseStamped starting_pose = getRobotPose();
 
 	double delta_heading = NavigationAlgo::changeInHeading(starting_pose, target_robot_pose, robot_name_, buffer_);
-	
+
 	if (abs(delta_heading) <= ANGLE_EPSILON)
 	{
 		ROS_INFO("[operations | nav_server | %s]: Delta heading not greater than epsilon threshold, done rotating...", robot_name_.c_str());
 		return true;
+	}
+
+	// New logic to handle ramp down angle offset
+	{
+		// Setup the current and desired speeds vectors
+		std::vector<double> current_speeds = {BASE_SPIN_SPEED, BASE_SPIN_SPEED, BASE_SPIN_SPEED, BASE_SPIN_SPEED};
+		std::vector<double> desired_speeds = {0, 0, 0, 0};
+
+		// Get the time for the robot to stop
+		double time_to_stop = NavigationAlgo::getLongestRampTime(current_speeds, desired_speeds);
+
+		// d = 1/2 * a * t^2
+		double distance_to_stop = 0.5 * NavigationAlgo::CONST_ACCEL * time_to_stop * time_to_stop;
+
+		double robot_radius = std::sqrt(std::pow(NavigationAlgo::wheel_separation_length_/2, 2), std::pow(NavigationAlgo::wheel_separation_width_/2, 2));
+
+		// Arc length formula: arclen = radius*theta => theta = arclen/radius
+		double radians_to_stop = distance_to_stop/robot_radius;
+
+		// Take this distance off of the distances
+		if(delta_heading > 0)
+			delta_heading -= radians_to_stop;
+		else
+			delta_heading += radians_to_stop
 	}
 
 	ROS_INFO("[operations | nav_server | %s]: Turning %frad", robot_name_.c_str(), delta_heading);
@@ -596,7 +620,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 	return true;
 }
 
-bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint)
+bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint, bool last_segment)
 {
 	brakeRobot(false);
 
@@ -609,6 +633,24 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 
     // If dist(current_pose, start_pose) > EXPECTED_TRAVEL_FACTOR * dist(start_pose, goal_pose), replan
 	double expected_travel_dist = distance_to_waypoint;
+
+	// If this is the last segment, reduce the travel distance by the ramp-down distance
+	if(last_segment)
+	{
+		// Setup the current and desired speeds vectors
+		std::vector<double> current_speeds = {BASE_DRIVE_SPEED, BASE_DRIVE_SPEED, BASE_DRIVE_SPEED, BASE_DRIVE_SPEED};
+		std::vector<double> desired_speeds = {0, 0, 0, 0};
+
+		// Get the time for the robot to stop
+		double time_to_stop = NavigationAlgos::getLongestRampTime(current_speeds, desired_speeds);
+
+		// d = 1/2 * a * t^2
+		double distance_to_stop = 0.5 * Navigation_Algos::CONST_ACCEL * time_to_stop * time_to_stop;
+
+		// Take this distance off of the distances
+		distance_to_waypoint -= distance_to_stop;
+		expected_travel_dist -= distance_to_stop;
+	}
 
 	// While we're not at the waypoint
 	while((distance_to_waypoint > c_dist_epsilon_) && ros::ok())

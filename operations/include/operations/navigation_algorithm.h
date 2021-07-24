@@ -39,6 +39,8 @@ public:
   static constexpr float wheel_sep_length_ = 1.076;
   static constexpr float wheel_rad_ = 0.17;
 
+  static const CONST_ACCEL = 0.50/0.19;
+
   /**
    * @brief **DEPRICATED** Get the Steering Angles for Making Radial Turn 
    *        Use override with geometry_msgs::Point instead
@@ -271,6 +273,23 @@ public:
    * @return geometry_msgs::PointStamped 
    */
   static geometry_msgs::Pose getPointCloserToOrigin(const geometry_msgs::Pose& point, const geometry_msgs::Pose& self_point, const double closer_distance);
+
+  /**
+   * @brief Get the time to ramp based on delta velocity and max acceleration
+   * 
+   * @param delta_velocity
+   * @return double 
+   */
+  static double getRampTime(double delta_velocity);
+
+  /**
+   * @brief Get the longest ramp time based on delta wheel velocities
+   * 
+   * @param current_velocities Current velocity of the wheels
+   * @param desired_velocities Desired velocities of the wheels
+   * @return double 
+   */
+  static double getLongestRampTime(const std::vector<double>& current_velocities, const std::vector<double>& desired_velocities);
 };
 
 #endif
