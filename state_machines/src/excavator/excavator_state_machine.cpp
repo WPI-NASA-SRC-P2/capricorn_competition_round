@@ -57,8 +57,8 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   BESIDE_REPAIR_STATION.pose.orientation.z = 1.0;
 
   UNDOCK_LOCATION.header.frame_id = COMMON_NAMES::MAP;
-  UNDOCK_LOCATION.pose.position.x = 6.0;
-  UNDOCK_LOCATION.pose.position.y = 8.0;
+  UNDOCK_LOCATION.pose.position.x = 4.0;
+  UNDOCK_LOCATION.pose.position.y = 14.0;
   UNDOCK_LOCATION.pose.orientation.w = 1.0;
 
   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);

@@ -50,8 +50,8 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   HAULER_RETURN_LOC.pose.orientation.w = 1;
 
   UNDOCK_LOCATION.header.frame_id = COMMON_NAMES::MAP;
-  UNDOCK_LOCATION.pose.position.x = 6.0;
-  UNDOCK_LOCATION.pose.position.y = 8.0;
+  UNDOCK_LOCATION.pose.position.x = 4.0;
+  UNDOCK_LOCATION.pose.position.y = 14.0;
   UNDOCK_LOCATION.pose.orientation.w = 1.0;
 
   PROC_PLANT_LOCATION.header.frame_id = COMMON_NAMES::MAP;
