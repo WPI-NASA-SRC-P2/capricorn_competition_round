@@ -46,7 +46,7 @@ std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex, g_clock_mutex;
 std::string g_desired_label;
 bool g_reached_goal = false, g_cancel_called = false, g_goal_failed = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false, g_nav_vision_called = false, g_last_nav_vision_call = false;
 int g_height_threshold = 400;
-const float EXCAVATOR_FALSE_DETECTION_WIDTH = 8;
+const float EXCAVATOR_FALSE_DETECTION_WIDTH = 8, PPM_Z_THRESHOLD = 5.0;
 const int EXCAVATOR_FALSE_DETECTION_SIZE_X_THRESHOLD = (int) 0.9*640; // 90% of the maximum width
 const int EXCAVATOR_FALSE_DETECTION_SIZE_Y_THRESHOLD = (int) 0.9*480; // 90% of the maximum height
 
@@ -331,7 +331,7 @@ void preParkMeneuver()
     for (int i = 0; i < objects.number_of_objects; i++)
     {
         perception::Object object = objects.obj.at(i);
-        if ((object.label == OBJECT_DETECTION_SCOUT_CLASS || object.label == OBJECT_DETECTION_HAULER_CLASS) && object.point.pose.position.z < 5)
+        if ((object.label == OBJECT_DETECTION_SCOUT_CLASS || object.label == OBJECT_DETECTION_HAULER_CLASS) && object.point.pose.position.z < PPM_Z_THRESHOLD)
         {
             // Store the object's center
             center_obj = object.center.x;
