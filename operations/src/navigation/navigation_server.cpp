@@ -652,8 +652,8 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	
 	if(distance_to_waypoint <= distance_to_stop)
 	{	
-		target_speed = distance_to_waypoint * NavigationAlgo::CONST_ACCEL * NavigationAlgo::CONST_ACCEL / 1.05;
-		distance_to_stop = distance_to_waypoint;
+		target_speed = distance_to_waypoint / time_to_stop;
+		distance_to_stop = distance_to_waypoint/2.0;
 		ROS_INFO("[operations | nav_server | %s]: %f too fast! Going %f instead.", robot_name_.c_str(), BASE_DRIVE_SPEED, target_speed);
 	}
 	// Take this distance off of the distances
