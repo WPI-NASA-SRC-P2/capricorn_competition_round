@@ -160,6 +160,7 @@ namespace COMMON_NAMES
     V_OBS_GOTO_GOAL = 4, // Uses go to goal with obstacle avoidance
     V_NAV_AND_NAV_VISION = 5, // Navigation which switches to vision based navigation when robot can see target and target location is near the robot
     V_HARDCODED_UNDOCK = 6,   // Hardcoded undock for resetting odom at Proc Plant
+    V_PPM = 7,   // Hardcoded undock for resetting odom at Proc Plant
   };
 
   /****** NAVIGATION ENUMS ******/
