@@ -68,26 +68,44 @@ void teleopCB(const geometry_msgs::Twist::ConstPtr &twist)
  */
 void navigationCB(const geometry_msgs::Point::ConstPtr &goal_point)
 {
-  operations::NavigationGoal goal;
-        goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-        goal.forward_velocity = -0.15;
-        goal.direction = 0;
-        goal.angular_velocity = 0;
-        
-        client->sendGoal(goal);
-        client->sendGoal(goal);
+    // Action message goal
+    operations::NavigationGoal goal;
+    
+    //Simple waypoint x meters in front of the robot
+    geometry_msgs::PoseStamped t1;
+    t1.header.frame_id = robot_name + ROBOT_CHASSIS;
+    t1.header.stamp = ros::Time::now();
+    t1.pose.position.x = goal_point->x;
+    t1.pose.position.y = goal_point->y;
+    t1.pose.position.z = 0;
 
-        ros::Duration(goal_point->x).sleep();
+    t1.pose.orientation.w = 1;
+    t1.pose.orientation.x = 0;
+    t1.pose.orientation.y = 0;
+    t1.pose.orientation.z = 0;
 
+    goal.pose = t1;
 
-        goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-        goal.forward_velocity = 0;
-        goal.direction = 0;
-        goal.angular_velocity = 0;
-        
-        client->sendGoal(goal);
-        client->sendGoal(goal);
+    // goal.point.point.x = goal_point->x;
+    // goal.forward_velocity = goal_point->z;
 
+    // goal.point.header.frame_id = robot_name + ROBOT_CHASSIS;
+
+    goal.drive_mode = NAV_TYPE::GOAL;
+    // goal.epsilon = 0.1;
+    // goal.final_rotate = true;
+
+    ROS_WARN("[operations | nav_client | %s]: Final rotate: %d", robot_name.c_str(), goal.final_rotate);
+
+    printf("Sending auto goal to actionlib server\n");
+    client->sendGoal(goal);
+    // ros::Duration(0.1).sleep();
+
+    // printf("Re-sending auto goal to actionlib server\n");
+    // goal.manual_driving = false;
+    // goal.forward_velocity = 0;
+    // goal.angular_velocity = 0;
+    // client->sendGoal(goal);
 }
 
 int main(int argc, char **argv)
