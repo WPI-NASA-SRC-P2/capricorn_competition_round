@@ -305,15 +305,6 @@ bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res
         return res.success;
     }
 
-/** @brief: 
- * In order to avoid parking at hopper to reset odom, we instead reset at the repair station itself.
- * The hauler parks at the hopper intially and resets its odom with the ground truth and stores it here.
- * We know the pose of hopper wrt the hauler, therefore, we know where the processing plant is. 
- * In the resetAtRepairStation state, we look at the processing plant, record the distance. We then 
- * simply add/subtract (depending on viewpoint, the yaw takes care of that)
- * to the processing plant pose to get the pose of the robot.
- * Hurray!
- * */ 
 
     if(visual_reset)
     {
@@ -339,33 +330,28 @@ bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res
         geometry_msgs::Quaternion imu_orientation_rs = req.visual_reset.orientation_rs;
         float imu_yaw_rs = getYawFromQuaternion(imu_orientation_rs);
 
-
-        // If we cant see the processing plant, we don't pass in depth, so that its set to zero and we use this edge-case-pose instead. 
-        // if(req.visual_reset.depth == 0)
-        // {
-        //     robot_reset_pose_rs.pose.position.x = pp_center_x;
-        //     robot_reset_pose_rs.pose.position.y = pp_center_y - DIST_PROCESSING_PLANT_REPAIR_STATION;
-        //     robot_reset_pose.pose.orientation.z = 0.707;                // Looking at 90-degrees, basically we ended up beside the repair station, which is where we cant see the processing plant. 
-        //     robot_reset_pose.pose.orientation.w = 0.707;
-        // }
-
         float temp_x = 0, temp_y = 0, data_points = 0;
-        if(depth_pp != 0)
+        if(depth_pp != 0.0)
         {
             temp_x += pp_center_x - (depth_rs * std::cos(imu_yaw_pp));
             temp_y += pp_center_y - (depth_rs * std::sin(imu_yaw_pp));
             data_points++;
+            ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " << target_robot_name << "]: X, Y of robot calculated at processing plant = " << temp_x << " " << temp_y);
+            ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " << target_robot_name << "]: No. of data-points = " << data_points);
         }
-        if(depth_rs != 0)     
+        if(depth_rs != 0.0)     
         {
             temp_x += rs_center_x - (depth_pp * std::cos(imu_yaw_rs));
             temp_y += rs_center_y - (depth_pp * std::sin(imu_yaw_rs));
             data_points++;
+            ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " << target_robot_name << "]: X, Y of robot calculated at repair station = " << temp_x << " " << temp_y);
+            ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " << target_robot_name << "]: No. of data-points = " << data_points);
         } 
         
+        // Reset should fail when we can see neither repair station nor processing plant.
         if(data_points == 0)
         {
-            ROS_ERROR_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: Both the Repair station and Proc Plant depths not provided");
+            ROS_ERROR_STREAM("[MAPLOC | reset_odom.cpp | " << target_robot_name << "]: Both the Repair station and Proc Plant depths not provided");
             res.success = false;
             return false;
         }
@@ -384,7 +370,7 @@ bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res
         res.success = resetOdomPose(target_robot_name, robot_reset_pose);
         if (res.success)
         {        
-            ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: " + " At RepariStation Reset Successful");
+            ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: " + "Visual Reset Successful");
         }
         return res.success;
     }
