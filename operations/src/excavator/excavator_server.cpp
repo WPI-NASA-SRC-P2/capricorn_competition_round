@@ -465,14 +465,16 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
     publishAngles(thetas[0], -2, 1, 0.4); // This set of values moves the arm over the surface
     ros::Duration(5).sleep();
     // previous shoulder yaw was 0.15
-    publishAngles(thetas[0], thetas[1], thetas[2], 0.4); // This set of values moves the scoop towards the hauler
-    ros::Duration(3).sleep();
-    // publishAngles(thetas[0], thetas[1], thetas[2], 0.4); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    // publishAngles(thetas[0], thetas[1], thetas[2], 0.4); // This set of values moves the scoop towards the hauler
     // ros::Duration(3).sleep();
-    publishAngles(thetas[0], thetas[1], thetas[2], 3); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    // // publishAngles(thetas[0], thetas[1], thetas[2], 0.4); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    // // ros::Duration(3).sleep();
+    // publishAngles(thetas[0], thetas[1], thetas[2], 3); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    // ros::Duration(5).sleep();
+    publishAngles(thetas[0], -2, 1, 3); // This set of values moves the arm over the surface
     ros::Duration(5).sleep();
-    publishAngles(thetas[0], thetas[1], thetas[2], -0.7786); // This set of values moves the scoop to the front center
-    ros::Duration(5).sleep();
+    // publishAngles(thetas[0], thetas[1], thetas[2], -0.7786); // This set of values moves the scoop to the front center
+    // ros::Duration(5).sleep();
   }
 
   else if (task == RECOVERY)
