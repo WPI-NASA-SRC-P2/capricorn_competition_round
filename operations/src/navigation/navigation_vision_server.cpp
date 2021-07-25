@@ -744,7 +744,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
         {
             // the class is not valid, send the appropriate result
             result.result = COMMON_RESULT::INVALID_GOAL;
-            as->setAborted(result, "Invalid Object Detection Class or Cannot go to the class");
+            as->setSucceeded(result, "Invalid Object Detection Class or Cannot go to the class");
             ROS_INFO_STREAM(getString("Invalid Object Detection Class or Cannot go to the class"));
             return;
         }

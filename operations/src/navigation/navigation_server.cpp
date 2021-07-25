@@ -675,7 +675,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			ROS_ERROR("[operations | nav_server | %s]: Failed to transform to robot frame! Exiting.", robot_name_.c_str());
 			operations::NavigationResult res;
 			res.result = COMMON_RESULT::FAILED;
-			action_server->setAborted(res);
+			action_server->setSucceeded(res);
 			return;
 		}
 
@@ -687,7 +687,7 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			ROS_ERROR("[operations | nav_server | %s]: Got 0 length trajectory! Exiting.", robot_name_.c_str());
 			operations::NavigationResult res;
 			res.result = COMMON_RESULT::FAILED;
-			action_server->setAborted(res);
+			action_server->setSucceeded(res);
 			return;
 		}
 
