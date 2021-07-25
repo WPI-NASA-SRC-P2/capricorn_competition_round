@@ -268,10 +268,7 @@ bool center()
                 g_nav_goal.angular_velocity = prev_angular_velocity + g_angular_vel_step_size;
             }
         }
-        if (z_obj > 30)
-        {
-            g_nav_goal.angular_velocity /= 2;
-        }
+        g_nav_goal.angular_velocity = g_nav_goal.angular_velocity / (int(z_obj / 30) + 1);
     }
 
     // maintaing previous values
