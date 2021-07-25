@@ -77,6 +77,7 @@ private:
     // Publishers for each wheel velocity and steering controller
     ros::Publisher front_left_vel_pub_, front_right_vel_pub_, back_left_vel_pub_, back_right_vel_pub_;
     ros::Publisher front_left_steer_pub_, front_right_steer_pub_, back_left_steer_pub_, back_right_steer_pub_;
+    ros::Publisher navigation_server_restart_pub_;
 
     // Debug publisher. Used to visualize poses in gazebo with utils/render_poses.py
     ros::Publisher waypoint_pub_;

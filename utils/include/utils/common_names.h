@@ -115,6 +115,7 @@ namespace COMMON_NAMES
   const std::string IMU_TOPIC = "/imu";
   const std::string IMU_FILTERED_TOPIC = "/imu_filtered";
   const std::string SPIRAL_WAYPOINT_PUBLISHER = "/covered_waypoints";
+  const std::string NAVIGATION_SERVER_RESTART_TOPIC = "navigation_server_restart";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
