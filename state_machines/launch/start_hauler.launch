@@ -26,7 +26,7 @@
 
         <include file="$(find operations)/launch/navigation.launch">
             <arg name="robot_name" value="$(arg robot_name)" />
-            <arg name="output" value="screen" />
+            <arg name="output" value="log" />
             <arg name="use_cheat_odom" value="$(arg use_cheat_odom)" />
             <arg name="use_crab_drive" value="$(arg use_crab_drive)" />
         </include>

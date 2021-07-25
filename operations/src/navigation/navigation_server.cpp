@@ -623,6 +623,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint, bool come_to_stop)
 {
 	brakeRobot(false);
+	ROS_INFO("[operations | nav_server | %s]: Begining smooth drive", robot_name_.c_str());
 
 	// Save the starting robot pose so we can track delta distance
 	geometry_msgs::PoseStamped starting_pose = getRobotPose();
@@ -630,27 +631,37 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	double distance_to_waypoint = NavigationAlgo::changeInPosition(getRobotPose(), waypoint);
 		// Initialize the current traveled distance to 0. Used to terminate the loop, and to request a new trajectory.
 	double distance_traveled = 0;
+	double target_speed = BASE_DRIVE_SPEED;
 
     // If dist(current_pose, start_pose) > EXPECTED_TRAVEL_FACTOR * dist(start_pose, goal_pose), replan
 	double expected_travel_dist = distance_to_waypoint;
 
 	// If this is the last segment, reduce the travel distance by the ramp-down distance
-	if(come_to_stop)
-	{
-		// Setup the current and desired speeds vectors
-		std::vector<double> current_speeds = {BASE_DRIVE_SPEED, BASE_DRIVE_SPEED, BASE_DRIVE_SPEED, BASE_DRIVE_SPEED};
-		std::vector<double> desired_speeds = {0, 0, 0, 0};
+	// if(come_to_stop)
+	// {
+	// Setup the current and desired speeds vectors
+	std::vector<double> current_speeds = {BASE_DRIVE_SPEED, BASE_DRIVE_SPEED, BASE_DRIVE_SPEED, BASE_DRIVE_SPEED};
+	std::vector<double> desired_speeds = {0, 0, 0, 0};
 
-		// Get the time for the robot to stop
-		double time_to_stop = NavigationAlgo::getLongestRampTime(current_speeds, desired_speeds);
+	// Get the time for the robot to stop
+	double time_to_stop = NavigationAlgo::getLongestRampTime(current_speeds, desired_speeds);
 
-		// d = 1/2 * a * t^2
-		double distance_to_stop = 0.5 * NavigationAlgo::CONST_ACCEL * time_to_stop * time_to_stop;
+	// d = 1/2 * a * t^2
+	double distance_to_stop = 1.05 * NavigationAlgo::CONST_ACCEL * time_to_stop * time_to_stop;
 
-		// Take this distance off of the distances
-		distance_to_waypoint -= distance_to_stop;
-		expected_travel_dist -= distance_to_stop;
+	
+	if(distance_to_waypoint <= distance_to_stop)
+	{	
+		target_speed = distance_to_waypoint * NavigationAlgo::CONST_ACCEL * NavigationAlgo::CONST_ACCEL / 1.05;
+		distance_to_stop = distance_to_waypoint;
+		ROS_INFO("[operations | nav_server | %s]: %f too fast! Going %f instead.", robot_name_.c_str(), BASE_DRIVE_SPEED, target_speed);
 	}
+	// Take this distance off of the distances
+	distance_to_waypoint -= distance_to_stop;
+	
+	ROS_INFO("[operations | nav_server | %s]: W/ stopping, distance to waypoint = %fm", robot_name_.c_str(), distance_to_waypoint);
+	expected_travel_dist -= distance_to_stop;
+	// }
 
 	// While we're not at the waypoint
 	while((distance_to_waypoint > c_dist_epsilon_) && ros::ok())
@@ -731,7 +742,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		center_of_rotation.y = center_radius;
 
 		std::vector<double> wheel_angles = NavigationAlgo::getSteeringAnglesRadialTurn(center_of_rotation);
-		std::vector<double> wheel_velocities = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_rotation, BASE_DRIVE_SPEED);
+		std::vector<double> wheel_velocities = NavigationAlgo::getDrivingVelocitiesRadialTurn(center_of_rotation, target_speed);
 
 		// Set wheels to that angle
 		steerRobot(wheel_angles);
@@ -740,14 +751,15 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 		moveRobotWheelsNew(wheel_velocities);
 
 		// Update distance to waypoint
-		distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, getRobotPose());
+		distance_to_waypoint = NavigationAlgo::changeInPosition(waypoint, getRobotPose()) - distance_to_stop;
 
 		update_rate_->sleep();
 		ros::spinOnce();
 	}
 
 	// Update the total traveled distance with the total distance we just traveled.
-	total_distance_traveled_ += distance_traveled;
+	total_distance_traveled_ += distance_traveled + distance_to_stop;
+	ROS_INFO("[operations | nav_server | %s]: Ended traveling %fm\n", robot_name_.c_str(), total_distance_traveled_);
 
 	// Stop moving the robot after we are done moving
 	// moveRobotWheelsNew(0);

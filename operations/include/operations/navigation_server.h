@@ -54,8 +54,8 @@ private:
     const float MIN_TURNING_RAD = -ANGLE_EPSILON;
 
     // Default speeds for straight lines and turn in place (linear wheel velocity in m/s)
-    const float BASE_DRIVE_SPEED = 3*0.6;
-    const float BASE_SPIN_SPEED = 3*0.2;
+    const float BASE_DRIVE_SPEED = 5*0.6;
+    const float BASE_SPIN_SPEED = 0.2;
 
     // How much slower robots should rotate when within abs(delta_heading) < ANGLE_EPSILON * SLOW_SPIN_EPSILON_FACTOR
     const float BASE_SPIN_SLOW_FACTOR = 0.3;
