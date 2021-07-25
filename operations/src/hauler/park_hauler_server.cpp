@@ -479,6 +479,13 @@ void parkWrtExcavator()
         // if excavator is lost or excavator is not in the center of the image, call the navigation vision server to center or find the excavator
         if(!findExcavator())
         {
+            g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = 0;
+            g_nav_goal.direction = 0;
+            g_nav_goal.angular_velocity = 0;
+            
+            g_nav_client->sendGoal(g_nav_goal);
+            g_nav_client->sendGoal(g_nav_goal);
             g_failed = true; 
             return;
         }
@@ -579,7 +586,7 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
         g_revolve_direction_set = false;
     }
 
-    while (ros::ok() && !g_parked && !g_cancel_called && g_failed)
+    while (ros::ok() && !g_parked && !g_cancel_called && !g_failed)
     {
         ros::spinOnce();
         if (park_mode == OBJECT_PARKER::HOPPER && g_hauler_message_received)
@@ -602,6 +609,7 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
 
     else if (g_failed)
     {
+        ROS_INFO_STREAM(getString("Parking Failed"));
         g_failed = false;
         result.result = COMMON_NAMES::COMMON_RESULT::FAILED;
         as->setSucceeded(result, "Failed Goal");
