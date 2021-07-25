@@ -23,7 +23,7 @@ bool DetectedVolatileRegister::isCloseEnough(const geometry_msgs::Point& pose_1,
     float y = pose_1.y - pose_2.y;
 
     float dist = std::hypot(x,y);
-    ROS_INFO_STREAM(dist);
+    // ROS_INFO_STREAM(dist);
     return dist<DISTANCE_THRESHOLD;
 }
 
@@ -46,7 +46,7 @@ bool DetectedVolatileRegister::isNewVolatile(ROBOTS_ENUM robot, const geometry_m
         }
     }
     for(auto each_volatile = std::begin(DetectedVolatileRegister::detected_volatile_list); each_volatile < std::end(DetectedVolatileRegister::detected_volatile_list); each_volatile++)
-        ROS_INFO_STREAM(each_volatile->first<<"  "<<each_volatile->second);
+        // ROS_INFO_STREAM(each_volatile->first<<"  "<<each_volatile->second);
     return !same_volatile;
 }
 

@@ -667,6 +667,8 @@ void VisualResetOfOdometry::entryPoint()
    no_of_measurements_ = 20;
    MAX_TRIES = 300;
    first_ = true;
+   macro_state_done_ = false;
+   macro_state_succeeded_ = false;
 
    micro_state = CENTER_TO_PROC_PLANT;
 }
@@ -797,7 +799,7 @@ float VisualResetOfOdometry::getObjectDepth(const std::string& centering_object)
       return 0.0;
    else   
    {
-      ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | Final distance to "<< centering_object << " is "<< (sum_of_all_readings/reading_count));
+      // ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | Final distance to "<< centering_object << " is "<< (sum_of_all_readings/reading_count));
       return (sum_of_all_readings/reading_count);
    }
    
@@ -817,6 +819,9 @@ void VisualResetOfOdometry::visualResetOdom()
    srv.request.visual_reset.orientation_rs = repair_station_orientation_;
    srv.request.visual_reset.robot_orientation = odom_.pose.pose.orientation;
    
+   // ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | Distance to proc_plant is : " << proc_plant_distance_);
+   // ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | Distance to repair_station is : " << repair_station_distance_);
+
    resetOdomDone_ = resetOdometryClient.call(srv);  
    macro_state_done_ = true;
    macro_state_succeeded_ = resetOdomDone_;
