@@ -766,21 +766,24 @@ float VisualResetOfOdometry::getObjectDepth(const std::string& centering_object)
    float sum_of_all_readings;
    while(ros::ok() && ((reading_count < no_of_measurements_) && (tries < MAX_TRIES))) // Can get stuck 
    {
+      ros::spinOnce();   // Update object detection callback
       tries++;
       if(!objects_msg_received_)
       {
          ros::Duration(0.01).sleep();
          continue;
       }
+      objects_msg_received_ = false;
 
       for(int i{}; i < vision_objects_->obj.size() ; i++ )
       {
-         if(vision_objects_->obj.at(i).label == centering_object);
+         if(vision_objects_->obj.at(i).label == centering_object)
          {
             reading_count++;
             float camera_depth = vision_objects_->obj.at(i).point.pose.position.z;
             sum_of_all_readings += (std::sqrt(std::pow(camera_depth, 2) - std::pow(camera_offset_, 2)) + camera_offset_); 
-            ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Got distance to " << centering_object);
+            // ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Distance to " << centering_object << " is " << (sum_of_all_readings/reading_count));
+            // ROS_INFO_STREAM("Sum of all readngs : " << sum_of_all_readings << " and reading_count = " << reading_count);
          }
       }
    }
@@ -793,7 +796,10 @@ float VisualResetOfOdometry::getObjectDepth(const std::string& centering_object)
    if(reading_count == 0)
       return 0.0;
    else   
-      return sum_of_all_readings/reading_count;
+   {
+      ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | Final distance to "<< centering_object << " is "<< (sum_of_all_readings/reading_count));
+      return (sum_of_all_readings/reading_count);
+   }
    
 }
 
