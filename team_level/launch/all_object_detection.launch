@@ -1,5 +1,7 @@
 <launch>
 
+    <!-- <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 /odom /map 100" /> -->
+
     <include file="$(find perception)/launch/team_object_detection.launch">
         <arg name="team_number" value="1" />
     </include>

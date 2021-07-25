@@ -620,7 +620,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 	return true;
 }
 
-bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint, bool last_segment)
+bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint, bool come_to_stop)
 {
 	brakeRobot(false);
 
@@ -635,7 +635,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	double expected_travel_dist = distance_to_waypoint;
 
 	// If this is the last segment, reduce the travel distance by the ramp-down distance
-	if(last_segment)
+	if(come_to_stop)
 	{
 		// Setup the current and desired speeds vectors
 		std::vector<double> current_speeds = {BASE_DRIVE_SPEED, BASE_DRIVE_SPEED, BASE_DRIVE_SPEED, BASE_DRIVE_SPEED};
@@ -874,6 +874,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 			{
 				// Initial check for delta heading in case it is above the max turning limit for ackermann steering
 				double delta_heading = NavigationAlgo::changeInHeading(getRobotPose(), current_waypoint, robot_name_, buffer_);
+				double delta_heading_future = NavigationAlgo::changeInHeading(current_waypoint, future_waypoint, robot_name_, buffer_);
+				bool steep_turn_upcoming = (delta_heading_future >= MAX_TURNING_RAD || delta_heading_future <= MIN_TURNING_RAD);
 
 				//Kludge for reducing reset distance after hard turns. Gets reset
 				// on receiving a new trajectory.
@@ -932,13 +934,15 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 							res.result = COMMON_RESULT::FAILED;
 							
 						}
+						steerRobot(DEFAULT_WHEEL_ANGLES);
+
 						action_server->setSucceeded(res);
 
 						return;
 					}
 				}
 
-				bool drove_successfully = smoothDriving(current_waypoint, future_waypoint);
+				bool drove_successfully = smoothDriving(current_waypoint, future_waypoint, steep_turn_upcoming || (trajectory.waypoints.size() == i+1));
 
 				// Reset initial turn flag
 				initial_turn_completed = false;
@@ -1003,6 +1007,8 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 						res.result = COMMON_RESULT::FAILED;
 						
 					}
+					steerRobot(DEFAULT_WHEEL_ANGLES);
+
 					action_server->setSucceeded(res);
 
 					return;
@@ -1082,7 +1088,9 @@ void NavigationServer::automaticDriving(const operations::NavigationGoalConstPtr
 				//AAAH ERROR
 				ROS_ERROR("[operations | nav_server | %s]: Final turn did not succeed. Exiting.", robot_name_.c_str());
 				res.result = COMMON_RESULT::FAILED;
+			
 			}
+			steerRobot(DEFAULT_WHEEL_ANGLES);
 			action_server->setSucceeded(res);
 
 			return;
