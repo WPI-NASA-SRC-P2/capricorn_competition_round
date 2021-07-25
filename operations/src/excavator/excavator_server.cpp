@@ -36,6 +36,7 @@ ros::Publisher excavator_elbow_pitch_publisher_;
 ros::Publisher excavator_wrist_pitch_publisher_;
 
 // The global variables to save the last values passed to the joints
+const float HAULER_ANTENNA_DISTANCE_THRESHOLD = 3.5;
 float curr_sh_yaw = 0;
 float curr_sh_pitch = 0;
 float curr_elb_pitch = 0;
@@ -52,7 +53,7 @@ int SLEEP_DURATION = 5; // The sleep duration
 perception::ObjectArray objectArray;
 std::string desired_label = OBJECT_DETECTION_ROBOT_ANTENNA_CLASS;
 std::mutex objects_mutex;
-bool objects_received = 0;
+bool objects_received = false;
 
 /**
  * @brief Initializing the publisher here
@@ -105,7 +106,7 @@ float findShoulderAngle(const geometry_msgs::Point &target)
   shoulder_wrt_base.y = 0.000001;
   shoulder_wrt_base.z = 0.100000;
 
-  return atan2((target.y - shoulder_wrt_base.y), (target.x - shoulder_wrt_base.x));
+  return atan2((target.y), (target.x));
 }
 
 /**
@@ -133,29 +134,48 @@ geometry_msgs::PoseStamped getHaulerPose(geometry_msgs::PointStamped stamped_poi
   perception::ObjectArray objects = objectArray;
 
   bool pointDetected = false;
+  float sum_x = 0, sum_y = 0, sum_z = 0;
+  int current_iter = 0, MAX_ITER = 30;
 
   int count = 0;
-  while(count < 5 && !pointDetected) // Checks five times for hauler pose so that missed frames don't cause error
+  while(ros::ok() && (count < 5 && current_iter < MAX_ITER)) // Checks five times for hauler pose so that missed frames don't cause error
   {
+    current_iter++;
+    if(!objects_received)
+      continue;
+    objects_received = false;
     for(int i = 0; i < objects.number_of_objects; i++) 
       {   
           perception::Object object = objects.obj.at(i);
           // ROS_INFO_STREAM("Object label: " << object.label);
           if(object.label == desired_label)
           {
+            if(object.point.pose.position.x > HAULER_ANTENNA_DISTANCE_THRESHOLD ||
+                object.point.pose.position.y > HAULER_ANTENNA_DISTANCE_THRESHOLD ||
+                object.point.pose.position.z > HAULER_ANTENNA_DISTANCE_THRESHOLD )
+              continue;
               // Store the object's location
-              currentHaulerPoseStamped = object.point;
+              sum_x += object.point.pose.position.x;
+              sum_y += object.point.pose.position.y;
+              sum_z += object.point.pose.position.z;
               pointDetected = true;
+              count++; 
               //ROS_INFO("[operations | excavator_server | %s]: Point Detected", robot_name_.c_str());
               break;
           }
       }
-      count++;
+  }
+
+  if(count>0)
+  {
+    currentHaulerPoseStamped.pose.position.x = sum_x/count;
+    currentHaulerPoseStamped.pose.position.y = sum_y/count;
+    currentHaulerPoseStamped.pose.position.z = sum_z/count;
   }
 
   currentHaulerPoseStamped.pose.position.x += 0.4;
-  currentHaulerPoseStamped.pose.position.y -= 0.2;
-  currentHaulerPoseStamped.pose.position.z -= 0.5;
+  currentHaulerPoseStamped.pose.position.y -= 0.3;
+  currentHaulerPoseStamped.pose.position.z -= 0.7;
 
   if (!pointDetected)
     ROS_WARN("[operations | excavator_server | %s]: Hauler antenna not detected, using default hauler position in left camera optical frame", robot_name_.c_str());
@@ -258,10 +278,10 @@ std::vector<float> getDumpAngleInBase(int tries)
 
   std::vector<float> thetas = getDepthHeight(final_wrt_shoulder);
   float shoulder_yaw = findShoulderAngle(initial_point_stamped.point);
-  if(shoulder_yaw > 0)
-  {
-    shoulder_yaw = shoulder_yaw - 0.34*shoulder_yaw/0.78; // Offset for getting precise yaw angle
-  }
+  // if(shoulder_yaw > 0)
+  // {
+  //   shoulder_yaw = shoulder_yaw - 0.34*shoulder_yaw/0.78; // Offset for getting precise yaw angle
+  // }
   thetas.insert(thetas.begin(), shoulder_yaw);
   ROS_INFO_STREAM("[operations | excavator_server | " << robot_name_.c_str() << "]: arm angles are " << thetas[0] << ", " << thetas[1] << ", " << thetas[2]);
   return thetas;
@@ -442,15 +462,17 @@ bool publishExcavatorMessage(const operations::ExcavatorGoalConstPtr &goal, cons
 
   else if (task == START_UNLOADING) // dumping angles
   {
+    publishAngles(thetas[0], -2, 1, 0.4); // This set of values moves the arm over the surface
+    ros::Duration(5).sleep();
     // previous shoulder yaw was 0.15
-    publishAngles(thetas[0], -2, 1, 0.4); // This set of values moves the scoop towards the hauler
-    ros::Duration(SLEEP_DURATION).sleep();
+    publishAngles(thetas[0], thetas[1], thetas[2], 0.4); // This set of values moves the scoop towards the hauler
+    ros::Duration(3).sleep();
     // publishAngles(thetas[0], thetas[1], thetas[2], 0.4); // This set of values moves the scoop to deposit volatiles in the hauler bin
     // ros::Duration(3).sleep();
-    publishAngles(thetas[0], -2, 1, 3); // This set of values moves the scoop to deposit volatiles in the hauler bin
-    ros::Duration(3).sleep();
-    publishAngles(thetas[0], -2, 1, -0.7786); // This set of values moves the scoop to the front center
-    ros::Duration(3).sleep();
+    publishAngles(thetas[0], thetas[1], thetas[2], 3); // This set of values moves the scoop to deposit volatiles in the hauler bin
+    ros::Duration(5).sleep();
+    publishAngles(thetas[0], thetas[1], thetas[2], -0.7786); // This set of values moves the scoop to the front center
+    ros::Duration(5).sleep();
   }
 
   else if (task == RECOVERY)
