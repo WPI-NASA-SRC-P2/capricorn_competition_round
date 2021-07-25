@@ -667,6 +667,8 @@ void VisualResetOfOdometry::entryPoint()
    no_of_measurements_ = 20;
    MAX_TRIES = 300;
    first_ = true;
+   macro_state_done_ = false;
+   macro_state_succeeded_ = false;
 
    micro_state = CENTER_TO_PROC_PLANT;
 }
