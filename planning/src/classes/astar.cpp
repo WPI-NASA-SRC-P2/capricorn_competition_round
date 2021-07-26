@@ -33,6 +33,14 @@ double AStar::distance(int ind1, int ind2, int width)
   return sqrt((pt1.first - pt2.first) * (pt1.first - pt2.first) + (pt1.second - pt2.second) * (pt1.second - pt2.second));
 }
 
+double AStar::distanceBetweenPoses(geometry_msgs::PoseStamped pose1, geometry_msgs::PoseStamped pose2)
+{ 
+  // Return Euclidean Distance.
+  auto pt1 = pose1.pose.position;
+  auto pt2 = pose2.pose.position;
+  return sqrt((pt1.x - pt2.x) * (pt1.x - pt2.x) + (pt1.y - pt2.y) * (pt1.y - pt2.y));
+}
+
 std::array<int, 8> AStar::getNeighborsIndiciesArray(int pt, int widthOfGrid, int sizeOfGrid)
 {
   // Get the neighbors around any given index (ternary operators to ensure the points remain within bounds)
@@ -111,6 +119,16 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
   }
 
   p.poses.push_back(lastPs);
+  //for removing short distances in the path
+  for (int i = 0; i < p.poses.size() - 1; )
+  {    
+    if(distanceBetweenPoses(p.poses[i], p.poses[i+1]) < 0.8)
+    {
+      p.poses.erase(p.poses.begin() + i + 1);
+      continue;
+    }
+    i++;
+  }
 
   if (abandonedIndex != 0)
   {
@@ -124,8 +142,9 @@ Path AStar::reconstructPath(int current, int last, std::unordered_map<int, int> 
     paddingPath.push_back(poseStampedFromIndex(abandonedIndex, oGrid, robot_name));
     p.poses = paddingPath;
     // ROS_INFO("[planning | astar ]: Returning the completed path");
-    return p;
+    
   }
+
 
   return p;
 }
