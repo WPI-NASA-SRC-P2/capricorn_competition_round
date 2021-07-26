@@ -256,6 +256,12 @@ TEAM_MICRO_STATE ScoutWaiting::getMicroState()
          return RECOVERY_SCOUT_FINDING;
       }
    }
+   if((scout_task == SCOUT_VISUAL_RESET_ODOM && !scout_done_and_succeeded) || 
+      (excavator_task == EXCAVATOR_VISUAL_RESET_ODOM && !excavator_done_and_succeeded))
+      {
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");
+         return RESET_SCOUT_EXCAV_ODOM;
+      }
    if (scout_task == SCOUT_LOCATE_VOLATILE)
    {
       bool excav_in_process = excavator_task == EXCAVATOR_GO_TO_SCOUT;
@@ -515,6 +521,12 @@ TEAM_MICRO_STATE Excavating::getMicroState()
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");
          return PRE_PARK_MANEUVER_EXCAVATOR;
+      }
+   if((hauler_task == HAULER_VISUAL_RESET_ODOM && !hauler_done_and_succeeded) || 
+      (excavator_task == EXCAVATOR_VISUAL_RESET_ODOM && !excavator_done_and_succeeded))
+      {
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");
+         return RESET_EXCAV_HAULER_ODOM;
       }
    if(hauler_task == HAULER_GO_BACK_TO_EXCAVATOR && !hauler_done_and_succeeded)
       {

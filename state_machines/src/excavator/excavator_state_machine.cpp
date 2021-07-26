@@ -1001,9 +1001,9 @@ void ExcavatorResetOdomAtHopper::goToProcPlant()
    }
 
    bool is_done = (navigation_vision_client_->getState().isDone());
-   bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(is_done)
    {
+      bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
       if(has_succeeded)
          micro_state = PARK_AT_HOPPER;
       else
@@ -1199,9 +1199,9 @@ void ExcavatorGoToRepairStation::goToRepair()
    }
    
    bool is_done = (navigation_vision_client_->getState().isDone());
-   bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(is_done)
    {
+      bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
       if(!has_succeeded)
       {
          micro_state = GO_TO_REPAIR_RECOVERY;
