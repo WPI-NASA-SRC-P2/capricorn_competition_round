@@ -620,10 +620,6 @@ void PreParkHaulerRecovery::step()
       break;
    case CENTER_TO_HAULER:
       centerHauler();
-      if(centerHaulerDone_){
-         goal_ = goal_states_::GET_IN_DIGGING_POSITION;
-         first_ = true;
-      }
       break;
    case GET_IN_DIGGING_POSITION:
       getInArmPosition();
@@ -634,7 +630,7 @@ void PreParkHaulerRecovery::step()
    }
 
    current_state_done_ = getInArmPositionDone_;
-   last_state_succeeded_ = getInArmPositionDone_ && centerHaulerDone_;
+   last_state_succeeded_ = getInArmPositionDone_ && centerHaulerSucceeded_;
 }
 
 
@@ -700,7 +696,15 @@ void PreParkHaulerRecovery::centerHauler() {
    }
    else
       centerHaulerDone_ = navigation_vision_client_->getState().isDone();
-      // centerHaulerDone_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+      if(centerHaulerDone_){
+         if(navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         {
+            goal_ = goal_states_::GET_IN_DIGGING_POSITION;
+            first_ = true;
+         }
+         else
+            centerHaulerSucceeded_ = false;
+      }
 }
 
 void PreParkHaulerRecovery::getInArmPosition() {

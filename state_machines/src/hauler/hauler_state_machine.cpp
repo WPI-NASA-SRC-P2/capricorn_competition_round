@@ -259,8 +259,7 @@ void ParkAtHopper::step()
     }
    current_state_done_ = park_robot_client_->getState().isDone();
    if(current_state_done_ && !(first_))
-      last_state_succeeded_ = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   
+      last_state_succeeded_ = (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS);
 }
 
 bool ParkAtHopper::isDone() 
@@ -454,7 +453,7 @@ void ParkAtExcavator::step()
 
    current_state_done_ = park_robot_client_->getState().isDone();
    if(current_state_done_ && !(first_))
-      last_state_succeeded_ = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+      last_state_succeeded_ = (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS);
 }
 
 bool ParkAtExcavator::isDone() 
@@ -720,9 +719,9 @@ void DumpVolatileAtHopper::goToProcPlant()
    }
 
    bool is_done = (navigation_vision_client_->getState().isDone());
-   bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(is_done)
    {
+      bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
       if(has_succeeded)
          micro_state = PARK_AT_HOPPER;
       else
