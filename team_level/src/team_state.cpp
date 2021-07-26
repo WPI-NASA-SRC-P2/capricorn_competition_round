@@ -341,9 +341,9 @@ void ScoutWaiting::stepRobotsToGoal()
 
 void ScoutWaiting::stepResetScoutExcavOdom()
 {
-   robot_state_register->setRobotState(excavator_in_team, SCOUT_VISUAL_RESET_ODOM);
+   robot_state_register->setRobotState(scout_in_team, SCOUT_VISUAL_RESET_ODOM);
 
-   robot_state_register->setRobotState(scout_in_team, EXCAVATOR_VISUAL_RESET_ODOM);
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_VISUAL_RESET_ODOM);
 }
 
 void ScoutWaiting::stepMakeExcavHaulerIdle()
@@ -592,7 +592,7 @@ void Excavating::stepWaitForHauler()
 
 void Excavating::stepResetExcavHaulerOdom()
 {
-   robot_state_register->setRobotState(excavator_in_team, SCOUT_VISUAL_RESET_ODOM);
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_VISUAL_RESET_ODOM);
 
    robot_state_register->setRobotState(hauler_in_team, HAULER_VISUAL_RESET_ODOM);
 }
