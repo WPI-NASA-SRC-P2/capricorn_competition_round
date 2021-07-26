@@ -634,16 +634,18 @@ void HaulerGoToLoc::exitPoint()
 void DumpVolatileAtHopper::entryPoint()
 {
    // we assume we are near the volatile
+   first_PPP = true;
    first_GTPP = true;
    first_PAH = true;
    first_UFH = true;
    first_GTR = true;
+   first_PPP = true;
    first_GTRR = true;
    first_DV = true;
    second_GTRR = true;
    first_GTLL = true;
    resetOdomDone_ = false;
-   micro_state = GO_TO_PROC_PLANT;
+   micro_state = PRE_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
    state_done =false;
@@ -675,6 +677,9 @@ void DumpVolatileAtHopper::step()
 {
    switch (micro_state)
    {
+   case PRE_PROC_PLANT: 
+      PreProcPlant();
+      break;
    case GO_TO_PROC_PLANT: 
       goToProcPlant();
       break;
@@ -704,6 +709,22 @@ void DumpVolatileAtHopper::step()
    }
 }
 
+void DumpVolatileAtHopper::PreProcPlant()
+{
+   if(first_PPP)
+   {
+
+      navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+      navigation_action_goal_.pose = PROC_PLANT_LOCATION;
+      navigation_client_->sendGoal(navigation_action_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Pre-parking to Processing Plant goal sent");
+      first_PPP = false;
+      return;
+   }
+   bool is_done = navigation_client_->getState().isDone();
+   if(is_done)
+      micro_state = GO_TO_PROC_PLANT;
+}
 void DumpVolatileAtHopper::goToProcPlant()
 {
    if (first_GTPP)
