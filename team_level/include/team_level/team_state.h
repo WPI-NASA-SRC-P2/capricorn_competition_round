@@ -53,6 +53,7 @@ enum TEAM_MICRO_STATE{
    PRE_PARK_MANEUVER_EXCAVATOR,
    PARK_AT_EXCAVATOR_HAULER,
    RESET_EXCAV_HAULER_ODOM,
+   PRE_PARK_MANEUVER_RECOVERY,
    DIG_AND_DUMP,
    BALLET_ONCE,
    UNDOCK_HAULER,
@@ -209,6 +210,7 @@ public:
 
 private:
    bool ballet_once, digging_re_attempted;
+   bool v_ppm_once, park_at_excav_re_attempted;
    TEAM_MICRO_STATE micro_state;
    void stepWaitForHauler();
    void stepPreParkManeuverExcavator();
@@ -218,6 +220,7 @@ private:
    void stepUndockHauler();
    void stepRecoveryExcavatorFinding();
    void stepResetExcavHaulerOdom();
+   void stepPreParkManeuverRecovery();
 };
 
 class Dumping: public TeamState{

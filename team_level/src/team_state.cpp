@@ -405,6 +405,8 @@ bool Excavating::entryPoint()
 
    ballet_once = true;
    digging_re_attempted = false;
+   v_ppm_once = true;
+   park_at_excav_re_attempted = false;
 
    volatile_site_location = robot_pose_register->getRobotPose(excavator_in_team);
    return true;
@@ -435,10 +437,30 @@ TEAM_MICRO_STATE Excavating::getMicroState()
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: UNDOCK_HAULER  2");
          return UNDOCK_HAULER;
       }
+   if (excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_failed && digging_re_attempted)
+      {
+         return UNDOCK_HAULER;
+      }
    if(excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_failed && ballet_once)
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: UNDOCK_HAULER  2");
          return BALLET_ONCE;
+      }
+   if(excavator_task == EXCAVATOR_PRE_HAULER_PARK_MANEUVER && excavator_done_and_failed)
+      {
+         return PRE_PARK_MANEUVER_RECOVERY;
+      }
+   if(excavator_task == EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY && excavator_done_and_succeeded)
+      {
+         if(!v_ppm_once)
+            park_at_excav_re_attempted = true;
+         return PARK_AT_EXCAVATOR_HAULER;
+      }   
+   if(hauler_task == HAULER_PARK_AT_EXCAVATOR && hauler_done_and_failed)
+      {
+         v_ppm_once = false;
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: DIG_AND_DUMP  3");
+         return PRE_PARK_MANEUVER_RECOVERY;
       }
    if(excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE)
    {
@@ -529,7 +551,7 @@ TeamState& Excavating::transition()
       ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to DUMPING");
       return getState(GO_TO_REPAIR_STATION);
    }
-   else if (excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE && excavator_done_and_failed && digging_re_attempted)
+   else if(excavator_task == EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY && excavator_done_and_failed && park_at_excav_re_attempted)
    {
       ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to GO_TO_REPAIR_STATION");
       return getState(GO_TO_REPAIR_STATION);
