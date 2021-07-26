@@ -106,7 +106,7 @@ float findShoulderAngle(const geometry_msgs::Point &target)
   shoulder_wrt_base.y = 0.000001;
   shoulder_wrt_base.z = 0.100000;
 
-  return atan2((target.y), (target.x));
+  return atan2((target.y - shoulder_wrt_base.y), (target.x - shoulder_wrt_base.x));
 }
 
 /**
