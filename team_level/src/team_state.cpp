@@ -504,7 +504,7 @@ TEAM_MICRO_STATE Excavating::getMicroState()
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: PRE_PARK_MANEUVER_EXCAVATOR  5");
          return PRE_PARK_MANEUVER_EXCAVATOR;
       }
-   if (hauler_task == HAULER_VISUAL_RESET_ODOM && robot_state_register->isDone(scout_in_team))
+   if (hauler_task == HAULER_VISUAL_RESET_ODOM && robot_state_register->isDone(hauler_in_team))
    {
       if(excavator_task == EXCAVATOR_VISUAL_RESET_ODOM && robot_state_register->isDone(excavator_in_team))
       {
@@ -710,7 +710,7 @@ TeamState& Dumping::transition()
 {
    if(isDone())
    {
-      ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to IDLE");
+      ROS_INFO("TEAM_LEVEL | team_state | HAULER reached, Shifting to IDLE");
       return getState(IDLE);
    }
    else
@@ -780,7 +780,7 @@ TeamState& GoToRepairStation::transition()
 {
    if(isDone())
    {
-      ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to IDLE");
+      ROS_INFO("TEAM_LEVEL | team_state | Robots reached, Shifting to IDLE");
       return getState(WAIT_FOR_HOPPER_APPOINTMENT);
    }
    else
@@ -880,7 +880,7 @@ TeamState& GoToInitLoc::transition()
 {
    if(isDone())
    {
-      ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to IDLE");
+      ROS_INFO("TEAM_LEVEL | team_state | Robots reached, Shifting to IDLE");
       return getState(IDLE);
    }
    else
@@ -948,7 +948,7 @@ TeamState& ResetAtHopper::transition()
 {
    if(isDone())
    {
-      ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to IDLE");
+      ROS_INFO("TEAM_LEVEL | team_state | Robots reached, Shifting to IDLE");
       if(scout_in_team != NONE)
          return getState(SEARCH);
       else
