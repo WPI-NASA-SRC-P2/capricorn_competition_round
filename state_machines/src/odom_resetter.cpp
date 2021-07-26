@@ -143,9 +143,9 @@ int main(int argc, char** argv)
         new_p = init_odom_p + curr_imu_p - init_imu_p;
         new_y = init_odom_y + curr_imu_y - init_imu_y;  
 
-        ROS_INFO_STREAM("init_odom_r:"<< init_odom_r << "  curr_imu_r:"<< curr_imu_r << "  init_imu_r:"<<init_imu_r);
-        ROS_INFO_STREAM("init_odom_p:"<< init_odom_p << "  curr_imu_p:"<< curr_imu_p << "  init_imu_p:"<<init_imu_p);
-        ROS_INFO_STREAM("init_odom_y:"<< init_odom_y << "  curr_imu_y:"<< curr_imu_y << "  init_imu_y:"<<init_imu_y);
+        // ROS_INFO_STREAM("init_odom_r:"<< init_odom_r << "  curr_imu_r:"<< curr_imu_r << "  init_imu_r:"<<init_imu_r);
+        // ROS_INFO_STREAM("init_odom_p:"<< init_odom_p << "  curr_imu_p:"<< curr_imu_p << "  init_imu_p:"<<init_imu_p);
+        // ROS_INFO_STREAM("init_odom_y:"<< init_odom_y << "  curr_imu_y:"<< curr_imu_y << "  init_imu_y:"<<init_imu_y);
 
         // Assemble data into pose for Rosservice call 
         rtabmap_ros::ResetPose pose;

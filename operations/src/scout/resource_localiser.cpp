@@ -293,7 +293,9 @@ void localiseResource(const operations::ResourceLocaliserGoalConstPtr &localiser
   else
   {
     ROS_ERROR_STREAM("[OPERATIONS | resource_localiser.cpp | " << robot_name_ << "]: " << "Resourse localisation called, but rover not near volatile");
-    server->setAborted();
+    operations::ResourceLocaliserResult res;
+    res.result = COMMON_RESULT::FAILED;
+    server->setSucceeded(res);
   }
 }
 

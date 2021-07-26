@@ -50,8 +50,8 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   HAULER_RETURN_LOC.pose.orientation.w = 1;
 
   UNDOCK_LOCATION.header.frame_id = COMMON_NAMES::MAP;
-  UNDOCK_LOCATION.pose.position.x = 6.0;
-  UNDOCK_LOCATION.pose.position.y = 8.0;
+  UNDOCK_LOCATION.pose.position.x = 4.0;
+  UNDOCK_LOCATION.pose.position.y = 14.0;
   UNDOCK_LOCATION.pose.orientation.w = 1.0;
 
   PROC_PLANT_LOCATION.header.frame_id = COMMON_NAMES::MAP;
@@ -60,8 +60,7 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   PROC_PLANT_LOCATION.pose.orientation.w = 1.0;
 
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &HaulerState::odomCallback, this);
-
-//   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &HaulerState::objectsCallback, this);
+  objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &HaulerState::objectsCallback, this);
 }
 
 HaulerState::~HaulerState()
@@ -84,6 +83,14 @@ void HaulerState::odomCallback(const nav_msgs::Odometry odom)
    hauler_pose_.header = odom.header;
    
 }
+
+void HaulerState::objectsCallback(const perception::ObjectArray::ConstPtr objs)
+{
+  const std::lock_guard<std::mutex> lock(objects_mutex_);
+  vision_objects_ = objs;
+  objects_msg_received_ = true;
+}
+
 
 /** TODO: Implememt entrypoint, transition, step and exit points for all states mentioned in the flow shown by ashay
     *   HAULER_GO_TO_LOC,                    //
@@ -252,8 +259,7 @@ void ParkAtHopper::step()
     }
    current_state_done_ = park_robot_client_->getState().isDone();
    if(current_state_done_ && !(first_))
-      last_state_succeeded_ = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
-   
+      last_state_succeeded_ = (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS);
 }
 
 bool ParkAtHopper::isDone() 
@@ -447,7 +453,7 @@ void ParkAtExcavator::step()
 
    current_state_done_ = park_robot_client_->getState().isDone();
    if(current_state_done_ && !(first_))
-      last_state_succeeded_ = (park_robot_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+      last_state_succeeded_ = (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS);
 }
 
 bool ParkAtExcavator::isDone() 
@@ -628,16 +634,18 @@ void HaulerGoToLoc::exitPoint()
 void DumpVolatileAtHopper::entryPoint()
 {
    // we assume we are near the volatile
+   first_PPP = true;
    first_GTPP = true;
    first_PAH = true;
    first_UFH = true;
    first_GTR = true;
+   first_PPP = true;
    first_GTRR = true;
    first_DV = true;
    second_GTRR = true;
    first_GTLL = true;
    resetOdomDone_ = false;
-   micro_state = GO_TO_PROC_PLANT;
+   micro_state = PRE_PROC_PLANT;
    macro_state_succeeded = false;
    macro_state_done = false;
    state_done =false;
@@ -669,6 +677,9 @@ void DumpVolatileAtHopper::step()
 {
    switch (micro_state)
    {
+   case PRE_PROC_PLANT: 
+      PreProcPlant();
+      break;
    case GO_TO_PROC_PLANT: 
       goToProcPlant();
       break;
@@ -698,6 +709,22 @@ void DumpVolatileAtHopper::step()
    }
 }
 
+void DumpVolatileAtHopper::PreProcPlant()
+{
+   if(first_PPP)
+   {
+
+      navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+      navigation_action_goal_.pose = PROC_PLANT_LOCATION;
+      navigation_client_->sendGoal(navigation_action_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Pre-parking to Processing Plant goal sent");
+      first_PPP = false;
+      return;
+   }
+   bool is_done = navigation_client_->getState().isDone();
+   if(is_done)
+      micro_state = GO_TO_PROC_PLANT;
+}
 void DumpVolatileAtHopper::goToProcPlant()
 {
    if (first_GTPP)
@@ -713,9 +740,9 @@ void DumpVolatileAtHopper::goToProcPlant()
    }
 
    bool is_done = (navigation_vision_client_->getState().isDone());
-   bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(is_done)
    {
+      bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
       if(has_succeeded)
          micro_state = PARK_AT_HOPPER;
       else
@@ -1207,12 +1234,14 @@ void HaulerBalletDancing::exitPoint()
 void HaulerVisualResetOfOdometry::entryPoint()
 {
    // declare entrypoint variables
-   ROS_INFO_STREAM("[STATE_MACHINES | excahauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to do visual odom-reset"); 
+   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to do visual odom-reset"); 
    proc_plant_distance_ = 0.0;
    repair_station_distance_ = 0.0;
    no_of_measurements_ = 20;
    MAX_TRIES = 300;
    first_ = true;
+   macro_state_done_ = false;
+   macro_state_succeeded_ = false;
 
    micro_state = CENTER_TO_PROC_PLANT;
 }
@@ -1268,7 +1297,7 @@ void HaulerVisualResetOfOdometry::centerToObject(const std::string& centering_ob
       navigation_vision_goal_.desired_object_label = centering_object;
       navigation_vision_goal_.mode = V_CENTER;
       navigation_vision_client_->sendGoal(navigation_vision_goal_);
-      ROS_INFO_STREAM("[STATE_MACHINES | excahauler_state_machine.cpp | " << robot_name_ << "]: Centering to " << centering_object << " vision goal sent"); 
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Centering to " << centering_object << " vision goal sent"); 
       first_ = false;
    }
 
@@ -1312,21 +1341,24 @@ float HaulerVisualResetOfOdometry::getObjectDepth(const std::string& centering_o
    float sum_of_all_readings;
    while(ros::ok() && ((reading_count < no_of_measurements_) && (tries < MAX_TRIES))) // Can get stuck 
    {
+      ros::spinOnce();   // Update object detection callback
       tries++;
       if(!objects_msg_received_)
       {
          ros::Duration(0.01).sleep();
          continue;
       }
+      objects_msg_received_ = false;
 
       for(int i{}; i < vision_objects_->obj.size() ; i++ )
       {
-         if(vision_objects_->obj.at(i).label == centering_object);
+         if(vision_objects_->obj.at(i).label == centering_object)
          {
             reading_count++;
             float camera_depth = vision_objects_->obj.at(i).point.pose.position.z;
             sum_of_all_readings += (std::sqrt(std::pow(camera_depth, 2) - std::pow(camera_offset_, 2)) + camera_offset_); 
-            ROS_INFO_STREAM("STATE_MACHINES | excahauler_state_machine | " << robot_name_ << " ]: Got distance to " << centering_object);
+            // ROS_INFO_STREAM("STATE_MACHINES | hauler_state_machine | " << robot_name_ << " ]: Distance to " << centering_object << " is " << (sum_of_all_readings/reading_count));
+            // ROS_INFO_STREAM("Sum of all readngs : " << sum_of_all_readings << " and reading_count = " << reading_count);
          }
       }
    }
@@ -1339,7 +1371,10 @@ float HaulerVisualResetOfOdometry::getObjectDepth(const std::string& centering_o
    if(reading_count == 0)
       return 0.0;
    else   
-      return sum_of_all_readings/reading_count;
+   {
+      // ROS_INFO_STREAM("STATE_MACHINES | hauler_state_machine | Final distance to "<< centering_object << " is "<< (sum_of_all_readings/reading_count));
+      return (sum_of_all_readings/reading_count);
+   }
    
 }
 
@@ -1357,16 +1392,19 @@ void HaulerVisualResetOfOdometry::visualResetOdom()
    srv.request.visual_reset.orientation_rs = repair_station_orientation_;
    srv.request.visual_reset.robot_orientation = odom_.pose.pose.orientation;
    
+   // ROS_INFO_STREAM("STATE_MACHINES | hauler_state_machine | Distance to proc_plant is : " << proc_plant_distance_);
+   // ROS_INFO_STREAM("STATE_MACHINES | hauler_state_machine | Distance to repair_station is : " << repair_station_distance_);
+
    resetOdomDone_ = resetOdometryClient.call(srv);  
    macro_state_done_ = true;
    macro_state_succeeded_ = resetOdomDone_;
+   micro_state = HAULER_IDLE;
 
    if(resetOdomDone_)
       ROS_INFO_STREAM("STATE_MACHINES | hauler_state_machine | " << robot_name_ << " ]: Odom reset successful!");
    else 
       ROS_INFO_STREAM("STATE_MACHINES | hauler_state_machine | " << robot_name_ << " ]: Reset didn't happen, good luck wherever you are going."); 
 }
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////  I D L E  S T A T E  C L A S S ////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////

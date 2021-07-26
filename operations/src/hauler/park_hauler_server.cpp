@@ -59,7 +59,7 @@ const int TIMES_REACHED_THRESHOLD = 10, DIFF_HOPPER_X_THRESH = 50, DIFF_FURNACE_
 const float PROCESSING_PLANT_RADIUS = 1.8, INIT_VALUE = -100.00;
 int g_times_reached = 0, g_center_image_x = 320, g_target_height = 385;
 
-bool g_execute_called = false;
+bool g_execute_called = false, g_failed = false;
 perception::ObjectArray g_hauler_objects, g_excavator_objects;
 std::string g_robot_name;
 
@@ -263,7 +263,7 @@ void computeProperties(perception::Object &object, bool &found, float &size_x, f
  * @brief find the excavator using navigation vision
  * 
  */
-void findExcavator()
+bool findExcavator()
 {
     g_navigation_vision_client->waitForServer();
     operations::NavigationVisionGoal goal;
@@ -272,7 +272,11 @@ void findExcavator()
     goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_REACH;
     g_navigation_vision_client->sendGoal(goal);
     g_navigation_vision_client->waitForResult();
-    return;
+    if(g_navigation_vision_client->getState() == actionlib::SimpleClientGoalState::SUCCEEDED && g_navigation_vision_client->getResult()->result == COMMON_NAMES::COMMON_RESULT::FAILED)
+    {
+        return false;
+    }
+    return true;
 }
 
 /**
@@ -473,7 +477,18 @@ void parkWrtExcavator()
     if ((!g_found_orientation && center_exc != INIT_VALUE && abs(error_angle) > ANGLE_THRESH_WIDE) || g_times_excavator > EXCAVATOR_TIMES_DETECT_TIMES)
     {
         // if excavator is lost or excavator is not in the center of the image, call the navigation vision server to center or find the excavator
-        findExcavator();
+        if(!findExcavator())
+        {
+            g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = 0;
+            g_nav_goal.direction = 0;
+            g_nav_goal.angular_velocity = 0;
+            
+            g_nav_client->sendGoal(g_nav_goal);
+            g_nav_client->sendGoal(g_nav_goal);
+            g_failed = true; 
+            return;
+        }
     }
 
     // rotate robot around excavator
@@ -521,6 +536,7 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
     // initializing global variables
     g_execute_called = true;
     g_cancel_called = false;
+    g_failed = false;
     g_parked = false;
     ros::Rate update_rate(UPDATE_HZ);
     bool park_mode = OBJECT_PARKER::EXCAVATOR;
@@ -570,7 +586,7 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
         g_revolve_direction_set = false;
     }
 
-    while (ros::ok() && !g_parked && !g_cancel_called)
+    while (ros::ok() && !g_parked && !g_cancel_called && !g_failed)
     {
         ros::spinOnce();
         if (park_mode == OBJECT_PARKER::HOPPER && g_hauler_message_received)
@@ -588,6 +604,15 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
         g_cancel_called = false;
         result.result = COMMON_NAMES::COMMON_RESULT::INTERRUPTED;
         as->setSucceeded(result, "Cancelled Goal");
+        return;
+    }
+
+    else if (g_failed)
+    {
+        ROS_INFO_STREAM(getString("Parking Failed"));
+        g_failed = false;
+        result.result = COMMON_NAMES::COMMON_RESULT::FAILED;
+        as->setSucceeded(result, "Failed Goal");
         return;
     }
 

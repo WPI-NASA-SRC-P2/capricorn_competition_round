@@ -57,8 +57,8 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   BESIDE_REPAIR_STATION.pose.orientation.z = 1.0;
 
   UNDOCK_LOCATION.header.frame_id = COMMON_NAMES::MAP;
-  UNDOCK_LOCATION.pose.position.x = 6.0;
-  UNDOCK_LOCATION.pose.position.y = 8.0;
+  UNDOCK_LOCATION.pose.position.x = 4.0;
+  UNDOCK_LOCATION.pose.position.y = 14.0;
   UNDOCK_LOCATION.pose.orientation.w = 1.0;
 
   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &ExcavatorState::objectsCallback, this);
@@ -584,6 +584,151 @@ void PreParkHauler::getInArmPosition() {
       getInArmPositionDone_ = true;
       // getInArmPositionDone_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// P R E _ P A R K _ H A U L E R  R E C O V E R Y  S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PreParkHaulerRecovery::entryPoint()
+{
+   //set entry variables
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: State Machine: Pre-parking to Hauler");
+   first_ = true;
+   current_state_done_ = false;
+   last_state_succeeded_ = false;
+   goToVolatileDone_ = false;
+   centerHaulerDone_ = false;
+   getInArmPositionDone_ = false;
+   goal_= goal_states_::GO_TO_VOLATILE;
+}
+
+/** TODO: 
+ * Drive on top of volatile using NAV::MANUAL
+ * Center it to the haulerbot_letion and set flags. 
+ * Set up seperate functions for all goals. 
+ * */ 
+void PreParkHaulerRecovery::step()
+{  
+   switch (goal_)
+   {
+   case GO_TO_VOLATILE:
+      goToVolatile();
+      if(goToVolatileDone_){
+         goal_ = goal_states_::CENTER_TO_HAULER;
+         first_ = true;
+      }
+      break;
+   case CENTER_TO_HAULER:
+      centerHauler();
+      break;
+   case GET_IN_DIGGING_POSITION:
+      getInArmPosition();
+      break;
+   default:
+      ROS_WARN_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Incorrect goal found:"<<goal_);
+      break;
+   }
+
+   current_state_done_ = getInArmPositionDone_;
+   last_state_succeeded_ = getInArmPositionDone_ && centerHaulerSucceeded_;
+}
+
+
+
+void PreParkHaulerRecovery::exitPoint()
+{
+   // cleanup the state (cancel nav goal)
+   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Excavator Parking Completed");
+   navigation_action_goal_.epsilon = 0.5;
+   navigation_client_->cancelGoal();
+   navigation_vision_client_->cancelGoal();
+}
+
+bool PreParkHaulerRecovery::isDone() {
+   // bool nav_done = navigation_client_->getState().isDone();
+   
+   // current_state_done_ = vis_nav_done && nav_done;
+   // if(current_state_done_)
+   //    ROS_WARN_STREAM("PreParkHaulerRecovery Completed");
+   return current_state_done_;
+
+} 
+
+bool PreParkHaulerRecovery::hasSucceeded() {
+
+   // if(last_state_succeeded_)
+   //    ROS_WARN_STREAM("PreParkHaulerRecovery Completed Successfully");
+   return last_state_succeeded_;
+   // return (navigation_vision_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}
+
+void PreParkHaulerRecovery::goToVolatile() {
+   //use manual nav goal to get on top of the volatile (with epsilon of 0.1 for higher accuracy)
+   if(first_){
+      // move towards volatile
+      navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+      navigation_action_goal_.forward_velocity = 0.6;
+      navigation_action_goal_.angular_velocity = 0;
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "GOING TO VOLATILE");
+      navigation_client_->sendGoal(navigation_action_goal_);
+      ros::Duration(ONE_METRE_DELAY_EXCAV_HAULER).sleep();
+      // brake wheels
+      navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+      navigation_action_goal_.forward_velocity = 0.0;   
+      navigation_action_goal_.angular_velocity = 0;
+      navigation_client_->sendGoal(navigation_action_goal_);
+      ros::Duration(0.5).sleep();
+      first_ = false;
+   }
+   else
+      goToVolatileDone_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}
+
+void PreParkHaulerRecovery::centerHauler() {
+   // centers excavator to scout to ensure proper scout undock/reset (excavator already reaches close to scout in GoToScout)
+   if(first_) {
+      navigation_vision_goal_.desired_object_label = COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS;
+      navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_PPM;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "NAV VISION GOAL SENT");
+      // once at centering, keep centering until finished, then will exit the state 
+      first_ = false;
+   }
+   else
+      centerHaulerDone_ = navigation_vision_client_->getState().isDone();
+      if(centerHaulerDone_){
+         if(navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         {
+            goal_ = goal_states_::GET_IN_DIGGING_POSITION;
+            first_ = true;
+         }
+         else
+            centerHaulerSucceeded_ = false;
+      }
+}
+
+void PreParkHaulerRecovery::getInArmPosition() {
+   //use manual nav goal to get to good dig position
+   if(first_){
+      navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+      navigation_action_goal_.forward_velocity = -0.6;
+      navigation_action_goal_.angular_velocity = 0;
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "driving to digging position");
+      navigation_client_->sendGoal(navigation_action_goal_);
+      ros::Duration(ONE_METRE_DELAY_EXCAV_HAULER).sleep();
+      navigation_action_goal_.drive_mode = NAV_TYPE::MANUAL;
+      navigation_action_goal_.forward_velocity = 0.0;   
+      navigation_action_goal_.angular_velocity = 0;
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: " << "UNDOCKING: backing up beep beep beep");
+      navigation_client_->sendGoal(navigation_action_goal_);
+      ros::Duration(0.5).sleep();
+      first_ = false;
+   }
+   else
+      getInArmPositionDone_ = true;
+      // getInArmPositionDone_ = (navigation_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED);
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// D I G  A N D  D U M P  C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -860,9 +1005,9 @@ void ExcavatorResetOdomAtHopper::goToProcPlant()
    }
 
    bool is_done = (navigation_vision_client_->getState().isDone());
-   bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(is_done)
    {
+      bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
       if(has_succeeded)
          micro_state = PARK_AT_HOPPER;
       else
@@ -1058,9 +1203,9 @@ void ExcavatorGoToRepairStation::goToRepair()
    }
    
    bool is_done = (navigation_vision_client_->getState().isDone());
-   bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
    if(is_done)
    {
+      bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
       if(!has_succeeded)
       {
          micro_state = GO_TO_REPAIR_RECOVERY;
@@ -1478,6 +1623,8 @@ void ExcavatorVisualResetOfOdometry::entryPoint()
    no_of_measurements_ = 20;
    MAX_TRIES = 300;
    first_ = true;
+   macro_state_done_ = false;
+   macro_state_succeeded_ = false;
 
    micro_state = CENTER_TO_PROC_PLANT;
 }
@@ -1577,21 +1724,24 @@ float ExcavatorVisualResetOfOdometry::getObjectDepth(const std::string& centerin
    float sum_of_all_readings;
    while(ros::ok() && ((reading_count < no_of_measurements_) && (tries < MAX_TRIES))) // Can get stuck 
    {
+      ros::spinOnce();   // Update object detection callback
       tries++;
       if(!objects_msg_received_)
       {
          ros::Duration(0.01).sleep();
          continue;
       }
+      objects_msg_received_ = false;
 
       for(int i{}; i < vision_objects_->obj.size() ; i++ )
       {
-         if(vision_objects_->obj.at(i).label == centering_object);
+         if(vision_objects_->obj.at(i).label == centering_object)
          {
             reading_count++;
             float camera_depth = vision_objects_->obj.at(i).point.pose.position.z;
             sum_of_all_readings += (std::sqrt(std::pow(camera_depth, 2) - std::pow(camera_offset_, 2)) + camera_offset_); 
-            ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Got distance to " << centering_object);
+            // ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Distance to " << centering_object << " is " << (sum_of_all_readings/reading_count));
+            // ROS_INFO_STREAM("Sum of all readngs : " << sum_of_all_readings << " and reading_count = " << reading_count);
          }
       }
    }
@@ -1604,7 +1754,10 @@ float ExcavatorVisualResetOfOdometry::getObjectDepth(const std::string& centerin
    if(reading_count == 0)
       return 0.0;
    else   
-      return sum_of_all_readings/reading_count;
+   {
+      // ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | Final distance to "<< centering_object << " is "<< (sum_of_all_readings/reading_count));
+      return (sum_of_all_readings/reading_count);
+   }
    
 }
 
@@ -1622,12 +1775,16 @@ void ExcavatorVisualResetOfOdometry::visualResetOdom()
    srv.request.visual_reset.orientation_rs = repair_station_orientation_;
    srv.request.visual_reset.robot_orientation = odom_.pose.pose.orientation;
    
+   // ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | Distance to proc_plant is : " << proc_plant_distance_);
+   // ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | Distance to repair_station is : " << repair_station_distance_);
+
    resetOdomDone_ = resetOdometryClient.call(srv);  
    macro_state_done_ = true;
    macro_state_succeeded_ = resetOdomDone_;
+   micro_state = EXCAVATOR_IDLE;
 
    if(resetOdomDone_)
-      ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Odom reset successful!");
+      ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Odom reset successful!");
    else 
-      ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Reset didn't happen, good luck wherever you are going."); 
+      ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: Reset didn't happen, good luck wherever you are going."); 
 }

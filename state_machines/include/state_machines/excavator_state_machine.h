@@ -357,6 +357,52 @@ private:
 
    bool goToVolatileDone_;
    bool centerHaulerDone_;
+   bool centerHaulerSucceeded_;
+   bool getInArmPositionDone_;
+};
+
+/**
+ * @brief Basically the same as PreParkHauler, but will center to the "scout" as well, as per object detection
+ * PreParkHaulerRecovery docks the excavator to the scout by: 
+ *    [1] Moves forward some distance to be ontop of volatile
+ *    [2] Rotates until excavator's vision is centered to hauler
+ *    [3] Moves back to have excavator's arm over volatile spot
+ *     
+ *  @param isDone() if arm is above the voltile 
+ *  @param hasSucceeded() excavator is centered to hauler and arm is above volatile
+ * 
+ */
+class PreParkHaulerRecovery : public ExcavatorState {
+public:   
+   PreParkHaulerRecovery(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY, nh, robot_name) {}
+
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+   State& transition() override{}; 
+
+   // movements for getting into position at volatile w.r.t. hauler
+   void goToVolatile();
+   void centerHauler();
+   void getInArmPosition();
+
+private:
+   bool first_;
+   int goal_;
+   enum goal_states_
+   {
+      GO_TO_VOLATILE = 1,
+      CENTER_TO_HAULER = 2,
+      GET_IN_DIGGING_POSITION = 3
+   };
+
+   bool goToVolatileDone_;
+   bool centerHaulerDone_;
+   bool centerHaulerSucceeded_;
    bool getInArmPositionDone_;
 };
 

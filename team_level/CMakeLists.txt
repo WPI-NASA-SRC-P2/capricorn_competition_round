@@ -132,6 +132,7 @@ add_library(${PROJECT_NAME}
   src/team_scheduler.cpp
   src/team_state.cpp
   src/team_manager.cpp
+  src/detected_volatile_register.cpp
 )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
@@ -164,6 +165,12 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 # ${catkin_LIBRARIES}
 # )
 
+
+add_executable(detected_volatile_checker src/detected_volatile_checker.cpp)
+add_dependencies(detected_volatile_checker ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(detected_volatile_checker ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
 
 add_executable(start_scheduler src/start_scheduler.cpp)
 add_dependencies(start_scheduler ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -199,7 +206,7 @@ catkin_install_python(PROGRAMS
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS start_scheduler robot_state_register team_scheduler
+install(TARGETS start_scheduler robot_state_register team_scheduler detected_volatile_checker
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

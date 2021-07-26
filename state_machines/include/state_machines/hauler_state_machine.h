@@ -524,6 +524,7 @@ public:
 private: 
    bool first_;
    geometry_msgs::PoseStamped target_loc_;
+   void PreProcPlant();
    void goToProcPlant();
    void parkAtHopper();
    void undockFromHopper();
@@ -535,12 +536,13 @@ private:
    void dumpVolatile();
    void idleHauler(){}
 
-   bool first_GTPP, first_GTPPR, second_GTPPR, first_PAH, first_UFH, first_GTR, first_GTRR, second_GTRR, 
+   bool first_PPP, first_GTPP, first_GTPPR, second_GTPPR, first_PAH, first_UFH, first_GTR, first_GTRR, second_GTRR, 
          first_GTLL, resetOdomDone_, macro_state_succeeded, macro_state_done, first_DV;
    geometry_msgs::PoseStamped hardcoded_pose_, GTRR_pose_, GTPP_pose_;
    bool state_done;
 
    enum RESET_ODOM_MICRO_STATES{
+      PRE_PROC_PLANT,
       GO_TO_PROC_PLANT,
       GO_TO_PROC_PLANT_RECOVERY,
       PARK_AT_HOPPER,

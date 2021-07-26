@@ -446,7 +446,7 @@ void TeamManager::checkAndRecruitForResetAtHopper(int team_index)
       bool scout_dead = robot_state_register->isRobotOutOfCommission(all_teams.at(team_index)->getScout());
       if(scout_dead)
       {
-         all_teams.at(team_index)->disbandScout();
+         // all_teams.at(team_index)->disbandScout();
          hopper_busy = false;
          return;
       }
@@ -456,7 +456,7 @@ void TeamManager::checkAndRecruitForResetAtHopper(int team_index)
       bool excavator_dead = robot_state_register->isRobotOutOfCommission(all_teams.at(team_index)->getExcavator());
       if(excavator_dead)
       {
-         all_teams.at(team_index)->disbandExcavator();
+         // all_teams.at(team_index)->disbandExcavator();
          hopper_busy = false;
          return;
       }
@@ -466,7 +466,7 @@ void TeamManager::checkAndRecruitForResetAtHopper(int team_index)
       bool hauler_dead = robot_state_register->isRobotOutOfCommission(all_teams.at(team_index)->getHauler());
       if(hauler_dead)
       {
-         all_teams.at(team_index)->disbandHauler();
+         // all_teams.at(team_index)->disbandHauler();
          hopper_busy = false;
          return;
       }
