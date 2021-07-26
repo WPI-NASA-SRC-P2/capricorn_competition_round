@@ -32,6 +32,16 @@ private:
   static double distance(int ind1, int ind2, int width);
 
   /**
+   * @brief 
+   * 
+   * @param pose1 
+   * @param pose2 
+   * @return double 
+   */
+  static double distanceBetweenPoses(geometry_msgs::PoseStamped pose1, geometry_msgs::PoseStamped pose2);
+
+
+  /**
    * @brief Return the 8 surronding points on an index on a grid
    * 
    * @param pt The index of the point to get the neighbors of
