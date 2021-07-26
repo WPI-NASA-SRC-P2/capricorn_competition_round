@@ -357,6 +357,7 @@ private:
 
    bool goToVolatileDone_;
    bool centerHaulerDone_;
+   bool centerHaulerSucceeded_;
    bool getInArmPositionDone_;
 };
 
@@ -401,6 +402,7 @@ private:
 
    bool goToVolatileDone_;
    bool centerHaulerDone_;
+   bool centerHaulerSucceeded_;
    bool getInArmPositionDone_;
 };
 
