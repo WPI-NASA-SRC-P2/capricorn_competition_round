@@ -22,8 +22,11 @@
 #include <srcp2_msgs/SystemPowerSaveSrv.h>
 #include <utils/common_names.h>
 
-#include "operations/SolarCharge.h"
+#include "operations/SolarModeAction.h"
 
+typedef actionlib::SimpleActionServer<operations::SolarModeAction> SolarServer_;
+typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient_;
+NavigationClient_ *navigation_client_;
 
 using namespace COMMON_NAMES;
 
@@ -37,12 +40,11 @@ public:
 protected:
       ros::NodeHandle nh_;
 
-      actionlib::SimpleActionServer<operations::SolarModeAction> SolarServer_;// NodeHandle instance must be created before this line. Otherwise strange error occurs.
       actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient_;
       
-      std::string action_name_;
-      action_name_ = "SolarModeAction";
+      std::string action_name_ = "SolarModeAction";
       // create messages that are used to published feedback/result
+      operations::SolarModeGoal goal;
       operations::SolarModeFeedback feedback_;
       operations::SolarModeResult result_;
 
@@ -51,7 +53,6 @@ private:
 
   // setting up actionlib service and client
   SolarServer_ *solarServer_;
-  NavigationClient_ *navigation_client_;
 
   // subscriber for system monitor
     ros::Subscriber systemMonitor_subscriber;
@@ -66,6 +67,8 @@ private:
   bool power_saver = false;
   bool should_turn = false;
   bool success = false;
+
+
 
     //done
     void initPowerSaverPublisher(ros::NodeHandle &nh, const std::string &robot_name);
@@ -88,6 +91,11 @@ private:
     void systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg);
 
     void executeCB(const operations::SolarModeGoalConstPtr &goal);
+
+    void stopSolarMode();
+
+    void startSolarMode();
+    
 
     void cancelGoal();
   

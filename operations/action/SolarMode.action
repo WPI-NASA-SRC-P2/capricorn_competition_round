@@ -1,15 +1,13 @@
 #goal
-bool solar_charge_status;
- ---
-
+bool solar_charge_status
+---
 #result
 bool solar_ok_
 bool power_rate_
 bool power_saver_
-
 ---
 #feedback
 bool solar_ok_
-float_t power_rate_
+float32 power_rate_
 bool power_saver_
 
