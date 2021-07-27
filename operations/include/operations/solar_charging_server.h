@@ -22,27 +22,22 @@
 #include <srcp2_msgs/SystemPowerSaveSrv.h>
 #include <utils/common_names.h>
 
-#include "operations/SolarModeAction.h"
-
-typedef actionlib::SimpleActionServer<operations::SolarModeAction> SolarServer_;
-typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient_;
-NavigationClient_ *navigation_client_;
-
 using namespace COMMON_NAMES;
 
 
-class SolarModeAction
+class SolarModeServer
 {
 public:
-  SolarModeAction(ros::NodeHandle& nh, std::string robot_name);
-  ~SolarModeAction();
+  SolarModeServer(ros::NodeHandle nh, std::string robot_name);
+  ~SolarModeServer()
+  {
+    delete solarServer_;
+    delete navigation_client_;
+  }
 
 protected:
-      ros::NodeHandle nh_;
-
-      actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient_;
       
-      std::string action_name_ = "SolarModeAction";
+      std::string action_name_ = "_solar_mode_server";
       // create messages that are used to published feedback/result
       operations::SolarModeGoal goal;
       operations::SolarModeFeedback feedback_;
@@ -50,15 +45,23 @@ protected:
 
 
 private:
+  ros::NodeHandle nh_;
+
+  typedef actionlib::SimpleActionServer<operations::SolarModeAction> SolarServer_;
+  SolarServer_ *solarServer_;
+
+  typedef actionlib::SimpleActionClient<operations::NavigationAction> NavigationClient_;
+  NavigationClient_ *navigation_client_;
 
   // setting up actionlib service and client
-  SolarServer_ *solarServer_;
 
   // subscriber for system monitor
     ros::Subscriber systemMonitor_subscriber;
 
   // piblisher for powermode
     ros::ServiceClient powerMode_client; 
+
+    std::string robot_name_;
 
 
   std::string robot_name;

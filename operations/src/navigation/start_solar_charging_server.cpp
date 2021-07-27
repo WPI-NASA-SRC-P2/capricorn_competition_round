@@ -2,7 +2,7 @@
 #include <ros/ros.h>
 #include <operations/solar_charging_server.h>
 
-typedef actionlib::SimpleActionServer<operations::SolarModeAction> Server;
+typedef actionlib::SimpleActionServer<operations::SolarModeAction> SolarServer_;
 
 int main(int argc, char* argv[])
 {
@@ -15,12 +15,12 @@ int main(int argc, char* argv[])
 
     std::string robot_name(argv[1]);
 
-    ros::init(argc, argv, robot_name + "_nav_server");
+    ros::init(argc, argv, robot_name + "_solar_mode_server");
     ros::NodeHandle nh;
 
     ROS_INFO("[operations | start_nav_server]: Constructing nav server", robot_name.c_str());
 
-    SolarModeAction* ns = new SolarModeAction(nh, robot_name);
+    SolarModeServer* ns = new SolarModeServer(nh, robot_name);
 
     ROS_INFO("[operations | start_nav_server]: Done constructing nav server", robot_name.c_str());
 

@@ -5,6 +5,7 @@ bool solar_charge_status
 bool solar_ok_
 bool power_rate_
 bool power_saver_
+uint32 result
 ---
 #feedback
 bool solar_ok_
