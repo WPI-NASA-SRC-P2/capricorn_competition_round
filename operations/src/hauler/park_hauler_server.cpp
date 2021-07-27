@@ -181,7 +181,7 @@ void parkWrtHopper()
 
     if (furnace_detected && furnace_z < 3)
     {
-        ROS_INFO_STREAM(getString("REACHED HOPPER"));
+        // ROS_INFO_STREAM(getString("REACHED HOPPER"));
         for (int i = 0; i < 20; i++)
         {
             g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
@@ -371,11 +371,11 @@ void parkWrtExcavator(std::vector<float>& last_n_depths_for_antenna)
 
             if (error_angle > 0 && error_angle < ANGLE_THRESHOLD_NARROW)
             {
-                ROS_INFO_STREAM(getString("HAULER's ORIENTATION CORRECT"));
+                // ROS_INFO_STREAM(getString("HAULER's ORIENTATION CORRECT"));
                 g_found_orientation = true;
             }
         }
-        ROS_INFO_STREAM("Antenna Finding");
+        // ROS_INFO_STREAM("Antenna Finding");
         bool is_robot_antenna = (object.label == COMMON_NAMES::OBJECT_DETECTION_ROBOT_ANTENNA_CLASS);
         if (is_robot_antenna)
         {
@@ -387,7 +387,7 @@ void parkWrtExcavator(std::vector<float>& last_n_depths_for_antenna)
                 sum_of_datas += last_n_depths_for_antenna.at(i);
                 
             depth_hauler_ra = sum_of_datas/last_n_depths_for_antenna.size();
-            ROS_INFO_STREAM("Antenna depth calculated: "<<depth_hauler_ra);
+            // ROS_INFO_STREAM("Antenna depth calculated: "<<depth_hauler_ra);
         }
     }
 
@@ -401,7 +401,7 @@ void parkWrtExcavator(std::vector<float>& last_n_depths_for_antenna)
         static float last_depth = INIT_VALUE;
 
         g_lost = (depth_hauler_ra == INIT_VALUE) ? g_lost + 1 : 0;
-        ROS_INFO("##### Using the new value #####");
+        // ROS_INFO("##### Using the new value #####");
         if (depth_hauler_ra < ROBOT_ANTENNA_DEPTH_THRESH && depth_hauler_ra != INIT_VALUE)
         {
             if (last_depth != depth_hauler_ra)
@@ -534,7 +534,7 @@ void cancelGoal()
     g_nav_goal.angular_velocity = 0;
     g_nav_client->sendGoal(g_nav_goal);
 
-    ROS_INFO_STREAM(getString("Park Hauler : Cancelled Goal"));
+    // ROS_INFO_STREAM(getString("Park Hauler : Cancelled Goal"));
 }
 
 /**
@@ -555,7 +555,7 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
     ros::Rate update_rate(UPDATE_HZ);
     bool park_mode = OBJECT_PARKER::EXCAVATOR;
 
-    ROS_INFO_STREAM(getString("Got the parking goal"));
+    // ROS_INFO_STREAM(getString("Got the parking goal"));
 
     ros::NodeHandle nh;
     ros::Subscriber excavator_objects_sub;
@@ -565,7 +565,7 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
         // check the mode, park with hopper
         // Assumes the robot has reached near processing plant
         g_nav_goal.forward_velocity = HOPPER_FORWARD_VELOCITY;
-        ROS_INFO_STREAM(getString("Parking To Hopper"));
+        // ROS_INFO_STREAM(getString("Parking To Hopper"));
         findProcessingPlant();
         // initialize all the necessary variables
         park_mode = OBJECT_PARKER::HOPPER;
@@ -577,17 +577,17 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
     else
     {
         // park with excavator
-        ROS_INFO_STREAM(getString("Parking To Excavator"));
+        // ROS_INFO_STREAM(getString("Parking To Excavator"));
         std::string excavator_name = COMMON_NAMES::EXCAVATOR_1_NAME;
 
         if (goal->hopper_or_excavator == COMMON_NAMES::OBJECT_DETECTION_EXCAVATOR_CLASS)
         {
             // uses "small_excavator_1" by default
-            ROS_INFO_STREAM(getString("USING AS ") << COMMON_NAMES::EXCAVATOR_1_NAME << " EXCAVATOR DEFAULT");
+            // ROS_INFO_STREAM(getString("USING AS ") << COMMON_NAMES::EXCAVATOR_1_NAME << " EXCAVATOR DEFAULT");
         }
         else
         {
-            ROS_INFO_STREAM(getString("USING AS ") << goal->hopper_or_excavator << " FOR EXCAVATOR PARKING");
+            // ROS_INFO_STREAM(getString("USING AS ") << goal->hopper_or_excavator << " FOR EXCAVATOR PARKING");
             // use given excavator name in the actionlib goal, this excavator name is used for subscribing to it's object detection topic
             excavator_name = goal->hopper_or_excavator;
         }
@@ -625,14 +625,14 @@ void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
 
     else if (g_failed)
     {
-        ROS_INFO_STREAM(getString("Parking Failed"));
+        // ROS_INFO_STREAM(getString("Parking Failed"));
         g_failed = false;
         result.result = COMMON_NAMES::COMMON_RESULT::FAILED;
         as->setSucceeded(result, "Failed Goal");
         return;
     }
 
-    ROS_INFO_STREAM(getString("Parked Robot"));
+    // ROS_INFO_STREAM(getString("Parked Robot"));
 
     result.result = COMMON_NAMES::COMMON_RESULT::SUCCESS;
     as->setSucceeded(result);
@@ -656,7 +656,7 @@ int main(int argc, char *argv[])
     //initialize node and node handler
     ros::init(argc, argv, g_robot_name + COMMON_NAMES::PARK_HAULER_HOPPER_SERVER_NODE_NAME);
     ros::NodeHandle nh;
-    ROS_INFO_STREAM(getString("Starting Park Hauler Server"));
+    // ROS_INFO_STREAM(getString("Starting Park Hauler Server"));
     //subscriber for object detection
     ros::Subscriber hauler_objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + g_robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &haulerObjectsCallback);
 
@@ -666,10 +666,10 @@ int main(int argc, char *argv[])
     Server server(nh, g_robot_name + COMMON_NAMES::PARK_HAULER_ACTIONLIB, boost::bind(&execute, _1, &server), false);
     server.registerPreemptCallback(&cancelGoal);
     server.start();
-    ROS_INFO_STREAM(getString("Starting Park Hauler Server"));
+    // ROS_INFO_STREAM(getString("Starting Park Hauler Server"));
     ros::spin();
 
-    ROS_INFO_STREAM(getString("Exiting"));
+    // ROS_INFO_STREAM(getString("Exiting"));
 
     delete g_nav_client;
     delete g_navigation_vision_client;
