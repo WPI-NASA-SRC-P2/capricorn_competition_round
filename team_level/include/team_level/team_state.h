@@ -61,6 +61,15 @@ enum TEAM_MICRO_STATE{
    // DUMPING
    DUMP_COLLECTION,
 
+   // GO_TO_REPAIR_STATION
+   VISUAL_RESET_ODOM,
+   GO_TO_REPAIR_STATION_MICRO,
+   GO_TO_LOOKOUT_LOCATION,
+
+   // RESET_AT_HOPPER
+   // GO_TO_REPAIR_STATION_MICRO
+   DUMP_VOLATILE_AT_HOPPER,
+
    // IDLE
    IDLE_MICRO_STATE
 };
@@ -242,11 +251,31 @@ public:
    bool isDone() override ;
    
    TeamState& transition() override;
-   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
+   TEAM_MICRO_STATE getMicroState();
    
    bool entryPoint() override;
    void step() override;
    void exitPoint() override;
+
+private:
+   bool checkForRespectiveRobots();
+
+   void stepForScout();
+   void stepForExcavator();
+   void stepForHauler();
+
+   TEAM_MICRO_STATE getScoutMicroState();
+   TEAM_MICRO_STATE getExcavatorMicroState();
+   TEAM_MICRO_STATE getHaulerMicroState();
+
+   void stepVisualResetOdom();
+   void stepGoToRepairStationMicro();
+   void stepGoToLookoutLocation();
+   void stepIdle(){}
+
+   STATE_MACHINE_TASK scout_robot_staring_state;
+   STATE_MACHINE_TASK excavator_robot_staring_state;
+   STATE_MACHINE_TASK hauler_robot_staring_state;
 };
 
 class WaitForHopperAppointment: public TeamState{
@@ -268,11 +297,14 @@ public:
    bool isDone() override ;
    
    TeamState& transition() override;
-   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
+   TEAM_MICRO_STATE getMicroState();
    
    bool entryPoint() override;
    void step() override;
    void exitPoint() override;
+
+private:
+   STATE_MACHINE_TASK hauler_robot_staring_state;
 };
 
 class GoToInitLoc: public TeamState{
@@ -286,4 +318,9 @@ public:
    bool entryPoint() override;
    void step() override;
    void exitPoint() override;
+
+private:
+   int start_state_delay_counter;
+   int START_EXCAVATOR_STATE_DELAY_MAX = 750;   // 20 Seconds is around 500 counts
+   int START_HAULER_STATE_DELAY_MAX = 1500;
 };

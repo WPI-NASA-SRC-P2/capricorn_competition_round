@@ -92,6 +92,8 @@ public:
    geometry_msgs::PoseStamped EXCAVATOR_2_LOOKOUT_LOC;
    geometry_msgs::PoseStamped EXCAVATOR_1_RETURN_LOC;
    geometry_msgs::PoseStamped EXCAVATOR_2_RETURN_LOC;
+   geometry_msgs::PoseStamped EXCAVATOR_1_INIT_LOC;
+   geometry_msgs::PoseStamped EXCAVATOR_2_INIT_LOC;
    geometry_msgs::PoseStamped BESIDE_REPAIR_STATION;
    geometry_msgs::PoseStamped UNDOCK_LOCATION;
    geometry_msgs::PoseStamped PROC_PLANT_LOCATION;
@@ -549,15 +551,19 @@ public:
    void exitPoint() override;
    void goToRepair();
    void goToRepairRecovery();
+   void undockFromRepairStation();
+   void goToLookoutLocation();
    void idleExcavator() {}
 
 private:
-   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
-   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
+   bool first_GTR, first_GTRR, second_GTRR, first_UFRS, first_GTLL, macro_state_done_, macro_state_succeeded_;
+   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_, hardcoded_pose_;
 
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_REPAIR,
       GO_TO_REPAIR_RECOVERY,
+      UNDOCK_FROM_REPAIR_STATION,
+      GO_TO_LOOKOUT_LOCATION,
       EXCAVATOR_IDLE
    };
 
@@ -699,6 +705,7 @@ public:
    void step() override;
    void exitPoint() override;
    State& transition() override{}
+   void goToDefaultArmPose();
    void centerToObject(const std::string& centering_object);
    float getObjectDepth(const std::string& centering_object);
    void visualResetOdom();
@@ -706,12 +713,13 @@ public:
 
 
 private:
-   bool first_, resetOdomDone_, macro_state_done_, macro_state_succeeded_;
+   bool first_, first_arm, resetOdomDone_, macro_state_done_, macro_state_succeeded_;
    float proc_plant_distance_, camera_offset_ = 0.4, repair_station_distance_;
    geometry_msgs::Quaternion proc_plant_orientation_, repair_station_orientation_;
    int no_of_measurements_, MAX_TRIES;
 
    enum RESET_ODOM_MICRO_STATES{
+      DEFAULT_ARM_POSE,
       CENTER_TO_PROC_PLANT,
       GET_PROC_PLANT_DISTANCE,
       CENTER_TO_REPAIR_STATION,

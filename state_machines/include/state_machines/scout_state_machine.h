@@ -331,16 +331,18 @@ public:
 
    void goToRepair();
    void goToRepairRecovery();
+   void undockFromRepairStation();
    void idleScout() {}
 
 private:
-   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
+   bool first_GTR, first_GTRR, second_GTRR, first_UFRS, macro_state_done_, macro_state_succeeded_;
    geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
    operations::NavigationGoal navigation_action_goal_;
 
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_REPAIR,
       GO_TO_REPAIR_RECOVERY,
+      UNDOCK_FROM_REPAIR_STATION,
       SCOUT_IDLE
    };
 

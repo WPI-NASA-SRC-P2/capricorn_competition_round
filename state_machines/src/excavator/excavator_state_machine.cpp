@@ -32,14 +32,24 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   // Locations for excavators to go to in order to clear the traffic at the hopper, HAULER_2 parks near the hopper, HAULER_1 near the repair station. 
   /** @brief : If there's a problem with rotation, check the orientations of these hardcoded poses */
   EXCAVATOR_1_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = 6.0;
-  EXCAVATOR_1_LOOKOUT_LOC.pose.position.y = -10.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = 8.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.position.y = -18.0;
   EXCAVATOR_1_LOOKOUT_LOC.pose.orientation.z = 1.0;
 
   EXCAVATOR_2_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  EXCAVATOR_2_LOOKOUT_LOC.pose.position.x = -2.0;
-  EXCAVATOR_2_LOOKOUT_LOC.pose.position.y = 20;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.position.x = -18.0;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.position.y = -6.0;
   EXCAVATOR_2_LOOKOUT_LOC.pose.orientation.z = 1.0;
+
+  EXCAVATOR_2_INIT_LOC.header.frame_id = COMMON_NAMES::MAP;
+  EXCAVATOR_2_INIT_LOC.pose.position.x = 3.0;
+  EXCAVATOR_2_INIT_LOC.pose.position.y = 20.0;
+  EXCAVATOR_2_INIT_LOC.pose.orientation.z = 1.0;
+
+  EXCAVATOR_1_INIT_LOC.header.frame_id = COMMON_NAMES::MAP;
+  EXCAVATOR_1_INIT_LOC.pose.position.x = 3.0;
+  EXCAVATOR_1_INIT_LOC.pose.position.y = -10.0;
+  EXCAVATOR_1_INIT_LOC.pose.orientation.z = 1.0;
 
   EXCAVATOR_1_RETURN_LOC.header.frame_id = COMMON_NAMES::MAP;
   EXCAVATOR_1_RETURN_LOC.pose.position.x = 10.0;
@@ -281,7 +291,7 @@ void ExcavatorGoToInitLoc::stepGoToInitLoc()
    if(gtic_first_)
    {
       navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-      navigation_action_goal_.pose = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
+      navigation_action_goal_.pose = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_INIT_LOC : EXCAVATOR_2_INIT_LOC;
       navigation_client_->sendGoal(navigation_action_goal_);
       gtic_first_ = false;
    }
@@ -458,6 +468,7 @@ void PreParkHauler::entryPoint()
    last_state_succeeded_ = false;
    goToVolatileDone_ = false;
    centerHaulerDone_ = false;
+   centerHaulerSucceeded_ = true;
    getInArmPositionDone_ = false;
    goal_= goal_states_::GO_TO_VOLATILE;
 }
@@ -480,10 +491,6 @@ void PreParkHauler::step()
       break;
    case CENTER_TO_HAULER:
       centerHauler();
-      if(centerHaulerDone_){
-         goal_ = goal_states_::GET_IN_DIGGING_POSITION;
-         first_ = true;
-      }
       break;
    case GET_IN_DIGGING_POSITION:
       getInArmPosition();
@@ -494,10 +501,8 @@ void PreParkHauler::step()
    }
 
    current_state_done_ = getInArmPositionDone_;
-   last_state_succeeded_ = getInArmPositionDone_ && centerHaulerDone_;
+   last_state_succeeded_ = getInArmPositionDone_ && centerHaulerSucceeded_;
 }
-
-
 
 void PreParkHauler::exitPoint()
 {
@@ -560,7 +565,11 @@ void PreParkHauler::centerHauler() {
    }
    else
       centerHaulerDone_ = navigation_vision_client_->getState().isDone();
-      // centerHaulerDone_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+      if(centerHaulerDone_){
+            goal_ = goal_states_::GET_IN_DIGGING_POSITION;
+            first_ = true;
+         centerHaulerSucceeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      }
 }
 
 void PreParkHauler::getInArmPosition() {
@@ -598,6 +607,7 @@ void PreParkHaulerRecovery::entryPoint()
    last_state_succeeded_ = false;
    goToVolatileDone_ = false;
    centerHaulerDone_ = false;
+   centerHaulerSucceeded_ = true;
    getInArmPositionDone_ = false;
    goal_= goal_states_::GO_TO_VOLATILE;
 }
@@ -697,13 +707,9 @@ void PreParkHaulerRecovery::centerHauler() {
    else
       centerHaulerDone_ = navigation_vision_client_->getState().isDone();
       if(centerHaulerDone_){
-         if(navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
-         {
-            goal_ = goal_states_::GET_IN_DIGGING_POSITION;
-            first_ = true;
-         }
-         else
-            centerHaulerSucceeded_ = false;
+         goal_ = goal_states_::GET_IN_DIGGING_POSITION;
+         first_ = true;
+         centerHaulerSucceeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
       }
 }
 
@@ -1151,9 +1157,12 @@ void ExcavatorGoToRepairStation::entryPoint()
    first_GTR  = true;
    first_GTRR = true;
    second_GTRR = true;
+   first_UFRS = true;
+   first_GTLL = true;
    macro_state_done_ = false;
    macro_state_succeeded_ = false;
    GTRL_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_RETURN_LOC : EXCAVATOR_2_RETURN_LOC;
+   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
    GTRR_pose_ = excavator_pose_;             
    GTRR_pose_.pose.position.x -= 10.0;
    micro_state = GO_TO_REPAIR;
@@ -1181,6 +1190,12 @@ void ExcavatorGoToRepairStation::step()
    case GO_TO_REPAIR_RECOVERY:
       goToRepairRecovery();
       break;
+   case UNDOCK_FROM_REPAIR_STATION:
+      undockFromRepairStation();
+      break;
+   case GO_TO_LOOKOUT_LOCATION:
+      goToLookoutLocation();
+      break;
    case EXCAVATOR_IDLE:
       idleExcavator();
       break;
@@ -1195,7 +1210,6 @@ void ExcavatorGoToRepairStation::goToRepair()
    {
       navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
       navigation_vision_goal_.mode = V_NAV_AND_NAV_VISION;
-      navigation_vision_goal_.goal_loc = GTRL_pose_;
       navigation_vision_client_->sendGoal(navigation_vision_goal_);
       ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Going to repair station vision goal sent");  
       first_GTR = false;
@@ -1214,8 +1228,7 @@ void ExcavatorGoToRepairStation::goToRepair()
       }
       else
       {
-         macro_state_done_ = true;
-         macro_state_succeeded_ = true;
+         micro_state = UNDOCK_FROM_REPAIR_STATION;
       } 
       
          
@@ -1258,6 +1271,46 @@ void ExcavatorGoToRepairStation::goToRepairRecovery()
       micro_state = GO_TO_REPAIR;
       first_GTR = true;
    }    
+}
+
+void ExcavatorGoToRepairStation::undockFromRepairStation()
+{
+   if(first_UFRS)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_HARDCODED_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Undocking from repair station");
+      first_UFRS = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      micro_state = GO_TO_LOOKOUT_LOCATION;
+   }
+}
+
+void ExcavatorGoToRepairStation::goToLookoutLocation()
+{
+   if(first_GTLL)
+   {
+   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+   navigation_action_goal_.pose = hardcoded_pose_;
+   navigation_client_->sendGoal(navigation_action_goal_);
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Lookout Location : " << hardcoded_pose_);
+   first_GTLL = false;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if(is_done)
+   {
+      macro_state_done_ = true;
+      macro_state_succeeded_ = true;
+      micro_state = EXCAVATOR_IDLE;
+   }
 }
 
 
@@ -1602,7 +1655,6 @@ bool ExcavatorBalletDancing::isDone() {
 bool ExcavatorBalletDancing::hasSucceeded() {
    return last_state_succeeded_;
 }
-
 void ExcavatorBalletDancing::exitPoint()
 {
     // clean up (cancel goals)
@@ -1623,16 +1675,20 @@ void ExcavatorVisualResetOfOdometry::entryPoint()
    no_of_measurements_ = 20;
    MAX_TRIES = 300;
    first_ = true;
+   first_arm = true;
    macro_state_done_ = false;
    macro_state_succeeded_ = false;
 
-   micro_state = CENTER_TO_PROC_PLANT;
+   micro_state = DEFAULT_ARM_POSE;
 }
 
 void ExcavatorVisualResetOfOdometry::step()
 {
    switch (micro_state)
    {
+   case DEFAULT_ARM_POSE:
+      goToDefaultArmPose();
+      break;
    case CENTER_TO_PROC_PLANT: 
       centerToObject(OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
       break;
@@ -1671,6 +1727,20 @@ bool ExcavatorVisualResetOfOdometry::hasSucceeded()
 void ExcavatorVisualResetOfOdometry::exitPoint()
 {
    navigation_vision_client_->cancelGoal();
+   excavator_arm_client_->cancelGoal();
+}
+
+void ExcavatorVisualResetOfOdometry::goToDefaultArmPose() 
+{
+   if(first_arm)
+   {
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Visual Reset : Going to Default arm pose before doing anything else");
+      excavator_arm_goal_.task = EXCAVATOR_ARM_TASK::GO_TO_DEFAULT;
+      excavator_arm_client_->sendGoal(excavator_arm_goal_);
+      first_arm = false;
+   }
+   if(excavator_arm_client_->getState().isDone())
+      micro_state = CENTER_TO_PROC_PLANT;
 }
 
 void ExcavatorVisualResetOfOdometry::centerToObject(const std::string& centering_object)

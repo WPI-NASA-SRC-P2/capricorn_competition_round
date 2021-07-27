@@ -115,6 +115,7 @@ namespace COMMON_NAMES
   const std::string IMU_TOPIC = "/imu";
   const std::string IMU_FILTERED_TOPIC = "/imu_filtered";
   const std::string SPIRAL_WAYPOINT_PUBLISHER = "/covered_waypoints";
+  const std::string MAP_RESET_TOPIC = "/odom_reset_map_reset";
 
   /****** HAULER NAMES ******/
   const std::string SET_BIN_POSITION = "/bin/command/position";
@@ -251,6 +252,7 @@ namespace COMMON_NAMES
     HAULER_GO_TO_LOOKOUT_LOCATION,
     HAULER_BALLET_DANCING,
     HAULER_VISUAL_RESET_ODOM,
+    HAULER_INITIAL_RESET,
     ROBOT_IDLE_STATE,
 
     /***************ROBOTS MACRO STATES***************/
