@@ -1046,7 +1046,7 @@ TeamState& GoToInitLoc::transition()
    
 void GoToInitLoc::step()
 {
-   ROS_INFO_THROTTLE(0.5, "Start delay counter: %i", start_state_delay_counter);
+   // ROS_INFO_THROTTLE(0.5, "Start delay counter: %i", start_state_delay_counter);
    if (start_state_delay_counter > START_EXCAVATOR_STATE_DELAY_MAX)
    {
       if(excavator_in_team != NONE)

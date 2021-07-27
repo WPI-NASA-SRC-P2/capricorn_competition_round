@@ -11,7 +11,7 @@
 #include<nav_msgs/Odometry.h>
 
 //Setting the node's update rate
-#define UPDATE_HZ 0.5
+#define UPDATE_HZ 0.75
 
 #define DEBUG_INSTRUMENTATION
 
@@ -97,6 +97,8 @@ int main(int argc, char *argv[])
   // #ifdef DEBUG_INSTRUMENTATION
   // #endif
   replan_trigger = nh.advertise<std_msgs::Bool>(CAPRICORN_TOPIC + robot_name_ + "/"  + NAVIGATION_ACTIONLIB + REPLAN_TRAJECTORY, 1000);
+  // run at 10hz
+  ros::Rate update_rate(UPDATE_HZ); // it slowed down pretty much, wont recommend havung it.
   
   while(ros::ok())
   {
@@ -118,8 +120,7 @@ int main(int argc, char *argv[])
           
       }
      
-    // run at 10hz
-    ros::Rate update_rate(UPDATE_HZ); // it slowed down pretty much, wont recommend havung it.
+    
     update_rate.sleep();
     ros::spinOnce();
   }
