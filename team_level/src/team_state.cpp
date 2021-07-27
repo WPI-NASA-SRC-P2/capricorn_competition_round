@@ -352,6 +352,8 @@ void ScoutWaiting::stepResetScoutExcavOdom()
    robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_VISUAL_RESET_ODOM);
 }
 
+// @Ashay @todo
+// Change this to DO-NOTHING when solar charging is implemented
 void ScoutWaiting::stepMakeExcavHaulerIdle()
 {
       robot_state_register->setRobotState(excavator_in_team, ROBOT_IDLE_STATE);
@@ -413,6 +415,7 @@ bool Excavating::entryPoint()
    digging_re_attempted = false;
    v_ppm_once = true;
    park_at_excav_re_attempted = false;
+   hauler_reached = false;
 
    volatile_site_location = robot_pose_register->getRobotPose(excavator_in_team);
    return true;
@@ -534,7 +537,7 @@ TEAM_MICRO_STATE Excavating::getMicroState()
          return WAIT_FOR_HAULER;
       }
       
-   if((hauler_task == ROBOT_IDLE_STATE /*&& excavator_task == ROBOT_IDLE_STATE*/) || excavator_task == EXCAVATOR_PARK_AND_PUB)
+   if(((hauler_task == ROBOT_IDLE_STATE && !hauler_reached)/*&& excavator_task == ROBOT_IDLE_STATE*/) || excavator_task == EXCAVATOR_PARK_AND_PUB)
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  7");
          return WAIT_FOR_HAULER;
@@ -630,10 +633,16 @@ void Excavating::stepWaitForHauler()
 void Excavating::stepPreParkManeuverRecovery()
 {
    robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY); 
+
+// @Ashay @todo
+// Change this to DO-NOTHING when solar charging is implemented
+   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
 }
 
 void Excavating::stepResetExcavHaulerOdom()
 {
+   hauler_reached = true;
+
    robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_VISUAL_RESET_ODOM);
 
    robot_state_register->setRobotState(hauler_in_team, HAULER_VISUAL_RESET_ODOM);
@@ -648,6 +657,8 @@ void Excavating::stepRecoveryExcavatorFinding()
 
 void Excavating::stepPreParkManeuverExcavator()
 {
+   hauler_reached = true;
+   
    robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_PRE_HAULER_PARK_MANEUVER); 
 }
 
@@ -1046,7 +1057,6 @@ TeamState& GoToInitLoc::transition()
    
 void GoToInitLoc::step()
 {
-   ROS_INFO_THROTTLE(0.5, "Start delay counter: %i", start_state_delay_counter);
    if (start_state_delay_counter > START_EXCAVATOR_STATE_DELAY_MAX)
    {
       if(excavator_in_team != NONE)

@@ -220,6 +220,7 @@ public:
 private:
    bool ballet_once, digging_re_attempted;
    bool v_ppm_once, park_at_excav_re_attempted;
+   bool hauler_reached;
    TEAM_MICRO_STATE micro_state;
    void stepWaitForHauler();
    void stepPreParkManeuverExcavator();
