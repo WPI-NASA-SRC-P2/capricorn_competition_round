@@ -150,7 +150,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/navigation/navigation_algorithm.cpp
   src/navigation/navigation_server.cpp
-  src/navigation/solar_recharge_server.cpp
+  src/navigation/solar_charging_server.cpp
 )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
@@ -305,7 +305,7 @@ target_link_libraries(park_hauler_client ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
-add_executable(solar_charging_client src/clients/solar_recharging_client.cpp)
+add_executable(solar_charging_client src/clients/solar_charging_client.cpp)
 add_dependencies(solar_charging_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(solar_charging_client ${PROJECT_NAME}
 ${catkin_LIBRARIES}

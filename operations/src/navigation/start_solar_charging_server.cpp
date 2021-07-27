@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 {
     if(argc != 2 && argc != 4)
     {
-        ROS_ERROR_STREAM("[operations | start_nav_server]: This node must be launched with the robotname passed as a command line argument!");
+        ROS_ERROR_STREAM("[operations | start_solar_charging_server]: This node must be launched with the robotname passed as a command line argument!");
 
         return -1;
     }
@@ -18,15 +18,15 @@ int main(int argc, char* argv[])
     ros::init(argc, argv, robot_name + "_solar_mode_server");
     ros::NodeHandle nh;
 
-    ROS_INFO("[operations | start_nav_server]: Constructing nav server", robot_name.c_str());
+    ROS_INFO("[operations | start_solar_charging_server]: Constructing solar charging server", robot_name.c_str());
 
     SolarModeServer* ns = new SolarModeServer(nh, robot_name);
 
-    ROS_INFO("[operations | start_nav_server]: Done constructing nav server", robot_name.c_str());
+    ROS_INFO("[operations | start_solar_charging_server]: Done constructing solar charging server", robot_name.c_str());
 
     ros::spin();
 
     delete ns;
 
-    ROS_WARN("[operations | start_nav_server]: NavigationServer died!", robot_name.c_str());
+    ROS_WARN("[operations | start_solar_charging_server]:  Solar charging server died!", robot_name.c_str());
 }

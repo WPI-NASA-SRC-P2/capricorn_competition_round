@@ -16,16 +16,16 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    std::string solar_status(argv[2]);
+    bool solar_status(argv[2]);
     bool solar_status_;
-    solar_status_ = boost::lexical_cast<bool>(solar_status);
+    solar_status_ = solar_status;
 
     std::string robot_name(argv[1]);
     std::string robot_name_ = robot_name;
     ros::init(argc, argv, robot_name + COMMON_NAMES::SOLAR_CHARGING_CLIENT_NODE_NAME);
 
     // initializing the client
-    client = new g_client(robot_name_ + "_solar_mode_server", true);
+    client = new g_client("/capricorn/" + robot_name_ + "/" + robot_name_ + "_solar_mode_server", true);
 
 
     ROS_INFO("Waiting for server");
