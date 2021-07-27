@@ -18,15 +18,15 @@ int main(int argc, char* argv[])
     ros::init(argc, argv, robot_name + "_nav_server");
     ros::NodeHandle nh;
 
-    ROS_INFO("[operations | start_nav_server]: Constructing nav server", robot_name.c_str());
+    ROS_INFO("[operations | start_nav_server | %s]: Constructing nav server", robot_name.c_str());
 
     NavigationServer* ns = new NavigationServer(nh, robot_name);
 
-    ROS_INFO("[operations | start_nav_server]: Done constructing nav server", robot_name.c_str());
+    ROS_INFO("[operations | start_nav_server | %s]: Done constructing nav server", robot_name.c_str());
 
     ros::spin();
 
     delete ns;
 
-    ROS_WARN("[operations | start_nav_server]: NavigationServer died!", robot_name.c_str());
+    ROS_WARN("[operations | start_nav_server | %s]: NavigationServer died!", robot_name.c_str());
 }

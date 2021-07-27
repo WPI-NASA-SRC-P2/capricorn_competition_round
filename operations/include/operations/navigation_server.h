@@ -11,6 +11,7 @@
 
 #include <operations/navigation_algorithm.h>
 #include <operations/NavigationAction.h> // Note: "Action" is appended
+#include <operations/WheelVelocities.h>
 #include <actionlib/server/simple_action_server.h>
 
 // Used to visualize poses in an array
@@ -40,6 +41,8 @@ public:
 private:
     bool initial_turn_completed = false;
 
+    const std::vector<double> DEFAULT_WHEEL_ANGLES = {0.0, 0.0, 0.0, 0.0};
+
     // Tolerances for linear and angular moves
     const float DIST_EPSILON = 0.5;
     const float ANGLE_EPSILON = 0.1;
@@ -59,9 +62,9 @@ private:
     const float SLOW_SPIN_EPSILON_FACTOR = 3;
 
     // How far the robot should travel before it asks for a new trajectory, in meters. Used in automaticDriving.
-    const double LARGE_TRAJECTORY_REST_DIST = 5; 
-    const double SMALL_TRAJECTORY_REST_DIST = 3; 
-    double trajectory_reset_dist = SMALL_TRAJECTORY_REST_DIST;
+    const double LARGE_TRAJECTORY_RESET_DIST = 5; 
+    const double SMALL_TRAJECTORY_RESET_DIST = 3; 
+    double trajectory_reset_dist_ = SMALL_TRAJECTORY_RESET_DIST;
 
     // If dist(current_pose, start_pose) > EXPECTED_TRAVEL_FACTOR * dist(start_pose, goal_pose), replan
     const double EXPECTED_TRAVEL_FACTOR = 1.5;
@@ -75,6 +78,7 @@ private:
     ros::Rate *update_rate_;
 
     // Publishers for each wheel velocity and steering controller
+    ros::Publisher wheel_ramp_pub_;
     ros::Publisher front_left_vel_pub_, front_right_vel_pub_, back_left_vel_pub_, back_right_vel_pub_;
     ros::Publisher front_left_steer_pub_, front_right_steer_pub_, back_left_steer_pub_, back_right_steer_pub_;
 
@@ -86,6 +90,9 @@ private:
 
     // Triggered when a plan reset is requested
     ros::Subscriber replan_sub_;
+    
+    // Check if the current ramp is done yet
+    ros::Subscriber ramp_finished_client_;
 
     ros::ServiceClient brake_client_;
 
@@ -109,6 +116,11 @@ private:
 
     // Whether we should get a new trajectory from the planner. Set by driveDistance in automaticDriving.
     bool get_new_trajectory_ = false;
+    bool ramp_finished_ = false;
+
+    // The current and most recent drive mode the wheels were following
+    NAV_TYPE last_mode_;
+    NAV_TYPE current_mode_;
 
     /**
      * @brief Uses waypoint_pub_ to publish poses to be visualized in Gazebo.
@@ -122,6 +134,12 @@ private:
      * 
      */
     void initVelocityPublisher(ros::NodeHandle &nh, const std::string &robot_name);
+
+    /**
+     * @brief Initialize the publishers for wheel speeds
+     * 
+     */
+    void initVelocityPublisherNew(ros::NodeHandle &nh, const std::string &robot_name);
 
     /**
     * @brief Initialise the publishers for wheel steering angles
@@ -146,14 +164,21 @@ private:
     */
     void updateRobotPose(const nav_msgs::Odometry::ConstPtr &msg);
 
-    geometry_msgs::PoseStamped getRobotPose();
-
     /**
      * @brief Callback from the planer to replan.
      * 
      * @param msg Empty message. Whenever its received, we reset the trajectory
      */
     void replanCB(const std_msgs::Bool::ConstPtr &msg);
+    /**
+    * @brief Subscribes to the ramping topic and updates whether the robot is still ramping
+    * No mutex because of how inconsequential this is
+    * 
+    * @param msg bool indicating if ramp has finished
+    */
+    void updateRobotRamping(const std_msgs::Bool::ConstPtr& msg);
+
+    geometry_msgs::PoseStamped getRobotPose();
 
     /**
     * @brief Initialize the subscriber for robot position
@@ -168,6 +193,17 @@ private:
     * @param data        data that will be published over the publisher
     */
     void publishMessage(ros::Publisher &publisher, float data);
+
+    /**
+     * @brief Sends the speeds to the ramp velocities node, so that wheels will ramp to these velocities.
+     * 
+     * @param speeds The vector of speeds to send.
+     *                  element 0: Front Left Wheel
+            *          element 1: Front Right Wheel
+            *          element 2: Back Right Wheel
+            *          element 3: Back Left Wheel
+     */
+    void driveRobot(const std::vector<double>& speeds);
 
     /**
     * @brief Steers the robot wheels for the angles
@@ -212,6 +248,35 @@ private:
     void moveRobotWheels(const double velocity);
 
     /**
+    * @brief Ramp robot wheels to the given velocity .
+    * 
+    * @param velocity Wheel Velocities
+        *                  The vector will be in order:
+        *                  Clockwise from top, starting with FRONT_LEFT
+        * 
+        *          element 0: Front Left Wheel
+        *          element 1: Front Right Wheel
+        *          element 2: Back Right Wheel
+        *          element 3: Back Left Wheel
+    */
+    void moveRobotWheelsNew(const std::vector<double> velocity);
+
+    /**
+    * @brief Ramp robot wheels to the given velocity .
+    * 
+    * @param velocity velocity for the wheels.
+    */
+    void moveRobotWheelsNew(const double velocity);
+
+    /**
+     * @brief 
+     * 
+     * @param desired_velocity 
+     * @param mode 
+     */
+    void changeWheelSpeeds(std::vector<double> desired_velocities);
+
+    /**
      * @brief Sends a goal received from the Robot SM to the planner. Receives and returns the trajectory
      * 
      * @param goal The end goal for the robot to go to
@@ -233,6 +298,13 @@ private:
      * @param brake True if the brake should be set, false, if it should be released.
      */
     void brakeRobot(bool brake);
+
+    /**
+     * @brief Set the manual brake on the robot w/ smooth ramping.
+     * 
+     * @param brake True if the brake should be set, false, if it should be released.
+     */
+    void brakeRobotNew(bool brake);
 
     /**
      * @brief Rotates the wheels to point at a target pose.
@@ -275,7 +347,7 @@ private:
      * @return true The robot successfully made it to the waypoint.
      * @return false The robot did not, either because it couldn't or because of an interrupt.
      */
-    bool smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint);
+    bool smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint, bool last_segment=false);
 
     /**
      * @brief Drives to a goal, based on waypoints generated by the local planner. NAV_TYPE::GOAL
@@ -287,7 +359,9 @@ private:
     void automaticDriving(const operations::NavigationGoalConstPtr &goal, Server *action_server, bool smooth);
 
     /**
-     * @brief Manually drive forwards or backwards. NAV_TYPE::MANUAL
+     * @brief Manual drive in a straight line.
+     * 
+     *
      * 
      * @param goal The goal of the action. Uses the forward_velocity member to choose a velocity
      * @param action_server The action server that this function is operating on.
