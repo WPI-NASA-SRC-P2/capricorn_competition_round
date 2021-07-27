@@ -1039,7 +1039,12 @@ void GoToInitLoc::step()
    if(excavator_in_team != NONE)
       robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_GO_TO_LOOKOUT_LOCATION);
    if(hauler_in_team != NONE)
-      robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOOKOUT_LOCATION);
+   {
+      if(hauler_in_team == HAULER_2)
+         robot_state_register->setRobotState(hauler_in_team, HAULER_INITIAL_RESET);
+      else
+         robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOOKOUT_LOCATION);
+   }
 }
 
 void GoToInitLoc::exitPoint() 
