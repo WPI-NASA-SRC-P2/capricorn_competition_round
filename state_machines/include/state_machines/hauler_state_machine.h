@@ -560,6 +560,60 @@ private:
 
 };
 
+class InitialReset: public HaulerState {
+public:   
+   InitialReset(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_INITIAL_RESET, nh, robot_name) {}
+
+   // define transition check conditions for the state (transition() is overriden by each individual state)
+   State& transition() override {};
+   
+   // define transition check conditions for the state (isDone() is overriden by each individual state)
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   // void entryPoint(const geometry_msgs::PoseStamped &target_loc) override;
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+
+private: 
+   bool first_;
+   geometry_msgs::PoseStamped target_loc_;
+   void PreProcPlant();
+   void goToProcPlant();
+   void parkAtHopper();
+   void undockFromHopper();
+   void resetOdom();
+   void goToRepair();
+   void goToLookoutLocation();
+   void goToRepairRecovery();
+   void goToProcPlantRecovery();
+   void dumpVolatile();
+   void idleHauler(){}
+
+   bool first_PPP, first_GTPP, first_GTPPR, second_GTPPR, first_PAH, first_UFH, first_GTR, first_GTRR, second_GTRR, 
+         first_GTLL, resetOdomDone_, macro_state_succeeded, macro_state_done, first_DV;
+   geometry_msgs::PoseStamped hardcoded_pose_, GTRR_pose_, GTPP_pose_;
+   bool state_done;
+
+   enum RESET_ODOM_MICRO_STATES{
+      PRE_PROC_PLANT,
+      GO_TO_PROC_PLANT,
+      GO_TO_PROC_PLANT_RECOVERY,
+      PARK_AT_HOPPER,
+      DUMP_VOLATILE,
+      UNDOCK_FROM_HOPPER,
+      RESET_ODOM_AT_HOPPER,
+      GO_TO_REPAIR_STATION,
+      GO_TO_REPAIR_STATION_RECOVERY,
+      GO_TO_LOOKOUT_LOCATION,
+      HAULER_IDLE 
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
+
+};
 
 /**
  * @brief HaulerGoToRepairStation naviagte to repair station
@@ -583,16 +637,18 @@ public:
 
    void goToRepair();
    void goToRepairRecovery();
+   void undockFromRepairStation();
    void idleHauler() {}
 
 private:
-   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
+   bool first_GTR, first_GTRR, second_GTRR, first_UFRS, macro_state_done_, macro_state_succeeded_;
    geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
    operations::NavigationGoal navigation_action_goal_;
 
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_REPAIR,
       GO_TO_REPAIR_RECOVERY,
+      UNDOCK_FROM_REPAIR_STATION,
       HAULER_IDLE
    };
 

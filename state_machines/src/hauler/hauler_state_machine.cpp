@@ -33,31 +33,29 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
 
   // Locations for haulers to go to in order to clear the traffic at the hopper, HAULER_2 parks near the hopper, HAULER_1 near the repair station. 
   HAULER_1_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  HAULER_1_LOOKOUT_LOC.pose.position.x    = 5.0;
-  HAULER_1_LOOKOUT_LOC.pose.position.y    = -5.0;
-  HAULER_1_LOOKOUT_LOC.pose.orientation.z = 0.707;
-  HAULER_1_LOOKOUT_LOC.pose.orientation.w = 0.707;
+  HAULER_1_LOOKOUT_LOC.pose.position.x    = 15.0;
+  HAULER_1_LOOKOUT_LOC.pose.position.y    = 3.0;
+  HAULER_1_LOOKOUT_LOC.pose.orientation.w = 1.0;
 
   HAULER_2_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  HAULER_2_LOOKOUT_LOC.pose.position.x    = 10.0;
+  HAULER_2_LOOKOUT_LOC.pose.position.x    = 15.0;
   HAULER_2_LOOKOUT_LOC.pose.position.y    = 15.0;
-  HAULER_2_LOOKOUT_LOC.pose.orientation.z = -0.707;
-  HAULER_2_LOOKOUT_LOC.pose.orientation.w = 0.707;
+  HAULER_2_LOOKOUT_LOC.pose.orientation.w = 1.0;
 
   HAULER_RETURN_LOC.header.frame_id = COMMON_NAMES::MAP;
   HAULER_RETURN_LOC.pose.position.x    = 10.0;
   HAULER_RETURN_LOC.pose.position.y    = 10.0;
-  HAULER_RETURN_LOC.pose.orientation.w = 1;
+  HAULER_RETURN_LOC.pose.orientation.w = 1.0;
 
   UNDOCK_LOCATION.header.frame_id = COMMON_NAMES::MAP;
   UNDOCK_LOCATION.pose.position.x = 4.0;
   UNDOCK_LOCATION.pose.position.y = 14.0;
   UNDOCK_LOCATION.pose.orientation.w = 1.0;
 
-  PROC_PLANT_LOCATION.header.frame_id = COMMON_NAMES::MAP;
-  PROC_PLANT_LOCATION.pose.position.x = -6.0;
-  PROC_PLANT_LOCATION.pose.position.y = 7.0;
-  PROC_PLANT_LOCATION.pose.orientation.w = 1.0;
+  PRE_PROC_PLANT_LOCATION.header.frame_id = COMMON_NAMES::MAP;
+  PRE_PROC_PLANT_LOCATION.pose.position.x = 7.0;
+  PRE_PROC_PLANT_LOCATION.pose.position.y = 9.0;
+  PRE_PROC_PLANT_LOCATION.pose.orientation.w = 1.0;
 
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &HaulerState::odomCallback, this);
   objects_sub_ = nh_.subscribe(CAPRICORN_TOPIC + robot_name_ + OBJECT_DETECTION_OBJECTS_TOPIC, 1, &HaulerState::objectsCallback, this);
@@ -715,7 +713,7 @@ void DumpVolatileAtHopper::PreProcPlant()
    {
 
       navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-      navigation_action_goal_.pose = PROC_PLANT_LOCATION;
+      navigation_action_goal_.pose = PRE_PROC_PLANT_LOCATION;
       navigation_client_->sendGoal(navigation_action_goal_);
       ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Pre-parking to Processing Plant goal sent");
       first_PPP = false;
@@ -731,8 +729,7 @@ void DumpVolatileAtHopper::goToProcPlant()
    {
       operations::NavigationVisionGoal navigation_vision_goal;
       navigation_vision_goal.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
-      navigation_vision_goal.mode = V_NAV_AND_NAV_VISION;
-      navigation_vision_goal_.goal_loc = PROC_PLANT_LOCATION;
+      navigation_vision_goal.mode = V_REACH;
       navigation_vision_client_->sendGoal(navigation_vision_goal);
       ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Going to Processing Plant vision goal sent");
       first_GTPP = false;
@@ -798,6 +795,7 @@ void DumpVolatileAtHopper::parkAtHopper()
    {
       park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_HOPPER_CLASS;
       park_robot_client_->sendGoal(park_robot_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Parking at Hopper"); 
       first_PAH = false;
       return;
    }
@@ -896,6 +894,230 @@ void DumpVolatileAtHopper::exitPoint()
    park_robot_client_->cancelGoal();
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////  I N I T  R E S E T _ O D O M   C L A S S ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void InitialReset::entryPoint()
+{
+   // we assume we are near the volatile
+   first_PPP = true;
+   first_GTPP = true;
+   first_PAH = true;
+   first_UFH = true;
+   first_GTR = true;
+   first_PPP = true;
+   first_GTRR = true;
+   first_DV = true;
+   second_GTRR = true;
+   first_GTLL = true;
+   resetOdomDone_ = false;
+   micro_state = GO_TO_PROC_PLANT;
+   macro_state_succeeded = false;
+   macro_state_done = false;
+   state_done =false;
+
+   // Setting poses
+   hardcoded_pose_ = UNDOCK_LOCATION;
+   
+   // Currently not caring about orientations
+   GTPP_pose_ = hauler_pose_;
+   GTPP_pose_.pose.position.x += 10.0;
+}
+
+bool InitialReset::isDone()
+{
+   // switch states once completed with locating the volatile
+   current_state_done_ = macro_state_done;
+   return current_state_done_;
+}
+
+bool InitialReset::hasSucceeded()
+{
+   // state succeeded once rover is parked on top of volatile
+   // last_state_succeeded_ = ((resource_localiser_client_->getState() == actionlib::SimpleClientGoalState::SUCCEEDED) && near_volatile_);
+   last_state_succeeded_ = macro_state_succeeded;
+   return last_state_succeeded_;
+}
+
+void InitialReset::step()
+{
+   switch (micro_state)
+   {
+   case GO_TO_PROC_PLANT: 
+      goToProcPlant();
+      break;
+   case PARK_AT_HOPPER:
+      parkAtHopper();
+      break;
+   case UNDOCK_FROM_HOPPER:
+      undockFromHopper();
+      break;
+   case RESET_ODOM_AT_HOPPER:
+      resetOdom();
+      break;
+   case GO_TO_LOOKOUT_LOCATION:
+      goToLookoutLocation();
+      break;
+   case GO_TO_PROC_PLANT_RECOVERY:
+      goToProcPlantRecovery();
+      break;
+   case HAULER_IDLE:
+      idleHauler();
+      break;
+   default:
+      break;
+   }
+}
+void InitialReset::goToProcPlant()
+{
+   if (first_GTPP)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_PROCESSING_PLANT_CLASS;
+      navigation_vision_goal.mode = V_REACH;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Going to Processing Plant vision goal sent");
+      first_GTPP = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if(is_done)
+   {
+      bool has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      if(has_succeeded)
+         micro_state = PARK_AT_HOPPER;
+      else
+      {
+         micro_state = GO_TO_PROC_PLANT_RECOVERY;
+         first_GTPPR = true;
+         second_GTPPR = true;
+      }
+   }
+}
+
+void InitialReset::goToProcPlantRecovery()
+{
+   //Send for centering first. 
+   if(first_GTPPR)
+   {
+      navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal_.mode = V_CENTER;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Centering to Repair Station vision goal sent");  
+      first_GTPPR = false;
+      return;
+   }
+
+   bool centering_done = (navigation_vision_client_->getState().isDone());
+   bool is_done = false;
+
+   // Once centering completed move 10 metres to the right of repair station. 
+   if(centering_done)
+   {
+      if(second_GTPPR)
+      {
+         navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+         navigation_action_goal_.pose = GTPP_pose_;
+         navigation_client_->sendGoal(navigation_action_goal_);
+          ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Travelling to right of Repair Station : GOAL : " << GTPP_pose_);
+         second_GTPPR = false;
+         return;
+      }
+      else 
+         is_done = navigation_client_->getState().isDone();   
+   }
+   if(is_done)
+   {
+      micro_state = GO_TO_PROC_PLANT;
+      first_GTPP = true;
+   }
+}
+
+void InitialReset::parkAtHopper()
+{
+   if (first_PAH)
+   {
+      park_robot_goal_.hopper_or_excavator = OBJECT_DETECTION_HOPPER_CLASS;
+      park_robot_client_->sendGoal(park_robot_goal_);
+      first_PAH = false;
+      return;
+   }
+
+   bool is_done = (park_robot_client_->getState().isDone());
+   if (is_done)
+   {
+      if (park_robot_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+      {
+         micro_state = UNDOCK_FROM_HOPPER;  
+      }
+   }
+}
+
+void InitialReset::undockFromHopper()
+{
+   if (first_UFH)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_HOPPER_CLASS;
+      navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_HARDCODED_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      first_UFH = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      if (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
+         micro_state = RESET_ODOM_AT_HOPPER;
+      // Dont find a reason it should fail,
+   }
+}
+
+void InitialReset::resetOdom()
+{
+   ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+   maploc::ResetOdom srv;
+   srv.request.target_robot_name = robot_name_;
+   srv.request.at_hopper = true;
+   resetOdomDone_ = resetOdometryClient.call(srv);
+   // macro_state_succeeded = resetOdometryClient.call(srv);
+   // macro_state_done = true;
+   micro_state = GO_TO_LOOKOUT_LOCATION;
+   return;
+}
+
+void InitialReset::goToLookoutLocation() 
+{
+   if(first_GTLL)
+   {
+   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+   navigation_action_goal_.pose = hardcoded_pose_;
+   navigation_client_->sendGoal(navigation_action_goal_);
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Common Undocking Location : " << hardcoded_pose_);
+   first_GTLL = false;
+   }
+   
+   bool is_done = (navigation_client_->getState().isDone());
+   if (is_done)
+   {
+      macro_state_done = true;
+      macro_state_succeeded = true;
+      micro_state = HAULER_IDLE;
+      // Dont find a reason it should fail,
+   }
+}
+
+void InitialReset::exitPoint()
+{
+   // none at the moment
+   navigation_client_->cancelGoal();
+   navigation_vision_client_->cancelGoal();
+   park_robot_client_->cancelGoal();
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////  G O  TO  R E P A I R  S T A T I O N  S T A T E  C L A S S ////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -905,6 +1127,7 @@ void HaulerGoToRepairStation::entryPoint()
    first_GTR  = true;
    first_GTRR = true;
    second_GTRR = true;
+   first_UFRS = true;
    macro_state_done_ = false;
    macro_state_succeeded_ = false;
    GTRL_pose_ = HAULER_RETURN_LOC;
@@ -935,6 +1158,9 @@ void HaulerGoToRepairStation::step()
       break;
    case GO_TO_REPAIR_RECOVERY:
       goToRepairRecovery();
+      break;
+   case UNDOCK_FROM_REPAIR_STATION:
+      undockFromRepairStation();
       break;
    case HAULER_IDLE:
       idleHauler();
@@ -969,8 +1195,7 @@ void HaulerGoToRepairStation::goToRepair()
       }
       else 
       {
-         macro_state_done_ = true;
-         macro_state_succeeded_ = true;
+         micro_state = UNDOCK_FROM_REPAIR_STATION;
       }     
    }
 }
@@ -1014,10 +1239,35 @@ void HaulerGoToRepairStation::goToRepairRecovery()
       
 }
 
+void HaulerGoToRepairStation::undockFromRepairStation()
+{
+
+   if(first_UFRS)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_HARDCODED_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: Undocking from repair station");
+      first_UFRS = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      
+      micro_state = HAULER_IDLE;
+      macro_state_done_ = true;
+      macro_state_succeeded_ = true;
+   }
+}
+
 void HaulerGoToRepairStation::exitPoint()
 {
    // none at the moment
    navigation_vision_client_->cancelGoal();
+   navigation_client_->cancelGoal();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
