@@ -106,7 +106,7 @@ float findShoulderAngle(const geometry_msgs::Point &target)
   shoulder_wrt_base.y = 0.000001;
   shoulder_wrt_base.z = 0.100000;
 
-  return atan2((target.y), (target.x));
+  return atan2((target.y - shoulder_wrt_base.y), (target.x - shoulder_wrt_base.x));
 }
 
 /**
@@ -278,6 +278,7 @@ std::vector<float> getDumpAngleInBase(int tries)
 
   std::vector<float> thetas = getDepthHeight(final_wrt_shoulder);
   float shoulder_yaw = findShoulderAngle(initial_point_stamped.point);
+  shoulder_yaw -= 0.1;
   // if(shoulder_yaw > 0)
   // {
   //   shoulder_yaw = shoulder_yaw - 0.34*shoulder_yaw/0.78; // Offset for getting precise yaw angle

@@ -48,10 +48,10 @@ bool g_hauler_message_received = false, g_excavator_message_received = false;
 
 // global variables for park excavator
 const int HAULER_HEIGHT_THRESH = 130, ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESH_WIDE = 100, EXCAVATOR_TIMES_DETECT_TIMES = 10, EXCAVATOR_HEIGHT_THRESH = 300;
-const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0, ROBOT_ANTENNA_DEPTH_THRESH = 2.5;
+const float DEFAULT_RADIUS = 5, ROBOT_RADIUS = 1, WIDTH_IMAGE = 640.0, ROBOT_ANTENNA_DEPTH_THRESH = 2.0;
 bool g_parked = false, g_found_orientation = false, g_cancel_called = false, g_revolve_direction_set = false;
 float g_revolve_direction = EXC_FORWARD_VELOCITY;
-float HAULER_EXCAVATOR_PARKING_FORWARD_TIME = 21.5, HAULER_EXCAVATOR_PARKING_BACKWARD_TIME = 4;
+float HAULER_EXCAVATOR_PARKING_FORWARD_TIME = 25, HAULER_EXCAVATOR_PARKING_BACKWARD_TIME = 4;
 int ANTENNA_AVERAGE_FOR_FRAMES = 5;
 int g_times_excavator = 0;
 
@@ -375,7 +375,7 @@ void parkWrtExcavator(std::vector<float>& last_n_depths_for_antenna)
                 g_found_orientation = true;
             }
         }
-
+        ROS_INFO_STREAM("Antenna Finding");
         bool is_robot_antenna = (object.label == COMMON_NAMES::OBJECT_DETECTION_ROBOT_ANTENNA_CLASS);
         if (is_robot_antenna)
         {
@@ -387,7 +387,7 @@ void parkWrtExcavator(std::vector<float>& last_n_depths_for_antenna)
                 sum_of_datas += last_n_depths_for_antenna.at(i);
                 
             depth_hauler_ra = sum_of_datas/last_n_depths_for_antenna.size();
-            
+            ROS_INFO_STREAM("Antenna depth calculated: "<<depth_hauler_ra);
         }
     }
 
@@ -395,44 +395,13 @@ void parkWrtExcavator(std::vector<float>& last_n_depths_for_antenna)
 
     if (g_found_orientation)
     {
-        // g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-        // g_nav_goal.forward_velocity = 0.15;
-        // g_nav_goal.direction = 0;
-        // g_nav_goal.angular_velocity = 0;
-        
-        // g_nav_client->sendGoal(g_nav_goal);
-        // g_nav_client->sendGoal(g_nav_goal);
-
-
-        // ros::Duration(HAULER_EXCAVATOR_PARKING_FORWARD_TIME).sleep();
-
-        // g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-        // g_nav_goal.forward_velocity = -0.15;
-        // g_nav_goal.direction = 0;
-        // g_nav_goal.angular_velocity = 0;
-        
-        // g_nav_client->sendGoal(g_nav_goal);
-        // g_nav_client->sendGoal(g_nav_goal);
-
-        // ros::Duration(HAULER_EXCAVATOR_PARKING_BACKWARD_TIME).sleep();
-
-
-        // g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
-        // g_nav_goal.forward_velocity = 0;
-        // g_nav_goal.direction = 0;
-        // g_nav_goal.angular_velocity = 0;
-        
-        // g_nav_client->sendGoal(g_nav_goal);
-        // g_nav_client->sendGoal(g_nav_goal);
-
-        // g_parked = true;
 
         // if the required orientation is found, drive forward till hauler's robot antenna's height (in pixels) exceeds a minimum threshold
         static int times_depth_crossed = 0, g_lost = 0;
         static float last_depth = INIT_VALUE;
 
         g_lost = (depth_hauler_ra == INIT_VALUE) ? g_lost + 1 : 0;
-
+        ROS_INFO("##### Using the new value #####");
         if (depth_hauler_ra < ROBOT_ANTENNA_DEPTH_THRESH && depth_hauler_ra != INIT_VALUE)
         {
             if (last_depth != depth_hauler_ra)
@@ -445,13 +414,49 @@ void parkWrtExcavator(std::vector<float>& last_n_depths_for_antenna)
             times_depth_crossed = 0;
         }
 
-        if (times_depth_crossed > 3 || g_lost > 5)
+        if (times_depth_crossed > 3)
         {
             g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
             g_nav_goal.forward_velocity = 0;
             g_nav_goal.angular_velocity = 0;
             times_depth_crossed = 0;
             last_depth = INIT_VALUE;
+            g_parked = true;
+            return;
+        }
+        else if(g_lost > 5)
+        {
+            g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = 0.15;
+            g_nav_goal.direction = 0;
+            g_nav_goal.angular_velocity = 0;
+            
+            g_nav_client->sendGoal(g_nav_goal);
+            g_nav_client->sendGoal(g_nav_goal);
+
+            ROS_WARN("New Attacking the Excavator");
+            ros::Duration(HAULER_EXCAVATOR_PARKING_FORWARD_TIME).sleep();
+
+            g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = -0.15;
+            g_nav_goal.direction = 0;
+            g_nav_goal.angular_velocity = 0;
+            
+            g_nav_client->sendGoal(g_nav_goal);
+            g_nav_client->sendGoal(g_nav_goal);
+
+            ROS_WARN("New Backing off from the Excavator");
+            ros::Duration(HAULER_EXCAVATOR_PARKING_BACKWARD_TIME).sleep();
+
+
+            g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+            g_nav_goal.forward_velocity = 0;
+            g_nav_goal.direction = 0;
+            g_nav_goal.angular_velocity = 0;
+            
+            g_nav_client->sendGoal(g_nav_goal);
+            g_nav_client->sendGoal(g_nav_goal);
+
             g_parked = true;
             return;
         }
@@ -651,7 +656,7 @@ int main(int argc, char *argv[])
     //initialize node and node handler
     ros::init(argc, argv, g_robot_name + COMMON_NAMES::PARK_HAULER_HOPPER_SERVER_NODE_NAME);
     ros::NodeHandle nh;
-
+    ROS_INFO_STREAM(getString("Starting Park Hauler Server"));
     //subscriber for object detection
     ros::Subscriber hauler_objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + g_robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &haulerObjectsCallback);
 
