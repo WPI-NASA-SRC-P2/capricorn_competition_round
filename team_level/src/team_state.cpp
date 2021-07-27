@@ -1000,6 +1000,8 @@ bool GoToInitLoc::entryPoint()
       return false;
    }
 
+   start_state_delay_counter = 0;
+
    return true;
 }
 
@@ -1036,15 +1038,20 @@ TeamState& GoToInitLoc::transition()
    
 void GoToInitLoc::step()
 {
-   if(excavator_in_team != NONE)
-      robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_GO_TO_LOOKOUT_LOCATION);
+   ROS_INFO_THROTTLE(0.5, "Start delay counter: %i", start_state_delay_counter);
+   if (start_state_delay_counter > START_EXCAVATOR_STATE_DELAY_MAX)
+   {
+      if(excavator_in_team != NONE)
+         robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_GO_TO_INIT_LOCATION);      
+   }   
    if(hauler_in_team != NONE)
    {
       if(hauler_in_team == HAULER_2)
          robot_state_register->setRobotState(hauler_in_team, HAULER_INITIAL_RESET);
-      else
+      else if (start_state_delay_counter > START_HAULER_STATE_DELAY_MAX)
          robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOOKOUT_LOCATION);
    }
+   start_state_delay_counter++;
 }
 
 void GoToInitLoc::exitPoint() 
