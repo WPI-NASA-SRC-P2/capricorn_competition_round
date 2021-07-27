@@ -18,7 +18,7 @@ SolarModeServer::SolarModeServer(ros::NodeHandle nh, std::string robot_name):nh_
   navigation_client_->waitForServer();
 
 	// Action server
-	solarServer_ = new SolarServer_(nh_, robot_name_ + action_name_, boost::bind(&SolarModeServer::executeCB, this, _1), false);
+	solarServer_ = new SolarServer_(nh_, COMMON_NAMES::SOLAR_RECHARGE_ACTIONLIB, boost::bind(&SolarModeServer::executeCB, this, _1), false);
 	solarServer_->registerPreemptCallback(boost::bind(&SolarModeServer::cancelGoal, this));
 	solarServer_->start();
 
@@ -121,6 +121,7 @@ void SolarModeServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg)
 void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
 {
   ros::Rate r(10);
+  ros::Duration(1.0).sleep();
 
   ROS_INFO("inside execute callback");
 

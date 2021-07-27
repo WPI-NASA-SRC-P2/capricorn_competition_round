@@ -504,7 +504,6 @@ public:
    {
       if(first_)
       {
-         ros::Duration(1.0).sleep();
          solar_charging_action_goal_.solar_charge_status = true;
          solar_charging_client_->sendGoal(solar_charging_action_goal_);
          first_ = false;
@@ -518,6 +517,25 @@ public:
    State& transition() override{} 
 private:
    bool first_;
+};
+
+class DoNothingState : public HaulerState {
+public:   
+   DoNothingState(ros::NodeHandle nh, std::string robot_name) : HaulerState(HAULER_DO_NOTHING, nh, robot_name) {}
+
+   bool isDone() override{ 
+      current_state_done_ = true;
+      return true; }
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override{ 
+      last_state_succeeded_ = true;
+      return true; }
+
+   void entryPoint() override {}
+   void step() override{}
+   void exitPoint() override{}
+   State& transition() override{} 
+
 };
 
 /**

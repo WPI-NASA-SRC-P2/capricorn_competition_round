@@ -325,7 +325,6 @@ public:
    {
       if(first_)
       {
-         ros::Duration(1.0).sleep();
          solar_charging_action_goal_.solar_charge_status = true;
          solar_charging_client_->sendGoal(solar_charging_action_goal_);
          first_ = false;
