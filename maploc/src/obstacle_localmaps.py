@@ -61,8 +61,9 @@ class ObjectPlotter:
     # subscriber callback to odom reset topic publisher, indicating which robot's odom has been reset
     # resets the map obstacles list if the robot's odom has been reset (such that new obstacles are obtained to match the new location)
     def mapResetCb(self, reset_robot_name):
-        if(reset_robot_name == self.robot_name):
+        if(reset_robot_name.data == self.robot_name):
             self.all_obstacles_list = []
+            rospy.loginfo("[MAPLOC | obstacle_localmaps.py | " + str(sys.argv[1]) + "]: map obstacles reset due to odom reset")
     
     # subscriber callback to robot pose, updates robot pose as it moves
     # TODO: DEPRECATED, REMOVE AT END IF UNNECESSARY
