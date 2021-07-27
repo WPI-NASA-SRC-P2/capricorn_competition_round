@@ -89,6 +89,8 @@ int main(int argc, char** argv)
 
     ros::ServiceClient reset_odom_to_pose_client = nh.serviceClient<rtabmap_ros::ResetPose>(robot_name + COMMON_NAMES::RESET_POSE_CLIENT);
 
+    ros::Publisher reset_success_pub = nh.advertise<std_msgs::String>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::MAP_RESET_TOPIC, 5);
+
     // Wait until we have received a message from both odom and imu
     bool name_is_not_hauler_2 = robot_name != COMMON_NAMES::HAULER_2_NAME;
     
@@ -159,6 +161,10 @@ int main(int argc, char** argv)
         // call the 'reset pose' rosservice to send updated data
         if(reset_odom_to_pose_client.call(pose)){
             ROS_INFO_STREAM("[STATE_MACHINES | odom_resetter.cpp | " + robot_name + "]: " + "Pose initialized for rtabmap; Pose: "<<pose.request);
+            // publish success to map reset topic to trigger map reset upon successful odom reset
+            std_msgs::String reset_successful_msg;
+            reset_successful_msg.data = robot_name;
+            reset_success_pub.publish(reset_successful_msg);
         }
         else{
             ROS_ERROR_STREAM("[STATE_MACHINES | odom_resetter.cpp | " + robot_name + "]: " + "RTabMap initialize pose failed; Pose: ."<<pose.request);

@@ -10,6 +10,7 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseWithCovariance
 from geometry_msgs.msg import PoseStamped
+from std_msgs.msg import String
 from math import pi, sqrt
 import sys
 from perception.msg import Object
@@ -40,7 +41,13 @@ class ObjectPlotter:
         self.robot_name = str(sys.argv[1])
         #robot_name+'_base_footprint', robot_name+"_left_camera_optical"
         self.robot_pos_sub = rospy.Subscriber("/" + self.robot_name +"/camera/odom", Odometry, self.robotCb)
+        
+        # subscriber to indicate if robot pose has been reset by odom_resetter.cpp (string = robot_name)
+        self.odom_resetter_sub = rospy.Subscriber("/capricorn/odom_reset_map_reset", String, self.mapResetCb)
+        
+        # robot_pose is deprecated
         self.robot_pose = PoseWithCovariance()# value indicates the robot base frame pose
+        
         self.occ_grid = OccupancyGrid()
         # object detection data and subscriber
         self.obj_list = ObjectArray()
@@ -51,7 +58,14 @@ class ObjectPlotter:
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         self.all_obstacles_list = []
     
+    # subscriber callback to odom reset topic publisher, indicating which robot's odom has been reset
+    # resets the map obstacles list if the robot's odom has been reset (such that new obstacles are obtained to match the new location)
+    def mapResetCb(self, reset_robot_name):
+        if(reset_robot_name == self.robot_name):
+            self.all_obstacles_list = []
+    
     # subscriber callback to robot pose, updates robot pose as it moves
+    # TODO: DEPRECATED, REMOVE AT END IF UNNECESSARY
     def robotCb(self, odom):
         self.robot_pose = odom.pose
         # print(f'Robot Pose Received: {self.robot_pose}')
