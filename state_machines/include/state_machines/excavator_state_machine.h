@@ -549,15 +549,19 @@ public:
    void exitPoint() override;
    void goToRepair();
    void goToRepairRecovery();
+   void undockFromRepairStation();
+   void goToLookoutLocation();
    void idleExcavator() {}
 
 private:
-   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
-   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
+   bool first_GTR, first_GTRR, second_GTRR, first_UFRS, first_GTLL, macro_state_done_, macro_state_succeeded_;
+   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_, hardcoded_pose_;
 
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_REPAIR,
       GO_TO_REPAIR_RECOVERY,
+      UNDOCK_FROM_REPAIR_STATION,
+      GO_TO_LOOKOUT_LOCATION,
       EXCAVATOR_IDLE
    };
 

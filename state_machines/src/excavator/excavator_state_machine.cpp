@@ -32,13 +32,13 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   // Locations for excavators to go to in order to clear the traffic at the hopper, HAULER_2 parks near the hopper, HAULER_1 near the repair station. 
   /** @brief : If there's a problem with rotation, check the orientations of these hardcoded poses */
   EXCAVATOR_1_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = 5.0;
-  EXCAVATOR_1_LOOKOUT_LOC.pose.position.y = -20.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = 8.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.position.y = -18.0;
   EXCAVATOR_1_LOOKOUT_LOC.pose.orientation.z = 1.0;
 
   EXCAVATOR_2_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  EXCAVATOR_2_LOOKOUT_LOC.pose.position.x = -2.0;
-  EXCAVATOR_2_LOOKOUT_LOC.pose.position.y = 20;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.position.x = -18.0;
+  EXCAVATOR_2_LOOKOUT_LOC.pose.position.y = -6.0;
   EXCAVATOR_2_LOOKOUT_LOC.pose.orientation.z = 1.0;
 
   EXCAVATOR_1_RETURN_LOC.header.frame_id = COMMON_NAMES::MAP;
@@ -1147,9 +1147,12 @@ void ExcavatorGoToRepairStation::entryPoint()
    first_GTR  = true;
    first_GTRR = true;
    second_GTRR = true;
+   first_UFRS = true;
+   first_GTLL = true;
    macro_state_done_ = false;
    macro_state_succeeded_ = false;
    GTRL_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_RETURN_LOC : EXCAVATOR_2_RETURN_LOC;
+   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
    GTRR_pose_ = excavator_pose_;             
    GTRR_pose_.pose.position.x -= 10.0;
    micro_state = GO_TO_REPAIR;
@@ -1177,6 +1180,12 @@ void ExcavatorGoToRepairStation::step()
    case GO_TO_REPAIR_RECOVERY:
       goToRepairRecovery();
       break;
+   case UNDOCK_FROM_REPAIR_STATION:
+      undockFromRepairStation();
+      break;
+   case GO_TO_LOOKOUT_LOCATION:
+      goToLookoutLocation();
+      break;
    case EXCAVATOR_IDLE:
       idleExcavator();
       break;
@@ -1191,7 +1200,6 @@ void ExcavatorGoToRepairStation::goToRepair()
    {
       navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
       navigation_vision_goal_.mode = V_NAV_AND_NAV_VISION;
-      navigation_vision_goal_.goal_loc = GTRL_pose_;
       navigation_vision_client_->sendGoal(navigation_vision_goal_);
       ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Going to repair station vision goal sent");  
       first_GTR = false;
@@ -1210,8 +1218,7 @@ void ExcavatorGoToRepairStation::goToRepair()
       }
       else
       {
-         macro_state_done_ = true;
-         macro_state_succeeded_ = true;
+         micro_state = UNDOCK_FROM_REPAIR_STATION;
       } 
       
          
@@ -1254,6 +1261,46 @@ void ExcavatorGoToRepairStation::goToRepairRecovery()
       micro_state = GO_TO_REPAIR;
       first_GTR = true;
    }    
+}
+
+void ExcavatorGoToRepairStation::undockFromRepairStation()
+{
+   if(first_UFRS)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_HARDCODED_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Undocking from repair station");
+      first_UFRS = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      micro_state = GO_TO_LOOKOUT_LOCATION;
+   }
+}
+
+void ExcavatorGoToRepairStation::goToLookoutLocation()
+{
+   if(first_GTLL)
+   {
+   navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
+   navigation_action_goal_.pose = hardcoded_pose_;
+   navigation_client_->sendGoal(navigation_action_goal_);
+   ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]:  Going to Lookout Location : " << hardcoded_pose_);
+   first_GTLL = false;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if(is_done)
+   {
+      macro_state_done_ = true;
+      macro_state_succeeded_ = true;
+      micro_state = EXCAVATOR_IDLE;
+   }
 }
 
 
