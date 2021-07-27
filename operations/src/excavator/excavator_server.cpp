@@ -278,6 +278,7 @@ std::vector<float> getDumpAngleInBase(int tries)
 
   std::vector<float> thetas = getDepthHeight(final_wrt_shoulder);
   float shoulder_yaw = findShoulderAngle(initial_point_stamped.point);
+  shoulder_yaw -= 0.1;
   // if(shoulder_yaw > 0)
   // {
   //   shoulder_yaw = shoulder_yaw - 0.34*shoulder_yaw/0.78; // Offset for getting precise yaw angle
