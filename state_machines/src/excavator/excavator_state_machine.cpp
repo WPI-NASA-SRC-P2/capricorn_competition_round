@@ -32,8 +32,8 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   // Locations for excavators to go to in order to clear the traffic at the hopper, HAULER_2 parks near the hopper, HAULER_1 near the repair station. 
   /** @brief : If there's a problem with rotation, check the orientations of these hardcoded poses */
   EXCAVATOR_1_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = 5.0;
-  EXCAVATOR_1_LOOKOUT_LOC.pose.position.y = -20.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.position.x = 6.0;
+  EXCAVATOR_1_LOOKOUT_LOC.pose.position.y = -10.0;
   EXCAVATOR_1_LOOKOUT_LOC.pose.orientation.z = 1.0;
 
   EXCAVATOR_2_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;

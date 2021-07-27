@@ -622,7 +622,7 @@ bool NavigationServer::driveDistance(double delta_distance)
 
 bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, const geometry_msgs::PoseStamped future_waypoint, bool come_to_stop)
 {
-	brakeRobot(false);
+	brakeRobotNew(false);
 	ROS_INFO("[operations | nav_server | %s]: Begining smooth drive", robot_name_.c_str());
 
 	// Save the starting robot pose so we can track delta distance
@@ -652,7 +652,7 @@ bool NavigationServer::smoothDriving(const geometry_msgs::PoseStamped waypoint, 
 	
 	if(distance_to_waypoint <= distance_to_stop)
 	{	
-		target_speed = distance_to_waypoint / time_to_stop;
+		target_speed = distance_to_waypoint / (time_to_stop * 1.05);
 		distance_to_stop = distance_to_waypoint/2.0;
 		ROS_INFO("[operations | nav_server | %s]: %f too fast! Going %f instead.", robot_name_.c_str(), BASE_DRIVE_SPEED, target_speed);
 	}

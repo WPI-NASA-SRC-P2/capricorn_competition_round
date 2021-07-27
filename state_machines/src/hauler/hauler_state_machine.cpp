@@ -33,8 +33,8 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
 
   // Locations for haulers to go to in order to clear the traffic at the hopper, HAULER_2 parks near the hopper, HAULER_1 near the repair station. 
   HAULER_1_LOOKOUT_LOC.header.frame_id = COMMON_NAMES::MAP;
-  HAULER_1_LOOKOUT_LOC.pose.position.x    = 5.0;
-  HAULER_1_LOOKOUT_LOC.pose.position.y    = -5.0;
+  HAULER_1_LOOKOUT_LOC.pose.position.x    = 3.0;
+  HAULER_1_LOOKOUT_LOC.pose.position.y    = -4.0;
   HAULER_1_LOOKOUT_LOC.pose.orientation.z = 0.707;
   HAULER_1_LOOKOUT_LOC.pose.orientation.w = 0.707;
 
@@ -55,8 +55,8 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   UNDOCK_LOCATION.pose.orientation.w = 1.0;
 
   PROC_PLANT_LOCATION.header.frame_id = COMMON_NAMES::MAP;
-  PROC_PLANT_LOCATION.pose.position.x = -6.0;
-  PROC_PLANT_LOCATION.pose.position.y = 7.0;
+  PROC_PLANT_LOCATION.pose.position.x = 10.0;
+  PROC_PLANT_LOCATION.pose.position.y = -7.0;
   PROC_PLANT_LOCATION.pose.orientation.w = 1.0;
 
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &HaulerState::odomCallback, this);
