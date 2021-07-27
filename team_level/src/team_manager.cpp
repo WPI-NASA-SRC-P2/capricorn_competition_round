@@ -428,7 +428,7 @@ void TeamManager::checkAndRecruitForGoToRepairStation(int team_index)
    else if(all_teams.at(team_index)->isExcavatorHired() && all_teams.at(team_index)->isHaulerHired())
    {
       ROBOTS_ENUM excavator = all_teams.at(team_index)->getExcavator();
-      transferRobotToStandbyTeam(excavator, GO_TO_REPAIR_STATION, team_index);
+      transferRobotToStandbyTeam(excavator, IDLE, team_index);
    }
 
    fireExcavator(team_index);
@@ -443,23 +443,13 @@ void TeamManager::checkAndRecruitForResetAtHopper(int team_index)
 {
    if(all_teams.at(team_index)->isScoutHired())
    {
-      bool scout_dead = robot_state_register->isRobotOutOfCommission(all_teams.at(team_index)->getScout());
-      if(scout_dead)
-      {
-         // all_teams.at(team_index)->disbandScout();
-         hopper_busy = false;
-         return;
-      }
+         ROBOTS_ENUM scout = all_teams.at(team_index)->getScout();
+         transferRobotToStandbyTeam(scout, IDLE, team_index);
    }
    else if(all_teams.at(team_index)->isExcavatorHired())
    {
-      bool excavator_dead = robot_state_register->isRobotOutOfCommission(all_teams.at(team_index)->getExcavator());
-      if(excavator_dead)
-      {
-         // all_teams.at(team_index)->disbandExcavator();
-         hopper_busy = false;
-         return;
-      }
+         ROBOTS_ENUM excavator = all_teams.at(team_index)->getExcavator();
+         transferRobotToStandbyTeam(excavator, IDLE, team_index);
    }
    else if(all_teams.at(team_index)->isHaulerHired())
    {
@@ -524,6 +514,21 @@ void TeamManager::step()
          ROS_WARN_STREAM("Team "<<i<<" Task:"<<all_teams.at(i)->getTeamMacroState());
       all_teams.at(i)->step();
    }
+}
+
+void TeamManager::DEBUG_createTeam(int team_index, ROBOTS_ENUM scout, ROBOTS_ENUM excavator, ROBOTS_ENUM hauler, TEAM_MACRO_STATE desired_state_of_team)
+{
+   for(int i = 0; i < MAX_TEAMS; i++)
+   {
+      all_teams.at(i)->disbandScout();
+      all_teams.at(i)->disbandExcavator();
+      all_teams.at(i)->disbandHauler();
+   }
+
+   all_teams.at(team_index)->setScout(scout);
+   all_teams.at(team_index)->setExcavator(excavator);
+   all_teams.at(team_index)->setHauler(hauler);
+   all_teams.at(team_index)->setTeamMacroState(desired_state_of_team);
 }
 
 void TeamManager::exec()
