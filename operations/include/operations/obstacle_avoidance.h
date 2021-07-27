@@ -45,6 +45,7 @@ const std::map<std::string, int> OBSTACLE_HEIGHT_THRESHOLD = {
     {COMMON_NAMES::OBJECT_DETECTION_SCOUT_CLASS, 60,},
     {COMMON_NAMES::OBJECT_DETECTION_HAULER_CLASS, 60,},
     {COMMON_NAMES::OBJECT_DETECTION_ROCK_CLASS, 60,}
+    {COMMON_NAMES::OBJECT_DETECTION_ROBOT_ANTENNA_CLASS, 20,}
 };
 
 // Line points which divides projected path of the robot (in pixels)
