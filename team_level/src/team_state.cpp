@@ -601,6 +601,9 @@ void Excavating::step()
    case PRE_PARK_MANEUVER_EXCAVATOR:
       stepPreParkManeuverExcavator();
       break;
+   case PRE_PARK_MANEUVER_RECOVERY:
+      stepPreParkManeuverRecovery();
+      break;
    case PARK_AT_EXCAVATOR_HAULER:
       stepParkHauler();
       break;
@@ -622,6 +625,11 @@ void Excavating::stepWaitForHauler()
    robot_state_register->setRobotState(hauler_in_team, HAULER_GO_BACK_TO_EXCAVATOR, volatile_site_location);
 
    robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_VOLATILE_RECOVERY); 
+}
+
+void Excavating::stepPreParkManeuverRecovery()
+{
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY); 
 }
 
 void Excavating::stepResetExcavHaulerOdom()
