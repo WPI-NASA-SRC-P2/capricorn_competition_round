@@ -276,7 +276,7 @@ void ParkAtHopper::exitPoint()
     park_robot_client_->cancelGoal();
     ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  State Machine: Finished parking at hopper");
     // // reset hauler odometry after finishing parking at the hopper
-    // reset_srv_.request.target_robot_name = robot_name_;
+    // reset_srv_.request.target_robot_name = robot_name_;HaulerVisualResetOfOdometry
     // reset_srv_.request.use_ground_truth = true;
     // ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: " << robot_name_ << " Hauler odometry reset service called!");
 }
@@ -649,7 +649,7 @@ void DumpVolatileAtHopper::entryPoint()
    state_done =false;
 
    // Setting poses
-   hardcoded_pose_ = UNDOCK_LOCATION;
+   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::HAULER_1_NAME) ? HAULER_1_LOOKOUT_LOC : HAULER_2_LOOKOUT_LOC;
    
    // Currently not caring about orientations
    GTPP_pose_ = hauler_pose_;
@@ -918,7 +918,7 @@ void InitialReset::entryPoint()
    state_done =false;
 
    // Setting poses
-   hardcoded_pose_ = UNDOCK_LOCATION;
+   hardcoded_pose_ = (robot_name_ == COMMON_NAMES::HAULER_1_NAME) ? HAULER_1_LOOKOUT_LOC : HAULER_2_LOOKOUT_LOC;
    
    // Currently not caring about orientations
    GTPP_pose_ = hauler_pose_;
