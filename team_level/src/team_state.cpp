@@ -636,7 +636,7 @@ void Excavating::stepPreParkManeuverRecovery()
 
 // @Ashay @todo
 // Change this to DO-NOTHING when solar charging is implemented
-   robot_state_register->setRobotState(hauler_in_team, ROBOT_IDLE_STATE);
+   robot_state_register->setRobotState(hauler_in_team, HAULER_DO_NOTHING);
 }
 
 void Excavating::stepResetExcavHaulerOdom()
