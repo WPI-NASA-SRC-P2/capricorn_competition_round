@@ -317,7 +317,7 @@ public:
  * @param hasSucceeded() navigation vision has succeeded at getting to the repair station
  */
 class GoToRepairStation : public ScoutState {
-public:   
+public:     
    GoToRepairStation(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_GOTO_REPAIR_STATION, nh, robot_name) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
@@ -331,16 +331,18 @@ public:
 
    void goToRepair();
    void goToRepairRecovery();
+   void undockFromRepairStation();
    void idleScout() {}
 
 private:
-   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
+   bool first_GTR, first_GTRR, second_GTRR, first_UFRS, macro_state_done_, macro_state_succeeded_;
    geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
    operations::NavigationGoal navigation_action_goal_;
 
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_REPAIR,
       GO_TO_REPAIR_RECOVERY,
+      UNDOCK_FROM_REPAIR_STATION,
       SCOUT_IDLE
    };
 
@@ -355,7 +357,7 @@ private:
  */
 class ScoutGoToLoc : public ScoutState {
 public:   
-   ScoutGoToLoc(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_SEARCH_VOLATILE, nh, robot_name) {}
+   ScoutGoToLoc(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_GO_TO_LOC, nh, robot_name) {}
 
    // define transition check conditions for the state (isDone() is overriden by each individual state)
    bool isDone() override;
@@ -373,6 +375,48 @@ private:
    geometry_msgs::PoseStamped target_loc_;
    operations::NavigationGoal navigation_action_goal_;
 };
+
+/**
+ * @brief Resets the odom by triangulating its position wrt to the proc_plant and repair station.
+ * 
+ * @param isDone() if it tries to reset once
+ * @param hasSucceeded() if reset is successful
+ */
+class VisualResetOfOdometry : public ScoutState {
+public:   
+   VisualResetOfOdometry(ros::NodeHandle nh, std::string robot_name) : ScoutState(SCOUT_VISUAL_RESET_ODOM, nh, robot_name) {}
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   void entryPoint() override;
+   void step() override;
+   State& transition() override{}
+   void exitPoint() override;
+   void centerToObject(const std::string& centering_object);
+   float getObjectDepth(const std::string& centering_object);
+   void visualResetOdom();
+   void idleScout() {}
+
+
+private:
+   bool first_, resetOdomDone_, macro_state_done_, macro_state_succeeded_;
+   float proc_plant_distance_, camera_offset_ = 0.4, repair_station_distance_;
+   geometry_msgs::Quaternion proc_plant_orientation_, repair_station_orientation_;
+   int no_of_measurements_, MAX_TRIES;
+
+   enum RESET_ODOM_MICRO_STATES{
+      CENTER_TO_PROC_PLANT,
+      GET_PROC_PLANT_DISTANCE,
+      CENTER_TO_REPAIR_STATION,
+      GET_REPAIR_STATION_DISTANCE,
+      CALL_RESET,
+      SCOUT_IDLE
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
+};
+
 
 // class ParkAtRepairStation : public ScoutState {
 // public:   
@@ -393,7 +437,7 @@ private:
 
 // class SolarCharge: public ScoutState
 // {
-// public:
+// public:  ros::Subscriber IMU_sub_;
 //   bool entryPoint();
 //   bool exec();
 //   bool exitPoint();

@@ -25,10 +25,10 @@ from object_detection.utils import visualization_utils as vis_util
 
 physical_devices = tf.config.list_physical_devices("GPU")
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
-# tf.config.experimental.set_virtual_device_configuration(
-#     physical_devices[0],
-#     [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=800)],
-# )
+tf.config.experimental.set_virtual_device_configuration(
+    physical_devices[0],
+    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=800)],
+)
 
 K = [381.36246688113556, 0.0, 320.5, 0.0, 381.36246688113556, 240.5, 0.0, 0.0, 1.0]
 Fx = K[0]
@@ -149,10 +149,12 @@ def estimate3dLocation(category_index, i, box, cl, score, disp_img):
     # calculates mean disparity in the middle rows of the detected object bounding boxes
     for w in range(low_x, high_x):
         for v in range(low_y, high_y):
-            if high_y < HEIGHT and high_x < WIDTH and disp_img[v, w] >= disp_min and disp_img[v, w] <= disp_max:
-                disp_final += disp_img[v, w]
-                num_pixels += 1
-
+            try:
+                if v < HEIGHT and w < WIDTH and disp_img[v, w] >= disp_min and disp_img[v, w] <= disp_max:
+                    disp_final += disp_img[v, w]
+                    num_pixels += 1
+            except:
+                continue
     if num_pixels != 0:
         disp_final /= num_pixels
 

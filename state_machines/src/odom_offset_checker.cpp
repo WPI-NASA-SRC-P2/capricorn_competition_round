@@ -13,11 +13,17 @@ NASA SPACE ROBOTICS CHALLENGE
 #include <rtabmap_ros/ResetPose.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <state_machines/robot_state_status.h>
+#include <utils/common_names.h>
+#include <state_machines/robot_state_status.h>
 
 #define UPDATE_HZ 10
 
+using namespace COMMON_NAMES;
 bool odom_message_received = false;
 bool wait_till_reset = false;
+std::string robot_name_;
+STATE_MACHINE_TASK robot_task_;
+
 
 nav_msgs::Odometry global_odometry;
 
@@ -41,6 +47,8 @@ void robot_state_callback(state_machines::robot_state_status robot_state_info)
                                                  curr_state_done == true && 
                                                  last_state_succeeded == true);
 
+   if(robot_state_info.robot_name == robot_name_)
+        robot_task_ = (STATE_MACHINE_TASK)robot_state_info.robot_current_state;
 }
 
 void getOdomRPY(double &r, double &p, double &y)
@@ -62,23 +70,23 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     ros::Rate update_rate(UPDATE_HZ);
 
-    std::string robot_name = argv[1];
+    robot_name_ = argv[1];
     
-    ros::Subscriber camera_odom_sub = nh.subscribe("/"+ robot_name + COMMON_NAMES::RTAB_ODOM_TOPIC, 223, odom_callback);
+    ros::Subscriber camera_odom_sub = nh.subscribe("/"+ robot_name_ + COMMON_NAMES::RTAB_ODOM_TOPIC, 223, odom_callback);
     ros::Subscriber robot_state_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::ROBOTS_CURRENT_STATE_TOPIC, 223, robot_state_callback);
 
-    ros::ServiceClient reset_odom_to_pose_client = nh.serviceClient<rtabmap_ros::ResetPose>(robot_name + COMMON_NAMES::RESET_POSE_CLIENT);
+    ros::ServiceClient reset_odom_to_pose_client = nh.serviceClient<rtabmap_ros::ResetPose>(robot_name_ + COMMON_NAMES::RESET_POSE_CLIENT);
 
-    bool name_is_not_hauler_2 = robot_name != COMMON_NAMES::HAULER_2_NAME;
+    bool name_is_not_hauler_2 = robot_name_ != COMMON_NAMES::HAULER_2_NAME;
     // **********************************
-
     // Wait until we have received a message from odom
-    while(ros::ok() && !(name_is_not_hauler_2 || wait_till_reset) && !odom_message_received)
+    while(ros::ok() && !((name_is_not_hauler_2 || wait_till_reset) && odom_message_received))
     {
         ros::Duration(0.1).sleep();
         ros::spinOnce();
     }
 
+    
     ros::Duration(10).sleep();
     ros::spinOnce();
     double new_odom_x = global_odometry.pose.pose.position.x;
@@ -93,9 +101,21 @@ int main(int argc, char** argv)
     // Inf loop
     while(ros::ok())
     {
+        ros::spinOnce();
+
         // Run the loop only once we've received another message
         if (odom_message_received)    
         {
+            if(robot_task_ == SCOUT_VISUAL_RESET_ODOM || robot_task_ == SCOUT_RESET_ODOM ||
+            robot_task_ == EXCAVATOR_VISUAL_RESET_ODOM || robot_task_ == EXCAVATOR_RESET_ODOM_AT_HOPPER ||
+            robot_task_ == HAULER_VISUAL_RESET_ODOM || robot_task_ == HAULER_DUMP_VOLATILE_TO_PROC_PLANT )
+            {
+                prev_odom_x = global_odometry.pose.pose.position.x;
+                prev_odom_y = global_odometry.pose.pose.position.y;
+                prev_odom_z = global_odometry.pose.pose.position.z;
+                continue;
+            }
+            
             // Store the latest odometry position and orientation readings
             new_odom_x = global_odometry.pose.pose.position.x;
             new_odom_y = global_odometry.pose.pose.position.y;
@@ -111,7 +131,7 @@ int main(int argc, char** argv)
             // If the distance > 1, then reset odom to the previous value
             if (distance > 1.0)
             {
-                ROS_WARN_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name + "]: " + "Distance is too large");
+                ROS_WARN_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name_ + "]: " + "Distance is too large");
                 
                 // Assemble data into pose for Rosservice call 
                 //      Use previous positions and new orientation
@@ -125,10 +145,10 @@ int main(int argc, char** argv)
 
                 // call the 'reset pose' rosservice to send updated data
                 if(reset_odom_to_pose_client.call(pose)){
-                    ROS_WARN_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name + "]: " + "Odometry has been reset");
+                    ROS_WARN_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name_ + "]: " + "Odometry has been reset");
                 }
                 else{
-                    ROS_ERROR_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name + "]: " + "Odometry reset has failed.");
+                    ROS_ERROR_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name_ + "]: " + "Odometry reset has failed.");
                 }
             }
             else
@@ -141,7 +161,7 @@ int main(int argc, char** argv)
                 prev_p = new_p;
                 prev_y = new_y;
 
-                // ROS_INFO_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name + "]: " + "Odometry is ok");
+                // ROS_INFO_STREAM("[STATE_MACHINES | odom_offset_checker.cpp | " + robot_name_ + "]: " + "Odometry is ok");
             }
 
             // Set this false so we can check to see when we get the next odom message
@@ -149,7 +169,6 @@ int main(int argc, char** argv)
 
         }
 
-        ros::spinOnce();
         update_rate.sleep();
     }
 

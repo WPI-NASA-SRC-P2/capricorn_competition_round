@@ -93,6 +93,8 @@ public:
    geometry_msgs::PoseStamped EXCAVATOR_1_RETURN_LOC;
    geometry_msgs::PoseStamped EXCAVATOR_2_RETURN_LOC;
    geometry_msgs::PoseStamped BESIDE_REPAIR_STATION;
+   geometry_msgs::PoseStamped UNDOCK_LOCATION;
+   geometry_msgs::PoseStamped PROC_PLANT_LOCATION;
 
 protected:
 
@@ -355,6 +357,52 @@ private:
 
    bool goToVolatileDone_;
    bool centerHaulerDone_;
+   bool centerHaulerSucceeded_;
+   bool getInArmPositionDone_;
+};
+
+/**
+ * @brief Basically the same as PreParkHauler, but will center to the "scout" as well, as per object detection
+ * PreParkHaulerRecovery docks the excavator to the scout by: 
+ *    [1] Moves forward some distance to be ontop of volatile
+ *    [2] Rotates until excavator's vision is centered to hauler
+ *    [3] Moves back to have excavator's arm over volatile spot
+ *     
+ *  @param isDone() if arm is above the voltile 
+ *  @param hasSucceeded() excavator is centered to hauler and arm is above volatile
+ * 
+ */
+class PreParkHaulerRecovery : public ExcavatorState {
+public:   
+   PreParkHaulerRecovery(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY, nh, robot_name) {}
+
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+   State& transition() override{}; 
+
+   // movements for getting into position at volatile w.r.t. hauler
+   void goToVolatile();
+   void centerHauler();
+   void getInArmPosition();
+
+private:
+   bool first_;
+   int goal_;
+   enum goal_states_
+   {
+      GO_TO_VOLATILE = 1,
+      CENTER_TO_HAULER = 2,
+      GET_IN_DIGGING_POSITION = 3
+   };
+
+   bool goToVolatileDone_;
+   bool centerHaulerDone_;
+   bool centerHaulerSucceeded_;
    bool getInArmPositionDone_;
 };
 
@@ -501,15 +549,19 @@ public:
    void exitPoint() override;
    void goToRepair();
    void goToRepairRecovery();
+   void undockFromRepairStation();
+   void goToLookoutLocation();
    void idleExcavator() {}
 
 private:
-   bool first_GTR, first_GTRR, second_GTRR, macro_state_done_, macro_state_succeeded_;
-   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_;
+   bool first_GTR, first_GTRR, second_GTRR, first_UFRS, first_GTLL, macro_state_done_, macro_state_succeeded_;
+   geometry_msgs::PoseStamped GTRL_pose_, GTRR_pose_, hardcoded_pose_;
 
    enum RESET_ODOM_MICRO_STATES{
       GO_TO_REPAIR,
       GO_TO_REPAIR_RECOVERY,
+      UNDOCK_FROM_REPAIR_STATION,
+      GO_TO_LOOKOUT_LOCATION,
       EXCAVATOR_IDLE
    };
 
@@ -540,8 +592,9 @@ public:
 private:
    bool first_;
    // geometry_msgs::PoseArray recovery_poses_;
-   geometry_msgs::PoseStamped recovery_poses_[4];
+   geometry_msgs::PoseStamped recovery_poses_[5];
    geometry_msgs::PoseStamped recovery_pose_;
+   geometry_msgs::PoseStamped scout_pose_;
    geometry_msgs::PoseStamped target_loc_;
 
    int pose_index_;
@@ -632,6 +685,50 @@ public:
 private:
    bool first_;
 };
+
+/**
+ * @brief Resets the odom by triangulating its position wrt to the proc_plant and repair station.
+ * 
+ * @param isDone() if it tries to reset once
+ * @param hasSucceeded() if reset is successful
+ */
+class ExcavatorVisualResetOfOdometry : public ExcavatorState {
+public:   
+   ExcavatorVisualResetOfOdometry(ros::NodeHandle nh, std::string robot_name) : ExcavatorState(EXCAVATOR_VISUAL_RESET_ODOM, nh, robot_name) {}
+   bool isDone() override;
+   // define if state succeeded in completing its action for the state (hasSucceeded is overriden by each individual state)
+   bool hasSucceeded() override;
+
+   void entryPoint() override;
+   void step() override;
+   void exitPoint() override;
+   State& transition() override{}
+   void goToDefaultArmPose();
+   void centerToObject(const std::string& centering_object);
+   float getObjectDepth(const std::string& centering_object);
+   void visualResetOdom();
+   void idleExcavator() {}
+
+
+private:
+   bool first_, first_arm, resetOdomDone_, macro_state_done_, macro_state_succeeded_;
+   float proc_plant_distance_, camera_offset_ = 0.4, repair_station_distance_;
+   geometry_msgs::Quaternion proc_plant_orientation_, repair_station_orientation_;
+   int no_of_measurements_, MAX_TRIES;
+
+   enum RESET_ODOM_MICRO_STATES{
+      DEFAULT_ARM_POSE,
+      CENTER_TO_PROC_PLANT,
+      GET_PROC_PLANT_DISTANCE,
+      CENTER_TO_REPAIR_STATION,
+      GET_REPAIR_STATION_DISTANCE,
+      CALL_RESET,
+      EXCAVATOR_IDLE
+   };
+
+   RESET_ODOM_MICRO_STATES micro_state;
+};
+
 
 // #endif
 

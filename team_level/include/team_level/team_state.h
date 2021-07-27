@@ -4,6 +4,7 @@
 #include <state_machines/set_robot_state.h>
 #include <team_level/robot_state_register.h>
 #include <team_level/robot_pose_register.h>
+#include<team_level/detected_volatile_register.h>
 
 // #include <team_level/team_scheduler.h>
 
@@ -39,6 +40,7 @@ enum TEAM_MICRO_STATE{
 
    // SCOUT_WAITING
    ROBOTS_TO_GOAL,
+   RESET_SCOUT_EXCAV_ODOM,
    UNDOCK_SCOUT,
    PARK_EXCAVATOR_AT_SCOUT,
    RECOVERY_SCOUT_FINDING,
@@ -50,12 +52,23 @@ enum TEAM_MICRO_STATE{
    CHECK_FOR_VOLATILE,
    PRE_PARK_MANEUVER_EXCAVATOR,
    PARK_AT_EXCAVATOR_HAULER,
+   RESET_EXCAV_HAULER_ODOM,
+   PRE_PARK_MANEUVER_RECOVERY,
    DIG_AND_DUMP,
    BALLET_ONCE,
    UNDOCK_HAULER,
 
    // DUMPING
    DUMP_COLLECTION,
+
+   // GO_TO_REPAIR_STATION
+   VISUAL_RESET_ODOM,
+   GO_TO_REPAIR_STATION_MICRO,
+   GO_TO_LOOKOUT_LOCATION,
+
+   // RESET_AT_HOPPER
+   // GO_TO_REPAIR_STATION_MICRO
+   DUMP_VOLATILE_AT_HOPPER,
 
    // IDLE
    IDLE_MICRO_STATE
@@ -75,6 +88,7 @@ public:
    {
       delete robot_state_register;
       delete robot_pose_register;
+      delete volatile_register;
    }
 
    uint64_t getId() const { return m_unId; }
@@ -120,6 +134,7 @@ protected:
    ROBOTS_ENUM scout_in_team, excavator_in_team, hauler_in_team;
    RobotStateRegister *robot_state_register;
    RobotPoseRegister *robot_pose_register;
+   DetectedVolatileRegister *volatile_register;
    geometry_msgs::PoseStamped volatile_site_location;
    bool reset_robot_odometry = false;
 };
@@ -187,6 +202,7 @@ private:
    void stepParkExcavatorAtScout();
    void stepRecoveryScoutFinding();
    void stepMakeExcavHaulerIdle();
+   void stepResetScoutExcavOdom();
 };
 
 class Excavating: public TeamState{
@@ -203,6 +219,7 @@ public:
 
 private:
    bool ballet_once, digging_re_attempted;
+   bool v_ppm_once, park_at_excav_re_attempted;
    TEAM_MICRO_STATE micro_state;
    void stepWaitForHauler();
    void stepPreParkManeuverExcavator();
@@ -211,6 +228,8 @@ private:
    void stepBalletOnce();
    void stepUndockHauler();
    void stepRecoveryExcavatorFinding();
+   void stepResetExcavHaulerOdom();
+   void stepPreParkManeuverRecovery();
 };
 
 class Dumping: public TeamState{
@@ -232,11 +251,31 @@ public:
    bool isDone() override ;
    
    TeamState& transition() override;
-   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
+   TEAM_MICRO_STATE getMicroState();
    
    bool entryPoint() override;
    void step() override;
    void exitPoint() override;
+
+private:
+   bool checkForRespectiveRobots();
+
+   void stepForScout();
+   void stepForExcavator();
+   void stepForHauler();
+
+   TEAM_MICRO_STATE getScoutMicroState();
+   TEAM_MICRO_STATE getExcavatorMicroState();
+   TEAM_MICRO_STATE getHaulerMicroState();
+
+   void stepVisualResetOdom();
+   void stepGoToRepairStationMicro();
+   void stepGoToLookoutLocation();
+   void stepIdle(){}
+
+   STATE_MACHINE_TASK scout_robot_staring_state;
+   STATE_MACHINE_TASK excavator_robot_staring_state;
+   STATE_MACHINE_TASK hauler_robot_staring_state;
 };
 
 class WaitForHopperAppointment: public TeamState{
@@ -258,11 +297,14 @@ public:
    bool isDone() override ;
    
    TeamState& transition() override;
-   TEAM_MICRO_STATE getMicroState(){return IDLE_MICRO_STATE;}
+   TEAM_MICRO_STATE getMicroState();
    
    bool entryPoint() override;
    void step() override;
    void exitPoint() override;
+
+private:
+   STATE_MACHINE_TASK hauler_robot_staring_state;
 };
 
 class GoToInitLoc: public TeamState{

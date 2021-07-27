@@ -29,6 +29,9 @@ public:
 
    void exec();
 
+   void DEBUG_createTeam(int team_index, ROBOTS_ENUM scout, ROBOTS_ENUM excavator, 
+                        ROBOTS_ENUM hauler, TEAM_MACRO_STATE desired_state_of_team);
+
 private:
    std::array<TeamScheduler*, MAX_TEAMS> all_teams;
 

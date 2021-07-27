@@ -160,6 +160,7 @@ namespace COMMON_NAMES
     V_OBS_GOTO_GOAL = 4, // Uses go to goal with obstacle avoidance
     V_NAV_AND_NAV_VISION = 5, // Navigation which switches to vision based navigation when robot can see target and target location is near the robot
     V_HARDCODED_UNDOCK = 6,   // Hardcoded undock for resetting odom at Proc Plant
+    V_PPM = 7,   // Hardcoded undock for resetting odom at Proc Plant
   };
 
   /****** NAVIGATION ENUMS ******/
@@ -197,6 +198,7 @@ namespace COMMON_NAMES
     SCOUT_RESET_ODOM_GROUND_TRUTH, // reset odometry of scout w.r.t. its starting position in sim
     SCOUT_GOTO_REPAIR_STATION,   // Scout goes to repair station
     SCOUT_PARK_REPAIR_STATION,   // Scout parks at repair station
+    SCOUT_VISUAL_RESET_ODOM,
 
     /**************EXCAVATOR STATES**************/  
     //11
@@ -220,6 +222,8 @@ namespace COMMON_NAMES
     EXCAVATOR_GO_TO_INIT_LOCATION,
     EXCAVATOR_GO_TO_LOOKOUT_LOCATION,
     EXCAVATOR_BALLET_DANCING,
+    EXCAVATOR_VISUAL_RESET_ODOM,
+    EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY,
     
     /**************HAULER STATES**************/
     //25
@@ -246,6 +250,8 @@ namespace COMMON_NAMES
     HAULER_GO_TO_EXCAVATOR_RECOVERY,
     HAULER_GO_TO_LOOKOUT_LOCATION,
     HAULER_BALLET_DANCING,
+    HAULER_VISUAL_RESET_ODOM,
+    HAULER_INITIAL_RESET,
     ROBOT_IDLE_STATE,
 
     /***************ROBOTS MACRO STATES***************/

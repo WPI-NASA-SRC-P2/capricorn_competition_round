@@ -44,7 +44,7 @@
     <node name="$(arg robot_name)_odom_reset_service_node" pkg="maploc" type="reset_odom" output="screen" />
 
     <!-- Launch the encoders-->
-    <!-- <node name="$(arg robot_name)_encoders" pkg="maploc" type="localization_odom_encoders" output="screen" args="$(arg robot_name)" /> -->
+    <node name="$(arg robot_name)_encoders" pkg="maploc" type="localization_odom_encoders" output="screen" args="$(arg robot_name)" />
     
     <!-- Launch the robot localization package functionality -->
     <include file="$(find maploc)/launch/robot_localization.launch" if="$(arg use_robot_localization)">

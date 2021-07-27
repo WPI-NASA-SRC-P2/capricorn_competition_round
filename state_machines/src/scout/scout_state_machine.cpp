@@ -49,7 +49,6 @@ ScoutState::ScoutState(uint32_t un_id, ros::NodeHandle nh, std::string robot_nam
   SCOUT_2_RETURN_LOC.pose.orientation.z = 1.0;
 
   odom_sub_ = nh_.subscribe("/" + robot_name_ + RTAB_ODOM_TOPIC, 10, &ScoutState::odomCallback, this);
-
 }
 
 ScoutState::~ScoutState()
@@ -285,7 +284,6 @@ void ResetOdomAtHopper::entryPoint()
    // Currently not caring about orientations
    GTPP_pose_ = scout_pose_;         // Go to Proc plant Recovery pose (supposedly getting to this pose will enable 'seeing' the Proc plant as it is assumed the                                       // rover is at the left of repair station and hence cant see it. If its in a crater, hopefully travelling this 10m will get it out of it.)         
    GTPP_pose_.pose.position.x += 10.0;
-
 }
 
 bool ResetOdomAtHopper::isDone()
@@ -467,6 +465,7 @@ void GoToRepairStation::entryPoint()
    first_GTR  = true;
    first_GTRR = true;
    second_GTRR = true;
+   first_UFRS = true;
    macro_state_done_ = false;
    macro_state_succeeded_ = false;
    GTRL_pose_ = (robot_name_ == COMMON_NAMES::SCOUT_1_NAME) ? SCOUT_1_RETURN_LOC : SCOUT_2_RETURN_LOC;
@@ -498,6 +497,9 @@ void GoToRepairStation::step()
       break;
    case GO_TO_REPAIR_RECOVERY:
       goToRepairRecovery();
+      break;
+   case UNDOCK_FROM_REPAIR_STATION:
+      undockFromRepairStation();
       break;
    case SCOUT_IDLE:
       idleScout();
@@ -532,8 +534,7 @@ void GoToRepairStation::goToRepair()
       }
       else
       {
-         macro_state_succeeded_ = true;
-         macro_state_done_ = true;
+         micro_state = UNDOCK_FROM_REPAIR_STATION;
       }          
    }
 }
@@ -577,10 +578,34 @@ void GoToRepairStation::goToRepairRecovery()
       
 }
 
+void GoToRepairStation::undockFromRepairStation()
+{
+   if(first_UFRS)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_HARDCODED_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Undocking from repair station");
+      first_UFRS = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      micro_state = SCOUT_IDLE;
+      macro_state_done_ = true;
+      macro_state_succeeded_ = true;
+   }
+      
+}
+
 void GoToRepairStation::exitPoint()
 {
    // none at the moment
    navigation_vision_client_->cancelGoal();
+   navigation_client_->cancelGoal();
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout finished going to repair station (exitpoint)");
 }
 
@@ -655,3 +680,181 @@ void ScoutGoToLoc::exitPoint()
     ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Reached scout, preparing to park");
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// V I S U A L  R E S E T  O D O M  S T A T E   C L A S S ////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void VisualResetOfOdometry::entryPoint()
+{
+   // declare entrypoint variables
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: State Machine: Going to do visual odom-reset"); 
+   proc_plant_distance_ = 0.0;
+   repair_station_distance_ = 0.0;
+   no_of_measurements_ = 20;
+   MAX_TRIES = 300;
+   first_ = true;
+   macro_state_done_ = false;
+   macro_state_succeeded_ = false;
+
+   micro_state = CENTER_TO_PROC_PLANT;
+}
+
+void VisualResetOfOdometry::step()
+{
+   switch (micro_state)
+   {
+   case CENTER_TO_PROC_PLANT: 
+      centerToObject(OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
+      break;
+   case GET_PROC_PLANT_DISTANCE:
+      proc_plant_distance_ = getObjectDepth(OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
+      break;
+   case CENTER_TO_REPAIR_STATION:
+      centerToObject(OBJECT_DETECTION_REPAIR_STATION_CLASS);
+      break;
+   case GET_REPAIR_STATION_DISTANCE:
+      repair_station_distance_ = getObjectDepth(OBJECT_DETECTION_REPAIR_STATION_CLASS);
+      break;
+   case CALL_RESET:
+      visualResetOdom();
+      break;
+   case SCOUT_IDLE:
+      idleScout();
+      break;
+   default:
+      break;
+   }
+}
+
+bool VisualResetOfOdometry::isDone()
+{
+   current_state_done_ = macro_state_done_;
+   return current_state_done_;
+}
+
+bool VisualResetOfOdometry::hasSucceeded()
+{
+   last_state_succeeded_ = macro_state_succeeded_;
+   return last_state_succeeded_;
+}
+
+void VisualResetOfOdometry::exitPoint()
+{
+   navigation_vision_client_->cancelGoal();
+}
+
+void VisualResetOfOdometry::centerToObject(const std::string& centering_object)
+{
+   if(first_)
+   {
+      navigation_vision_goal_.desired_object_label = centering_object;
+      navigation_vision_goal_.mode = V_CENTER;
+      navigation_vision_client_->sendGoal(navigation_vision_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Centering to " << centering_object << " vision goal sent"); 
+      first_ = false;
+   }
+
+   // If centering is done, check if it has succeeded. If it does, we proceed to obtain its depth and orientation
+   // If it doesnt succeed, we instead try to center to repair station.
+   bool is_done = navigation_vision_client_->getState().isDone();
+   bool has_succeeded = false;
+   if(is_done)
+   {
+      has_succeeded = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      if(has_succeeded)
+      {
+         if(centering_object == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+         {
+            proc_plant_orientation_ = odom_.pose.pose.orientation;
+            micro_state = GET_PROC_PLANT_DISTANCE;
+         }
+            
+         else
+         {
+            repair_station_orientation_ = odom_.pose.pose.orientation;
+            micro_state = GET_REPAIR_STATION_DISTANCE;
+         }
+      }
+         
+      else
+      {
+         if(centering_object == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+            micro_state = CENTER_TO_REPAIR_STATION;
+         else
+            micro_state = CALL_RESET;
+      }         
+      first_ = true;
+   }  
+}
+
+float VisualResetOfOdometry::getObjectDepth(const std::string& centering_object) 
+{
+   // Try to get an image with the proc_plant in it, tries ==> no_of_attempts, reading_count ==> no_of_time we actually get a reading.
+   int reading_count = 0, tries = 0;
+   float sum_of_all_readings;
+   while(ros::ok() && ((reading_count < no_of_measurements_) && (tries < MAX_TRIES))) // Can get stuck 
+   {
+      ros::spinOnce();   // Update object detection callback
+      tries++;
+      if(!objects_msg_received_)
+      {
+         ros::Duration(0.01).sleep();
+         continue;
+      }
+      objects_msg_received_ = false;
+
+      for(int i{}; i < vision_objects_->obj.size() ; i++ )
+      {
+         if(vision_objects_->obj.at(i).label == centering_object)
+         {
+            reading_count++;
+            float camera_depth = vision_objects_->obj.at(i).point.pose.position.z;
+            sum_of_all_readings += (std::sqrt(std::pow(camera_depth, 2) - std::pow(camera_offset_, 2)) + camera_offset_); 
+            // ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Distance to " << centering_object << " is " << (sum_of_all_readings/reading_count));
+            // ROS_INFO_STREAM("Sum of all readngs : " << sum_of_all_readings << " and reading_count = " << reading_count);
+         }
+      }
+   }
+
+   if(centering_object == OBJECT_DETECTION_PROCESSING_PLANT_CLASS)
+      micro_state = CENTER_TO_REPAIR_STATION;
+   if(centering_object == OBJECT_DETECTION_REPAIR_STATION_CLASS)
+      micro_state = CALL_RESET;
+
+   if(reading_count == 0)
+      return 0.0;
+   else   
+   {
+      // ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | Final distance to "<< centering_object << " is "<< (sum_of_all_readings/reading_count));
+      return (sum_of_all_readings/reading_count);
+   }
+   
+}
+
+void VisualResetOfOdometry::visualResetOdom()
+{
+
+   ros::ServiceClient resetOdometryClient = nh_.serviceClient<maploc::ResetOdom>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::RESET_ODOMETRY);
+   maploc::ResetOdom srv;
+
+   srv.request.target_robot_name = robot_name_;
+   srv.request.visual_reset.visual_reset = true;
+   srv.request.visual_reset. depth_pp = proc_plant_distance_;
+   srv.request.visual_reset. depth_rs = repair_station_distance_;
+   srv.request.visual_reset.orientation_pp = proc_plant_orientation_;
+   srv.request.visual_reset.orientation_rs = repair_station_orientation_;
+   srv.request.visual_reset.robot_orientation = odom_.pose.pose.orientation;
+   
+   // ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | Distance to proc_plant is : " << proc_plant_distance_);
+   // ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | Distance to repair_station is : " << repair_station_distance_);
+
+   resetOdomDone_ = resetOdometryClient.call(srv);  
+   macro_state_done_ = true;
+   macro_state_succeeded_ = resetOdomDone_;
+   micro_state = SCOUT_IDLE;
+
+   if(resetOdomDone_)
+      ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Odom reset successful!");
+   else 
+      ROS_INFO_STREAM("STATE_MACHINES | scout_state_machine | " << robot_name_ << " ]: Reset didn't happen, good luck wherever you are going."); 
+}

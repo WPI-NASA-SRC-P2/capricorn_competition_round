@@ -38,14 +38,15 @@ rosgraph_msgs::Clock g_start_clock;
 std::string g_robot_name;
 geometry_msgs::PoseStamped g_robot_pose;
 
-const int ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5, NAV_LOC_DIST_THRESH = 15;
+const int ANGLE_THRESHOLD_NARROW = 20, ANGLE_THRESHOLD_WIDE = 80, HEIGHT_IMAGE = 480, FOUND_FRAME_THRESHOLD = 3, LOST_FRAME_THRESHOLD = 5, NAV_LOC_DIST_THRESH = 10;
+const int CONTINUOUS_DETECTION_FRAMES = 5;
 const float PROPORTIONAL_ANGLE = 0.0010, ANGULAR_VELOCITY = 0.35, INIT_VALUE = -100.00, FORWARD_VELOCITY = 1, g_angular_vel_step_size = 0.05, TIMER_THRESH = 20.0;
 const double NOT_AVOID_OBSTACLE_THRESHOLD = 5.0;
 std::mutex g_objects_mutex, g_cancel_goal_mutex, g_odom_mutex, g_clock_mutex;
 std::string g_desired_label;
 bool g_reached_goal = false, g_cancel_called = false, g_goal_failed = false, g_send_nav_goal = false, g_previous_state_is_go_to = false, g_message_received = false, g_nav_vision_called = false, g_last_nav_vision_call = false;
 int g_height_threshold = 400;
-const float EXCAVATOR_FALSE_DETECTION_WIDTH = 8;
+const float EXCAVATOR_FALSE_DETECTION_WIDTH = 8, PPM_Z_THRESHOLD = 5.0;
 const int EXCAVATOR_FALSE_DETECTION_SIZE_X_THRESHOLD = (int) 0.9*640; // 90% of the maximum width
 const int EXCAVATOR_FALSE_DETECTION_SIZE_Y_THRESHOLD = (int) 0.9*480; // 90% of the maximum height
 
@@ -179,18 +180,19 @@ bool center()
         g_nav_goal.forward_velocity = 0;
         g_client->sendGoal(g_nav_goal);
         ROS_INFO_STREAM(getString("Task Failed"));
+        g_goal_failed = true;
         return true;
     }
 
     const std::lock_guard<std::mutex> lock(g_objects_mutex);
     perception::ObjectArray objects = g_objects;
     // Initialize location and size variables
-    float center_obj = INIT_VALUE, error_angle = WIDTH_IMAGE;
+    float center_obj = INIT_VALUE, error_angle = WIDTH_IMAGE, z_obj = INIT_VALUE;
 
     static float prev_angular_velocity;
     static int lost_detection_times = 0, true_detection_times = 0, revolve_direction = -1, centered_times = 0;
 
-    if (centered_times > 10)
+    if (centered_times > CONTINUOUS_DETECTION_FRAMES)
     {
         g_nav_goal.angular_velocity = 0;
         centered_times = 0;
@@ -206,6 +208,7 @@ bool center()
         {
             // Store the object's center
             center_obj = object.center.x;
+            z_obj = object.point.pose.position.z;
         }
     }
 
@@ -245,7 +248,7 @@ bool center()
             // if the bounding box is in the center of image following the narrow angle
             centered_times++;
 
-            if (centered_times > 10)
+            if (centered_times > CONTINUOUS_DETECTION_FRAMES)
             {
                 g_nav_goal.angular_velocity = 0;
             }
@@ -266,6 +269,10 @@ bool center()
                 g_nav_goal.angular_velocity = prev_angular_velocity + g_angular_vel_step_size;
             }
         }
+        if (z_obj > 30)
+        {
+            g_nav_goal.angular_velocity /= 2;
+        }
     }
 
     // maintaing previous values
@@ -282,6 +289,121 @@ void centering()
 {
     if (center())
         g_reached_goal = true;
+}
+
+/**
+ * @brief Pre park meneuver for excavator to center to hauler on the basis of z filter
+ * 
+ */
+void preParkMeneuver()
+{
+    if(checkIfFailed())
+    {
+        g_goal_failed = true;
+        g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
+        g_nav_goal.direction = 0;
+        g_nav_goal.angular_velocity = 0;
+        g_nav_goal.forward_velocity = 0;
+        g_client->sendGoal(g_nav_goal);
+        ROS_INFO_STREAM(getString("Task Failed"));
+        g_goal_failed = true;
+        return;
+    }
+
+    const std::lock_guard<std::mutex> lock(g_objects_mutex);
+    perception::ObjectArray objects = g_objects;
+    // Initialize location and size variables
+    float center_obj = INIT_VALUE, error_angle = WIDTH_IMAGE, z_obj = INIT_VALUE;
+
+    static float prev_angular_velocity;
+    static int lost_detection_times = 0, true_detection_times = 0, revolve_direction = -1, centered_times = 0;
+
+    if (centered_times > CONTINUOUS_DETECTION_FRAMES)
+    {
+        g_nav_goal.angular_velocity = 0;
+        centered_times = 0;
+        ROS_INFO_STREAM(getString(std::string("Pre Park Maneuver Finished")));
+        g_reached_goal = true;
+        return;
+    }
+
+    // Find the desired objects
+    for (int i = 0; i < objects.number_of_objects; i++)
+    {
+        perception::Object object = objects.obj.at(i);
+        if ((object.label == OBJECT_DETECTION_SCOUT_CLASS || object.label == OBJECT_DETECTION_HAULER_CLASS) && object.point.pose.position.z < PPM_Z_THRESHOLD)
+        {
+            // Store the object's center
+            center_obj = object.center.x;
+            z_obj = object.point.pose.position.z;
+        }
+    }
+
+    if (center_obj < HEIGHT_THRESHOLD::MINIMUM_THRESH)
+    {
+        // object not detected, rotate on robot's axis to find the object
+        lost_detection_times++;
+        true_detection_times = 0;
+        if (lost_detection_times > LOST_FRAME_THRESHOLD)
+        {
+            g_nav_goal.angular_velocity = revolve_direction * ANGULAR_VELOCITY;
+            g_nav_goal.forward_velocity = 0;
+        }
+        return;
+    }
+    else
+    {
+        g_nav_goal.direction = 0;
+        lost_detection_times = 0;
+        true_detection_times++;
+
+        // object found, compute the error in angle i.e. the error between the center of image and center of bounding box
+        float center_img = (WIDTH_IMAGE / 2.0);
+        error_angle = center_img - center_obj;
+
+        if (error_angle < 0)
+        {
+            revolve_direction = REVOLVE_DIRECTION::CLOCK;
+        }
+        else
+        {
+            revolve_direction = REVOLVE_DIRECTION::COUNTER_CLOCK;
+        }
+
+        if (abs(error_angle) < ANGLE_THRESHOLD_NARROW)
+        {
+            // if the bounding box is in the center of image following the narrow angle
+            centered_times++;
+
+            if (centered_times > CONTINUOUS_DETECTION_FRAMES)
+            {
+                g_nav_goal.angular_velocity = 0;
+            }
+        }
+        else
+        {
+            centered_times = 0;
+            // proportional controller for calculating angular velocity needed to center the object in the image
+            g_nav_goal.angular_velocity = error_angle * PROPORTIONAL_ANGLE;
+            g_nav_goal.forward_velocity = 0;
+
+            if (g_nav_goal.angular_velocity < prev_angular_velocity - g_angular_vel_step_size)
+            {
+                g_nav_goal.angular_velocity = prev_angular_velocity - g_angular_vel_step_size;
+            }
+            if (g_nav_goal.angular_velocity > prev_angular_velocity + g_angular_vel_step_size)
+            {
+                g_nav_goal.angular_velocity = prev_angular_velocity + g_angular_vel_step_size;
+            }
+        }
+        if (z_obj > 30)
+        {
+            g_nav_goal.angular_velocity /= 2;
+        }
+    }
+
+    // maintaing previous values
+    prev_angular_velocity = g_nav_goal.angular_velocity;
 }
 
 /**
@@ -690,7 +812,7 @@ void goToLocationAndObject(const geometry_msgs::PoseStamped &goal_loc)
         object_found_frames = 0;
     }
 
-    if (object_found_frames > 10)
+    if (object_found_frames > CONTINUOUS_DETECTION_FRAMES)
     {
         g_nav_goal.drive_mode = NAV_TYPE::MANUAL;
         g_send_nav_goal = true;
@@ -738,7 +860,7 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
         {
             // the class is not valid, send the appropriate result
             result.result = COMMON_RESULT::INVALID_GOAL;
-            as->setAborted(result, "Invalid Object Detection Class or Cannot go to the class");
+            as->setSucceeded(result, "Invalid Object Detection Class or Cannot go to the class");
             ROS_INFO_STREAM(getString("Invalid Object Detection Class or Cannot go to the class"));
             return;
         }
@@ -807,6 +929,10 @@ void execute(const operations::NavigationVisionGoalConstPtr &goal, Server *as)
             {
                 g_client->sendGoal(g_nav_goal);
             }
+            break;
+        case NAV_VISION_TYPE::V_PPM:
+            preParkMeneuver();
+            g_client->sendGoal(g_nav_goal);
             break;
         default:
             ROS_ERROR_STREAM(getString("Encountered Unhandled State!"));

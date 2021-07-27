@@ -203,6 +203,13 @@ class ObjectPlotter:
 
         return False
 
+    def modifyWidthAccordingToObj(self, obj):
+        if obj.label == "hopper" or obj.label == "processingPlant" or obj.label == "repairStation":
+            return obj.width + 5
+        else:
+            return obj.width
+
+
     # plot all objects in object list
     # - basically plot single object many times (across length of object list)
     def addAllObstacles(self):
@@ -214,7 +221,9 @@ class ObjectPlotter:
             # loop through all objects in the object list and plot them
             for obj in self.obj_list.obj:
                 obj_wrt_map = self.transform(obj.point, "map")
-                obj_wrt_map.pose.position.z = obj.width
+                temp_width = self.modifyWidthAccordingToObj(obj)
+
+                obj_wrt_map.pose.position.z = temp_width
                 if not self.checkIfObjectExists(obj_wrt_map):
                     self.all_obstacles_list.append([obj_wrt_map, 0.0])
 
