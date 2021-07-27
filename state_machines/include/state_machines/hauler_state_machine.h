@@ -30,6 +30,8 @@
 #include "perception/ObjectArray.h"    
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseArray.h> 
+#include <operations/SolarModeAction.h>
+
 
 using namespace COMMON_NAMES;
 
@@ -161,6 +163,10 @@ protected:
   typedef actionlib::SimpleActionClient<operations::ParkRobotAction> ParkRobotClient;
   ParkRobotClient *park_robot_client_;
   operations::ParkRobotGoal park_robot_goal_;
+
+  typedef actionlib::SimpleActionClient<operations::SolarModeAction> SolarChargingClient;
+  SolarChargingClient *solar_charging_client_;
+  operations::SolarModeGoal solar_charging_action_goal_;
 };
 
 /**
@@ -492,10 +498,26 @@ public:
       navigation_vision_client_ ->cancelGoal();
       navigation_client_->cancelGoal();
       park_robot_client_->cancelGoal();
+      first_ = true;
    }
-   void step() override{}
-   void exitPoint() override{}
+   void step() override
+   {
+      if(first_)
+      {
+         ros::Duration(1.0).sleep();
+         solar_charging_action_goal_.solar_charge_status = true;
+         solar_charging_client_->sendGoal(solar_charging_action_goal_);
+         first_ = false;
+      }
+   }
+   void exitPoint() override
+   {
+      solar_charging_action_goal_.solar_charge_status = false;
+      solar_charging_client_->sendGoal(solar_charging_action_goal_);
+   }
    State& transition() override{} 
+private:
+   bool first_;
 };
 
 /**

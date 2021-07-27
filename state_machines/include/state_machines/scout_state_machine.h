@@ -28,6 +28,8 @@
 #include <std_msgs/UInt8.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseArray.h> 
+#include <operations/SolarModeAction.h>
+
 
 using namespace COMMON_NAMES;
 
@@ -155,6 +157,10 @@ protected:
   typedef actionlib::SimpleActionClient<operations::ParkRobotAction> ParkRobotClient;
   ParkRobotClient *park_robot_client_;
   operations::ParkRobotGoal park_robot_goal_;
+
+  typedef actionlib::SimpleActionClient<operations::SolarModeAction> SolarChargingClient;
+  SolarChargingClient *solar_charging_client_;
+  operations::SolarModeGoal solar_charging_action_goal_;
 
   geometry_msgs::PoseStamped SCOUT_1_RETURN_LOC;
   geometry_msgs::PoseStamped SCOUT_2_RETURN_LOC;
@@ -306,8 +312,12 @@ public:
       return true; }
 
    void entryPoint() override;
-   void step() override{}
-   void exitPoint() override{}
+   void step() override;
+   void exitPoint() override;
+
+private:
+   bool first_;
+
 };
 
 /**
