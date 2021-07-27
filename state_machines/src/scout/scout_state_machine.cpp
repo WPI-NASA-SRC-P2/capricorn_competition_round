@@ -284,7 +284,6 @@ void ResetOdomAtHopper::entryPoint()
    // Currently not caring about orientations
    GTPP_pose_ = scout_pose_;         // Go to Proc plant Recovery pose (supposedly getting to this pose will enable 'seeing' the Proc plant as it is assumed the                                       // rover is at the left of repair station and hence cant see it. If its in a crater, hopefully travelling this 10m will get it out of it.)         
    GTPP_pose_.pose.position.x += 10.0;
-
 }
 
 bool ResetOdomAtHopper::isDone()
@@ -466,6 +465,7 @@ void GoToRepairStation::entryPoint()
    first_GTR  = true;
    first_GTRR = true;
    second_GTRR = true;
+   first_UFRS = true;
    macro_state_done_ = false;
    macro_state_succeeded_ = false;
    GTRL_pose_ = (robot_name_ == COMMON_NAMES::SCOUT_1_NAME) ? SCOUT_1_RETURN_LOC : SCOUT_2_RETURN_LOC;
@@ -497,6 +497,9 @@ void GoToRepairStation::step()
       break;
    case GO_TO_REPAIR_RECOVERY:
       goToRepairRecovery();
+      break;
+   case UNDOCK_FROM_REPAIR_STATION:
+      undockFromRepairStation();
       break;
    case SCOUT_IDLE:
       idleScout();
@@ -531,8 +534,7 @@ void GoToRepairStation::goToRepair()
       }
       else
       {
-         macro_state_succeeded_ = true;
-         macro_state_done_ = true;
+         micro_state = UNDOCK_FROM_REPAIR_STATION;
       }          
    }
 }
@@ -576,10 +578,34 @@ void GoToRepairStation::goToRepairRecovery()
       
 }
 
+void GoToRepairStation::undockFromRepairStation()
+{
+   if(first_UFRS)
+   {
+      operations::NavigationVisionGoal navigation_vision_goal;
+      navigation_vision_goal.desired_object_label = OBJECT_DETECTION_REPAIR_STATION_CLASS;
+      navigation_vision_goal.mode = COMMON_NAMES::NAV_VISION_TYPE::V_HARDCODED_UNDOCK;
+      navigation_vision_client_->sendGoal(navigation_vision_goal);
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Undocking from repair station");
+      first_UFRS = false;
+      return;
+   }
+
+   bool is_done = (navigation_vision_client_->getState().isDone());
+   if (is_done)
+   {
+      micro_state = SCOUT_IDLE;
+      macro_state_done_ = true;
+      macro_state_succeeded_ = true;
+   }
+      
+}
+
 void GoToRepairStation::exitPoint()
 {
    // none at the moment
    navigation_vision_client_->cancelGoal();
+   navigation_client_->cancelGoal();
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout finished going to repair station (exitpoint)");
 }
 

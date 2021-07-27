@@ -699,6 +699,7 @@ public:
    void step() override;
    void exitPoint() override;
    State& transition() override{}
+   void goToDefaultArmPose();
    void centerToObject(const std::string& centering_object);
    float getObjectDepth(const std::string& centering_object);
    void visualResetOdom();
@@ -706,12 +707,13 @@ public:
 
 
 private:
-   bool first_, resetOdomDone_, macro_state_done_, macro_state_succeeded_;
+   bool first_, first_arm, resetOdomDone_, macro_state_done_, macro_state_succeeded_;
    float proc_plant_distance_, camera_offset_ = 0.4, repair_station_distance_;
    geometry_msgs::Quaternion proc_plant_orientation_, repair_station_orientation_;
    int no_of_measurements_, MAX_TRIES;
 
    enum RESET_ODOM_MICRO_STATES{
+      DEFAULT_ARM_POSE,
       CENTER_TO_PROC_PLANT,
       GET_PROC_PLANT_DISTANCE,
       CENTER_TO_REPAIR_STATION,

@@ -458,6 +458,7 @@ void PreParkHauler::entryPoint()
    last_state_succeeded_ = false;
    goToVolatileDone_ = false;
    centerHaulerDone_ = false;
+   centerHaulerSucceeded_ = true;
    getInArmPositionDone_ = false;
    goal_= goal_states_::GO_TO_VOLATILE;
 }
@@ -480,10 +481,6 @@ void PreParkHauler::step()
       break;
    case CENTER_TO_HAULER:
       centerHauler();
-      if(centerHaulerDone_){
-         goal_ = goal_states_::GET_IN_DIGGING_POSITION;
-         first_ = true;
-      }
       break;
    case GET_IN_DIGGING_POSITION:
       getInArmPosition();
@@ -494,10 +491,8 @@ void PreParkHauler::step()
    }
 
    current_state_done_ = getInArmPositionDone_;
-   last_state_succeeded_ = getInArmPositionDone_ && centerHaulerDone_;
+   last_state_succeeded_ = getInArmPositionDone_ && centerHaulerSucceeded_;
 }
-
-
 
 void PreParkHauler::exitPoint()
 {
@@ -560,7 +555,11 @@ void PreParkHauler::centerHauler() {
    }
    else
       centerHaulerDone_ = navigation_vision_client_->getState().isDone();
-      // centerHaulerDone_ = (navigation_vision_result_.result == COMMON_RESULT::SUCCESS);
+      if(centerHaulerDone_){
+            goal_ = goal_states_::GET_IN_DIGGING_POSITION;
+            first_ = true;
+         centerHaulerSucceeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
+      }
 }
 
 void PreParkHauler::getInArmPosition() {
@@ -598,6 +597,7 @@ void PreParkHaulerRecovery::entryPoint()
    last_state_succeeded_ = false;
    goToVolatileDone_ = false;
    centerHaulerDone_ = false;
+   centerHaulerSucceeded_ = true;
    getInArmPositionDone_ = false;
    goal_= goal_states_::GO_TO_VOLATILE;
 }
@@ -697,13 +697,9 @@ void PreParkHaulerRecovery::centerHauler() {
    else
       centerHaulerDone_ = navigation_vision_client_->getState().isDone();
       if(centerHaulerDone_){
-         if(navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS)
-         {
-            goal_ = goal_states_::GET_IN_DIGGING_POSITION;
-            first_ = true;
-         }
-         else
-            centerHaulerSucceeded_ = false;
+         goal_ = goal_states_::GET_IN_DIGGING_POSITION;
+         first_ = true;
+         centerHaulerSucceeded_ = (navigation_vision_client_->getResult()->result == COMMON_RESULT::SUCCESS);
       }
 }
 
@@ -1602,7 +1598,6 @@ bool ExcavatorBalletDancing::isDone() {
 bool ExcavatorBalletDancing::hasSucceeded() {
    return last_state_succeeded_;
 }
-
 void ExcavatorBalletDancing::exitPoint()
 {
     // clean up (cancel goals)
@@ -1623,16 +1618,20 @@ void ExcavatorVisualResetOfOdometry::entryPoint()
    no_of_measurements_ = 20;
    MAX_TRIES = 300;
    first_ = true;
+   first_arm = true;
    macro_state_done_ = false;
    macro_state_succeeded_ = false;
 
-   micro_state = CENTER_TO_PROC_PLANT;
+   micro_state = DEFAULT_ARM_POSE;
 }
 
 void ExcavatorVisualResetOfOdometry::step()
 {
    switch (micro_state)
    {
+   case DEFAULT_ARM_POSE:
+      goToDefaultArmPose();
+      break;
    case CENTER_TO_PROC_PLANT: 
       centerToObject(OBJECT_DETECTION_PROCESSING_PLANT_CLASS);
       break;
@@ -1671,6 +1670,20 @@ bool ExcavatorVisualResetOfOdometry::hasSucceeded()
 void ExcavatorVisualResetOfOdometry::exitPoint()
 {
    navigation_vision_client_->cancelGoal();
+   excavator_arm_client_->cancelGoal();
+}
+
+void ExcavatorVisualResetOfOdometry::goToDefaultArmPose() 
+{
+   if(first_arm)
+   {
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Visual Reset : Going to Default arm pose before doing anything else");
+      excavator_arm_goal_.task = EXCAVATOR_ARM_TASK::GO_TO_DEFAULT;
+      excavator_arm_client_->sendGoal(excavator_arm_goal_);
+      first_arm = false;
+   }
+   if(excavator_arm_client_->getState().isDone())
+      micro_state = CENTER_TO_PROC_PLANT;
 }
 
 void ExcavatorVisualResetOfOdometry::centerToObject(const std::string& centering_object)
