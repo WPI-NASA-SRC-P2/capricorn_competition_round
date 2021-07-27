@@ -13,6 +13,7 @@ NASA SPACE ROBOTICS CHALLENGE
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Pose.h>
+#include <std_msgs/String.h>
 #include <gazebo_msgs/GetModelState.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -52,6 +53,8 @@ const float DIST_PROCESSING_PLANT_HOPPER = 6.0; // Distance between the robot re
 const float REPAIR_STATION_x_OFFSET = 6.0;      // Distance between the robot reset position and the repair station center
 const float REPAIR_STATION_y_OFFSET = 13.0;
 
+// publisher for odom reset success indicator for map
+ros::Publisher reset_success_pub;
 
 // stored whether first ground truth call made for each robot
 std::unordered_set<std::string> used_groundtruth, expected_robot_names{SCOUT_1_NAME, SCOUT_2_NAME, SCOUT_3_NAME, EXCAVATOR_1_NAME, EXCAVATOR_2_NAME, EXCAVATOR_3_NAME, HAULER_1_NAME, HAULER_2_NAME, HAULER_3_NAME};
@@ -301,6 +304,10 @@ bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res
         res.success = resetOdomPose(target_robot_name, common_gt_pose_value);
         if (res.success)
         {        
+            // publish success to map reset topic to trigger map reset upon successful odom reset
+            std_msgs::String reset_successful_msg;
+            reset_successful_msg.data = target_robot_name;
+            reset_success_pub.publish(reset_successful_msg);
             ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: " + " At Hopper Reset Successful");
         }
         return res.success;
@@ -372,6 +379,10 @@ bool resetOdom(maploc::ResetOdom::Request &req, maploc::ResetOdom::Response &res
         res.success = resetOdomPose(target_robot_name, robot_reset_pose);
         if (res.success)
         {        
+            // publish success to map reset topic to trigger map reset upon successful odom reset
+            std_msgs::String reset_successful_msg;
+            reset_successful_msg.data = target_robot_name;
+            reset_success_pub.publish(reset_successful_msg);
             ROS_INFO_STREAM("[MAPLOC | reset_odom.cpp | " + target_robot_name + "]: " + "Visual Reset Successful");
         }
         return res.success;
@@ -426,7 +437,9 @@ int main(int argc, char *argv[])
 
     // set up service for reseting the odometry of the rover 
     ros::ServiceServer service = nh.advertiseService(CAPRICORN_TOPIC + RESET_ODOMETRY, resetOdom);
-    
+    // set up reset success publisher for reseting map obstacles when odom resets
+    reset_success_pub = nh.advertise<std_msgs::String>(COMMON_NAMES::CAPRICORN_TOPIC + COMMON_NAMES::MAP_RESET_TOPIC, 5);
+
 
     // indicate that reset is complete
     ROS_INFO("[MAPLOC | reset_odom.cpp | SERVICE]: reset rover odometry service, online");

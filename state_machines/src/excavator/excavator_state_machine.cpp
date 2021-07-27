@@ -42,6 +42,16 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   EXCAVATOR_2_LOOKOUT_LOC.pose.position.y = -6.0;
   EXCAVATOR_2_LOOKOUT_LOC.pose.orientation.z = 1.0;
 
+  EXCAVATOR_2_INIT_LOC.header.frame_id = COMMON_NAMES::MAP;
+  EXCAVATOR_2_INIT_LOC.pose.position.x = 3.0;
+  EXCAVATOR_2_INIT_LOC.pose.position.y = 20.0;
+  EXCAVATOR_2_INIT_LOC.pose.orientation.z = 1.0;
+
+  EXCAVATOR_1_INIT_LOC.header.frame_id = COMMON_NAMES::MAP;
+  EXCAVATOR_1_INIT_LOC.pose.position.x = 3.0;
+  EXCAVATOR_1_INIT_LOC.pose.position.y = -10.0;
+  EXCAVATOR_1_INIT_LOC.pose.orientation.z = 1.0;
+
   EXCAVATOR_1_RETURN_LOC.header.frame_id = COMMON_NAMES::MAP;
   EXCAVATOR_1_RETURN_LOC.pose.position.x = 10.0;
   EXCAVATOR_1_RETURN_LOC.pose.position.y = 0.0;
@@ -282,7 +292,7 @@ void ExcavatorGoToInitLoc::stepGoToInitLoc()
    if(gtic_first_)
    {
       navigation_action_goal_.drive_mode = NAV_TYPE::GOAL;
-      navigation_action_goal_.pose = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_LOOKOUT_LOC : EXCAVATOR_2_LOOKOUT_LOC;
+      navigation_action_goal_.pose = (robot_name_ == COMMON_NAMES::EXCAVATOR_1_NAME) ? EXCAVATOR_1_INIT_LOC : EXCAVATOR_2_INIT_LOC;
       navigation_client_->sendGoal(navigation_action_goal_);
       gtic_first_ = false;
    }

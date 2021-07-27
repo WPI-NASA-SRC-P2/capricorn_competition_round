@@ -26,7 +26,7 @@ void TeamManager::initTeams(ros::NodeHandle nh)
    addRobots();
    setSearchStates();
    setEmptyTeamsStandby();
-   setHaulerForReset();
+   // setHaulerForReset();
 }
 
 void TeamManager::initTeamArray(ros::NodeHandle nh)
@@ -58,8 +58,8 @@ void TeamManager::addRobots()
    
    for(int i = 0; i < MAX_HAULERS; i++)
    {
-      if (i == resetting_hauler_index)
-         continue;
+      // if (i == resetting_hauler_index)
+      //    continue;
       int robot_index = (int) HAULER_1 + i;
       ROBOTS_ENUM robot = (ROBOTS_ENUM) robot_index;
       int standby_team = getStandbyTeam();
