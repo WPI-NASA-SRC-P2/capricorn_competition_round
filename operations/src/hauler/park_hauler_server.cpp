@@ -375,7 +375,7 @@ void parkWrtExcavator(std::vector<float>& last_n_depths_for_antenna)
                 g_found_orientation = true;
             }
         }
-        ROS_INFO_STREAM("Antenna Finding");
+        // ROS_INFO_STREAM("Antenna Finding");
         bool is_robot_antenna = (object.label == COMMON_NAMES::OBJECT_DETECTION_ROBOT_ANTENNA_CLASS);
         if (is_robot_antenna)
         {
@@ -387,7 +387,7 @@ void parkWrtExcavator(std::vector<float>& last_n_depths_for_antenna)
                 sum_of_datas += last_n_depths_for_antenna.at(i);
                 
             depth_hauler_ra = sum_of_datas/last_n_depths_for_antenna.size();
-            ROS_INFO_STREAM("Antenna depth calculated: "<<depth_hauler_ra);
+            // ROS_INFO_STREAM("Antenna depth calculated: "<<depth_hauler_ra);
         }
     }
 
@@ -401,7 +401,7 @@ void parkWrtExcavator(std::vector<float>& last_n_depths_for_antenna)
         static float last_depth = INIT_VALUE;
 
         g_lost = (depth_hauler_ra == INIT_VALUE) ? g_lost + 1 : 0;
-        ROS_INFO("##### Using the new value #####");
+        // ROS_INFO("##### Using the new value #####");
         if (depth_hauler_ra < ROBOT_ANTENNA_DEPTH_THRESH && depth_hauler_ra != INIT_VALUE)
         {
             if (last_depth != depth_hauler_ra)

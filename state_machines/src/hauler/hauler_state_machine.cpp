@@ -506,7 +506,7 @@ void UndockExcavator::step()
    {
       ROS_INFO_STREAM(robot_name_ << " State Machine: Undocking from volatile");
       navigation_vision_goal_.desired_object_label = OBJECT_DETECTION_EXCAVATOR_CLASS;
-      navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_HARDCODED_UNDOCK;
+      navigation_vision_goal_.mode = COMMON_NAMES::NAV_VISION_TYPE::V_UNDOCK;
       navigation_vision_client_->sendGoal(navigation_vision_goal_);
       first_ = false; 
       ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]:  Undock stepping, first_ = false now");
