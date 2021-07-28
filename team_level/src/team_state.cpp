@@ -569,22 +569,22 @@ TeamState& Excavating::transition()
    else if(excavator_task == EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY && excavator_done_and_failed)
    {
       ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to GO_TO_REPAIR_STATION");
-      return getState(GO_TO_REPAIR_STATION);
+      return getState(IDLE);
    }
    else if(hauler_task == HAULER_PARK_AT_EXCAVATOR && hauler_done_and_failed && park_at_excav_re_attempted)
    {
-      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to GO_TO_REPAIR_STATION");
-      return getState(GO_TO_REPAIR_STATION);
+      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to IDLE");
+      return getState(IDLE);
    }
    else if(excavator_task == EXCAVATOR_VOLATILE_RECOVERY && excavator_done_and_failed)
    {
-      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to GO_TO_REPAIR_STATION");
-      return getState(GO_TO_REPAIR_STATION);
+      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to IDLE");
+      return getState(IDLE);
    }
    else if(hauler_task == HAULER_GO_TO_EXCAVATOR_RECOVERY && hauler_done_and_failed)
    {
-      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to GO_TO_REPAIR_STATION");
-      return getState(GO_TO_REPAIR_STATION);
+      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to IDLE");
+      return getState(IDLE);
    }
    else
    {
@@ -856,11 +856,11 @@ TEAM_MICRO_STATE GoToRepairStation::getScoutMicroState()
    //    return VISUAL_RESET_ODOM;
    if (scout_task == SCOUT_VISUAL_RESET_ODOM && !robot_state_register->isDone(scout_in_team))
       return VISUAL_RESET_ODOM;
+   // if (scout_task == SCOUT_VISUAL_RESET_ODOM && robot_state_register->isDone(scout_in_team))
+   //    return GO_TO_REPAIR_STATION_MICRO;
+   // if (scout_task == SCOUT_GOTO_REPAIR_STATION && !robot_state_register->isDone(scout_in_team))
+   //    return GO_TO_REPAIR_STATION_MICRO;
    if (scout_task == SCOUT_VISUAL_RESET_ODOM && robot_state_register->isDone(scout_in_team))
-      return GO_TO_REPAIR_STATION_MICRO;
-   if (scout_task == SCOUT_GOTO_REPAIR_STATION && !robot_state_register->isDone(scout_in_team))
-      return GO_TO_REPAIR_STATION_MICRO;
-   if (scout_task == SCOUT_GOTO_REPAIR_STATION && robot_state_register->isDone(scout_in_team))
       return IDLE_MICRO_STATE;
    return VISUAL_RESET_ODOM;
 
@@ -1133,16 +1133,17 @@ TEAM_MICRO_STATE ResetAtHopper::getMicroState()
    STATE_MACHINE_TASK hauler_task = robot_state_register->currentState(hauler_in_team);
    bool hauler_done_and_succeeded = robot_state_register->isDone(hauler_in_team);// && robot_state_register->hasSucceeded(hauler_in_team);
 
-   if(hauler_task == hauler_robot_staring_state)
-      return GO_TO_REPAIR_STATION_MICRO;
-   if(hauler_task == HAULER_GOTO_REPAIR_STATION && !hauler_done_and_succeeded)
-      return GO_TO_REPAIR_STATION_MICRO;
-   if(hauler_task == HAULER_GOTO_REPAIR_STATION && hauler_done_and_succeeded)
-      return DUMP_VOLATILE_AT_HOPPER;
+   // if(hauler_task == hauler_robot_staring_state)
+   //    return GO_TO_REPAIR_STATION_MICRO;
+   // if(hauler_task == HAULER_GOTO_REPAIR_STATION && !hauler_done_and_succeeded)
+   //    return GO_TO_REPAIR_STATION_MICRO;
+   // if(hauler_task == HAULER_GOTO_REPAIR_STATION && hauler_done_and_succeeded)
+   //    return DUMP_VOLATILE_AT_HOPPER;
    if(hauler_task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && !hauler_done_and_succeeded)
       return DUMP_VOLATILE_AT_HOPPER;
    if(hauler_task == HAULER_DUMP_VOLATILE_TO_PROC_PLANT && hauler_done_and_succeeded)
       return IDLE_MICRO_STATE;
+   return DUMP_VOLATILE_AT_HOPPER;
 
    ROS_WARN("TEAM_LEVEL | team_state | Unknown Combination of the robot states found!");
    ROS_WARN_STREAM("TEAM_LEVEL | team_state | Hauler enum "<<hauler_in_team<<" state:"<<hauler_task);   

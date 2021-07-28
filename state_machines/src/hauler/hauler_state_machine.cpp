@@ -1361,21 +1361,21 @@ void GoToExcavatorRecovery::createPoses()
 {
    ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: State Machine: Creating poses.");
    
-   recovery_poses_[0] = excavator_pose_;
+   recovery_pose_ = excavator_pose_;
+   recovery_poses_[0] = recovery_pose_;
 
-   recovery_pose_ = hauler_pose_;
    recovery_pose_.pose.position.x += search_offset_;
    recovery_poses_[1] = recovery_pose_;
 
-   recovery_pose_ = hauler_pose_;
+   recovery_pose_ = excavator_pose_;
    recovery_pose_.pose.position.x -= search_offset_;
    recovery_poses_[2] = recovery_pose_;
 
-   recovery_pose_ = hauler_pose_;
+   recovery_pose_ = excavator_pose_;
    recovery_pose_.pose.position.y += search_offset_;
    recovery_poses_[3] = recovery_pose_;
 
-   recovery_pose_ = hauler_pose_;
+   recovery_pose_ = excavator_pose_;
    recovery_pose_.pose.position.y -= search_offset_;
    recovery_poses_[4] = recovery_pose_;
 
