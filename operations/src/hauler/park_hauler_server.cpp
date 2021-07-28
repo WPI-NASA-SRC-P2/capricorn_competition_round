@@ -24,6 +24,7 @@ Command Line Arguments Required:
 #include <utils/common_names.h>
 #include <perception/ObjectArray.h>
 #include <operations/NavigationVisionAction.h>
+#include <rosgraph_msgs/Clock.h>
 
 #define UPDATE_HZ 8
 
@@ -40,6 +41,7 @@ enum OBJECT_PARKER
 Client *g_nav_client;
 VisionClient *g_navigation_vision_client;
 operations::NavigationGoal g_nav_goal;
+rosgraph_msgs::Clock g_clock, g_start_clock;
 
 const float HOPPER_FORWARD_VELOCITY = 0.3, EXC_FORWARD_VELOCITY = 0.2;
 std::mutex g_hauler_objects_mutex, g_excavator_objects_mutex, g_cancel_goal_mutex;
@@ -74,6 +76,15 @@ std::string getString(std::string message)
 }
 
 /**
+ * @brief Callback function which subscribes to clock message published by simulation to get the simulation time
+ * 
+ */
+ void clockCallback(const rosgraph_msgs::Clock clock)
+ {
+     g_clock = clock;
+ }
+
+/**
  * @brief Callback function which subscriber to Objects message published from hauler's object detection
  * 
  * @param objs 
@@ -95,6 +106,21 @@ void excavatorObjectsCallback(const perception::ObjectArray &objs)
     const std::lock_guard<std::mutex> lock(g_excavator_objects_mutex);
     g_excavator_message_received = true;
     g_excavator_objects = objs;
+}
+
+/**
+ * @brief Function which checks if the process has exceeded the timer limits
+ * 
+ * @return true : if exceeded
+ * @return false : otherwise
+ */
+bool checkIfFailed() 
+{
+    if((g_clock.clock - g_start_clock.clock).toSec() > TIMER_THRESH)
+    {
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -140,6 +166,23 @@ void centerFurnace()
  */
 void parkWrtHopper()
 {
+    if (!g_go_straight)
+    {
+        g_start_clock = g_clock;
+    }
+
+    if(checkIfFailed())
+    {
+        g_failed = true;
+        g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
+        g_nav_goal.direction = 0;
+        g_nav_goal.angular_velocity = 0;
+        g_nav_goal.forward_velocity = 0;
+        g_nav_client->sendGoal(g_nav_goal);
+        ROS_INFO_STREAM(getString("Task Failed"));
+        return;
+    }
+
     //parsing the objects message to extract the necessary information of required object
     const std::lock_guard<std::mutex> lock(g_hauler_objects_mutex);
     perception::ObjectArray objects = g_hauler_objects;
@@ -201,7 +244,9 @@ void parkWrtHopper()
         {
             centerFurnace();
             centering = false;
+            ROS_INFO_STREAM(getString("Hopper - Going Straight"));
         }
+        g_go_straight = true;
         g_nav_goal.drive_mode = COMMON_NAMES::NAV_TYPE::MANUAL;
         g_nav_goal.forward_velocity = HOPPER_FORWARD_VELOCITY;
         return;
@@ -545,9 +590,11 @@ void cancelGoal()
  */
 void execute(const operations::ParkRobotGoalConstPtr &goal, Server *as)
 {
+    g_start_clock = g_clock;
     operations::ParkRobotResult result;
 
     // initializing global variables
+    g_go_straight = false;
     g_execute_called = true;
     g_cancel_called = false;
     g_failed = false;
@@ -659,6 +706,7 @@ int main(int argc, char *argv[])
     ROS_INFO_STREAM(getString("Starting Park Hauler Server"));
     //subscriber for object detection
     ros::Subscriber hauler_objects_sub = nh.subscribe(COMMON_NAMES::CAPRICORN_TOPIC + g_robot_name + COMMON_NAMES::OBJECT_DETECTION_OBJECTS_TOPIC, 1, &haulerObjectsCallback);
+    ros::Subscriber clock_sub = nh.subscribe(COMMON_NAMES::CLOCK_TOPIC, 1, &clockCallback);
 
     g_nav_client = new Client(COMMON_NAMES::CAPRICORN_TOPIC + g_robot_name + "/" + COMMON_NAMES::NAVIGATION_ACTIONLIB, true);
     g_navigation_vision_client = new VisionClient(g_robot_name + COMMON_NAMES::NAVIGATION_VISION_ACTIONLIB, true);
