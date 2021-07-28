@@ -30,6 +30,8 @@
 #include <operations/ParkRobotAction.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseArray.h>
+#include <operations/SolarModeAction.h>
+
 
 using namespace COMMON_NAMES;
 
@@ -133,6 +135,10 @@ protected:
   typedef actionlib::SimpleActionClient<operations::ParkRobotAction> ParkRobotClient;
   ParkRobotClient *park_robot_client_;
   operations::ParkRobotGoal park_robot_goal_;
+
+  typedef actionlib::SimpleActionClient<operations::SolarModeAction> SolarChargingClient;
+  SolarChargingClient *solar_charging_client_;
+  operations::SolarModeGoal solar_charging_action_goal_;
 
 /** @brief:
  * Parameters that have to be tuned through testing.*/ 
@@ -306,16 +312,34 @@ public:
 
    void entryPoint() override 
    {
-   excavator_arm_client_->cancelGoal();
-   navigation_vision_client_ ->cancelGoal();
-   navigation_client_->cancelGoal();
-   park_robot_client_->cancelGoal();
-
-   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Excavator has entered idle state, awaiting new state...");
+      excavator_arm_client_->cancelGoal();
+      navigation_vision_client_ ->cancelGoal();
+      navigation_client_->cancelGoal();
+      park_robot_client_->cancelGoal();
+      solar_charging_action_goal_.solar_charge_status = true;
+      // solar_charging_client_->sendGoal(solar_charging_action_goal_);
+      first_ = true;
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Excavator has entered idle state, awaiting new state...");
    }
-   void step() override{}
-   void exitPoint() override{}
+   void step() override
+   {
+      if(first_)
+      {
+         solar_charging_action_goal_.solar_charge_status = true;
+         solar_charging_client_->sendGoal(solar_charging_action_goal_);
+         first_ = false;
+         ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Excavator has begun solar charging, awaiting new state...");
+      }
+   }
+   void exitPoint() override
+   {
+         solar_charging_action_goal_.solar_charge_status = false;
+         solar_charging_client_->sendGoal(solar_charging_action_goal_);
+      ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Excavator has stopped solar charging, exiting idle state");
+   }
    State& transition() override{} 
+private:
+   bool first_;
 };
 
 /**

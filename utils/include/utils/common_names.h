@@ -44,6 +44,8 @@ namespace COMMON_NAMES
   const std::string FIND_PP_RS_ACTIONLIB = "_find_pp_rs";
   const std::string NAVIGATION_VISION_ACTIONLIB = "_navigation_vision";
   const std::string STATE_MACHINE_ACTIONLIB = "_state_machine";
+  const std::string SOLAR_RECHARGE_ACTIONLIB = "solar_recharging";
+
 
   /****** SERVICES ******/
   const std::string SCOUT_SEARCH_SERVICE = "scout_search";
@@ -87,6 +89,8 @@ namespace COMMON_NAMES
   const std::string PARK_HAULER_HOPPER_CLIENT_NODE_NAME = "_park_hauler_client";
   const std::string SCOUT_SEARCH_NODE_NAME = "_scout_search";
   const std::string STATE_MACHINE_SERVER_NODE_NAME = "_sm_server";
+  const std::string SOLAR_CHARGING_CLIENT_NODE_NAME = "_solar_charging_client";
+
 
   /****** TOPIC NAMES ******/
   const std::string CLOCK_TOPIC = "/clock";
@@ -209,7 +213,7 @@ namespace COMMON_NAMES
     EXCAVATOR_PARK_AND_PUB,          // Publish a message that excavator has reached,
                                          // And park where the scout was located.
     EXCAVATOR_PRE_HAULER_PARK_MANEUVER,     // Centering the hauler for ease of parking
-    EXCAVATOR_DIG_AND_DUMP_VOLATILE, // Takes care of digging, and dumping
+    EXCAVATOR_DIG_AND_DUMP_VOLATILE, // Takes care of digging, and dumpin g
                                          // the volatile in hauler if volatile is found
     EXCAVATOR_GOTO_DEFAULT_ARM_POSE, // Moves excavator's arm to a default position used for object detection
     EXCAVATOR_RESET_ODOM_GROUND_TRUTH, // reset odometry of excavator w.r.t. its starting position in sim
@@ -253,6 +257,7 @@ namespace COMMON_NAMES
     HAULER_BALLET_DANCING,
     HAULER_VISUAL_RESET_ODOM,
     HAULER_INITIAL_RESET,
+    HAULER_DO_NOTHING,
     ROBOT_IDLE_STATE,
 
     /***************ROBOTS MACRO STATES***************/

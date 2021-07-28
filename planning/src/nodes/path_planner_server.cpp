@@ -64,7 +64,7 @@ bool PathServer::trajectoryGeneration(planning::trajectory::Request &req, planni
 
     res.trajectory = trajectory;
   } else {
-    ROS_WARN("[planning | astar | %s ]: No Poses Set.", robot_name_);
+    ROS_WARN("[planning | astar | %s ]: No Poses Set.", robot_name_.c_str());
   }
 
   return true;
