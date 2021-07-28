@@ -95,8 +95,7 @@ void SolarModeServer::stopSolarMode()
 
 void SolarModeServer::initMode(bool initModeGoal)
 {
-  
-  ROS_INFO("entered solarChargeInit");
+  ROS_INFO("[operations | solar_mode_server | %s]: entered solarChargeInit", robot_name.c_str());
 
   success = true;
  
@@ -123,14 +122,13 @@ void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
 {
   ros::Rate r(10);
 
-  ROS_INFO("inside execute callback");
+  
 
   initMode(goal->solar_charge_status);
-  ROS_WARN("Excecuting something");
   while(goal->solar_charge_status == true){
     robot_moving = true;
     ros::spinOnce();
-    ROS_INFO_STREAM("LOOPPPP"<<solar_ok);
+    ROS_INFO("[operations | solar_mode_server | %s]: Rotating robot for solar charging", robot_name.c_str());
     //in case there is no solar charging, change nothing
     //Maybe TODO:: if turing takes too long, set success = false
 
@@ -139,10 +137,8 @@ void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
   
     if(solar_ok)
     {
-      ROS_WARN("wow");
       stopRobot();
       setPowerSaveMode(true);
-      ROS_INFO("solar okay seen");
       should_turn = false;
       break;
     }
@@ -153,9 +149,8 @@ void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
   }
 
     robot_moving = false;
-    ROS_INFO("Out of limbo");
     if(success){
-    ROS_WARN("Should be done by now");
+    ROS_INFO("[operations | solar_mode_server | %s] : Done rotating robot", robot_name.c_str());
 
     result_.solar_ok_ = solar_ok;
     result_.power_rate_= power_rate;
