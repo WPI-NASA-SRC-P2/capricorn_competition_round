@@ -122,12 +122,21 @@ void SolarModeServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg)
 
 void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
 {
+  if (first_call)
+  {
+    result_.result = COMMON_RESULT::SUCCESS;
+    solarServer_->setSucceeded(result_);
+    first_call = false;
+    return;
+  }a
+
   ros::Rate r(10);
 
   continue_motion = true;
 
   initMode(goal->solar_charge_status);
-  while(goal->solar_charge_status == true && ros::ok() && continue_motion){
+  while(goal->solar_charge_status == true && ros::ok() && continue_motion)
+  {
     robot_moving = true;
     ros::spinOnce();
     // ROS_INFO("[operations | solar_mode_server | %s]: Rotating robot for solar charging", robot_name.c_str());
@@ -151,8 +160,9 @@ void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
     //could put feedback if it ends up being useful
   }
 
-    robot_moving = false;
-    if(success){
+  robot_moving = false;
+  if(success)
+  {
     ROS_INFO_STREAM("[operations | solar_mode_server | "<<robot_name<<"]: Done rotating robot");
     // ROS_INFO("[operations | solar_mode_server | %s] : Done rotating robot", robot_name.c_str());
 
@@ -167,9 +177,10 @@ void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
 
 }
 
-void SolarModeServer::cancelGoal(){
-    continue_motion = false;
-    stopSolarMode();
+void SolarModeServer::cancelGoal()
+{
+  continue_motion = false;
+  stopSolarMode();
 }
 
 
