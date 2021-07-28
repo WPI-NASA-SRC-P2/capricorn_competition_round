@@ -43,7 +43,7 @@ void robot_state_callback(state_machines::robot_state_status robot_state_info)
     bool last_state_succeeded = robot_state_info.last_state_succeeded;
 
     wait_till_reset = (curr_bot == COMMON_NAMES::HAULER_2_NAME && 
-                                                 curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_DUMP_VOLATILE_TO_PROC_PLANT && 
+                                                 curr_state == COMMON_NAMES::STATE_MACHINE_TASK::HAULER_INITIAL_RESET && 
                                                  curr_state_done == true && 
                                                  last_state_succeeded == true);
 
