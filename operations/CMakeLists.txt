@@ -82,6 +82,7 @@ add_action_files(DIRECTORY action
   ResourceLocaliser.action
   Hauler.action
   Excavator.action
+  SolarMode.action
 )
 
 generate_messages(
@@ -149,6 +150,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/navigation/navigation_algorithm.cpp
   src/navigation/navigation_server.cpp
+  src/navigation/solar_charging_server.cpp
 )
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
@@ -197,6 +199,12 @@ target_link_libraries(wheel_speed_processing
 add_executable(navigation_vision_server src/navigation/navigation_vision_server.cpp)
 add_dependencies(navigation_vision_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(navigation_vision_server ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+add_executable(start_solar_charging_server src/navigation/start_solar_charging_server.cpp)
+add_dependencies(start_solar_charging_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(start_solar_charging_server ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
@@ -297,6 +305,11 @@ target_link_libraries(park_hauler_client ${PROJECT_NAME}
 ${catkin_LIBRARIES}
 )
 
+add_executable(solar_charging_client src/clients/solar_charging_client.cpp)
+add_dependencies(solar_charging_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(solar_charging_client ${PROJECT_NAME}
+${catkin_LIBRARIES}
+)
 # target_link_libraries(start_scout_sm navigation_algorithm)
 
 #############
@@ -315,6 +328,7 @@ install(TARGETS start_nav_server wheel_speed_processing navigation_vision_server
                 park_hauler_server resource_localiser resource_localiser_tester 
                 scout_search spiral_points_publisher navigation_client navigation_vision_client 
                 excavator_actionlib_client hauler_actionlib_client park_hauler_client
+                start_solar_charging_server
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

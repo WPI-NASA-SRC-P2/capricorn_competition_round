@@ -1,7 +1,0 @@
-<launch>
-
-    <node name="odom_evaluation" pkg="maploc" type="gazebo_base_footprints.py" />
-    <!-- launch the rviz for the odometry evaluation -->
-    <node pkg="rviz" type="rviz" name="rviz_odom" args="-d $(find utils)/rviz/odom_verification.rviz"/>
-
-</launch>

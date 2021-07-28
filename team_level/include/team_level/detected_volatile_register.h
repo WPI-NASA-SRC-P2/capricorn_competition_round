@@ -18,7 +18,7 @@ public:
     void registerNewVolatile(ROBOTS_ENUM robot, geometry_msgs::PoseStamped robot_pose);
 
 private:
-    const float DISTANCE_THRESHOLD = 5.0;
+    const float DISTANCE_THRESHOLD = 10.0;
 
     ros::Subscriber scout_1_subscriber, scout_2_subscriber;
 
