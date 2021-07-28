@@ -333,8 +333,7 @@ public:
    }
    void exitPoint() override
    {
-      solar_charging_action_goal_.solar_charge_status = false;
-      solar_charging_client_->sendGoal(solar_charging_action_goal_);
+      solar_charging_client_->cancelGoal();
       ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Excavator has stopped solar charging, exiting idle state");
    }
    State& transition() override{} 

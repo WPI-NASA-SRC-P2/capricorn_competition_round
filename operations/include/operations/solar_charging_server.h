@@ -70,6 +70,7 @@ private:
   bool power_saver = false;
   bool should_turn = false;
   bool success = false;
+  bool robot_moving = false;
 
 
 

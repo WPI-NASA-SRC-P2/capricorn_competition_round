@@ -78,7 +78,7 @@ void SolarModeServer::setPowerSaveMode(bool state)
 
 void SolarModeServer::startSolarMode()
 {
-  ROS_INFO("Starting Solar Charge Mode");
+  ROS_INFO("[operations | solar_mode_server | %s]: Starting Solar Charge Mode", robot_name.c_str());
   setPowerSaveMode(false);
   rotateRobot();
   should_turn = true;
@@ -86,9 +86,10 @@ void SolarModeServer::startSolarMode()
 
 void SolarModeServer::stopSolarMode()
 {
-  ROS_INFO("Stopping Solar Charge Mode");
+  ROS_INFO("[operations | solar_mode_server | %s]: Stopping Solar Charge Mode", robot_name.c_str());
   setPowerSaveMode(false);
-  stopRobot();
+  if(robot_moving)
+    stopRobot();
   should_turn = false;
 }
 
@@ -121,13 +122,13 @@ void SolarModeServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg)
 void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
 {
   ros::Rate r(10);
-  ros::Duration(1.0).sleep();
 
   ROS_INFO("inside execute callback");
 
   initMode(goal->solar_charge_status);
   ROS_WARN("Excecuting something");
   while(goal->solar_charge_status == true){
+    robot_moving = true;
     ros::spinOnce();
     ROS_INFO_STREAM("LOOPPPP"<<solar_ok);
     //in case there is no solar charging, change nothing
@@ -150,6 +151,8 @@ void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
 
     //could put feedback if it ends up being useful
   }
+
+    robot_moving = false;
     ROS_INFO("Out of limbo");
     if(success){
     ROS_WARN("Should be done by now");
@@ -166,7 +169,7 @@ void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
 }
 
 void SolarModeServer::cancelGoal(){
-  stopSolarMode();
+    stopSolarMode();
 }
 
 
