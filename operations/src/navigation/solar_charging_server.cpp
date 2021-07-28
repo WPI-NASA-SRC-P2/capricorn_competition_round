@@ -128,7 +128,7 @@ void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
     solarServer_->setSucceeded(result_);
     first_call = false;
     return;
-  }a
+  }
 
   ros::Rate r(10);
 
