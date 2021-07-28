@@ -40,7 +40,7 @@ void State::setRobotScheduler(RobotScheduler& c_robot_scheduler)
 RobotScheduler::RobotScheduler(const ros::NodeHandle &nh, std::string robot_name) : nh_(nh), robot_name_(robot_name)
 {
    // set subscriber for updating desired state from scheduler
-   desired_state_sub_ = nh_.subscribe(CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 2, &RobotScheduler::desiredStateCB, this);
+   desired_state_sub_ = nh_.subscribe(CAPRICORN_TOPIC + ROBOTS_DESIRED_STATE_TOPIC, 2000, &RobotScheduler::desiredStateCB, this);
 }
 
 RobotScheduler::~RobotScheduler() 
