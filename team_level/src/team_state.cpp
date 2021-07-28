@@ -1073,8 +1073,10 @@ void GoToInitLoc::step()
    if(hauler_in_team != NONE)
    {
       if(hauler_in_team == HAULER_2)
+      {
          if (start_state_delay_counter > START_EXCAVATOR_STATE_DELAY_MAX)
             robot_state_register->setRobotState(hauler_in_team, HAULER_INITIAL_RESET);
+      }
       else if (start_state_delay_counter > START_HAULER_STATE_DELAY_MAX)
          robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOOKOUT_LOCATION);
    }
