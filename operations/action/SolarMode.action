@@ -1,0 +1,14 @@
+#goal
+bool solar_charge_status
+---
+#result
+bool solar_ok_
+bool power_rate_
+bool power_saver_
+uint32 result
+---
+#feedback
+bool solar_ok_
+float32 power_rate_
+bool power_saver_
+

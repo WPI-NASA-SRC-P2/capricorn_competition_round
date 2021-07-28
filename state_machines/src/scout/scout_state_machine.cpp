@@ -21,12 +21,14 @@ ScoutState::ScoutState(uint32_t un_id, ros::NodeHandle nh, std::string robot_nam
   navigation_vision_client_ = new NavigationVisionClient(CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + NAVIGATION_VISION_ACTIONLIB, true);
   navigation_client_ = new NavigationClient(CAPRICORN_TOPIC + robot_name_ + "/" + NAVIGATION_ACTIONLIB, true);
   park_robot_client_ = new ParkRobotClient(CAPRICORN_TOPIC + robot_name_ + "/" + robot_name_ + COMMON_NAMES::PARK_HAULER_ACTIONLIB, true);
+  solar_charging_client_ = new SolarChargingClient(COMMON_NAMES::CAPRICORN_TOPIC + robot_name_ + "/" + COMMON_NAMES::SOLAR_RECHARGE_ACTIONLIB, true);
   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Waiting for the scout action servers...");
   navigation_vision_client_->waitForServer();
   navigation_client_->waitForServer();
   resource_localiser_client_->waitForServer();
   park_robot_client_->waitForServer();
-  
+//   solar_charging_client_->waitForExistence(); // does not have a waitForExistence
+
   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: All scout action servers started!");
   
   // spiral client for spiral motion
@@ -623,7 +625,26 @@ void IdleState::entryPoint()
    operations::Spiral srv;
    srv.request.resume_spiral_motion = false;
    spiralClient_.call(srv);
+
+   first_ = true;
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout has entered idle state, awaiting new state...");
+}
+
+void IdleState::step()
+{
+   if(first_)
+   {
+      solar_charging_action_goal_.solar_charge_status = true;
+      solar_charging_client_->sendGoal(solar_charging_action_goal_);
+      first_ = false;
+      ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout has started solar charging, awaiting new state...");
+   }
+}
+void IdleState::exitPoint()
+{
+   solar_charging_action_goal_.solar_charge_status = false;
+   solar_charging_client_->sendGoal(solar_charging_action_goal_);
+   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout has stopped solar charging, exiting idle state");
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////

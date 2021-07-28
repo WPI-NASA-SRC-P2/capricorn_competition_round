@@ -44,6 +44,8 @@ namespace COMMON_NAMES
   const std::string FIND_PP_RS_ACTIONLIB = "_find_pp_rs";
   const std::string NAVIGATION_VISION_ACTIONLIB = "_navigation_vision";
   const std::string STATE_MACHINE_ACTIONLIB = "_state_machine";
+  const std::string SOLAR_RECHARGE_ACTIONLIB = "solar_recharging";
+
 
   /****** SERVICES ******/
   const std::string SCOUT_SEARCH_SERVICE = "scout_search";
@@ -87,6 +89,8 @@ namespace COMMON_NAMES
   const std::string PARK_HAULER_HOPPER_CLIENT_NODE_NAME = "_park_hauler_client";
   const std::string SCOUT_SEARCH_NODE_NAME = "_scout_search";
   const std::string STATE_MACHINE_SERVER_NODE_NAME = "_sm_server";
+  const std::string SOLAR_CHARGING_CLIENT_NODE_NAME = "_solar_charging_client";
+
 
   /****** TOPIC NAMES ******/
   const std::string CLOCK_TOPIC = "/clock";
@@ -253,6 +257,7 @@ namespace COMMON_NAMES
     HAULER_BALLET_DANCING,
     HAULER_VISUAL_RESET_ODOM,
     HAULER_INITIAL_RESET,
+    HAULER_DO_NOTHING,
     ROBOT_IDLE_STATE,
 
     /***************ROBOTS MACRO STATES***************/
