@@ -220,6 +220,7 @@ public:
 private:
    bool ballet_once, digging_re_attempted;
    bool v_ppm_once, park_at_excav_re_attempted;
+   bool hauler_reached;
    TEAM_MICRO_STATE micro_state;
    void stepWaitForHauler();
    void stepPreParkManeuverExcavator();
@@ -318,4 +319,9 @@ public:
    bool entryPoint() override;
    void step() override;
    void exitPoint() override;
+
+private:
+   int start_state_delay_counter;
+   int START_EXCAVATOR_STATE_DELAY_MAX = 750;   // 20 Seconds is around 500 counts
+   int START_HAULER_STATE_DELAY_MAX = 1500;
 };
