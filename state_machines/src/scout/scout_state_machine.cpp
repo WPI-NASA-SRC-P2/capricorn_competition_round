@@ -27,7 +27,7 @@ ScoutState::ScoutState(uint32_t un_id, ros::NodeHandle nh, std::string robot_nam
   navigation_client_->waitForServer();
   resource_localiser_client_->waitForServer();
   park_robot_client_->waitForServer();
-//   solar_charging_client_->waitForExistence(); // does not have a waitForExistence
+  solar_charging_client_->waitForServer(); // does not have a waitForExistence
 
   ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: All scout action servers started!");
   
@@ -642,7 +642,8 @@ void IdleState::step()
 }
 void IdleState::exitPoint()
 {
-   solar_charging_client_->cancelGoal();
+   solar_charging_action_goal_.solar_charge_status = false;
+   solar_charging_client_->sendGoal(solar_charging_action_goal_);
    ROS_INFO_STREAM("[STATE_MACHINES | scout_state_machine.cpp | " << robot_name_ << "]: Scout has stopped solar charging, exiting idle state");
 }
 

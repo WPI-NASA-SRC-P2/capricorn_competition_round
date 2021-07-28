@@ -30,7 +30,7 @@ HaulerState::HaulerState(uint32_t un_id, ros::NodeHandle nh, std::string robot_n
   hauler_client_->waitForServer(); 
   park_robot_client_->waitForServer(); 
   resetHaulerOdometryClient_.waitForExistence();
-//   solar_charging_client_->waitForExistence(); // does not have a waitForExistence 
+  solar_charging_client_->waitForServer(); // does not have a waitForExistence 
   ROS_INFO_STREAM("[STATE_MACHINES | hauler_state_machine.cpp | " << robot_name_ << "]: All hauler action servers started!");
 
   // Locations for haulers to go to in order to clear the traffic at the hopper, HAULER_2 parks near the hopper, HAULER_1 near the repair station. 

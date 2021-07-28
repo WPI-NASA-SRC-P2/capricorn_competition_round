@@ -317,7 +317,7 @@ public:
       navigation_client_->cancelGoal();
       park_robot_client_->cancelGoal();
       solar_charging_action_goal_.solar_charge_status = true;
-      solar_charging_client_->sendGoal(solar_charging_action_goal_);
+      // solar_charging_client_->sendGoal(solar_charging_action_goal_);
       first_ = true;
       ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Excavator has entered idle state, awaiting new state...");
    }
@@ -333,7 +333,8 @@ public:
    }
    void exitPoint() override
    {
-      solar_charging_client_->cancelGoal();
+         solar_charging_action_goal_.solar_charge_status = false;
+         solar_charging_client_->sendGoal(solar_charging_action_goal_);
       ROS_INFO_STREAM("[STATE_MACHINES | excavator_state_machine.cpp | " << robot_name_ << "]: Excavator has stopped solar charging, exiting idle state");
    }
    State& transition() override{} 

@@ -71,6 +71,7 @@ private:
   bool should_turn = false;
   bool success = false;
   bool robot_moving = false;
+  bool continue_motion = true;
 
 
 

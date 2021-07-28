@@ -27,7 +27,7 @@ ExcavatorState::ExcavatorState(uint32_t un_id, ros::NodeHandle nh, std::string r
   navigation_client_->waitForServer();
   excavator_arm_client_->waitForServer();
   park_robot_client_->waitForServer();
-//   solar_charging_client_->waitForExistence(); // does not have a waitForExistence
+  solar_charging_client_->waitForServer(); // does not have a waitForExistence
   ROS_INFO_STREAM("STATE_MACHINES | excavator_state_machine | " << robot_name_ << " ]: All excavator action servers started!");
 
   // Locations for excavators to go to in order to clear the traffic at the hopper, HAULER_2 parks near the hopper, HAULER_1 near the repair station. 

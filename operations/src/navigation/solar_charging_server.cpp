@@ -62,6 +62,8 @@ void SolarModeServer::stopRobot(void)
     // Diverting values from twist to navigation
     goal.forward_velocity = 0;
     goal.angular_velocity = 0; //units radian per sec ???
+    ROS_INFO_STREAM("[operations | solar_mode_server | "<<robot_name<<"]: Stopping the robot");
+    // ROS_WARN("[operations | solar_mode_server | %s] : Stopping the robot", robot_name.c_str());
 
   navigation_client_->sendGoal(goal);
   ros::Duration(0.05).sleep();
@@ -122,13 +124,14 @@ void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
 {
   ros::Rate r(10);
 
-  
+  continue_motion = true;
 
   initMode(goal->solar_charge_status);
-  while(goal->solar_charge_status == true){
+  while(goal->solar_charge_status == true && ros::ok() && continue_motion){
     robot_moving = true;
     ros::spinOnce();
-    ROS_INFO("[operations | solar_mode_server | %s]: Rotating robot for solar charging", robot_name.c_str());
+    // ROS_INFO("[operations | solar_mode_server | %s]: Rotating robot for solar charging", robot_name.c_str());
+    ROS_INFO_STREAM("[operations | solar_mode_server | "<<robot_name<<"]: Rotating robot for solar charging");
     //in case there is no solar charging, change nothing
     //Maybe TODO:: if turing takes too long, set success = false
 
@@ -150,7 +153,8 @@ void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
 
     robot_moving = false;
     if(success){
-    ROS_INFO("[operations | solar_mode_server | %s] : Done rotating robot", robot_name.c_str());
+    ROS_INFO_STREAM("[operations | solar_mode_server | "<<robot_name<<"]: Done rotating robot");
+    // ROS_INFO("[operations | solar_mode_server | %s] : Done rotating robot", robot_name.c_str());
 
     result_.solar_ok_ = solar_ok;
     result_.power_rate_= power_rate;
@@ -164,6 +168,7 @@ void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
 }
 
 void SolarModeServer::cancelGoal(){
+    continue_motion = false;
     stopSolarMode();
 }
 
