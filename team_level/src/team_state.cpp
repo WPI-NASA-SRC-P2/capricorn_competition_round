@@ -798,7 +798,7 @@ bool GoToRepairStation::isDone()
       STATE_MACHINE_TASK scout_task = robot_state_register->currentState(scout_in_team);
       bool scout_done_and_succeeded = robot_state_register->isDone(scout_in_team);// && robot_state_register->hasSucceeded(scout_in_team);
 
-      return scout_task == SCOUT_GOTO_REPAIR_STATION && scout_done_and_succeeded;
+      return scout_task == SCOUT_VISUAL_RESET_ODOM && scout_done_and_succeeded;
    }
    if(excavator_in_team != NONE)
    {
