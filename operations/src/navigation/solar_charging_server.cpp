@@ -121,7 +121,6 @@ void SolarModeServer::systemMonitorCB(const srcp2_msgs::SystemMonitorMsg &msg)
 void SolarModeServer::executeCB(const operations::SolarModeGoalConstPtr &goal)
 {
   ros::Rate r(10);
-  ros::Duration(1.0).sleep();
 
   ROS_INFO("inside execute callback");
 

@@ -511,8 +511,7 @@ public:
    }
    void exitPoint() override
    {
-      solar_charging_action_goal_.solar_charge_status = false;
-      solar_charging_client_->sendGoal(solar_charging_action_goal_);
+      solar_charging_client_->cancelGoal();
    }
    State& transition() override{} 
 private:
