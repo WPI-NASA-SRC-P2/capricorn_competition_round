@@ -213,7 +213,7 @@ namespace COMMON_NAMES
     EXCAVATOR_PARK_AND_PUB,          // Publish a message that excavator has reached,
                                          // And park where the scout was located.
     EXCAVATOR_PRE_HAULER_PARK_MANEUVER,     // Centering the hauler for ease of parking
-    EXCAVATOR_DIG_AND_DUMP_VOLATILE, // Takes care of digging, and dumping
+    EXCAVATOR_DIG_AND_DUMP_VOLATILE, // Takes care of digging, and dumpin g
                                          // the volatile in hauler if volatile is found
     EXCAVATOR_GOTO_DEFAULT_ARM_POSE, // Moves excavator's arm to a default position used for object detection
     EXCAVATOR_RESET_ODOM_GROUND_TRUTH, // reset odometry of excavator w.r.t. its starting position in sim

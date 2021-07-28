@@ -12,6 +12,7 @@
 
 //Setting the node's update rate
 #define UPDATE_HZ 0.5
+#define UPDATE_HZ_FAST 1
 
 #define DEBUG_INSTRUMENTATION
 
@@ -23,7 +24,7 @@ ros::Publisher replan_trigger;
 tf2_ros::Buffer buffer_;
 tf2_ros::TransformListener *listener_path_;
 
-
+float Z_THRESHOLD = 7.0;
 
 std::string robot_name_ = "";
 geometry_msgs::PoseStamped robot_pose_;
@@ -117,9 +118,29 @@ int main(int argc, char *argv[])
         }
           
       }
-     
+
+      float sleep_time = UPDATE_HZ;
+      for (int j = 0; j < global_Obstacles_.number_of_objects; j++)
+      {
+        std::string object_label = global_Obstacles_.obj.at(j).label;
+
+        if (object_label == OBJECT_DETECTION_EXCAVATOR_CLASS || 
+            object_label == OBJECT_DETECTION_HAULER_CLASS || 
+            object_label == OBJECT_DETECTION_SCOUT_CLASS ||
+            object_label == OBJECT_DETECTION_PROCESSING_PLANT_CLASS || 
+            object_label == OBJECT_DETECTION_REPAIR_STATION_CLASS )
+        {
+          if(global_Obstacles_.obj.at(j).point.pose.position.z < Z_THRESHOLD)
+            {
+              sleep_time = UPDATE_HZ_FAST;
+              break;
+            }
+        }
+        
+      }
+      
     // run at 10hz
-    ros::Rate update_rate(UPDATE_HZ); // it slowed down pretty much, wont recommend havung it.
+    ros::Rate update_rate(sleep_time); // it slowed down pretty much, wont recommend havung it.
     update_rate.sleep();
     ros::spinOnce();
   }

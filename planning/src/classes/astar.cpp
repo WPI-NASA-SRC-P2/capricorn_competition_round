@@ -231,10 +231,15 @@ Path AStar::findPathOccGrid(const nav_msgs::OccupancyGrid &oGrid, Point target, 
   target.x = target.x / oGrid.info.resolution;
   target.y = std::round(target.y / oGrid.info.resolution); //ROUNDING OPERATION NECESSARY - DO NOT CHANGE
 
-  if(target.y == 20/oGrid.info.resolution)
+  if(target.y == 20/oGrid.info.resolution )
   {
     target.y = target.y + 1;
   }
+  else if( target.y == -20/oGrid.info.resolution)
+  {
+    target.y = target.y - 1;
+  }
+  
 
   if (oGrid.data.size() == 0)
   {
