@@ -363,7 +363,7 @@ void ScoutWaiting::stepMakeExcavHaulerIdle()
 
 void ScoutWaiting::stepRecoveryScoutFinding()
 {
-   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_GO_TO_SCOUT_RECOVERY);
+   robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_GO_TO_SCOUT_RECOVERY, robot_pose_register->getRobotPose(scout_in_team));
 }
 
 void ScoutWaiting::stepUndockScout()
@@ -1073,7 +1073,8 @@ void GoToInitLoc::step()
    if(hauler_in_team != NONE)
    {
       if(hauler_in_team == HAULER_2)
-         robot_state_register->setRobotState(hauler_in_team, HAULER_INITIAL_RESET);
+         if (start_state_delay_counter > START_EXCAVATOR_STATE_DELAY_MAX)
+            robot_state_register->setRobotState(hauler_in_team, HAULER_INITIAL_RESET);
       else if (start_state_delay_counter > START_HAULER_STATE_DELAY_MAX)
          robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_LOOKOUT_LOCATION);
    }
