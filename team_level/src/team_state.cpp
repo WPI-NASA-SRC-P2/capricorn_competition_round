@@ -455,22 +455,6 @@ TEAM_MICRO_STATE Excavating::getMicroState()
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: UNDOCK_HAULER  2");
          return BALLET_ONCE;
       }
-   if(excavator_task == EXCAVATOR_PRE_HAULER_PARK_MANEUVER && excavator_done_and_failed)
-      {
-         return PRE_PARK_MANEUVER_RECOVERY;
-      }
-   if(excavator_task == EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY && excavator_done_and_succeeded)
-      {
-         if(!v_ppm_once)
-            park_at_excav_re_attempted = true;
-         return PARK_AT_EXCAVATOR_HAULER;
-      }   
-   if(hauler_task == HAULER_PARK_AT_EXCAVATOR && hauler_done_and_failed)
-      {
-         v_ppm_once = false;
-         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: DIG_AND_DUMP  3");
-         return PRE_PARK_MANEUVER_RECOVERY;
-      }
    if(excavator_task == EXCAVATOR_DIG_AND_DUMP_VOLATILE)
    {
       if(!ballet_once)
@@ -496,15 +480,37 @@ TEAM_MICRO_STATE Excavating::getMicroState()
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: DIG_AND_DUMP  3");
          return DIG_AND_DUMP;
       }
+   if(hauler_task == HAULER_PARK_AT_EXCAVATOR && hauler_done_and_failed)
+      {
+         v_ppm_once = false;
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: DIG_AND_DUMP  3");
+         return PRE_PARK_MANEUVER_RECOVERY;
+      }
    if(excavator_task == EXCAVATOR_PRE_HAULER_PARK_MANEUVER && excavator_done_and_succeeded)
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: PARK_AT_EXCAVATOR_HAULER  4");
          return PARK_AT_EXCAVATOR_HAULER;
       }
+   if(excavator_task == EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY && excavator_done_and_succeeded)
+      {
+         if(!v_ppm_once)
+            park_at_excav_re_attempted = true;
+         return PARK_AT_EXCAVATOR_HAULER;
+      }   
+   if(excavator_task == EXCAVATOR_PRE_HAULER_PARK_MANEUVER && excavator_done_and_failed)
+      {
+         return PRE_PARK_MANEUVER_RECOVERY;
+      }
    if((excavator_task == EXCAVATOR_VOLATILE_RECOVERY && excavator_done_and_succeeded)
       && (hauler_task == HAULER_GO_BACK_TO_EXCAVATOR && hauler_done_and_succeeded) )
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: PRE_PARK_MANEUVER_EXCAVATOR  5");
+         return PRE_PARK_MANEUVER_EXCAVATOR;
+      }
+   if((excavator_task == EXCAVATOR_VOLATILE_RECOVERY && excavator_done_and_succeeded)
+      && hauler_task == HAULER_GO_TO_EXCAVATOR_RECOVERY && hauler_done_and_succeeded)
+      {
+         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");
          return PRE_PARK_MANEUVER_EXCAVATOR;
       }
    if (hauler_task == HAULER_VISUAL_RESET_ODOM && robot_state_register->isDone(hauler_in_team))
@@ -518,12 +524,6 @@ TEAM_MICRO_STATE Excavating::getMicroState()
       {
          // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");
          return RESET_EXCAV_HAULER_ODOM;
-      }
-   if((excavator_task == EXCAVATOR_VOLATILE_RECOVERY && excavator_done_and_succeeded)
-      && hauler_task == HAULER_GO_TO_EXCAVATOR_RECOVERY && hauler_done_and_succeeded)
-      {
-         // ROS_INFO_STREAM("[ TEAM_LEVEL | team_state ]: WAIT_FOR_HAULER  6");
-         return PRE_PARK_MANEUVER_EXCAVATOR;
       }
    if((hauler_task == HAULER_VISUAL_RESET_ODOM && !hauler_done_and_succeeded) || 
       (excavator_task == EXCAVATOR_VISUAL_RESET_ODOM && !excavator_done_and_succeeded))
@@ -566,7 +566,12 @@ TeamState& Excavating::transition()
       ROS_INFO("TEAM_LEVEL | team_state | Excavator reached, Shifting to DUMPING");
       return getState(GO_TO_REPAIR_STATION);
    }
-   else if(excavator_task == EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY && excavator_done_and_failed && park_at_excav_re_attempted)
+   else if(excavator_task == EXCAVATOR_PRE_PARK_MANEUVER_RECOVERY && excavator_done_and_failed)
+   {
+      ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to GO_TO_REPAIR_STATION");
+      return getState(GO_TO_REPAIR_STATION);
+   }
+   else if(hauler_task == HAULER_PARK_AT_EXCAVATOR && hauler_done_and_failed && park_at_excav_re_attempted)
    {
       ROS_INFO("TEAM_LEVEL | team_state | Excavation FAILED! Shifting to GO_TO_REPAIR_STATION");
       return getState(GO_TO_REPAIR_STATION);
