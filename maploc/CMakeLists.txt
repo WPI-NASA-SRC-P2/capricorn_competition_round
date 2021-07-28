@@ -199,28 +199,9 @@ target_link_libraries(odom_error
   ${catkin_LIBRARIES}
 )
 
-add_executable(localization_odom_encoders src/localization_odom_encoders.cpp)
-add_dependencies(localization_odom_encoders ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(localization_odom_encoders
-  ${catkin_LIBRARIES}
-)
-
-add_executable(ground_truth_pr src/ground_truth_pr.cpp)
-add_dependencies(ground_truth_pr ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(ground_truth_pr
-  ${catkin_LIBRARIES}
-)
-
-add_executable(pr_dataset src/pr_dataset.cpp)
-add_dependencies(pr_dataset ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pr_dataset
-  ${catkin_LIBRARIES}
-)
-
 install(PROGRAMS
 src/obstacle_localmaps.py
 src/map_centering_frame.py
-src/gazebo_base_footprints.py
 DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -241,7 +222,6 @@ DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
 install(TARGETS publish_cheat_odom initialize_rtabmap reset_odom odom_error 
-                localization_odom_encoders ground_truth_pr pr_dataset
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
