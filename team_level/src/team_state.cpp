@@ -650,7 +650,7 @@ void Excavating::stepResetExcavHaulerOdom()
 
 void Excavating::stepRecoveryExcavatorFinding()
 {
-   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_EXCAVATOR_RECOVERY);
+   robot_state_register->setRobotState(hauler_in_team, HAULER_GO_TO_EXCAVATOR_RECOVERY, robot_pose_register->getRobotPose(excavator_in_team));
 
    robot_state_register->setRobotState(excavator_in_team, EXCAVATOR_VOLATILE_RECOVERY); 
 }
