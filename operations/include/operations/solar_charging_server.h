@@ -65,6 +65,7 @@ private:
 
 
   std::string robot_name;
+  bool first_call = true;
   bool solar_ok = false;  
   float_t power_rate; 
   bool power_saver = false;
