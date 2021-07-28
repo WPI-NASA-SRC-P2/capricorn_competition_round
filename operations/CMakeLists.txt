@@ -328,6 +328,7 @@ install(TARGETS start_nav_server wheel_speed_processing navigation_vision_server
                 park_hauler_server resource_localiser resource_localiser_tester 
                 scout_search spiral_points_publisher navigation_client navigation_vision_client 
                 excavator_actionlib_client hauler_actionlib_client park_hauler_client
+                start_solar_charging_server
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
